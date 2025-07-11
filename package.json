@@ -1,0 +1,47 @@
+{
+  "private": true,
+  "version": "1.0.0",
+  "description": "custom helpers",
+  "type": "module",
+  "packageManager": "pnpm@latest",
+  "scripts": {
+    "prepare": "husky",
+    "init": "npx pnpm install",
+    "init:force": "rm -rf ./node_modules pnpm-lock.yaml ./packages/*/node_modules && npm run init",
+    "lint": "eslint . --color",
+    "lint:fix": "npm run lint -- --fix",
+    "lint:style": "stylelint --fix '**/*.{css,scss}' --cache --cache-location node_modules/.cache/stylelint/",
+    "link": "ddc link",
+    "dev": "ddc dev --vue-package 'playground'",
+    "update": "ddc update",
+    "build": "ddc build --vue-package 'playground' --external vue,@deot/vc",
+    "test": "ddc test",
+    "add": "ddc add",
+    "release": "ddc release",
+    "typecheck": "vue-tsc --noEmit --skipLibCheck",
+    "cli:dev": "tsx ./packages/cli/src/index.ts dev",
+    "cli:build": "tsx --tsconfig ./tsconfig.json ./packages/cli/src/index.ts build"
+  },
+  "scripts-info": {
+    "init": "首次安装",
+    "link": "依赖包关联",
+    "add": "创建新包或者给包添加依赖",
+    "dev": "开发模式",
+    "build": "打包模式",
+    "update": "更新 devDependencies 和 dependencies",
+    "test": "执行测试, 可选择单个包或全部"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deot/docs.git"
+  },
+  "author": "deot",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/deot/docs/issues"
+  },
+  "homepage": "https://github.com/deot/docs#readme",
+  "devDependencies": {
+    "@deot/dev": "^2.9.5"
+  }
+}

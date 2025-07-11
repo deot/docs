@@ -1,0 +1,34 @@
+{
+  "name": "@deot/docs-dever",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "shared.config.ts"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@deot/dev-shared": "^2.9.1",
+    "autoprefixer": "^10.4.21",
+    "cssnano": "^7.0.6",
+    "ejs": "^3.1.10",
+    "fs-extra": "^11.3.0",
+    "inquirer": "^12.5.2",
+    "lodash-es": "^4.17.21",
+    "sass": "^1.86.3",
+    "vite": "^6.2.5"
+  },
+  "devDependencies": {}
+}

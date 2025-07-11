@@ -1,0 +1,62 @@
+[
+	{
+		"path": "/changelog",
+		"name": "Changelog",
+	},
+	{
+		"name": "Development",
+		"children": [
+			{
+				"path": "/installation",
+				"name": "Installation",
+			},
+			{
+				"path": "/quickstart",
+				"name": "Quick Start",
+			},
+			{
+				"path": "/i18n",
+				"name": "Internationalization",
+			}
+		]
+	},
+	{
+		"name": "Group",
+		"group": [
+			{
+				"name": "Group 1",
+				"list": [
+					{
+						"path": "/children-group-11",
+						"name": "children 1 - 1",
+					},
+					{
+						"path": "/children-group-12",
+						"name": "children 1 - 2",
+					},
+					{
+						"path": "/children-group-13",
+						"name": "children 1 - 3",
+					}
+				]
+			},
+			{
+				"name": "Group 2",
+				"list": [
+					{
+						"path": "/children-group-21",
+						"name": "children 2 - 1",
+					},
+					{
+						"path": "/children-group-22",
+						"name": "children 2 - 2",
+					},
+					{
+						"path": "/children-group-23",
+						"name": "children 2 - 3",
+					}
+				]
+			}
+		]
+	}
+]

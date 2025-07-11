@@ -1,0 +1,62 @@
+[
+	{
+		"path": "/changelog",
+		"name":  "更新日志",
+	},
+	{
+		"name":  "开发指南",
+		"children": [
+			{
+				"path": "/installation",
+				"name":  "安装",
+			},
+			{
+				"path": "/quickstart",
+				"name":  "快速上手",
+			},
+			{
+				"path": "/i18n",
+				"name":  "国际化",
+			}
+		]
+	},
+	{
+		"name":  "组合",
+		"group": [
+			{
+				"name":  "组合 1",
+				"list": [
+					{
+						"path": "/children-group-11",
+						"name":  "子 1 - 1",
+					},
+					{
+						"path": "/children-group-12",
+						"name":  "子 1 - 2",
+					},
+					{
+						"path": "/children-group-13",
+						"name":  "子 1 - 3",
+					}
+				]
+			},
+			{
+				"name":  "组合 2",
+				"list": [
+					{
+						"path": "/children-group-21",
+						"name":  "子 2 - 1",
+					},
+					{
+						"path": "/children-group-22",
+						"name":  "子 2 - 2",
+					},
+					{
+						"path": "/children-group-23",
+						"name":  "子 2 - 3",
+					}
+				]
+			}
+		]
+	}
+]
