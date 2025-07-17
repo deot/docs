@@ -15,13 +15,13 @@
 <script setup>
 import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue';
 import { TransitionFade } from '@deot/vc';
-import { EditorView, basicSetup } from "codemirror";
-import { javascript } from "@codemirror/lang-javascript";
-import { highlightActiveLine } from "@codemirror/view";
+import { EditorView, basicSetup } from 'codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { highlightActiveLine } from '@codemirror/view';
 import { Drag } from './drag';
 
 const props = defineProps({
-	source: String,
+	value: String,
 	onChange: {
 		type: Function,
 		default: () => {}
@@ -44,7 +44,7 @@ onMounted(async () => {
 		isActive.value = true;
 		await nextTick();
 		editor.value = new EditorView({
-			doc: props.source,
+			doc: props.value,
 			extensions: [
 				basicSetup,
 				javascript(),

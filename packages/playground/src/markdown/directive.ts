@@ -21,7 +21,11 @@ export const vMarkdown = (el: any, binding: any) => {
 	const palygrounds = el.querySelectorAll('div[data-code]');
 	[...palygrounds].forEach((it) => {
 		const code = it.dataset.code;
-		const app = createApp(() => h(Playground, { source: code }));
+		let propsData = {};
+		try {
+			propsData = JSON.parse(it.dataset.props || '{}');
+		} catch { /* empty */ };
+		const app = createApp(() => h(Playground, { modelValue: code, ...(typeof propsData === 'object' ? propsData : {}) }));
 		app.mount(`#${it.id}`);
 	});
 

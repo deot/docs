@@ -60,7 +60,8 @@ md.renderer.rules.fence = (tokens, index, ...rest) => {
 		&& prevToken.info.match(new RegExp(`^${RUNTIME}\\s*(.*)$`));
 
 	return isHit
-		? `<div id="PG-${index}" data-code="${md.utils.escapeHtml(tokens[index].content)}"></div>`
+		// eslint-disable-next-line @stylistic/max-len
+		? `<div id="PG-${index}" data-code="${md.utils.escapeHtml(tokens[index].content)}" data-props="${md.utils.escapeHtml(isHit[1] ? isHit[1].trim() : '')}"></div>`
 		: defaultRender(tokens, index, ...rest);
 };
 

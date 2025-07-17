@@ -1,4 +1,4 @@
-import * as Dever from '@deot/env-dever';
+import * as Dever from '@deot/docs-dever';
 
 // @vitest-environment node
 describe('index', () => {
