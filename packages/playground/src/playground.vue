@@ -1,19 +1,20 @@
 <template>
-	<div v-if="!styleless" class="c-playground">
-		<div class="c-playground__header">
-			<div class="c-playground__tools">
+	<div v-if="!styleless" class="docs-playground">
+		<div class="docs-playground__header">
+			<div class="docs-playground__tools">
 				<Clipboard :value="modelValue" tag="span">
 					{{ copyText['zh-CN'] }}
 				</Clipboard>
 				<span @click="handleEditor">&lt;/&gt;</span>
 			</div>
 		</div>
-		<div v-if="error" class="c-playground__error">
+		<div v-if="error" class="docs-playground__error">
 			{{ error }}
 		</div>
-		<section v-show="!error" ref="preview" class="c-playground__preview">
+		<section v-show="!error" ref="preview" class="docs-playground__preview">
 			<Sandbox
 				:store="store"
+				:clear-console="clearConsole"
 				:preview-options="previewOptions"
 			/>
 		</section>
@@ -46,6 +47,7 @@ const copyText = {
 	'en-US': 'Copy',
 };
 
+const clearConsole = ref(import.meta.env.MODE !== 'development');
 const error = ref('');
 const template = ref({
 	welcomeSFC: props.modelValue || welcomeSFCCode,
@@ -118,7 +120,7 @@ defineExpose({
 });
 </script>
 <style>
-.c-playground {
+.docs-playground {
 	width: 100%;
 	display: flex;
 	justify-content: center;
@@ -127,36 +129,36 @@ defineExpose({
 	margin-bottom: 16px;
 	box-sizing: border-box;
 }
-.c-playground__header {
+.docs-playground__header {
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
 	background: #f6f8fa !important;
 	padding: 10px;
 }
-.c-playground__tools {
+.docs-playground__tools {
 	display: flex;
 	align-items: center;
 	font-size: 14px;
 	line-height: 20px;
 }
-.c-playground__tools > span {
+.docs-playground__tools > span {
 	cursor: pointer;
 	margin-left: 10px;
 }
-.c-playground__tools > span:last-child {
+.docs-playground__tools > span:last-child {
 	font-size: 20px;
 }
-.c-playground__error {
+.docs-playground__error {
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	height: 100%;
 	box-sizing: border-box;
 }
-.c-playground__preview {
+.docs-playground__preview {
 	padding: 10px;
-	margin-top: 10px;
 	box-sizing: border-box;
+	background: white;
 }
 </style>

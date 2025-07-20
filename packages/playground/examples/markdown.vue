@@ -1,9 +1,12 @@
 <template>
-	<Markdown v-model="value" />
+	<div style="padding: 24px">
+		<Markdown v-model="current" />
+	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
 import { Markdown } from '@deot/docs-playground';
+import '/node_modules/@deot/style/dist/index.normalize-only.css';
 import '/node_modules/@deot/vc-components/dist/index.style.css';
 
 let source = `\n## 标题\n\n`;
@@ -19,5 +22,5 @@ source += `<\/script>\n`;
 source += `\`\`\`\n`;
 source += `:::\n`;
 
-const value = ref(source);
+const current = ref(source);
 </script>

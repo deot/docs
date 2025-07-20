@@ -1,13 +1,37 @@
 import { createApp, h } from 'vue';
+import { Clipboard } from '@deot/vc';
 import hljs from 'highlight.js';
+import { definer as vueHighlight } from 'highlightjs-vue';
 
 import { Markdown } from './utils';
 import Playground from '../playground.vue';
 
-hljs.configure({
-	// 一个缩进为四空格
-	tabReplace: '    '
-});
+const TAB_REPLACE_RE = /^(<[^>]+>|\t)+/gm;
+const hljsPlugin = {
+	'after:highlight': (e) => {
+		e.value = e.value.replace(TAB_REPLACE_RE, (m: string) =>
+			m.replace(/\t/g, '    ')
+		);
+	},
+	'after:highlightElement': (e) => {
+		const { el, text } = e;
+		const root = document.createElement('div');
+		const app = createApp(() => h(Clipboard, {
+			value: text,
+			style: {
+				position: 'absolute',
+				top: '3px',
+				right: '5px',
+				cursor: 'pointer'
+			}
+		}, '复制'));
+		app.mount(root);
+		el.appendChild(root);
+	}
+};
+
+hljs.addPlugin(hljsPlugin);
+hljs.registerLanguage('vue', vueHighlight);
 
 export const vMarkdown = (el: any, binding: any) => {
 	const source = binding.value;
@@ -31,6 +55,6 @@ export const vMarkdown = (el: any, binding: any) => {
 
 	const blocks = el.querySelectorAll('pre code:not(.hljs)');
 	[...blocks].forEach((block) => {
-		hljs.highlightBlock(block);
+		hljs.highlightElement(block);
 	});
 };

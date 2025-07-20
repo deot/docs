@@ -1,12 +1,12 @@
 <template>
-	<div class="c-playground-editor">
+	<div class="docs-playground-editor">
 		<TransitionFade @after-leave="hide">
-			<div v-show="isActive" ref="wrapper" class="c-playground-editor__wrapper">
-				<div ref="bar" class="c-playground-editor__header">
+			<div v-show="isActive" ref="wrapper" class="docs-playground-editor__wrapper">
+				<div ref="bar" class="docs-playground-editor__header">
 					<span>&lt;/&gt;</span>
 					<span style="cursor: pointer;" @click="hide">&#10005;</span>
 				</div>
-				<div ref="textarea" class="c-playground-editor__editor">
+				<div ref="textarea" class="docs-playground-editor__editor">
 				</div>
 			</div>
 		</TransitionFade>
@@ -17,6 +17,7 @@ import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue';
 import { TransitionFade } from '@deot/vc';
 import { EditorView, basicSetup } from 'codemirror';
 import { javascript } from '@codemirror/lang-javascript';
+import { vue } from '@codemirror/lang-vue';
 import { highlightActiveLine } from '@codemirror/view';
 import { Drag } from './drag';
 
@@ -40,6 +41,7 @@ const hide = () => {
 };
 
 onMounted(async () => {
+	const isVue = props.value.includes('<script>') || props.value.includes('<template>');
 	try {
 		isActive.value = true;
 		await nextTick();
@@ -47,7 +49,7 @@ onMounted(async () => {
 			doc: props.value,
 			extensions: [
 				basicSetup,
-				javascript(),
+				isVue ? vue() : javascript(),
 				highlightActiveLine(),
 				EditorView.updateListener.of((e) => {
 					if (e.docChanged) {
@@ -75,7 +77,7 @@ onBeforeUnmount(() => {
 
 </script>
 <style>
-.c-playground-editor .c-playground-editor__wrapper {
+.docs-playground-editor .docs-playground-editor__wrapper {
 	width: 600px;
 	position: fixed;
 	right: 10px;
@@ -87,7 +89,7 @@ onBeforeUnmount(() => {
 	background: white;
 	z-index: 99999;
 }
-.c-playground-editor .c-playground-editor__header {
+.docs-playground-editor .docs-playground-editor__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -97,7 +99,7 @@ onBeforeUnmount(() => {
 	line-height: 20px;
 	cursor: move;
 }
-.c-playground-editor .c-playground-editor__editor {
+.docs-playground-editor .docs-playground-editor__editor {
 	padding: 1px;
 	background: #f6f8fa !important;
 }
