@@ -5,7 +5,7 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue';
-import { Markdown } from '@deot/docs-playground';
+import { Markdown } from '@deot/docs-markdown';
 import '/node_modules/@deot/style/dist/index.normalize-only.css';
 import '/node_modules/@deot/vc-components/dist/index.style.css';
 

@@ -2,9 +2,8 @@ import { createApp, h } from 'vue';
 import { Clipboard } from '@deot/vc';
 import hljs from 'highlight.js';
 import { definer as vueHighlight } from 'highlightjs-vue';
-
-import { Markdown } from './utils';
-import Playground from '../playground.vue';
+import { Playground } from '@deot/docs-playground';
+import { Markdown } from './markdown';
 
 const TAB_REPLACE_RE = /^(<[^>]+>|\t)+/gm;
 const hljsPlugin = {
