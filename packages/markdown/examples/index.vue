@@ -8,19 +8,7 @@ import { ref } from 'vue';
 import { Markdown } from '@deot/docs-markdown';
 import '/node_modules/@deot/style/dist/index.normalize-only.css';
 import '/node_modules/@deot/vc-components/dist/index.style.css';
-
-let source = `\n## 标题\n\n`;
-
-source += `:::RUNTIME {"style":"height:200px"}\n`;
-source += `\`\`\`vue\n`;
-source += `<template>\n`;
-source += `	<Button>123</Button>\n`;
-source += `<\/template>\n`;
-source += `<script setup>\n`;
-source += `import { Button } from '@deot/vc'\n`;
-source += `<\/script>\n`;
-source += `\`\`\`\n`;
-source += `:::\n`;
+import source from './locals/README.md?raw';
 
 const current = ref(source);
 </script>
