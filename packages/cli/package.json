@@ -14,11 +14,11 @@
   },
   "dependencies": {
     "@deot/docs-dever": "*",
-    "commander": "^13.1.0"
+    "commander": "^15.0.0"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
-    "@deot/dev-test": "^2.9.1"
+    "cross-env": "^10.0.1",
+    "@deot/dev-test": "^2.9.13"
   },
   "bin": {
     "doc": "bin/cli.js"

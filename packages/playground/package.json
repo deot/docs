@@ -18,8 +18,11 @@
     "codemirror": "^6.0.2"
   },
   "devDependencies": {
-    "@deot/style": "^1.1.2",
-    "@deot/vc": "^1.0.37",
-    "echarts": "^5.6.0",
-    "photoswipe": "^5.4.4"  }
+    "@deot/helper": "^1.1.17",
+    "@deot/style": "^1.1.4",
+    "@deot/vc": "^1.0.71",
+    "echarts": "^6.1.0",
+    "photoswipe": "^5.4.4",
+    "vue": "^3.5.39"
+  }
 }

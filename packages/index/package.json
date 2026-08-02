@@ -11,6 +11,10 @@
     "access": "public"
   },
   "dependencies": {
-    "@deot/docs-cli": "*"
+    "@deot/docs-cli": "*",
+    "@deot/docs-client": "*",
+    "@deot/docs-dever": "*",
+    "@deot/docs-markdown": "*",
+    "@deot/docs-playground": "*"
   }
 }
