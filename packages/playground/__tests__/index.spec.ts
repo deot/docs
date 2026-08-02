@@ -87,6 +87,7 @@ describe('Playground', () => {
 
 	it('is exported from the package entry', async () => {
 		const entry = await import('../src');
+		expect(entry.CodePreview).toBeDefined();
 		expect(entry.Playground).toBe(Playground);
 	});
 
@@ -210,7 +211,7 @@ describe('Playground', () => {
 		expect(files.find('.docs-playground-files').exists()).toBe(true);
 		expect(files.find('.docs-playground__header').exists()).toBe(false);
 		expect(files.find('.docs-playground__tools').exists()).toBe(false);
-		expect(files.find('.docs-playground-files__copy').attributes('aria-label')).toBe('复制当前文件');
+		expect(files.find('.docs-code-preview__copy').attributes('aria-label')).toBe('复制当前文件');
 		expect(files.find('code.hljs').html()).toContain('hljs-tag');
 		expect(files.find('code.hljs').html()).not.toContain('<strong>files</strong>');
 		expect(files.find('pre').element.childNodes).toHaveLength(1);

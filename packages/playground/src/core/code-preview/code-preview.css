@@ -1,0 +1,73 @@
+.docs-code-preview {
+	position: relative;
+	display: flex;
+	min-height: 0;
+	overflow: hidden;
+	background: #f7f8fa;
+	border-radius: 8px;
+}
+
+.docs-code-preview__language {
+	position: absolute;
+	top: 6px;
+	right: 12px;
+	z-index: 1;
+	display: inline-flex;
+	width: 30px;
+	height: 30px;
+	overflow: hidden;
+	font-size: 12px;
+	line-height: 18px;
+	color: #71717a;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	justify-content: center;
+	align-items: center;
+}
+
+.docs-code-preview__copy {
+	position: absolute;
+	top: 6px;
+	right: 12px;
+	z-index: 2;
+	display: inline-flex;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	color: #71717a;
+	pointer-events: none;
+	cursor: pointer;
+	background: #f7f8fa;
+	border: 1px solid #d4d4d8;
+	border-radius: 8px;
+	opacity: 0;
+	transition: opacity 0.15s ease, background-color 0.15s ease;
+	justify-content: center;
+	align-items: center;
+}
+
+.docs-code-preview:hover .docs-code-preview__copy,
+.docs-code-preview__copy:focus-visible {
+	pointer-events: auto;
+	opacity: 1;
+}
+
+.docs-code-preview__copy:hover {
+	background: #fff;
+}
+
+.docs-code-preview__code {
+	width: 100%;
+	min-height: 0;
+	margin: 0;
+	overflow: auto;
+	background: #f7f8fa;
+	flex: 1 1 auto;
+}
+
+.docs-code-preview__code code.hljs {
+	min-height: 100%;
+	padding: 12px 56px 12px 24px;
+	background: #f7f8fa;
+	box-sizing: border-box;
+}

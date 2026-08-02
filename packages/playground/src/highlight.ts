@@ -67,13 +67,22 @@ const escapeHTML = (code: string) => code
 	.replace(/"/g, '&quot;')
 	.replace(/'/g, '&#039;');
 
-export const highlightCode = (code: string, filename: string) => {
+const TAB_REPLACE_RE = /^(<[^>]+>|\t)+/gm;
+const normalizeHighlightTabs = (code: string) => code.replace(TAB_REPLACE_RE, match =>
+	match.replace(/\t/g, '    ')
+);
+
+export const highlightCodeByLanguage = (code: string, language: string) => {
 	try {
-		return registerVueHighlight().highlight(code, {
-			language: resolveHighlightLanguage(filename),
+		const highlighted = registerVueHighlight().highlight(code, {
+			language: language || 'plaintext',
 			ignoreIllegals: true
 		}).value;
+		return normalizeHighlightTabs(highlighted);
 	} catch {
 		return escapeHTML(code);
 	}
 };
+
+export const highlightCode = (code: string, filename: string) =>
+	highlightCodeByLanguage(code, resolveHighlightLanguage(filename));

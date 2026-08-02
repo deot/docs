@@ -18,6 +18,10 @@
     "codemirror": "^6.0.2",
     "highlight.js": "^11.11.1"
   },
+  "peerDependencies": {
+    "@deot/vc": "^1.0.71",
+    "vue": "^3.5.39"
+  },
   "devDependencies": {
     "@deot/helper": "^1.1.17",
     "@deot/style": "^1.1.4",

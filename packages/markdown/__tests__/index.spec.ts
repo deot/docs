@@ -5,36 +5,63 @@ import { mount } from '@vue/test-utils';
 import { Markdown as MarkdownRenderer } from '../src/markdown';
 import { Markdown } from '../src';
 
+const { codePreviewUnmounted, playgroundUnmounted } = vi.hoisted(() => ({
+	codePreviewUnmounted: vi.fn(),
+	playgroundUnmounted: vi.fn()
+}));
+
 vi.mock('@deot/vc', () => ({
 	Clipboard: defineComponent({
+		name: 'Clipboard',
 		props: ['value'],
 		template: '<button class="clipboard"><slot /></button>'
 	})
 }));
 
-vi.mock('@deot/docs-playground', () => ({
-	registerVueHighlight: vi.fn(),
-	Playground: defineComponent({
-		props: ['modelValue', 'theme', 'files', 'entry', 'views'],
-		setup(props) {
-			return () => h('div', { class: 'playground' }, [
-				props.modelValue || '',
-				'-',
-				props.entry || '',
-				'-',
-				JSON.stringify(props.files || {}),
-				'-',
-				props.theme || '',
-				'-',
-				JSON.stringify(props.views || [])
-			]);
-		}
-	})
-}));
+vi.mock('@deot/docs-playground', async () => {
+	const { default: RealCodePreview } = await import('../../playground/src/core/code-preview/code-preview.vue');
+	return {
+		CodePreview: defineComponent({
+			props: ['code', 'filename', 'language', 'copyLabel'],
+			unmounted: codePreviewUnmounted,
+			setup(props, { attrs }) {
+				return () => h(RealCodePreview, { ...attrs, ...props });
+			}
+		}),
+		Playground: defineComponent({
+			props: ['modelValue', 'theme', 'files', 'entry', 'views'],
+			unmounted: playgroundUnmounted,
+			setup(props) {
+				return () => h('div', { class: 'playground' }, [
+					h('span', [
+						props.modelValue || '',
+						'-',
+						props.entry || '',
+						'-',
+						JSON.stringify(props.files || {}),
+						'-',
+						props.theme || '',
+						'-',
+						JSON.stringify(props.views || [])
+					]),
+					h('pre', { class: 'playground-code' }, [
+						h('code', { class: 'hljs language-js' }, 'runtime preview')
+					])
+				]);
+			}
+		})
+	};
+});
 
 describe('markdown', () => {
+	beforeEach(() => {
+		codePreviewUnmounted.mockReset();
+		playgroundUnmounted.mockReset();
+	});
+
 	afterEach(() => {
 		document.body.innerHTML = '';
+		document.getElementById('docs-code-preview-style')?.remove();
 	});
 
 	it('renders markdown features and adds the md marker', () => {
@@ -88,16 +115,84 @@ describe('markdown', () => {
 		expect(html).not.toContain('<pre>');
 	});
 
-	it('renders the wrapper, playgrounds, highlighting and clipboard controls', async () => {
+	it('renders the wrapper, playgrounds and shared code previews', async () => {
 		const source = '# Hello\n\n:::RUNTIME {"theme":"dark"}\n```vue\n<template>demo</template>\n```\n:::\n\n```js\n\tconst n = 1\n```';
 		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
 		await nextTick();
 
 		expect(wrapper.find('h1').text()).toContain('Hello');
 		expect(document.querySelector('.playground')?.textContent).toMatch(/<template>demo<\/template>.*dark/s);
-		expect(wrapper.find('code').classes()).toContain('hljs');
-		expect(wrapper.find('.clipboard').exists()).toBe(true);
-		expect(wrapper.find('code').text()).toMatch(/const\s+n\s+=\s+1/);
+		expect(wrapper.find('.docs-code-preview code').classes()).toContain('hljs');
+		expect(wrapper.find('.docs-code-preview code').html()).toContain('hljs-keyword');
+		expect(wrapper.find('.docs-code-preview__copy').exists()).toBe(true);
+		expect(wrapper.find('.docs-code-preview__language').text()).toBe('js');
+		expect(wrapper.find('.docs-code-preview code').text()).toMatch(/const\s+n\s+=\s+1/);
+		expect(wrapper.findAll('.docs-code-preview')).toHaveLength(1);
+		expect(wrapper.findAll('.docs-markdown-code-preview')).toHaveLength(1);
+		expect(wrapper.find('.playground .playground-code').exists()).toBe(true);
+		expect(wrapper.find('.playground .docs-code-preview').exists()).toBe(false);
+	});
+
+	it('passes Vue, JavaScript and unnamed fences to shared code previews', async () => {
+		const source = [
+			'```vue',
+			'<template />',
+			'```',
+			'',
+			'```js',
+			'const value = 1',
+			'```',
+			'',
+			'```',
+			'plain',
+			'```'
+		].join('\n');
+		const wrapper = mount(Markdown, { props: { modelValue: source } });
+		await nextTick();
+
+		expect(wrapper.findAll('.docs-code-preview')).toHaveLength(3);
+		expect(wrapper.findAll('.docs-code-preview__language').map(item => item.text())).toEqual(['vue', 'js']);
+		expect(wrapper.findAll('.docs-code-preview code')[0].html()).toContain('hljs-tag');
+		expect(wrapper.findAll('.docs-code-preview code')[1].html()).toContain('hljs-keyword');
+		expect(wrapper.findAll('.docs-code-preview code')[2].text()).toBe('plain');
+		expect(document.querySelectorAll('#docs-code-preview-style')).toHaveLength(1);
+	});
+
+	it('cleans up mounted previews when source changes and the wrapper unmounts', async () => {
+		const source = (language: string, value: number) => [
+			':::RUNTIME',
+			'```vue',
+			`<template>${value}</template>`,
+			'```',
+			':::',
+			'',
+			`\`\`\`${language}`,
+			`const value = ${value}`,
+			'```'
+		].join('\n');
+		const wrapper = mount(Markdown, { props: { modelValue: source('js', 1) } });
+		await nextTick();
+		expect(wrapper.findAll('.docs-code-preview')).toHaveLength(1);
+		expect(wrapper.findAll('.playground')).toHaveLength(1);
+		const previewElement = wrapper.find('.docs-code-preview').element;
+
+		await wrapper.setProps({ value: 'unrelated' });
+		await nextTick();
+		expect(wrapper.find('.docs-code-preview').element).toBe(previewElement);
+		expect(codePreviewUnmounted).not.toHaveBeenCalled();
+		expect(playgroundUnmounted).not.toHaveBeenCalled();
+
+		await wrapper.setProps({ modelValue: source('ts', 2) });
+		await nextTick();
+		expect(wrapper.findAll('.docs-code-preview')).toHaveLength(1);
+		expect(wrapper.findAll('.playground')).toHaveLength(1);
+		expect(wrapper.find('.docs-code-preview__language').text()).toBe('ts');
+		expect(codePreviewUnmounted).toHaveBeenCalledTimes(1);
+		expect(playgroundUnmounted).toHaveBeenCalledTimes(1);
+
+		wrapper.unmount();
+		expect(codePreviewUnmounted).toHaveBeenCalledTimes(2);
+		expect(playgroundUnmounted).toHaveBeenCalledTimes(2);
 	});
 
 	it('mounts multi-file props through the directive', async () => {

@@ -83,3 +83,15 @@ defineProps({ label: String });
 </template>
 ```
 :::
+
+## 普通代码块
+
+```vue
+<script setup>
+defineProps({ label: String });
+</script>
+
+<template>
+	<strong>{{ label }}</strong>
+</template>
+```

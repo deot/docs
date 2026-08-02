@@ -1,68 +1,73 @@
 import { createApp, h } from 'vue';
-import { Clipboard } from '@deot/vc';
-import hljs from 'highlight.js';
+import type { App, DirectiveBinding } from 'vue';
 import * as DocsPlayground from '@deot/docs-playground';
 import { Markdown } from './markdown';
 
-const TAB_REPLACE_RE = /^(<[^>]+>|\t)+/gm;
-const hljsPlugin = {
-	'after:highlight': (e) => {
-		e.value = e.value.replace(TAB_REPLACE_RE, (m: string) =>
-			m.replace(/\t/g, '    ')
-		);
-	},
-	'after:highlightElement': (e) => {
-		const { el, text } = e;
-		const root = document.createElement('div');
-		const app = createApp(() => h(Clipboard, {
-			value: text,
-			style: {
-				position: 'absolute',
-				top: '3px',
-				right: '5px',
-				cursor: 'pointer'
-			}
-		}, '复制'));
-		app.mount(root);
-		el.appendChild(root);
-	}
+const mountedApps = new WeakMap<HTMLElement, App[]>();
+
+const cleanup = (el: HTMLElement) => {
+	for (const app of mountedApps.get(el) || []) app.unmount();
+	mountedApps.delete(el);
 };
 
-hljs.addPlugin(hljsPlugin);
-DocsPlayground.registerVueHighlight(hljs);
+const resolveBlockLanguage = (block: Element) => {
+	const languageClass = [...block.classList].find(className =>
+		className.startsWith('language-')
+	);
+	return languageClass?.slice('language-'.length) || '';
+};
 
-export const vMarkdown = (el: any, binding: any) => {
-	const source = binding.value;
-	let result = '';
-	if (source) {
-		result = Markdown.render(source);
-	}
+const render = (el: HTMLElement, binding: DirectiveBinding<string | undefined>) => {
+	cleanup(el);
+	el.innerHTML = binding.value ? Markdown.render(binding.value) : '';
 
-	el.innerHTML = result;
+	const apps: App[] = [];
+	const blocks = el.querySelectorAll('pre code');
+	blocks.forEach((block) => {
+		const pre = block.parentElement;
+		if (!pre) return;
+		const mountPoint = document.createElement('div');
+		mountPoint.className = 'docs-markdown-code-preview';
+		pre.replaceWith(mountPoint);
+		const app = createApp(() => h(DocsPlayground.CodePreview, {
+			code: block.textContent || '',
+			language: resolveBlockLanguage(block)
+		}));
+		app.mount(mountPoint);
+		apps.push(app);
+	});
 
-	const palygrounds = el.querySelectorAll('div[data-playground]');
-	[...palygrounds].forEach((it) => {
-		const code = it.dataset.code;
+	const playgrounds = el.querySelectorAll<HTMLElement>('div[data-playground]');
+	playgrounds.forEach((item) => {
+		const code = item.dataset.code;
 		let files;
 		let propsData = {};
 		try {
-			propsData = JSON.parse(it.dataset.props || '{}');
-		} catch { /* empty */ };
+			propsData = JSON.parse(item.dataset.props || '{}');
+		} catch { /* empty */ }
 		try {
-			files = it.dataset.files ? JSON.parse(it.dataset.files) : undefined;
+			files = item.dataset.files ? JSON.parse(item.dataset.files) : undefined;
 		} catch { /* empty */ }
 		const runtimeProps = files
-			? { files, entry: it.dataset.entry }
+			? { files, entry: item.dataset.entry }
 			: { modelValue: code };
 		const app = createApp(() => h(DocsPlayground.Playground, {
 			...(typeof propsData === 'object' ? propsData : {}),
 			...runtimeProps
 		}));
-		app.mount(it);
+		app.mount(item);
+		apps.push(app);
 	});
 
-	const blocks = el.querySelectorAll('pre code:not(.hljs)');
-	[...blocks].forEach((block) => {
-		hljs.highlightElement(block);
-	});
+	mountedApps.set(el, apps);
+};
+
+const update = (el: HTMLElement, binding: DirectiveBinding<string | undefined>) => {
+	if (binding.value !== binding.oldValue) render(el, binding);
+};
+
+export const vMarkdown = {
+	mounted: render,
+	updated: update,
+	beforeUnmount: cleanup
 };

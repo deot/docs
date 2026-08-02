@@ -15,15 +15,6 @@ defineProps<{
 }>();
 </script>
 <style lang="scss">
-@use 'highlight.js/styles/github.css';
-
-code.hljs {
-	position: relative;
-	padding: 10px;
-	background-color: #f9fafc;
-	border-radius: 5px!important;
-}
-
 *,
 *::before,
 *::after {
@@ -81,6 +72,10 @@ $sign: md;
 	line-height: 1.5;
 	color: #515a6e;
 	overflow-wrap: break-word;
+}
+
+.docs-markdown-code-preview {
+	margin-bottom: 16px;
 }
 
 .docs-markdown-reset {

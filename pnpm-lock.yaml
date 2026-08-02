@@ -99,9 +99,6 @@ importers:
       '@deot/docs-playground':
         specifier: '*'
         version: link:../playground
-      highlight.js:
-        specifier: ^11.11.1
-        version: 11.11.1
       markdown-it:
         specifier: ^14.1.0
         version: 14.1.0

@@ -1,6 +1,7 @@
 import hljs from 'highlight.js';
 import {
 	highlightCode,
+	highlightCodeByLanguage,
 	registerVueHighlight,
 	resolveHighlightLanguage
 } from '../src/highlight';
@@ -35,6 +36,13 @@ describe('playground highlight', () => {
 		expect(result).toContain('&lt;');
 		expect(result).toContain('&gt;');
 		expect(result).not.toContain('<script>');
+	});
+
+	it('highlights explicit languages and normalizes indentation tabs', () => {
+		const result = highlightCodeByLanguage('\tconst value: number = 1', 'typescript');
+		expect(result).toContain('    ');
+		expect(result).not.toContain('\t');
+		expect(result).toContain('hljs-keyword');
 	});
 
 	it('falls back to escaped text when highlighting fails', () => {

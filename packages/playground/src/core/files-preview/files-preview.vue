@@ -42,30 +42,21 @@
 				</div>
 			</div>
 		</div>
-		<div class="docs-playground-files__body">
-			<span class="docs-playground-files__language">{{ languageLabel }}</span>
-			<Clipboard
-				class="docs-playground-files__copy"
-				:value="activeCode"
-				tag="button"
-				type="button"
-				title="复制"
-				aria-label="复制当前文件"
-			>
-				<PlaygroundIcon name="copy" />
-			</Clipboard>
-			<!-- eslint-disable-next-line vue/no-v-html -->
-			<pre class="docs-playground-files__code"><code class="hljs" v-html="highlightedCode"></code></pre>
-		</div>
+		<CodePreview
+			class="docs-playground-files__body"
+			:code="activeCode"
+			:filename="activeFilename"
+			copy-label="复制当前文件"
+		/>
 	</div>
 </template>
 <script lang="ts" setup>
 import { computed } from 'vue';
-import { Clipboard, Scroller } from '@deot/vc';
+import { Scroller } from '@deot/vc';
 import { PLAYGROUND_VIEW_TEXT } from '../../constants';
-import { highlightCode } from '../../highlight';
 import PlaygroundIcon from '../../icon';
 import type { PlaygroundFiles, PlaygroundView } from '../../types';
+import CodePreview from '../code-preview';
 
 const props = defineProps<{
 	files: PlaygroundFiles;
@@ -80,12 +71,7 @@ const emit = defineEmits<{
 }>();
 
 const filenames = computed(() => Object.keys(props.files));
-const languageLabel = computed(() => props.activeFilename.split('.').at(-1)?.toLowerCase() || '');
 const activeCode = computed(() => props.files[props.activeFilename] || '');
-const highlightedCode = computed(() => highlightCode(
-	activeCode.value,
-	props.activeFilename
-));
 
 const handleActive = (filename: string) => {
 	if (filename !== props.activeFilename) emit('active-change', filename);
@@ -93,8 +79,6 @@ const handleActive = (filename: string) => {
 const handleView = (view: PlaygroundView) => emit('view-change', view);
 </script>
 <style>
-@import 'highlight.js/styles/github.css';
-
 .docs-playground-files {
 	display: flex;
 	height: 100%;
@@ -225,71 +209,8 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 }
 
 .docs-playground-files .docs-playground-files__body {
-	position: relative;
-	display: flex;
 	min-height: 0;
+	border-radius: 0;
 	flex: 1 1 auto;
-}
-
-.docs-playground-files .docs-playground-files__language {
-	position: absolute;
-	top: 6px;
-	right: 12px;
-	z-index: 1;
-	display: inline-flex;
-	width: 30px;
-	height: 30px;
-	font-size: 12px;
-	line-height: 18px;
-	color: #71717a;
-	justify-content: center;
-	align-items: center;
-}
-
-.docs-playground-files .docs-playground-files__copy {
-	position: absolute;
-	top: 6px;
-	right: 12px;
-	z-index: 2;
-	display: inline-flex;
-	width: 30px;
-	height: 30px;
-	padding: 0;
-	color: #71717a;
-	pointer-events: none;
-	cursor: pointer;
-	background: #f7f8fa;
-	border: 1px solid #d4d4d8;
-	border-radius: 8px;
-	opacity: 0;
-	transition: opacity 0.15s ease, background-color 0.15s ease;
-	justify-content: center;
-	align-items: center;
-}
-
-.docs-playground-files:hover .docs-playground-files__copy,
-.docs-playground-files .docs-playground-files__copy:focus-visible {
-	pointer-events: auto;
-	opacity: 1;
-}
-
-.docs-playground-files .docs-playground-files__copy:hover {
-	background: #fff;
-}
-
-.docs-playground-files .docs-playground-files__code {
-	width: 100%;
-	min-height: 0;
-	margin: 0;
-	overflow: auto;
-	background: #f7f8fa;
-	flex: 1 1 auto;
-}
-
-.docs-playground-files .docs-playground-files__code code.hljs {
-	min-height: 100%;
-	padding: 12px 56px 12px 24px;
-	background: #f7f8fa;
-	box-sizing: border-box;
 }
 </style>
