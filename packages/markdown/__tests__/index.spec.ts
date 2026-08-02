@@ -13,8 +13,9 @@ vi.mock('@deot/vc', () => ({
 }));
 
 vi.mock('@deot/docs-playground', () => ({
+	registerVueHighlight: vi.fn(),
 	Playground: defineComponent({
-		props: ['modelValue', 'theme', 'files', 'entry'],
+		props: ['modelValue', 'theme', 'files', 'entry', 'views'],
 		setup(props) {
 			return () => h('div', { class: 'playground' }, [
 				props.modelValue || '',
@@ -23,7 +24,9 @@ vi.mock('@deot/docs-playground', () => ({
 				'-',
 				JSON.stringify(props.files || {}),
 				'-',
-				props.theme || ''
+				props.theme || '',
+				'-',
+				JSON.stringify(props.views || [])
 			]);
 		}
 	})
@@ -99,7 +102,7 @@ describe('markdown', () => {
 
 	it('mounts multi-file props through the directive', async () => {
 		const source = [
-			':::RUNTIME {"entry":"App.vue","theme":"dark"}',
+			':::RUNTIME {"entry":"App.vue","theme":"dark","views":["files","runtime"]}',
 			'```vue App.vue',
 			'<template>app</template>',
 			'```',
@@ -116,6 +119,19 @@ describe('markdown', () => {
 		expect(text).toContain('"App.vue":"<template>app</template>\\n"');
 		expect(text).toContain('"util.ts":"export const value = 1\\n"');
 		expect(text).toContain('-dark');
+		expect(text).toContain('["files","runtime"]');
+	});
+
+	it.each([
+		[['runtime'], '["runtime"]'],
+		[['files'], '["files"]'],
+		[['files', 'runtime'], '["files","runtime"]'],
+		[['runtime', 'files'], '["runtime","files"]']
+	])('passes RUNTIME views %j to Playground', async (views, expected) => {
+		const source = `:::RUNTIME ${JSON.stringify({ views })}\n\`\`\`vue\n<template />\n\`\`\`\n:::`;
+		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
+		await nextTick();
+		expect(wrapper.find('.playground').text()).toContain(expected);
 	});
 
 	it('reports invalid multi-file declarations', () => {
@@ -126,6 +142,18 @@ describe('markdown', () => {
 		expect(missingName).toContain('每个代码块都必须声明文件名');
 		expect(duplicateName).toContain('文件名 App.vue 重复');
 		expect(missingEntry).toContain('入口文件 main.js 不存在');
+	});
+
+	it('reports invalid RUNTIME views', () => {
+		const render = (props: Record<string, unknown>) => MarkdownRenderer.render(
+			`:::RUNTIME ${JSON.stringify(props)}\n\`\`\`vue\n<template />\n\`\`\`\n:::`
+		);
+
+		expect(render({ views: [] })).toContain('views 必须是非空数组');
+		expect(render({ views: 'runtime' })).toContain('views 必须是非空数组');
+		expect(render({ views: ['unknown'] })).toContain('views 不支持 unknown');
+		expect(render({ views: ['runtime', 'runtime'] })).toContain('views 不能重复声明 runtime');
+		expect(render({ view: 'files' })).toContain('不支持 view 参数');
 	});
 
 	it('supports empty input, malformed props and multiple markdown instances', async () => {

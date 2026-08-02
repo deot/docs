@@ -331,7 +331,7 @@ onBeforeUnmount(() => {
 	width: 680px;
 	font-size: 13px;
 	background: white;
-	border-radius: 3px;
+	border-radius: 8px;
 	opacity: 1;
 	box-shadow: 0 0 50px rgb(0 0 0 / 20%);
 }
@@ -400,7 +400,7 @@ onBeforeUnmount(() => {
 	cursor: pointer;
 	background: white;
 	border: 1px solid #d1d5db;
-	border-radius: 3px;
+	border-radius: 8px;
 	box-sizing: border-box;
 	gap: 5px;
 	align-items: center;
@@ -412,7 +412,7 @@ onBeforeUnmount(() => {
 	cursor: pointer;
 	background: white;
 	border: 1px solid #d1d5db;
-	border-radius: 3px;
+	border-radius: 8px;
 }
 
 .docs-playground-editor .docs-playground-editor__tab.active {

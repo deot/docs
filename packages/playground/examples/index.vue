@@ -1,13 +1,28 @@
 <template>
 	<div class="playground-examples">
-		<h2>单文件</h2>
-		<Playground v-model="source" />
+		<h2>仅运行时预览</h2>
+		<Playground v-model="source" :views="['runtime']" />
 
-		<h2>JavaScript 入口</h2>
-		<Playground v-model:files="javascriptFiles" v-model:entry="javascriptEntry" />
+		<h2>仅文件预览</h2>
+		<Playground
+			v-model:files="javascriptFiles"
+			v-model:entry="javascriptEntry"
+			:views="['files']"
+		/>
 
-		<h2>Vue SFC 入口</h2>
-		<Playground v-model:files="vueFiles" v-model:entry="vueEntry" />
+		<h2>文件预览 / 运行时预览</h2>
+		<Playground
+			v-model:files="javascriptFiles"
+			v-model:entry="javascriptEntry"
+			:views="['files', 'runtime']"
+		/>
+
+		<h2>运行时预览 / 文件预览</h2>
+		<Playground
+			v-model:files="vueFiles"
+			v-model:entry="vueEntry"
+			:views="['runtime', 'files']"
+		/>
 	</div>
 </template>
 <script setup>

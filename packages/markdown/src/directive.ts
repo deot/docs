@@ -1,8 +1,7 @@
 import { createApp, h } from 'vue';
 import { Clipboard } from '@deot/vc';
 import hljs from 'highlight.js';
-import { definer as vueHighlight } from './hightlightjs-vue';
-import { Playground } from '@deot/docs-playground';
+import * as DocsPlayground from '@deot/docs-playground';
 import { Markdown } from './markdown';
 
 const TAB_REPLACE_RE = /^(<[^>]+>|\t)+/gm;
@@ -30,7 +29,7 @@ const hljsPlugin = {
 };
 
 hljs.addPlugin(hljsPlugin);
-hljs.registerLanguage('vue', vueHighlight);
+DocsPlayground.registerVueHighlight(hljs);
 
 export const vMarkdown = (el: any, binding: any) => {
 	const source = binding.value;
@@ -55,7 +54,7 @@ export const vMarkdown = (el: any, binding: any) => {
 		const runtimeProps = files
 			? { files, entry: it.dataset.entry }
 			: { modelValue: code };
-		const app = createApp(() => h(Playground, {
+		const app = createApp(() => h(DocsPlayground.Playground, {
 			...(typeof propsData === 'object' ? propsData : {}),
 			...runtimeProps
 		}));

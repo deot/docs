@@ -1,6 +1,6 @@
 ## 标题
 
-:::RUNTIME {"style":"height:200px"}
+:::RUNTIME {"views":["runtime"],"style":"height:200px"}
 ```vue
 <template>
 	<Button>123</Button>
@@ -11,9 +11,9 @@ import { Button } from '@deot/vc';
 ```
 :::
 
-## JavaScript 入口的多文件示例
+## 仅文件预览
 
-:::RUNTIME {"entry":"main.js","style":"height:200px"}
+:::RUNTIME {"entry":"main.js","views":["files"] }
 ```js main.js
 import { createApp } from 'vue';
 import App from './App.vue';
@@ -36,9 +36,9 @@ export const message = 'Hello from RUNTIME files';
 ```
 :::
 
-## Vue SFC 入口的多文件示例
+## 文件预览 / 运行时预览
 
-:::RUNTIME {"entry":"App.vue","style":"height:200px"}
+:::RUNTIME {"entry":"App.vue","views":["files","runtime"]}
 ```vue App.vue
 <script setup>
 import Child from './Child.vue';
@@ -46,6 +46,30 @@ import Child from './Child.vue';
 
 <template>
 	<Child label="Imported child component" />
+</template>
+```
+
+```vue Child.vue
+<script setup>
+defineProps({ label: String });
+</script>
+
+<template>
+	<strong>{{ label }}</strong>
+</template>
+```
+:::
+
+## 运行时预览 / 文件预览
+
+:::RUNTIME {"entry":"App.vue","views":["runtime","files"],"style":"height:200px"}
+```vue App.vue
+<script setup>
+import Child from './Child.vue';
+</script>
+
+<template>
+	<Child label="Runtime first" />
 </template>
 ```
 

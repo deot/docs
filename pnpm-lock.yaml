@@ -96,6 +96,9 @@ importers:
 
   packages/markdown:
     dependencies:
+      '@deot/docs-playground':
+        specifier: '*'
+        version: link:../playground
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
@@ -148,6 +151,9 @@ importers:
       codemirror:
         specifier: ^6.0.2
         version: 6.0.2
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.11.1
     devDependencies:
       '@deot/helper':
         specifier: ^1.1.17
