@@ -15,6 +15,7 @@ export default configure(void 0, {
 		}
 	},
 	rules: {
-		'no-useless-assignment': 'off'
+		'no-unused-vars': 'off',
+		'@typescript-eslint/no-unused-vars': 'warn'
 	}
 });
