@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { defineComponent, nextTick } from 'vue';
+import { defineComponent, h, nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 import { Markdown as MarkdownRenderer } from '../src/markdown';
 import { Markdown } from '../src';
@@ -14,8 +14,18 @@ vi.mock('@deot/vc', () => ({
 
 vi.mock('@deot/docs-playground', () => ({
 	Playground: defineComponent({
-		props: ['modelValue', 'theme'],
-		template: '<div class="playground">{{ modelValue }}-{{ theme }}</div>'
+		props: ['modelValue', 'theme', 'files', 'entry'],
+		setup(props) {
+			return () => h('div', { class: 'playground' }, [
+				props.modelValue || '',
+				'-',
+				props.entry || '',
+				'-',
+				JSON.stringify(props.files || {}),
+				'-',
+				props.theme || ''
+			]);
+		}
 	})
 }));
 
@@ -23,6 +33,7 @@ describe('markdown', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';
 	});
+
 	it('renders markdown features and adds the md marker', () => {
 		const html = MarkdownRenderer.render([
 			'# Title',
@@ -45,12 +56,33 @@ describe('markdown', () => {
 		expect(html).toContain('<code class="language-ts">');
 	});
 
-	it('turns a RUNTIME fence into a playground placeholder', () => {
+	it('keeps an unnamed single-file RUNTIME block backward compatible', () => {
 		const html = MarkdownRenderer.render(':::RUNTIME {"theme":"dark"}\n```vue\n<template>ok</template>\n```\n:::');
 
-		expect(html).toContain('id="PG-1"');
+		expect(html).toContain('data-playground');
 		expect(html).toContain('data-code="&lt;template&gt;ok&lt;/template&gt;');
 		expect(html).toContain('data-props="{&quot;theme&quot;:&quot;dark&quot;}"');
+		expect(html).not.toContain('data-files=');
+	});
+
+	it('collects named fences into one multi-file playground', () => {
+		const source = [
+			':::RUNTIME {"entry":"main.js","theme":"dark"}',
+			'```js main.js',
+			'import App from "./App.vue";',
+			'```',
+			'```vue App.vue',
+			'<template>multi</template>',
+			'```',
+			':::'
+		].join('\n');
+		const html = MarkdownRenderer.render(source);
+
+		expect(html.match(/data-playground/g)).toHaveLength(1);
+		expect(html).toContain('data-entry="main.js"');
+		expect(html).toContain('&quot;main.js&quot;');
+		expect(html).toContain('&quot;App.vue&quot;');
+		expect(html).not.toContain('<pre>');
 	});
 
 	it('renders the wrapper, playgrounds, highlighting and clipboard controls', async () => {
@@ -59,30 +91,56 @@ describe('markdown', () => {
 		await nextTick();
 
 		expect(wrapper.find('h1').text()).toContain('Hello');
-		expect(document.querySelector('.playground')?.textContent).toMatch(/<template>demo<\/template>\s+-dark/);
+		expect(document.querySelector('.playground')?.textContent).toMatch(/<template>demo<\/template>.*dark/s);
 		expect(wrapper.find('code').classes()).toContain('hljs');
 		expect(wrapper.find('.clipboard').exists()).toBe(true);
 		expect(wrapper.find('code').text()).toMatch(/const\s+n\s+=\s+1/);
 	});
 
-	it('supports value, empty input and malformed playground props', async () => {
-		const wrapper = mount(Markdown, {
+	it('mounts multi-file props through the directive', async () => {
+		const source = [
+			':::RUNTIME {"entry":"App.vue","theme":"dark"}',
+			'```vue App.vue',
+			'<template>app</template>',
+			'```',
+			'```ts util.ts',
+			'export const value = 1',
+			'```',
+			':::'
+		].join('\n');
+		mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
+		await nextTick();
+
+		const text = document.querySelector('.playground')?.textContent || '';
+		expect(text).toContain('-App.vue-');
+		expect(text).toContain('"App.vue":"<template>app</template>\\n"');
+		expect(text).toContain('"util.ts":"export const value = 1\\n"');
+		expect(text).toContain('-dark');
+	});
+
+	it('reports invalid multi-file declarations', () => {
+		const missingName = MarkdownRenderer.render(':::RUNTIME\n```vue App.vue\n<template />\n```\n```ts\ncode\n```\n:::');
+		const duplicateName = MarkdownRenderer.render(':::RUNTIME\n```vue App.vue\na\n```\n```vue App.vue\nb\n```\n:::');
+		const missingEntry = MarkdownRenderer.render(':::RUNTIME {"entry":"main.js"}\n```vue App.vue\na\n```\n:::');
+
+		expect(missingName).toContain('每个代码块都必须声明文件名');
+		expect(duplicateName).toContain('文件名 App.vue 重复');
+		expect(missingEntry).toContain('入口文件 main.js 不存在');
+	});
+
+	it('supports empty input, malformed props and multiple markdown instances', async () => {
+		const malformed = mount(Markdown, {
 			props: { value: ':::RUNTIME not-json\n```vue\ndemo\n```\n:::' },
 			attachTo: document.body
 		});
-		await nextTick();
-		expect(document.querySelector('.playground')?.textContent).toMatch(/demo\s+-/);
-
-		await wrapper.setProps({ value: '' });
-		expect(wrapper.find('.docs-markdown-reset').text()).toBe('');
-	});
-
-	it('uses empty props for a runtime block without configuration', async () => {
 		mount(Markdown, {
-			props: { value: ':::RUNTIME\n```vue\ndemo\n```\n:::' },
+			props: { value: ':::RUNTIME\n```vue\nsecond\n```\n:::' },
 			attachTo: document.body
 		});
 		await nextTick();
-		expect(document.querySelector('.playground')?.textContent).toMatch(/demo\s+-/);
+		expect(document.querySelectorAll('.playground')).toHaveLength(2);
+
+		await malformed.setProps({ value: '' });
+		expect(malformed.find('.docs-markdown-reset').text()).toBe('');
 	});
 });

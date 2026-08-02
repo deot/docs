@@ -41,15 +41,25 @@ export const vMarkdown = (el: any, binding: any) => {
 
 	el.innerHTML = result;
 
-	const palygrounds = el.querySelectorAll('div[data-code]');
+	const palygrounds = el.querySelectorAll('div[data-playground]');
 	[...palygrounds].forEach((it) => {
 		const code = it.dataset.code;
+		let files;
 		let propsData = {};
 		try {
 			propsData = JSON.parse(it.dataset.props || '{}');
 		} catch { /* empty */ };
-		const app = createApp(() => h(Playground, { modelValue: code, ...(typeof propsData === 'object' ? propsData : {}) }));
-		app.mount(`#${it.id}`);
+		try {
+			files = it.dataset.files ? JSON.parse(it.dataset.files) : undefined;
+		} catch { /* empty */ }
+		const runtimeProps = files
+			? { files, entry: it.dataset.entry }
+			: { modelValue: code };
+		const app = createApp(() => h(Playground, {
+			...(typeof propsData === 'object' ? propsData : {}),
+			...runtimeProps
+		}));
+		app.mount(it);
 	});
 
 	const blocks = el.querySelectorAll('pre code:not(.hljs)');
