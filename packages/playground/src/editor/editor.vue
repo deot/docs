@@ -12,7 +12,7 @@
 		</TransitionFade>
 	</div>
 </template>
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue';
 import { TransitionFade } from '@deot/vc';
 import { EditorView, basicSetup } from 'codemirror';

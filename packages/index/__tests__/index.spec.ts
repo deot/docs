@@ -1,8 +1,8 @@
-import { Dever } from '@deot/docs';
+import { Dever } from '../src';
 
 // @vitest-environment node
 describe('index.ts', () => {
-	it('any', () => {
-		expect(typeof Dever).toBe('object');
+	it('exports the dever API', () => {
+		expect(Dever.run).toBeTypeOf('function');
 	});
 });
