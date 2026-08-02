@@ -1,11 +1,10 @@
 {
   "extends": "@deot/dev/tsconfig.shared.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "allowJs": true,
     "paths": {
-      "@deot/docs": ["packages/index/src"],
-      "@deot/docs-*": ["packages/*/src"]
+      "@deot/docs": ["./packages/index/src"],
+      "@deot/docs-*": ["./packages/*/src"]
     }
   },
   "include": [

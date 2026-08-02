@@ -21,25 +21,30 @@
 	</div>
 	<Sandbox v-else :store="store" :preview-options="previewOptions" />
 </template>
-<script setup>
+<script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { Sandbox, useStore } from '@vue/repl';
+import type { ImportMap, SandboxProps, StoreState } from '@vue/repl';
 import { Clipboard } from '@deot/vc';
 import { Editor } from './editor';
 
-const emit = defineEmits(['update:modelValue', 'change']);
-const props = defineProps({
-	modelValue: String,
-	styleless: {
-		type: Boolean,
-		default: false
-	},
-	options: {
-		type: Object,
-		default: () => ({})
-	}
+const emit = defineEmits<{
+	'update:modelValue': [value: string];
+	'change': [value: string];
+}>();
+type PlaygroundOptions = Omit<Partial<StoreState>, 'builtinImportMap'> & {
+	builtinImportMap?: ImportMap;
+};
+const props = withDefaults(defineProps<{
+	modelValue?: string;
+	styleless?: boolean;
+	options?: PlaygroundOptions;
+}>(), {
+	modelValue: '',
+	styleless: false,
+	options: () => ({})
 });
-const newSFCCode = `<script setup><\/script>\n\n<template>\n  <div>\n    <slot />\n  <\/div>\n<\/template>\n`;
+const newSFCCode = `<script setup lang="ts"><\/script>\n\n<template>\n  <div>\n    <slot />\n  <\/div>\n<\/template>\n`;
 const welcomeSFCCode = newSFCCode;
 
 const copyText = {
@@ -47,7 +52,8 @@ const copyText = {
 	'en-US': 'Copy',
 };
 
-const clearConsole = ref(import.meta.env.MODE !== 'development');
+const env = (import.meta as ImportMeta & { env: { MODE?: string } }).env;
+const clearConsole = ref(env.MODE !== 'development');
 const error = ref('');
 const template = ref({
 	welcomeSFC: props.modelValue || welcomeSFCCode,
@@ -93,7 +99,7 @@ const store = useStore({
 	template
 });
 
-const previewOptions = computed(() => {
+const previewOptions = computed<SandboxProps['previewOptions']>(() => {
 	return {
 		headHTML: [
 			'<link rel="stylesheet" href="https://unpkg.com/@deot/style/dist/index.normalize-only.css">',
@@ -107,7 +113,7 @@ const previewOptions = computed(() => {
 const handleEditor = () => {
 	Editor.popup({
 		value: template.value.welcomeSFC,
-		onChange: (code) => {
+		onChange: (code: string) => {
 			store.activeFile.code = code;
 			emit('update:modelValue', code);
 			emit('change', code);
@@ -115,7 +121,7 @@ const handleEditor = () => {
 	});
 };
 
-watch(() => props.modelValue, v => (store.activeFile.code = v));
+watch(() => props.modelValue, (value: string) => (store.activeFile.code = value));
 
 defineExpose({
 	store
@@ -123,34 +129,39 @@ defineExpose({
 </script>
 <style>
 .docs-playground {
-	width: 100%;
 	display: flex;
+	width: 100%;
+	margin-bottom: 16px;
+	box-shadow: rgb(229 229 229) 0 0 10px;
+	box-sizing: border-box;
 	justify-content: center;
 	flex-direction: column;
-	box-shadow: rgb(229, 229, 229) 0px 0px 10px;
-	margin-bottom: 16px;
-	box-sizing: border-box;
 }
+
 .docs-playground__header {
 	display: flex;
+	padding: 10px;
+	background: #f6f8fa !important;
 	justify-content: flex-end;
 	align-items: center;
-	background: #f6f8fa !important;
-	padding: 10px;
 }
+
 .docs-playground__tools {
 	display: flex;
 	align-items: center;
 	font-size: 14px;
 	line-height: 20px;
 }
+
 .docs-playground__tools > span {
-	cursor: pointer;
 	margin-left: 10px;
+	cursor: pointer;
 }
+
 .docs-playground__tools > span:last-child {
 	font-size: 20px;
 }
+
 .docs-playground__error {
 	display: flex;
 	justify-content: center;
@@ -158,9 +169,10 @@ defineExpose({
 	height: 100%;
 	box-sizing: border-box;
 }
+
 .docs-playground__preview {
 	padding: 10px;
-	box-sizing: border-box;
 	background: white;
+	box-sizing: border-box;
 }
 </style>

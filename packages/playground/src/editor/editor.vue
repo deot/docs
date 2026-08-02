@@ -12,7 +12,7 @@
 		</TransitionFade>
 	</div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue';
 import { TransitionFade } from '@deot/vc';
 import { EditorView, basicSetup } from 'codemirror';
@@ -21,20 +21,20 @@ import { vue } from '@codemirror/lang-vue';
 import { highlightActiveLine } from '@codemirror/view';
 import { Drag } from './drag';
 
-const props = defineProps({
-	value: String,
-	onChange: {
-		type: Function,
-		default: () => {}
-	}
+const props = withDefaults(defineProps<{
+	value?: string;
+	onChange?: (value: string) => void;
+}>(), {
+	value: '',
+	onChange: () => {}
 });
 
 const isActive = ref(false);
-const textarea = ref();
-const editor = ref();
-const bar = ref();
-const wrapper = ref();
-const drag = ref();
+const textarea = ref<HTMLDivElement | null>(null);
+const editor = ref<EditorView | null>(null);
+const bar = ref<HTMLDivElement | null>(null);
+const wrapper = ref<HTMLDivElement | null>(null);
+const drag = ref<Drag | null>(null);
 
 const hide = () => {
 	isActive.value = false;
@@ -45,6 +45,7 @@ onMounted(async () => {
 	try {
 		isActive.value = true;
 		await nextTick();
+		if (!textarea.value || !bar.value || !wrapper.value) return;
 		editor.value = new EditorView({
 			doc: props.value,
 			extensions: [
@@ -71,34 +72,36 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-	drag.value.off();
-	editor.value.destroy();
+	drag.value?.off();
+	editor.value?.destroy();
 });
 
 </script>
 <style>
 .docs-playground-editor .docs-playground-editor__wrapper {
-	width: 600px;
 	position: fixed;
 	right: 10px;
 	bottom: 10px;
-	font-size: 13px;
-	border-radius: 3px;
-	box-shadow: 0 0 50px rgba(#000, 0.2);
-	opacity: 1;
-	background: white;
 	z-index: 99999;
+	width: 600px;
+	font-size: 13px;
+	background: white;
+	border-radius: 3px;
+	opacity: 1;
+	box-shadow: 0 0 50px rgba(#000, 0.2);
 }
+
 .docs-playground-editor .docs-playground-editor__header {
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	background: #f6f8fa !important;
 	padding: 10px;
 	font-size: 20px;
 	line-height: 20px;
 	cursor: move;
+	background: #f6f8fa !important;
+	justify-content: space-between;
+	align-items: center;
 }
+
 .docs-playground-editor .docs-playground-editor__editor {
 	padding: 1px;
 	background: #f6f8fa !important;

@@ -1,41 +1,44 @@
 <template>
 	<div class="docs-markdown-reset" v-markdown="modelValue || value"></div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { vMarkdown } from './directive';
 
 // 后续再做change
-defineEmits(['update:modelValue', 'change']);
-defineProps({
-	modelValue: String,
-	value: String
-});
+defineEmits<{
+	'update:modelValue': [value: string];
+	'change': [value: string];
+}>();
+defineProps<{
+	modelValue?: string;
+	value?: string;
+}>();
 </script>
 <style lang="scss">
 @use 'highlight.js/styles/github.css';
 
 code.hljs {
-	padding: 10px;
-	border-radius: 5px!important;
-	background-color: #f9fafc;
 	position: relative;
+	padding: 10px;
+	background-color: #f9fafc;
+	border-radius: 5px!important;
 }
 
 *,
 *::before,
 *::after {
-	box-sizing: border-box
+	box-sizing: border-box;
 }
 
 a {
 	color: #333;
-	text-decoration: none
+	text-decoration: none;
 }
 
 ul,
 li {
+	padding: 0;
 	list-style: none;
-	padding: 0
 }
 
 h1 .header-anchor,
@@ -44,10 +47,10 @@ h3 .header-anchor,
 h4 .header-anchor,
 h5 .header-anchor,
 h6 .header-anchor {
-	margin-left: -15px;
-	margin-right: 5px;
 	float: left;
-	opacity: 0
+	margin-right: 5px;
+	margin-left: -15px;
+	opacity: 0;
 }
 
 h1:hover .header-anchor,
@@ -56,7 +59,7 @@ h3:hover .header-anchor,
 h4:hover .header-anchor,
 h5:hover .header-anchor,
 h6:hover .header-anchor {
-	opacity: 1
+	opacity: 1;
 }
 
 $sign: md;
@@ -65,20 +68,19 @@ $sign: md;
 	font-family:
 		-apple-system,
 		BlinkMacSystemFont,
-		Segoe UI,
+		"Segoe UI",
 		Helvetica,
 		Arial,
 		sans-serif,
-		Apple Color Emoji,
-		Segoe UI Emoji,
-		Segoe UI Symbol
-	;
-	line-height: 1.5;
+		"Apple Color emoji",
+		"Segoe UI emoji",
+		"Segoe UI Symbol";
 	font-size: 12px; // em基于此放大
-	word-wrap: break-word;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	line-height: 1.5;
 	color: #515a6e;
+	overflow-wrap: break-word;
 }
 
 .docs-markdown-reset {
@@ -283,7 +285,7 @@ $sign: md;
 }
 
 .docs-markdown-reset li[#{$sign}] {
-	word-wrap: break-all;
+	overflow-wrap: break-all;
 }
 
 .docs-markdown-reset li>p[#{$sign}] {
@@ -495,7 +497,7 @@ $sign: md;
 }
 
 .docs-markdown-reset pre[#{$sign}] {
-	word-wrap: normal;
+	overflow-wrap: normal;
 }
 
 .docs-markdown-reset .highlight[#{$sign}] {
@@ -523,7 +525,7 @@ $sign: md;
 	margin: 0;
 	overflow: visible;
 	line-height: inherit;
-	word-wrap: normal;
+	overflow-wrap: normal;
 	background-color: transparent;
 	border: 0;
 }
@@ -551,7 +553,6 @@ $sign: md;
 		margin-bottom: 0;
 	}
 }
-
 
 .docs-markdown-reset code[#{$sign}]:not(.hljs)  {
 	padding: 0 4px;
