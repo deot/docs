@@ -3,11 +3,13 @@ import { File as ReplFile, useStore } from '@vue/repl';
 import type { SandboxProps } from '@vue/repl';
 import { NEW_SFC_CODE } from '../constants';
 import type { PlaygroundFiles, PlaygroundOptions } from '../types';
+import { SANDBOX_RUNTIME_ERROR_CAPTURE_HTML } from './runtime/error-guard';
 
 const cdnURL = 'https://cdn.jsdelivr.net/npm';
 
 export const runtimePreviewOptions: SandboxProps['previewOptions'] = {
 	headHTML: [
+		SANDBOX_RUNTIME_ERROR_CAPTURE_HTML,
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/style/dist/index.normalize-only.css">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/vc-components/dist/index.style.css">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/style/dist/index.css">',

@@ -185,6 +185,9 @@ describe('Playground', () => {
 	it('supports a styleless sandbox and default template', () => {
 		const wrapper = mount(Playground, { props: { styleless: true } });
 		expect(wrapper.find('.docs-playground').exists()).toBe(false);
+		expect(wrapper.find('.docs-playground-runtime--styleless').attributes('style'))
+			.toContain('height: 28px');
+		expect(wrapper.find('.docs-playground__header').exists()).toBe(false);
 		expect(wrapper.find('.sandbox').exists()).toBe(true);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('autoStoreInit')).toBe(false);
 		expect(store.options.template.value.welcomeSFC).toContain('<slot />');
@@ -195,6 +198,16 @@ describe('Playground', () => {
 		expect(runtime.find('.sandbox').exists()).toBe(true);
 		expect(runtime.find('.docs-playground-files').exists()).toBe(false);
 		expect(runtime.find('.docs-playground__views').exists()).toBe(false);
+		expect(runtime.find('.docs-playground__preview').attributes('style'))
+			.toContain('height: 48px');
+
+		const fixedRuntime = mount(Playground, {
+			attrs: { style: 'height: 200px' },
+			props: { modelValue: '<template>fixed</template>' }
+		});
+		expect(fixedRuntime.attributes('style')).toContain('height: 200px');
+		expect(fixedRuntime.find('.docs-playground__preview').attributes('style'))
+			.toContain('height: 48px');
 
 		const files = mount(Playground, {
 			props: {
@@ -206,7 +219,7 @@ describe('Playground', () => {
 				views: ['files']
 			}
 		});
-		expect(useStore).toHaveBeenCalledTimes(1);
+		expect(useStore).toHaveBeenCalledTimes(2);
 		expect(files.find('.sandbox').exists()).toBe(false);
 		expect(files.find('.docs-playground-files').exists()).toBe(true);
 		expect(files.find('.docs-playground__header').exists()).toBe(false);

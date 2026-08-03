@@ -1,10 +1,16 @@
 <template>
-	<Sandbox
+	<div
 		v-if="styleless"
-		:store="store"
-		:auto-store-init="false"
-		:preview-options="runtimePreviewOptions"
-	/>
+		class="docs-playground-runtime--styleless"
+		:style="stylelessStyle"
+	>
+		<Sandbox
+			ref="sandboxRef"
+			:store="store"
+			:auto-store-init="false"
+			:preview-options="runtimePreviewOptions"
+		/>
+	</div>
 	<div v-else class="docs-playground-runtime">
 		<div class="docs-playground__header">
 			<div class="docs-playground__tools">
@@ -45,8 +51,9 @@
 				</button>
 			</div>
 		</div>
-		<section class="docs-playground__preview">
+		<section class="docs-playground__preview" :style="previewStyle">
 			<Sandbox
+				ref="sandboxRef"
 				:store="store"
 				:auto-store-init="false"
 				:clear-console="clearConsole"
@@ -56,7 +63,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Clipboard } from '@deot/vc';
 import { Sandbox } from '@vue/repl';
 import { PLAYGROUND_VIEW_TEXT } from '../../constants';
@@ -64,6 +71,9 @@ import { Editor } from '../../editor';
 import type { EditorFilesChangeAction } from '../../editor';
 import PlaygroundIcon from '../../icon';
 import type { PlaygroundFiles, PlaygroundOptions, PlaygroundView } from '../../types';
+import { useSandboxAutoHeight } from './auto-height';
+import type { SandboxExposed } from './auto-height';
+import { useSandboxRuntimeErrorGuard } from './error-guard';
 import {
 	createReplFile,
 	createRuntimeStore,
@@ -92,6 +102,11 @@ const env = (import.meta as ImportMeta & { env: { MODE?: string } }).env;
 const clearConsole = env.MODE !== 'development';
 const copyValue = computed(() => props.files[props.entry] || '');
 const store = createRuntimeStore(props.files, props.entry, props.options);
+const sandboxRef = ref<SandboxExposed | null>(null);
+const runtimeHeight = useSandboxAutoHeight(sandboxRef);
+useSandboxRuntimeErrorGuard(sandboxRef);
+const previewStyle = computed(() => ({ height: `${runtimeHeight.value + 20}px` }));
+const stylelessStyle = computed(() => ({ height: `${runtimeHeight.value}px` }));
 let syncedFiles = { ...props.files };
 let syncedEntry = props.entry;
 
@@ -164,9 +179,17 @@ watch(() => props.entry, (entry) => {
 <style>
 .docs-playground-runtime {
 	display: flex;
+	width: 100%;
 	min-height: 0;
+	overflow: hidden;
 	flex: 1 1 auto;
 	flex-direction: column;
+}
+
+.docs-playground-runtime--styleless {
+	width: 100%;
+	min-height: 0;
+	overflow: hidden;
 }
 
 .docs-playground__header {
@@ -243,6 +266,7 @@ watch(() => props.entry, (entry) => {
 .docs-playground__preview {
 	min-height: 0;
 	padding: 10px;
+	overflow: hidden;
 	background: #fff;
 	box-sizing: border-box;
 	flex: 1 1 auto;
