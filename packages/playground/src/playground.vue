@@ -5,7 +5,10 @@
 		:entry="currentEntry"
 		:options="options"
 		:styleless="true"
+		:viewport="activeViewport"
+		:viewport-options="selectableViewportOptions"
 		@files-change="handleFilesChange"
+		@viewport-change="handleViewport"
 	/>
 	<div
 		v-else
@@ -23,8 +26,11 @@
 			:options="options"
 			:active-view="activeView"
 			:views="normalizedViews"
+			:viewport="activeViewport"
+			:viewport-options="selectableViewportOptions"
 			@files-change="handleFilesChange"
 			@view-change="handleView"
+			@viewport-change="handleViewport"
 		/>
 		<FilesPreview
 			v-if="normalizedViews.includes('files')"
@@ -44,12 +50,26 @@ import { computed, ref, watch } from 'vue';
 import { DEFAULT_ENTRY, NEW_SFC_CODE } from './constants';
 import { FilesPreview, RuntimePreview } from './core';
 import type { EditorFilesChangeAction } from './editor';
-import type { PlaygroundFiles, PlaygroundOptions, PlaygroundView } from './types';
+import type {
+	PlaygroundFiles,
+	PlaygroundOptions,
+	PlaygroundView,
+	PlaygroundViewport
+} from './types';
+import {
+	cloneViewport,
+	includeActiveViewport,
+	isValidViewport,
+	normalizeViewportOptions,
+	resolveInitialViewport,
+	viewportEquals
+} from './core/runtime/viewport';
 
 const emit = defineEmits<{
 	'update:modelValue': [value: string];
 	'update:files': [files: PlaygroundFiles];
 	'update:entry': [entry: string];
+	'update:viewport': [viewport: PlaygroundViewport];
 	'change': [value: string];
 }>();
 const props = withDefaults(defineProps<{
@@ -57,6 +77,8 @@ const props = withDefaults(defineProps<{
 	files?: PlaygroundFiles;
 	entry?: string;
 	views?: PlaygroundView[];
+	viewport?: PlaygroundViewport;
+	viewportOptions?: PlaygroundViewport[];
 	styleless?: boolean;
 	options?: PlaygroundOptions;
 }>(), {
@@ -95,6 +117,15 @@ const normalizeViews = (views: PlaygroundView[]) => {
 const normalizedViews = computed(() => normalizeViews(props.views));
 const activeView = ref<PlaygroundView>(normalizedViews.value[0]);
 const runtimeActivated = ref(props.styleless || activeView.value === 'runtime');
+const normalizedViewportOptions = computed(() => normalizeViewportOptions(props.viewportOptions));
+const activeViewport = ref<PlaygroundViewport>(resolveInitialViewport(
+	props.viewport,
+	normalizedViewportOptions.value
+));
+const selectableViewportOptions = computed(() => includeActiveViewport(
+	normalizedViewportOptions.value,
+	activeViewport.value
+));
 const error = ref(props.entry && initialFiles[props.entry] === undefined
 	? `入口文件 ${props.entry} 不存在`
 	: '');
@@ -104,6 +135,12 @@ const emitFiles = () => emit('update:files', { ...sourceFiles.value });
 const handleView = (view: PlaygroundView) => {
 	activeView.value = view;
 	if (view === 'runtime') runtimeActivated.value = true;
+};
+
+const handleViewport = (viewport: PlaygroundViewport) => {
+	if (!isValidViewport(viewport) || viewportEquals(activeViewport.value, viewport)) return;
+	activeViewport.value = cloneViewport(viewport);
+	emit('update:viewport', cloneViewport(viewport));
 };
 
 const handleFileActive = (filename: string) => {
@@ -184,6 +221,24 @@ watch(normalizedViews, (views) => {
 	if (!views.includes(activeView.value)) activeView.value = views[0];
 	if (!views.includes('runtime')) runtimeActivated.value = false;
 	else if (activeView.value === 'runtime') runtimeActivated.value = true;
+});
+
+watch(() => props.viewport, (viewport) => {
+	const nextViewport = resolveInitialViewport(viewport, normalizedViewportOptions.value);
+	if (viewportEquals(activeViewport.value, nextViewport)) return;
+	activeViewport.value = nextViewport;
+});
+
+watch(normalizedViewportOptions, (options) => {
+	if (!options.length) {
+		const nextViewport = resolveInitialViewport(props.viewport, options);
+		if (!viewportEquals(activeViewport.value, nextViewport)) activeViewport.value = nextViewport;
+		return;
+	}
+	if (options.some(viewport => viewportEquals(viewport, activeViewport.value))) return;
+	activeViewport.value = isValidViewport(props.viewport)
+		? cloneViewport(props.viewport)
+		: cloneViewport(options[0]);
 });
 </script>
 <style lang="scss">

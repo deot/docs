@@ -25,6 +25,32 @@ setTimeout(() => (expanded.value = true), 300);
 ```
 :::
 
+## 响应式运行时尺寸
+
+:::RUNTIME {"viewport":"auto","viewportOptions":["auto",375,[375,667],768]}
+```vue
+<template>
+	<div class="viewport-demo">
+		当前内容会在 375px 视口下切换为移动端布局
+	</div>
+</template>
+
+<style>
+.viewport-demo {
+	padding: 16px;
+	background: #e8eef8;
+}
+
+@media (max-width: 400px) {
+	.viewport-demo {
+		color: #fff;
+		background: #5495f6;
+	}
+}
+</style>
+```
+:::
+
 ## 仅文件预览
 
 :::RUNTIME {"entry":"main.js","views":["files"] }

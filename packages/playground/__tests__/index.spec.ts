@@ -14,6 +14,22 @@ const { popup, store, setFiles } = vi.hoisted(() => ({
 vi.mock('../src/editor', () => ({ Editor: { popup } }));
 vi.mock('@deot/vc', () => ({
 	Clipboard: defineComponent({ name: 'Clipboard', props: ['value'], template: '<button class="clipboard"><slot /></button>' }),
+	Dropdown: defineComponent({
+		name: 'Dropdown',
+		props: ['modelValue'],
+		emits: ['update:modelValue'],
+		template: '<div class="dropdown"><slot /><div class="dropdown-content"><slot name="content" /></div></div>'
+	}),
+	DropdownMenu: defineComponent({
+		name: 'DropdownMenu',
+		template: '<div class="dropdown-menu"><slot /></div>'
+	}),
+	DropdownItem: defineComponent({
+		name: 'DropdownItem',
+		props: ['value', 'selected'],
+		emits: ['click'],
+		template: '<button class="dropdown-item" :class="{ \'is-selected\': selected }" @click="$emit(\'click\', value)"><slot /></button>'
+	}),
 	Scroller: defineComponent({
 		name: 'Scroller',
 		props: ['contentClass'],
@@ -83,6 +99,110 @@ describe('Playground', () => {
 		expect(store.init).toHaveBeenCalledTimes(1);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('autoStoreInit')).toBe(false);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML).toContain('@deot/style');
+		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
+			.toContain('name="viewport"');
+	});
+
+	it('switches the default responsive viewports without recreating the sandbox', async () => {
+		const wrapper = mount(Playground, { props: { modelValue: '<template>viewport</template>' } });
+		const viewport = wrapper.find('.docs-playground-runtime__viewport');
+		const sandbox = wrapper.find('.sandbox').element;
+		const options = wrapper.findAll('.docs-playground__viewport-option');
+
+		expect(options.map(item => item.text())).toEqual(['自适应', '375px']);
+		expect(viewport.attributes('style')).toContain('width: 100%');
+		expect(wrapper.find('.docs-playground__viewport-trigger').attributes('aria-label'))
+			.toBe('视口：自适应');
+
+		await options[1].trigger('click');
+		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
+			.toContain('width: 375px');
+		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
+			.toContain('max-width: 100%');
+		expect(wrapper.find('.docs-playground__viewport-trigger').classes()).toContain('is-active');
+		expect(wrapper.emitted('update:viewport')).toEqual([[375]]);
+		expect(wrapper.find('.sandbox').element).toBe(sandbox);
+	});
+
+	it('closes the viewport menu when external options hide it', async () => {
+		const wrapper = mount(Playground, { props: { modelValue: '<template>viewport</template>' } });
+		wrapper.findComponent({ name: 'Dropdown' }).vm.$emit('update:modelValue', true);
+		await nextTick();
+		expect(wrapper.find('.docs-playground__viewport-trigger').attributes('aria-expanded'))
+			.toBe('true');
+
+		await wrapper.setProps({ viewportOptions: [] });
+		expect(wrapper.find('.docs-playground__viewport-trigger').exists()).toBe(false);
+
+		await wrapper.setProps({ viewportOptions: ['auto', 375] });
+		expect(wrapper.find('.docs-playground__viewport-trigger').attributes('aria-expanded'))
+			.toBe('false');
+	});
+
+	it('supports fixed viewport height, external updates and an empty option list', async () => {
+		const wrapper = mount(Playground, {
+			props: {
+				modelValue: '<template>fixed viewport</template>',
+				viewport: [375, 667],
+				viewportOptions: ['auto', [375, 667], 768]
+			}
+		});
+
+		expect(wrapper.find('.docs-playground__preview').attributes('style'))
+			.toContain('height: 687px');
+		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
+			.toContain('width: 375px');
+		expect(wrapper.findAll('.docs-playground__viewport-option').map(item => item.text()))
+			.toEqual(['自适应', '375 × 667px', '768px']);
+		expect(wrapper.find('.docs-playground__viewport-option[aria-checked="true"]').text())
+			.toBe('375 × 667px');
+
+		await wrapper.setProps({ viewport: 768 });
+		expect(wrapper.find('.docs-playground__preview').attributes('style'))
+			.toContain('height: 48px');
+		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
+			.toContain('width: 768px');
+		await wrapper.setProps({ viewport: undefined });
+		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
+			.toContain('width: 100%');
+
+		await wrapper.setProps({ viewport: 375, viewportOptions: [] });
+		expect(wrapper.find('.docs-playground__viewport-menu').exists()).toBe(false);
+		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
+			.toContain('width: 375px');
+
+		await wrapper.setProps({ viewport: undefined, viewportOptions: ['auto', 768] });
+		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
+			.toContain('width: 100%');
+		await wrapper.setProps({ viewportOptions: [] });
+		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
+			.toContain('width: 100%');
+	});
+
+	it('filters invalid direct viewport options and applies viewport sizing to styleless mode', () => {
+		const normalized = mount(Playground, {
+			props: {
+				modelValue: '<template>normalized</template>',
+				viewportOptions: [0, 'mobile', 375, 375] as any
+			}
+		});
+		expect(normalized.find('.docs-playground__viewport-menu').exists()).toBe(false);
+		expect(normalized.find('.docs-playground-runtime__viewport').attributes('style'))
+			.toContain('width: 375px');
+
+		const styleless = mount(Playground, {
+			props: {
+				modelValue: '<template>styleless</template>',
+				styleless: true,
+				viewport: [375, 667],
+				viewportOptions: []
+			}
+		});
+		expect(styleless.find('.docs-playground-runtime--styleless').attributes('style'))
+			.toContain('height: 667px');
+		expect(styleless.find('.docs-playground-runtime__viewport').attributes('style'))
+			.toContain('width: 375px');
+		expect(styleless.find('.docs-playground__viewport-menu').exists()).toBe(false);
 	});
 
 	it('is exported from the package entry', async () => {

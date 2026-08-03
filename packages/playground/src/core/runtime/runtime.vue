@@ -4,16 +4,58 @@
 		class="docs-playground-runtime--styleless"
 		:style="stylelessStyle"
 	>
-		<Sandbox
-			ref="sandboxRef"
-			:store="store"
-			:auto-store-init="false"
-			:preview-options="runtimePreviewOptions"
-		/>
+		<div class="docs-playground-runtime__viewport" :style="viewportStyle">
+			<Sandbox
+				ref="sandboxRef"
+				:store="store"
+				:auto-store-init="false"
+				:preview-options="runtimePreviewOptions"
+			/>
+		</div>
 	</div>
 	<div v-else class="docs-playground-runtime">
 		<div class="docs-playground__header">
 			<div class="docs-playground__tools">
+				<Dropdown
+					v-if="viewportOptions.length > 1"
+					v-model="viewportMenuVisible"
+					class="docs-playground__viewport-menu"
+					:portal="true"
+					trigger="click"
+					placement="bottom-right"
+				>
+					<button
+						type="button"
+						class="docs-playground__tool docs-playground__viewport-trigger"
+						:class="{ 'is-active': viewport !== 'auto' }"
+						:title="`视口：${viewportLabel}`"
+						:aria-label="`视口：${viewportLabel}`"
+						:aria-expanded="viewportMenuVisible"
+						aria-haspopup="menu"
+					>
+						<PlaygroundIcon name="viewport" />
+					</button>
+					<template #content>
+						<DropdownMenu
+							class="docs-playground__viewport-options"
+							role="menu"
+							aria-label="运行时视口"
+						>
+							<DropdownItem
+								v-for="(item, index) in viewportOptions"
+								:key="getViewportKey(item)"
+								class="docs-playground__viewport-option"
+								:value="index"
+								:selected="viewportEquals(item, viewport)"
+								role="menuitemradio"
+								:aria-checked="viewportEquals(item, viewport)"
+								@click="handleViewport(index)"
+							>
+								{{ formatViewportLabel(item) }}
+							</DropdownItem>
+						</DropdownMenu>
+					</template>
+				</Dropdown>
 				<Clipboard
 					class="docs-playground__tool"
 					:value="copyValue"
@@ -52,28 +94,44 @@
 			</div>
 		</div>
 		<section class="docs-playground__preview" :style="previewStyle">
-			<Sandbox
-				ref="sandboxRef"
-				:store="store"
-				:auto-store-init="false"
-				:clear-console="clearConsole"
-				:preview-options="runtimePreviewOptions"
-			/>
+			<div class="docs-playground-runtime__viewport-stage">
+				<div class="docs-playground-runtime__viewport" :style="viewportStyle">
+					<Sandbox
+						ref="sandboxRef"
+						:store="store"
+						:auto-store-init="false"
+						:clear-console="clearConsole"
+						:preview-options="runtimePreviewOptions"
+					/>
+				</div>
+			</div>
 		</section>
 	</div>
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Clipboard } from '@deot/vc';
+import { Clipboard, Dropdown, DropdownItem, DropdownMenu } from '@deot/vc';
 import { Sandbox } from '@vue/repl';
 import { PLAYGROUND_VIEW_TEXT } from '../../constants';
 import { Editor } from '../../editor';
 import type { EditorFilesChangeAction } from '../../editor';
 import PlaygroundIcon from '../../icon';
-import type { PlaygroundFiles, PlaygroundOptions, PlaygroundView } from '../../types';
+import type {
+	PlaygroundFiles,
+	PlaygroundOptions,
+	PlaygroundView,
+	PlaygroundViewport
+} from '../../types';
 import { useSandboxAutoHeight } from './auto-height';
 import type { SandboxExposed } from './auto-height';
 import { useSandboxRuntimeErrorGuard } from './error-guard';
+import {
+	formatViewportLabel,
+	getViewportHeight,
+	getViewportKey,
+	getViewportWidth,
+	viewportEquals
+} from './viewport';
 import {
 	createReplFile,
 	createRuntimeStore,
@@ -88,14 +146,19 @@ const props = withDefaults(defineProps<{
 	styleless?: boolean;
 	activeView?: PlaygroundView;
 	views?: PlaygroundView[];
+	viewport?: PlaygroundViewport;
+	viewportOptions?: PlaygroundViewport[];
 }>(), {
 	styleless: false,
 	activeView: 'runtime',
-	views: () => ['runtime']
+	views: () => ['runtime'],
+	viewport: 'auto',
+	viewportOptions: () => ['auto', 375]
 });
 const emit = defineEmits<{
 	'files-change': [files: PlaygroundFiles, entry: string, action: EditorFilesChangeAction];
 	'view-change': [view: PlaygroundView];
+	'viewport-change': [viewport: PlaygroundViewport];
 }>();
 
 const env = (import.meta as ImportMeta & { env: { MODE?: string } }).env;
@@ -105,8 +168,19 @@ const store = createRuntimeStore(props.files, props.entry, props.options);
 const sandboxRef = ref<SandboxExposed | null>(null);
 const runtimeHeight = useSandboxAutoHeight(sandboxRef);
 useSandboxRuntimeErrorGuard(sandboxRef);
-const previewStyle = computed(() => ({ height: `${runtimeHeight.value + 20}px` }));
-const stylelessStyle = computed(() => ({ height: `${runtimeHeight.value}px` }));
+const viewportMenuVisible = ref(false);
+const viewportLabel = computed(() => formatViewportLabel(props.viewport));
+const desiredViewportHeight = computed(() => getViewportHeight(props.viewport) || runtimeHeight.value);
+const previewStyle = computed(() => ({ height: `${desiredViewportHeight.value + 20}px` }));
+const stylelessStyle = computed(() => ({ height: `${desiredViewportHeight.value}px` }));
+const viewportStyle = computed(() => {
+	const width = getViewportWidth(props.viewport);
+	return {
+		width: width ? `${width}px` : '100%',
+		maxWidth: '100%',
+		height: '100%'
+	};
+});
 let syncedFiles = { ...props.files };
 let syncedEntry = props.entry;
 
@@ -161,6 +235,16 @@ const handleEditor = () => {
 	});
 };
 const handleView = (view: PlaygroundView) => emit('view-change', view);
+const handleViewport = (index: number) => {
+	const viewport = props.viewportOptions[index];
+	if (viewport && !viewportEquals(viewport, props.viewport)) {
+		emit('viewport-change', viewport);
+	}
+};
+
+watch(() => props.viewportOptions.length, (length) => {
+	if (length <= 1) viewportMenuVisible.value = false;
+});
 
 watch(() => props.files, (files) => {
 	if (filesEqual(files, syncedFiles)) return;
@@ -188,9 +272,28 @@ watch(() => props.entry, (entry) => {
 	flex-direction: column;
 
 	@include modifier(styleless) {
+		display: flex;
 		width: 100%;
 		min-height: 0;
 		overflow: hidden;
+		justify-content: center;
+	}
+
+	@include element(viewport-stage) {
+		display: flex;
+		width: 100%;
+		height: 100%;
+		min-width: 0;
+		justify-content: center;
+	}
+
+	@include element(viewport) {
+		position: relative;
+		height: 100%;
+		min-width: 0;
+		overflow: hidden;
+		box-sizing: border-box;
+		flex: 0 1 auto;
 	}
 }
 
@@ -259,6 +362,30 @@ watch(() => props.entry, (entry) => {
 			color: #2563eb;
 			background: #e8eef8;
 		}
+
+		@include when(active) {
+			color: #2563eb;
+			background: #e8eef8;
+		}
+	}
+
+	@include element(viewport-menu) {
+		display: inline-flex;
+	}
+
+	@include element(viewport-trigger) {
+		.docs-playground-icon {
+			width: 20px;
+			height: 20px;
+		}
+	}
+
+	@include element(viewport-options) {
+		min-width: 136px;
+	}
+
+	@include element(viewport-option) {
+		white-space: nowrap;
 	}
 
 	@include element(editor) {

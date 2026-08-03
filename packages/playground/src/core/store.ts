@@ -10,6 +10,7 @@ const cdnURL = 'https://cdn.jsdelivr.net/npm';
 export const runtimePreviewOptions: SandboxProps['previewOptions'] = {
 	headHTML: [
 		SANDBOX_RUNTIME_ERROR_CAPTURE_HTML,
+		'<meta name="viewport" content="width=device-width, initial-scale=1">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/style/dist/index.normalize-only.css">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/vc-components/dist/index.style.css">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/style/dist/index.css">',

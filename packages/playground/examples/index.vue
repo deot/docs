@@ -3,6 +3,14 @@
 		<h2>仅运行时预览</h2>
 		<Playground v-model="source" :views="['runtime']" />
 
+		<h2>响应式运行时尺寸</h2>
+		<Playground
+			v-model="source"
+			v-model:viewport="viewport"
+			:viewport-options="viewportOptions"
+		/>
+		<p>当前视口：{{ JSON.stringify(viewport) }}</p>
+
 		<h2>仅文件预览</h2>
 		<Playground
 			v-model:files="javascriptFiles"
@@ -32,6 +40,8 @@ import '/node_modules/@deot/vc-components/dist/index.style.css';
 
 // eslint-disable-next-line @stylistic/max-len
 const source = ref(`<script setup>\nimport { ref } from 'vue'\n\nconst msg = ref('Hello World!!')\n<\/script>\n\n<template>\n  <h1>{{ msg }}<\/h1>\n  <input v-model="msg" />\n<\/template>\n`);
+const viewport = ref('auto');
+const viewportOptions = ['auto', 375, [375, 667], 768];
 const javascriptEntry = ref('main.js');
 const javascriptFiles = ref({
 	'main.js': `import { createApp } from 'vue';\nimport App from './App.vue';\n\ncreateApp(App).mount('#app');\n`,

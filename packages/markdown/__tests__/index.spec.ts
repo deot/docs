@@ -29,7 +29,15 @@ vi.mock('@deot/docs-playground', async () => {
 			}
 		}),
 		Playground: defineComponent({
-			props: ['modelValue', 'theme', 'files', 'entry', 'views'],
+			props: [
+				'modelValue',
+				'theme',
+				'files',
+				'entry',
+				'views',
+				'viewport',
+				'viewportOptions'
+			],
 			unmounted: playgroundUnmounted,
 			setup(props) {
 				return () => h('div', { class: 'playground' }, [
@@ -42,7 +50,11 @@ vi.mock('@deot/docs-playground', async () => {
 						'-',
 						props.theme || '',
 						'-',
-						JSON.stringify(props.views || [])
+						JSON.stringify(props.views || []),
+						'-',
+						JSON.stringify(props.viewport),
+						'-',
+						JSON.stringify(props.viewportOptions)
 					]),
 					h('pre', { class: 'playground-code' }, [
 						h('code', { class: 'hljs language-js' }, 'runtime preview')
@@ -229,6 +241,24 @@ describe('markdown', () => {
 		expect(wrapper.find('.playground').text()).toContain(expected);
 	});
 
+	it('passes RUNTIME viewport props to Playground', async () => {
+		const viewport = [375, 667];
+		const viewportOptions = ['auto', 375, viewport, 768];
+		const source = [
+			`:::RUNTIME ${JSON.stringify({ viewport, viewportOptions })}`,
+			'```vue',
+			'<template />',
+			'```',
+			':::'
+		].join('\n');
+		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
+		await nextTick();
+
+		const text = wrapper.find('.playground').text();
+		expect(text).toContain('[375,667]');
+		expect(text).toContain('["auto",375,[375,667],768]');
+	});
+
 	it('reports invalid multi-file declarations', () => {
 		const missingName = MarkdownRenderer.render(':::RUNTIME\n```vue App.vue\n<template />\n```\n```ts\ncode\n```\n:::');
 		const duplicateName = MarkdownRenderer.render(':::RUNTIME\n```vue App.vue\na\n```\n```vue App.vue\nb\n```\n:::');
@@ -249,6 +279,22 @@ describe('markdown', () => {
 		expect(render({ views: ['unknown'] })).toContain('views 不支持 unknown');
 		expect(render({ views: ['runtime', 'runtime'] })).toContain('views 不能重复声明 runtime');
 		expect(render({ view: 'files' })).toContain('不支持 view 参数');
+	});
+
+	it('reports invalid RUNTIME viewport declarations', () => {
+		const render = (props: Record<string, unknown>) => MarkdownRenderer.render(
+			`:::RUNTIME ${JSON.stringify(props)}\n\`\`\`vue\n<template />\n\`\`\`\n:::`
+		);
+
+		expect(render({ viewport: 'mobile' })).toContain('viewport 必须是 auto、正数宽度或 [宽,高]');
+		expect(render({ viewport: 0 })).toContain('viewport 必须是 auto、正数宽度或 [宽,高]');
+		expect(render({ viewport: [375] })).toContain('viewport 必须是 auto、正数宽度或 [宽,高]');
+		expect(render({ viewportOptions: 'auto' })).toContain('viewportOptions 必须是数组');
+		expect(render({ viewportOptions: ['auto', 0] }))
+			.toContain('viewportOptions[1] 必须是 auto、正数宽度或 [宽,高]');
+		expect(render({ viewportOptions: ['auto', 'auto'] }))
+			.toContain('viewportOptions 不能重复声明 auto');
+		expect(render({ viewportOptions: [] })).toContain('data-playground');
 	});
 
 	it('supports empty input, malformed props and multiple markdown instances', async () => {

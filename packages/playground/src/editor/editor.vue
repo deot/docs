@@ -451,7 +451,7 @@ onBeforeUnmount(() => {
 		font-size: 0;
 		line-height: 0;
 		color: #fff;
-		background-color: #5495f6;
+		background-color: #5495f6!important;
 		border: 0;
 		border-radius: 7px;
 		justify-content: center;
