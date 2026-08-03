@@ -14,7 +14,7 @@
     "link": "ddc link",
     "dev": "ddc dev --vue-package 'playground,markdown'",
     "update": "ddc update",
-    "build": "ddc build --vue-package 'playground,markdown' --external vue,@deot/vc",
+		"build": "ddc build --vue-package 'client,playground,markdown' --external vue,@deot/vc",
     "test": "ddc test",
     "add": "ddc add",
     "release": "ddc release",
