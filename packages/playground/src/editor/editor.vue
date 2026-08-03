@@ -21,7 +21,7 @@
 							v-for="filename in filenames"
 							:key="filename"
 							class="docs-playground-editor__tab"
-							:class="{ active: filename === activeFilename }"
+							:class="{ 'is-active': filename === activeFilename }"
 							:data-filename="filename"
 							@click="handleTabClick($event, filename)"
 							@dblclick="handleRename(filename)"
@@ -322,172 +322,176 @@ onBeforeUnmount(() => {
 	editor.value?.destroy();
 });
 </script>
-<style>
-.docs-playground-editor .docs-playground-editor__wrapper {
-	position: fixed;
-	right: 10px;
-	bottom: 10px;
-	z-index: 1001;
-	width: 680px;
-	font-size: 13px;
-	background: white;
-	border-radius: 8px;
-	opacity: 1;
-	box-shadow: 0 0 50px rgb(0 0 0 / 20%);
-}
+<style lang="scss">
+@use '../style' as *;
 
-.docs-playground-editor .docs-playground-editor__header {
-	display: flex;
-	padding: 10px;
-	font-size: 20px;
-	line-height: 20px;
-	cursor: move;
-	background: #f6f8fa !important;
-	justify-content: space-between;
-	align-items: center;
-}
+@include block(docs-playground-editor) {
+	button {
+		padding: 3px 7px;
+		white-space: nowrap;
+		cursor: pointer;
+		background: white;
+		border: 1px solid #d1d5db;
+		border-radius: 8px;
 
-.docs-playground-editor .docs-playground-editor__files {
-	display: flex;
-	width: 100%;
-	min-width: 0;
-	padding: 6px 8px;
-	overflow: hidden;
-	background: #f6f8fa;
-	border-top: 1px solid #e5e7eb;
-	border-bottom: 1px solid #e5e7eb;
-	box-sizing: border-box;
-	gap: 8px;
-	justify-content: space-between;
-}
+		&:disabled {
+			cursor: not-allowed;
+			opacity: 0.5;
+		}
+	}
 
-.docs-playground-editor .docs-playground-editor__actions {
-	display: flex;
-	flex: 0 0 auto;
-	gap: 4px;
-}
+	@include element(wrapper) {
+		position: fixed;
+		right: 10px;
+		bottom: 10px;
+		z-index: 1001;
+		width: 680px;
+		font-size: 13px;
+		background: white;
+		border-radius: 8px;
+		opacity: 1;
+		box-shadow: 0 0 50px rgb(0 0 0 / 20%);
+	}
 
-.docs-playground-editor .docs-playground-editor__scroller {
-	width: 0;
-	flex: 1 1 0;
-	min-width: 0;
-	overflow: hidden;
-}
+	@include element(header) {
+		display: flex;
+		padding: 10px;
+		font-size: 20px;
+		line-height: 20px;
+		cursor: move;
+		background: #f6f8fa !important;
+		justify-content: space-between;
+		align-items: center;
+	}
 
-.docs-playground-editor .docs-playground-editor__scroller .vc-scroller__wrapper {
-	scrollbar-width: none;
-}
+	@include element(files) {
+		display: flex;
+		width: 100%;
+		min-width: 0;
+		padding: 6px 8px;
+		overflow: hidden;
+		background: #f6f8fa;
+		border-top: 1px solid #e5e7eb;
+		border-bottom: 1px solid #e5e7eb;
+		box-sizing: border-box;
+		gap: 8px;
+		justify-content: space-between;
+	}
 
-.docs-playground-editor .docs-playground-editor__scroller .vc-scroller__wrapper::-webkit-scrollbar {
-	display: none;
-}
+	@include element(actions) {
+		display: flex;
+		flex: 0 0 auto;
+		gap: 4px;
+	}
 
-.docs-playground-editor .docs-playground-editor__tabs {
-	display: inline-flex;
-	min-width: 100%;
-	padding: 6px 6px 0 0;
-	box-sizing: border-box;
-	gap: 8px;
-}
+	@include element(scroller) {
+		width: 0;
+		min-width: 0;
+		overflow: hidden;
+		flex: 1 1 0;
 
-.docs-playground-editor .docs-playground-editor__tab {
-	position: relative;
-	display: inline-flex;
-	height: 26px;
-	padding: 3px 12px 3px 7px;
-	line-height: 18px;
-	white-space: nowrap;
-	cursor: pointer;
-	background: white;
-	border: 1px solid #d1d5db;
-	border-radius: 8px;
-	box-sizing: border-box;
-	gap: 5px;
-	align-items: center;
-}
+		.vc-scroller__wrapper {
+			scrollbar-width: none;
 
-.docs-playground-editor button {
-	padding: 3px 7px;
-	white-space: nowrap;
-	cursor: pointer;
-	background: white;
-	border: 1px solid #d1d5db;
-	border-radius: 8px;
-}
+			&::-webkit-scrollbar {
+				display: none;
+			}
+		}
+	}
 
-.docs-playground-editor .docs-playground-editor__tab.active {
-	color: white;
-	background: #2563eb;
-	border-color: #2563eb;
-}
+	@include element(tabs) {
+		display: inline-flex;
+		min-width: 100%;
+		padding: 6px 6px 0 0;
+		box-sizing: border-box;
+		gap: 8px;
+	}
 
-.docs-playground-editor button:disabled {
-	cursor: not-allowed;
-	opacity: 0.5;
-}
+	@include element(tab) {
+		position: relative;
+		display: inline-flex;
+		height: 26px;
+		padding: 3px 12px 3px 7px;
+		line-height: 18px;
+		white-space: nowrap;
+		cursor: pointer;
+		background: white;
+		border: 1px solid #d1d5db;
+		border-radius: 8px;
+		box-sizing: border-box;
+		gap: 5px;
+		align-items: center;
 
-.docs-playground-editor .docs-playground-editor__filename {
-	width: 100px;
-	height: 18px;
-	padding: 0 3px;
-	font: inherit;
-	line-height: 16px;
-	border: 1px solid #d1d5db;
-	box-sizing: border-box;
-}
+		@include when(active) {
+			color: white;
+			background: #2563eb;
+			border-color: #2563eb;
+		}
+	}
 
-.docs-playground-editor .docs-playground-editor__close {
-	position: absolute;
-	top: -6px;
-	right: -6px;
-	z-index: 1;
-	display: flex;
-	width: 14px;
-	height: 14px;
-	padding: 0;
-	font-size: 0;
-	line-height: 0;
-	color: #fff;
-	background-color: #5495f6;
-	border: 0;
-	border-radius: 7px;
-	justify-content: center;
-	align-items: center;
-}
+	@include element(filename) {
+		width: 100px;
+		height: 18px;
+		padding: 0 3px;
+		font: inherit;
+		line-height: 16px;
+		border: 1px solid #d1d5db;
+		box-sizing: border-box;
+	}
 
-.docs-playground-editor .docs-playground-editor__close::before,
-.docs-playground-editor .docs-playground-editor__close::after {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	width: 8px;
-	height: 1px;
-	background-color: currentcolor;
-	content: '';
-}
+	@include element(close) {
+		position: absolute;
+		top: -6px;
+		right: -6px;
+		z-index: 1;
+		display: flex;
+		width: 14px;
+		height: 14px;
+		padding: 0;
+		font-size: 0;
+		line-height: 0;
+		color: #fff;
+		background-color: #5495f6;
+		border: 0;
+		border-radius: 7px;
+		justify-content: center;
+		align-items: center;
 
-.docs-playground-editor .docs-playground-editor__close::before {
-	transform: translate(-50%, -50%) rotate(45deg);
-}
+		&::before,
+		&::after {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 8px;
+			height: 1px;
+			background-color: currentcolor;
+			content: '';
+		}
 
-.docs-playground-editor .docs-playground-editor__close::after {
-	transform: translate(-50%, -50%) rotate(-45deg);
-}
+		&::before {
+			transform: translate(-50%, -50%) rotate(45deg);
+		}
 
-.docs-playground-editor .docs-playground-editor__delete {
-	position: static !important;
-}
+		&::after {
+			transform: translate(-50%, -50%) rotate(-45deg);
+		}
+	}
 
-.docs-playground-editor .docs-playground-editor__error {
-	padding: 5px 10px;
-	color: #b91c1c;
-	white-space: pre-wrap;
-	background: #fef2f2;
-}
+	@include element(delete) {
+		position: static !important;
+	}
 
-.docs-playground-editor .docs-playground-editor__editor {
-	min-height: 240px;
-	padding: 1px;
-	background: #f6f8fa !important;
+	@include element(error) {
+		padding: 5px 10px;
+		color: #b91c1c;
+		white-space: pre-wrap;
+		background: #fef2f2;
+	}
+
+	@include element(editor) {
+		min-height: 240px;
+		padding: 1px;
+		background: #f6f8fa !important;
+	}
 }
 </style>

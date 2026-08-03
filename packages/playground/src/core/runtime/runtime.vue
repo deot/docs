@@ -41,7 +41,7 @@
 					:key="item"
 					type="button"
 					class="docs-playground__view"
-					:class="{ active: item === activeView }"
+					:class="{ 'is-active': item === activeView }"
 					:title="PLAYGROUND_VIEW_TEXT[item]"
 					:aria-label="PLAYGROUND_VIEW_TEXT[item]"
 					:aria-pressed="item === activeView"
@@ -176,99 +176,105 @@ watch(() => props.entry, (entry) => {
 	store.setActive(toReplFilename(entry));
 });
 </script>
-<style>
-.docs-playground-runtime {
+<style lang="scss">
+@use '../../style' as *;
+
+@include block(docs-playground-runtime) {
 	display: flex;
 	width: 100%;
 	min-height: 0;
 	overflow: hidden;
 	flex: 1 1 auto;
 	flex-direction: column;
+
+	@include modifier(styleless) {
+		width: 100%;
+		min-height: 0;
+		overflow: hidden;
+	}
 }
 
-.docs-playground-runtime--styleless {
-	width: 100%;
-	min-height: 0;
-	overflow: hidden;
-}
+@include block(docs-playground) {
+	@include element(header) {
+		display: flex;
+		height: 48px;
+		padding: 0 12px;
+		background: #f7f8fa !important;
+		box-shadow: inset 0 -1px #edeff1;
+		box-sizing: border-box;
+		justify-content: flex-end;
+		align-items: center;
+		flex: 0 0 48px;
+	}
 
-.docs-playground__header {
-	display: flex;
-	height: 48px;
-	padding: 0 12px;
-	background: #f7f8fa !important;
-	box-shadow: inset 0 -1px #edeff1;
-	box-sizing: border-box;
-	justify-content: flex-end;
-	align-items: center;
-	flex: 0 0 48px;
-}
+	@include element(views) {
+		display: flex;
+		gap: 4px;
+	}
 
-.docs-playground__views {
-	display: flex;
-	gap: 4px;
-}
+	@include element(view) {
+		display: inline-flex;
+		width: 30px;
+		height: 30px;
+		padding: 0;
+		font: inherit;
+		color: #64748b;
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		border-radius: 8px;
+		justify-content: center;
+		align-items: center;
 
-.docs-playground__view {
-	display: inline-flex;
-	width: 30px;
-	height: 30px;
-	padding: 0;
-	font: inherit;
-	color: #64748b;
-	cursor: pointer;
-	background: transparent;
-	border: 0;
-	border-radius: 8px;
-	justify-content: center;
-	align-items: center;
-}
+		@include when(active) {
+			color: #fff;
+			background: #2563eb;
+		}
+	}
 
-.docs-playground__view.active {
-	color: #fff;
-	background: #2563eb;
-}
+	@include element(tools) {
+		display: flex;
+		margin-right: 4px;
+		margin-left: auto;
+		font-size: 14px;
+		line-height: 20px;
+		align-items: center;
+	}
 
-.docs-playground__tools {
-	display: flex;
-	margin-right: 4px;
-	margin-left: auto;
-	font-size: 14px;
-	line-height: 20px;
-	align-items: center;
-}
+	@include element(tool) {
+		display: inline-flex;
+		width: 30px;
+		height: 30px;
+		padding: 0;
+		font: inherit;
+		color: #64748b;
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		border-radius: 8px;
+		justify-content: center;
+		align-items: center;
 
-.docs-playground__tool {
-	display: inline-flex;
-	width: 30px;
-	height: 30px;
-	padding: 0;
-	font: inherit;
-	color: #64748b;
-	cursor: pointer;
-	background: transparent;
-	border: 0;
-	border-radius: 8px;
-	justify-content: center;
-	align-items: center;
-}
+		&:hover {
+			color: #2563eb;
+			background: #e8eef8;
+		}
+	}
 
-.docs-playground__tool:hover {
-	color: #2563eb;
-	background: #e8eef8;
-}
+	@include element(editor) {
+		.docs-playground-icon {
+			width: 22px;
+			height: 22px;
+		}
+	}
 
-.docs-playground__editor .docs-playground-icon {
-	width: 22px;
-	height: 22px;
-}
-
-.docs-playground__preview {
-	min-height: 0;
-	padding: 10px;
-	overflow: hidden;
-	background: #fff;
-	box-sizing: border-box;
-	flex: 1 1 auto;
+	@include element(preview) {
+		min-height: 0;
+		padding: 10px;
+		overflow: hidden;
+		background: #fff;
+		box-sizing: border-box;
+		flex: 1 1 auto;
+	}
 }
 </style>

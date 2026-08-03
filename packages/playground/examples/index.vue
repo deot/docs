@@ -44,8 +44,10 @@ const vueFiles = ref({
 	'Card.vue': `<script setup>\ndefineProps({ title: String });\n<\/script>\n\n<template>\n  <strong>{{ title }}<\/strong>\n<\/template>\n`
 });
 </script>
-<style scoped>
-.playground-examples {
+<style lang="scss" scoped>
+@use '../src/style' as *;
+
+@include block(playground-examples) {
 	padding: 24px;
 }
 </style>

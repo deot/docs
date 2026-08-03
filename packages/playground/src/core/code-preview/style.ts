@@ -1,5 +1,5 @@
 import githubHighlightStyle from './github.css?inline';
-import codePreviewStyle from './code-preview.css?inline';
+import codePreviewStyle from './code-preview.scss?inline';
 
 export const CODE_PREVIEW_STYLE_ID = 'docs-code-preview-style';
 const styleText = `${githubHighlightStyle}\n${codePreviewStyle}`;

@@ -122,7 +122,7 @@ describe('Playground', () => {
 		);
 		await nextTick();
 		expect(store.addFile).toHaveBeenCalledWith(expect.objectContaining({ filename: 'src/util.ts' }));
-		expect(wrapper.find('[data-filename="util.ts"]').classes()).toContain('active');
+		expect(wrapper.find('[data-filename="util.ts"]').classes()).toContain('is-active');
 
 		options.onFilesChange(
 			{ 'bootstrap.js': 'second', 'App.vue': '<template />', 'util.ts': '' },
@@ -140,7 +140,7 @@ describe('Playground', () => {
 		);
 		await nextTick();
 		expect(store.files['src/util.ts']).toBeUndefined();
-		expect(wrapper.find('[data-filename="bootstrap.js"]').classes()).toContain('active');
+		expect(wrapper.find('[data-filename="bootstrap.js"]').classes()).toContain('is-active');
 		expect(wrapper.emitted('update:files')?.at(-1)?.[0]).toEqual({
 			'bootstrap.js': 'second',
 			'App.vue': '<template />'
@@ -229,7 +229,7 @@ describe('Playground', () => {
 		expect(files.find('code.hljs').html()).not.toContain('<strong>files</strong>');
 		expect(files.find('pre').element.childNodes).toHaveLength(1);
 		await files.find('[data-filename="util.ts"]').trigger('click');
-		expect(files.find('[data-filename="util.ts"]').classes()).toContain('active');
+		expect(files.find('[data-filename="util.ts"]').classes()).toContain('is-active');
 		expect(files.find('code.hljs').text()).toContain('export const value');
 	});
 
@@ -244,7 +244,7 @@ describe('Playground', () => {
 		expect(useStore).not.toHaveBeenCalled();
 		const buttons = wrapper.findAll('.docs-playground__view');
 		expect(buttons.map(item => item.attributes('aria-label'))).toEqual(['文件预览', '运行时预览']);
-		expect(buttons[0].classes()).toContain('active');
+		expect(buttons[0].classes()).toContain('is-active');
 		expect(wrapper.find('.sandbox').exists()).toBe(false);
 		expect(wrapper.find('.docs-playground__header').exists()).toBe(false);
 		expect(wrapper.find('.docs-playground-files__actions').exists()).toBe(true);

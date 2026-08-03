@@ -16,7 +16,7 @@
 					:key="filename"
 					type="button"
 					class="docs-playground-files__tab"
-					:class="{ active: filename === activeFilename }"
+					:class="{ 'is-active': filename === activeFilename }"
 					:data-filename="filename"
 					@click="handleActive(filename)"
 				>
@@ -31,7 +31,7 @@
 						:key="item"
 						type="button"
 						class="docs-playground__view"
-						:class="{ active: item === activeView }"
+						:class="{ 'is-active': item === activeView }"
 						:title="PLAYGROUND_VIEW_TEXT[item]"
 						:aria-label="PLAYGROUND_VIEW_TEXT[item]"
 						:aria-pressed="item === activeView"
@@ -78,8 +78,10 @@ const handleActive = (filename: string) => {
 };
 const handleView = (view: PlaygroundView) => emit('view-change', view);
 </script>
-<style>
-.docs-playground-files {
+<style lang="scss">
+@use '../../style' as *;
+
+@include block(docs-playground-files) {
 	display: flex;
 	height: 100%;
 	max-height: 100%;
@@ -88,129 +90,133 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 	background: #f7f8fa;
 	flex: 1 1 auto;
 	flex-direction: column;
+
+	@include element(toolbar) {
+		display: flex;
+		height: 48px;
+		overflow: hidden;
+		box-shadow: inset 0 -1px #dedede;
+		box-sizing: border-box;
+		flex: 0 0 48px;
+	}
+
+	@include element(scroller) {
+		width: 0;
+		height: 48px;
+		min-width: 0;
+		overflow: hidden;
+		background: #f7f8fa;
+		flex: 1 1 auto;
+
+		.vc-scroller__wrapper {
+			height: 48px;
+			overflow-y: hidden !important;
+			scrollbar-width: none;
+
+			&::-webkit-scrollbar {
+				display: none;
+			}
+		}
+
+		.vc-scroller-track.is-y {
+			display: none !important;
+		}
+	}
+
+	@include element(tabs) {
+		display: inline-flex;
+		height: 48px;
+		min-width: 100%;
+		padding: 0 20px;
+		box-sizing: border-box;
+		gap: 4px;
+	}
+
+	@include element(tab) {
+		position: relative;
+		display: inline-flex;
+		height: 48px;
+		padding: 0 14px;
+		font: inherit;
+		font-size: 15px;
+		line-height: 48px;
+		color: #52525b;
+		white-space: nowrap;
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		box-sizing: border-box;
+		gap: 5px;
+		align-items: center;
+
+		@include when(active) {
+			color: #18181b;
+
+			&::after {
+				position: absolute;
+				right: 8px;
+				bottom: 0;
+				left: 8px;
+				height: 3px;
+				background: #5495f6;
+				border-radius: 2px 2px 0 0;
+				content: '';
+			}
+		}
+	}
+
+	@include element(entry) {
+		font-size: 10px;
+		line-height: 16px;
+		color: #71717a;
+	}
+
+	@include element(actions) {
+		display: flex;
+		height: 48px;
+		background: #f7f8fa;
+		box-sizing: border-box;
+		flex: 0 0 auto;
+		align-items: center;
+	}
+
+	@include element(body) {
+		min-height: 0;
+		border-radius: 0;
+		flex: 1 1 auto;
+	}
 }
 
-.docs-playground-files .docs-playground-files__toolbar {
-	display: flex;
-	height: 48px;
-	overflow: hidden;
-	box-shadow: inset 0 -1px #dedede;
-	box-sizing: border-box;
-	flex: 0 0 48px;
-}
+@include block(docs-playground) {
+	@include element(views) {
+		@include modifier(files) {
+			display: flex;
+			height: 48px;
+			padding: 0 12px;
+			box-sizing: border-box;
+			gap: 4px;
+			align-items: center;
+		}
+	}
 
-.docs-playground-files .docs-playground-files__scroller {
-	width: 0;
-	height: 48px;
-	min-width: 0;
-	overflow: hidden;
-	background: #f7f8fa;
-	flex: 1 1 auto;
-}
+	@include element(view) {
+		display: inline-flex;
+		width: 30px;
+		height: 30px;
+		padding: 0;
+		font: inherit;
+		color: #64748b;
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		border-radius: 8px;
+		justify-content: center;
+		align-items: center;
 
-.docs-playground-files .docs-playground-files__scroller .vc-scroller__wrapper {
-	height: 48px;
-	overflow-y: hidden !important;
-	scrollbar-width: none;
-}
-
-.docs-playground-files .docs-playground-files__scroller .vc-scroller__wrapper::-webkit-scrollbar {
-	display: none;
-}
-
-.docs-playground-files .docs-playground-files__scroller .vc-scroller-track.is-y {
-	display: none !important;
-}
-
-.docs-playground-files .docs-playground-files__tabs {
-	display: inline-flex;
-	height: 48px;
-	min-width: 100%;
-	padding: 0 20px;
-	box-sizing: border-box;
-	gap: 4px;
-}
-
-.docs-playground-files .docs-playground-files__tab {
-	position: relative;
-	display: inline-flex;
-	height: 48px;
-	padding: 0 14px;
-	font: inherit;
-	font-size: 15px;
-	line-height: 48px;
-	color: #52525b;
-	white-space: nowrap;
-	cursor: pointer;
-	background: transparent;
-	border: 0;
-	box-sizing: border-box;
-	gap: 5px;
-	align-items: center;
-}
-
-.docs-playground-files .docs-playground-files__tab.active {
-	color: #18181b;
-}
-
-.docs-playground-files .docs-playground-files__tab.active::after {
-	position: absolute;
-	right: 8px;
-	bottom: 0;
-	left: 8px;
-	height: 3px;
-	background: #5495f6;
-	border-radius: 2px 2px 0 0;
-	content: '';
-}
-
-.docs-playground-files .docs-playground-files__entry {
-	font-size: 10px;
-	line-height: 16px;
-	color: #71717a;
-}
-
-.docs-playground-files .docs-playground-files__actions {
-	display: flex;
-	height: 48px;
-	background: #f7f8fa;
-	box-sizing: border-box;
-	flex: 0 0 auto;
-	align-items: center;
-}
-
-.docs-playground-files .docs-playground__views--files {
-	display: flex;
-	height: 48px;
-	padding: 0 12px;
-	box-sizing: border-box;
-	gap: 4px;
-	align-items: center;
-}
-
-.docs-playground-files .docs-playground__view {
-	display: inline-flex;
-	width: 30px;
-	height: 30px;
-	padding: 0;
-	font: inherit;
-	color: #64748b;
-	cursor: pointer;
-	background: transparent;
-	border: 0;
-	border-radius: 8px;
-	justify-content: center;
-	align-items: center;
-}
-
-.docs-playground-files .docs-playground__view.active {
-	color: #fff;
-	background: #2563eb;
-}
-
-.docs-playground-files .docs-playground-files__body {
-	min-height: 0;
-	border-radius: 0;
-	flex: 1 1 auto;
+		@include when(active) {
+			color: #fff;
+			background: #2563eb;
+		}
+	}
 }
 </style>

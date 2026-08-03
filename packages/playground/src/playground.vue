@@ -186,8 +186,10 @@ watch(normalizedViews, (views) => {
 	else if (activeView.value === 'runtime') runtimeActivated.value = true;
 });
 </script>
-<style>
-.docs-playground {
+<style lang="scss">
+@use './style' as *;
+
+@include block(docs-playground) {
 	display: flex;
 	width: 100%;
 	margin-bottom: 16px;
@@ -198,21 +200,21 @@ watch(normalizedViews, (views) => {
 	box-sizing: border-box;
 	justify-content: center;
 	flex-direction: column;
-}
 
-.docs-playground--files {
-	height: 100%;
-	min-height: 0;
-	overflow: hidden;
-	background: #f6f8fa;
-	box-shadow: none;
-}
+	@include modifier(files) {
+		height: 100%;
+		min-height: 0;
+		overflow: hidden;
+		background: #f6f8fa;
+		box-shadow: none;
+	}
 
-.docs-playground__error {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	height: 100%;
-	box-sizing: border-box;
+	@include element(error) {
+		display: flex;
+		height: 100%;
+		box-sizing: border-box;
+		justify-content: center;
+		align-items: center;
+	}
 }
 </style>

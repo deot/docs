@@ -20,8 +20,10 @@ defineProps<{
 	name: PlaygroundIconName;
 }>();
 </script>
-<style>
-.docs-playground-icon {
+<style lang="scss">
+@use '../style' as *;
+
+@include block(docs-playground-icon) {
 	display: block;
 	width: 18px;
 	height: 18px;
