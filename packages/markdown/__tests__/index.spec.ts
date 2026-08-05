@@ -10,6 +10,17 @@ const { codePreviewUnmounted, playgroundUnmounted } = vi.hoisted(() => ({
 	playgroundUnmounted: vi.fn()
 }));
 
+const runtimeWithConfig = (config: string, body: string) => [
+	':::RUNTIME',
+	'<!--',
+	'<config lang="json5">',
+	config,
+	'</config>',
+	'-->',
+	body,
+	':::'
+].join('\n');
+
 vi.mock('@deot/vc', () => ({
 	Clipboard: defineComponent({
 		name: 'Clipboard',
@@ -98,26 +109,31 @@ describe('markdown', () => {
 		expect(html).toContain('<code class="language-ts">');
 	});
 
-	it('keeps an unnamed single-file RUNTIME block backward compatible', () => {
-		const html = MarkdownRenderer.render(':::RUNTIME {"theme":"dark"}\n```vue\n<template>ok</template>\n```\n:::');
+	it('keeps an unnamed single-file RUNTIME block', () => {
+		const html = MarkdownRenderer.render(runtimeWithConfig(
+			'{ views: [\'runtime\'] }',
+			'```vue\n<template>ok</template>\n```'
+		));
 
 		expect(html).toContain('data-playground');
 		expect(html).toContain('data-code="&lt;template&gt;ok&lt;/template&gt;');
-		expect(html).toContain('data-props="{&quot;theme&quot;:&quot;dark&quot;}"');
+		expect(html).toContain('data-props="{&quot;views&quot;:[&quot;runtime&quot;]}"');
 		expect(html).not.toContain('data-files=');
+		expect(html).not.toContain('<config');
 	});
 
 	it('collects named fences into one multi-file playground', () => {
-		const source = [
-			':::RUNTIME {"entry":"main.js","theme":"dark"}',
-			'```js main.js',
-			'import App from "./App.vue";',
-			'```',
-			'```vue App.vue',
-			'<template>multi</template>',
-			'```',
-			':::'
-		].join('\n');
+		const source = runtimeWithConfig(
+			'{ entry: \'main.js\', views: [\'files\'] }',
+			[
+				'```js main.js',
+				'import App from "./App.vue";',
+				'```',
+				'```vue App.vue',
+				'<template>multi</template>',
+				'```'
+			].join('\n')
+		);
 		const html = MarkdownRenderer.render(source);
 
 		expect(html.match(/data-playground/g)).toHaveLength(1);
@@ -128,12 +144,24 @@ describe('markdown', () => {
 	});
 
 	it('renders the wrapper, playgrounds and shared code previews', async () => {
-		const source = '# Hello\n\n:::RUNTIME {"theme":"dark"}\n```vue\n<template>demo</template>\n```\n:::\n\n```js\n\tconst n = 1\n```';
+		const source = [
+			'# Hello',
+			'',
+			runtimeWithConfig(
+				'{ views: [\'runtime\'] }',
+				'```vue\n<template>demo</template>\n```'
+			),
+			'',
+			'```js',
+			'\tconst n = 1',
+			'```'
+		].join('\n');
 		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
 		await nextTick();
 
 		expect(wrapper.find('h1').text()).toContain('Hello');
-		expect(document.querySelector('.playground')?.textContent).toMatch(/<template>demo<\/template>.*dark/s);
+		expect(document.querySelector('.playground')?.textContent).toContain('<template>demo</template>');
+		expect(document.querySelector('.playground')?.textContent).toContain('["runtime"]');
 		expect(wrapper.find('.docs-code-preview code').classes()).toContain('hljs');
 		expect(wrapper.find('.docs-code-preview code').html()).toContain('hljs-keyword');
 		expect(wrapper.find('.docs-code-preview__copy').exists()).toBe(true);
@@ -208,16 +236,17 @@ describe('markdown', () => {
 	});
 
 	it('mounts multi-file props through the directive', async () => {
-		const source = [
-			':::RUNTIME {"entry":"App.vue","theme":"dark","views":["files","runtime"]}',
-			'```vue App.vue',
-			'<template>app</template>',
-			'```',
-			'```ts util.ts',
-			'export const value = 1',
-			'```',
-			':::'
-		].join('\n');
+		const source = runtimeWithConfig(
+			'{ entry: \'App.vue\', views: [\'files\', \'runtime\'] }',
+			[
+				'```vue App.vue',
+				'<template>app</template>',
+				'```',
+				'```ts util.ts',
+				'export const value = 1',
+				'```'
+			].join('\n')
+		);
 		mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
 		await nextTick();
 
@@ -225,7 +254,6 @@ describe('markdown', () => {
 		expect(text).toContain('-App.vue-');
 		expect(text).toContain('"App.vue":"<template>app</template>\\n"');
 		expect(text).toContain('"util.ts":"export const value = 1\\n"');
-		expect(text).toContain('-dark');
 		expect(text).toContain('["files","runtime"]');
 	});
 
@@ -235,22 +263,23 @@ describe('markdown', () => {
 		[['files', 'runtime'], '["files","runtime"]'],
 		[['runtime', 'files'], '["runtime","files"]']
 	])('passes RUNTIME views %j to Playground', async (views, expected) => {
-		const source = `:::RUNTIME ${JSON.stringify({ views })}\n\`\`\`vue\n<template />\n\`\`\`\n:::`;
+		const source = runtimeWithConfig(
+			`{ views: ${JSON.stringify(views)} }`,
+			'```vue\n<template />\n```'
+		);
 		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
 		await nextTick();
 		expect(wrapper.find('.playground').text()).toContain(expected);
 	});
 
 	it('passes RUNTIME viewport props to Playground', async () => {
-		const viewport = [375, 667];
-		const viewportOptions = ['auto', 375, viewport, 768];
-		const source = [
-			`:::RUNTIME ${JSON.stringify({ viewport, viewportOptions })}`,
-			'```vue',
-			'<template />',
-			'```',
-			':::'
-		].join('\n');
+		const source = runtimeWithConfig(
+			`{
+				viewport: [375, 667],
+				viewportOptions: ['auto', 375, [375, 667], 768],
+			}`,
+			'```vue\n<template />\n```'
+		);
 		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
 		await nextTick();
 
@@ -259,10 +288,41 @@ describe('markdown', () => {
 		expect(text).toContain('["auto",375,[375,667],768]');
 	});
 
+	it('ignores inline RUNTIME props on the opening line', () => {
+		const html = MarkdownRenderer.render([
+			':::RUNTIME { "views": ["files"], "entry": "missing.js" }',
+			'```vue',
+			'<template />',
+			'```',
+			':::'
+		].join('\n'));
+
+		expect(html).toContain('data-playground');
+		expect(html).toContain('data-props="{}"');
+		expect(html).not.toContain('files');
+	});
+
+	it('ignores plain HTML comments without a json5 config', () => {
+		const html = MarkdownRenderer.render([
+			':::RUNTIME',
+			'<!-- note only -->',
+			'```vue',
+			'<template />',
+			'```',
+			':::'
+		].join('\n'));
+
+		expect(html).toContain('data-playground');
+		expect(html).toContain('data-props="{}"');
+	});
+
 	it('reports invalid multi-file declarations', () => {
 		const missingName = MarkdownRenderer.render(':::RUNTIME\n```vue App.vue\n<template />\n```\n```ts\ncode\n```\n:::');
 		const duplicateName = MarkdownRenderer.render(':::RUNTIME\n```vue App.vue\na\n```\n```vue App.vue\nb\n```\n:::');
-		const missingEntry = MarkdownRenderer.render(':::RUNTIME {"entry":"main.js"}\n```vue App.vue\na\n```\n:::');
+		const missingEntry = MarkdownRenderer.render(runtimeWithConfig(
+			'{ entry: \'main.js\' }',
+			'```vue App.vue\na\n```'
+		));
 
 		expect(missingName).toContain('每个代码块都必须声明文件名');
 		expect(duplicateName).toContain('文件名 App.vue 重复');
@@ -270,36 +330,38 @@ describe('markdown', () => {
 	});
 
 	it('reports invalid RUNTIME views', () => {
-		const render = (props: Record<string, unknown>) => MarkdownRenderer.render(
-			`:::RUNTIME ${JSON.stringify(props)}\n\`\`\`vue\n<template />\n\`\`\`\n:::`
+		const render = (config: string) => MarkdownRenderer.render(
+			runtimeWithConfig(config, '```vue\n<template />\n```')
 		);
 
-		expect(render({ views: [] })).toContain('views 必须是非空数组');
-		expect(render({ views: 'runtime' })).toContain('views 必须是非空数组');
-		expect(render({ views: ['unknown'] })).toContain('views 不支持 unknown');
-		expect(render({ views: ['runtime', 'runtime'] })).toContain('views 不能重复声明 runtime');
-		expect(render({ view: 'files' })).toContain('不支持 view 参数');
+		expect(render('{ views: [] }')).toContain('views 必须是非空数组');
+		expect(render('{ views: \'runtime\' }')).toContain('views 必须是非空数组');
+		expect(render('{ views: [\'unknown\'] }')).toContain('views 不支持 unknown');
+		expect(render('{ views: [\'runtime\', \'runtime\'] }')).toContain('views 不能重复声明 runtime');
+		expect(render('{ view: \'files\' }')).toContain('不支持 view 参数');
 	});
 
 	it('reports invalid RUNTIME viewport declarations', () => {
-		const render = (props: Record<string, unknown>) => MarkdownRenderer.render(
-			`:::RUNTIME ${JSON.stringify(props)}\n\`\`\`vue\n<template />\n\`\`\`\n:::`
+		const render = (config: string) => MarkdownRenderer.render(
+			runtimeWithConfig(config, '```vue\n<template />\n```')
 		);
 
-		expect(render({ viewport: 'mobile' })).toContain('viewport 必须是 auto、正数宽度或 [宽,高]');
-		expect(render({ viewport: 0 })).toContain('viewport 必须是 auto、正数宽度或 [宽,高]');
-		expect(render({ viewport: [375] })).toContain('viewport 必须是 auto、正数宽度或 [宽,高]');
-		expect(render({ viewportOptions: 'auto' })).toContain('viewportOptions 必须是数组');
-		expect(render({ viewportOptions: ['auto', 0] }))
+		expect(render('{ viewport: \'mobile\' }')).toContain('viewport 必须是 auto、正数宽度或 [宽,高]');
+		expect(render('{ viewport: 0 }')).toContain('viewport 必须是 auto、正数宽度或 [宽,高]');
+		expect(render('{ viewport: [375] }')).toContain('viewport 必须是 auto、正数宽度或 [宽,高]');
+		expect(render('{ viewportOptions: \'auto\' }')).toContain('viewportOptions 必须是数组');
+		expect(render('{ viewportOptions: [\'auto\', 0] }'))
 			.toContain('viewportOptions[1] 必须是 auto、正数宽度或 [宽,高]');
-		expect(render({ viewportOptions: ['auto', 'auto'] }))
+		expect(render('{ viewportOptions: [\'auto\', \'auto\'] }'))
 			.toContain('viewportOptions 不能重复声明 auto');
-		expect(render({ viewportOptions: [] })).toContain('data-playground');
+		expect(render('{ viewportOptions: [] }')).toContain('data-playground');
 	});
 
-	it('supports empty input, malformed props and multiple markdown instances', async () => {
+	it('supports empty input, malformed config and multiple markdown instances', async () => {
 		const malformed = mount(Markdown, {
-			props: { value: ':::RUNTIME not-json\n```vue\ndemo\n```\n:::' },
+			props: {
+				value: runtimeWithConfig('{ views: [', '```vue\ndemo\n```')
+			},
 			attachTo: document.body
 		});
 		mount(Markdown, {
@@ -308,6 +370,7 @@ describe('markdown', () => {
 		});
 		await nextTick();
 		expect(document.querySelectorAll('.playground')).toHaveLength(2);
+		expect(document.body.innerHTML).toContain('data-props="{}"');
 
 		await malformed.setProps({ value: '' });
 		expect(malformed.find('.docs-markdown-reset').text()).toBe('');

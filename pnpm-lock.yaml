@@ -10,7 +10,7 @@ importers:
     devDependencies:
       '@deot/dev':
         specifier: ^2.9.15
-        version: 2.9.15(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@typescript-eslint/utils@8.65.0(eslint@10.8.0)(typescript@6.0.3))(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(eslint@10.8.0)(postcss-html@1.8.1)(postcss@8.5.25)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(vue-eslint-parser@10.4.1(eslint@10.8.0))(yaml@2.9.0)
+        version: 2.9.15(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@typescript-eslint/utils@8.65.0(eslint@10.8.0)(typescript@6.0.3))(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(eslint@10.8.0)(postcss-html@1.8.1)(postcss@8.5.25)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(vue-eslint-parser@10.4.1(eslint@10.8.0))(yaml@2.9.0)
 
   packages/cli:
     dependencies:
@@ -99,6 +99,9 @@ importers:
       '@deot/docs-playground':
         specifier: '*'
         version: link:../playground
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
       markdown-it:
         specifier: ^14.1.0
         version: 14.1.0
@@ -1467,6 +1470,10 @@ packages:
   '@swc/types@0.1.28':
     resolution: {integrity: sha512-V6Mnml8v09QALx6K0elJ7o9K/MkVDtW3t6L+7Ou/JcWtb3xwId2AH4FeOceySd2JaO87IMw4+6vSZxLm34LPbw==}
 
+  '@testing-library/dom@10.4.1':
+    resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
+    engines: {node: '>=18'}
+
   '@testing-library/dom@9.3.4':
     resolution: {integrity: sha512-FlS4ZWlp97iiNWig0Muq8p+3rVDjRiYE+YKGbAqXOu9nwJFFOdL00kFpz42M+4huzYi86vAK1sOOfyOG45muIQ==}
     engines: {node: '>=14'}
@@ -1942,6 +1949,9 @@ packages:
   aria-query@5.1.3:
     resolution: {integrity: sha512-R5iJ5lkuHybztUfuOAznmboyjWq8O6sqNqtK7CLOqdydi54VNbORp49mb14KbWgG1QD3JFO9hJdZ+y4KutfdOQ==}
 
+  aria-query@5.3.0:
+    resolution: {integrity: sha512-b0P0sZPKtyu8HkeRAfCq0IfURZK+SuwMjY1UXGBU27wpAiTwQAIlq56IbIO+ytk/JjS1fMR14ee5WBBfKi5J6A==}
+
   array-buffer-byte-length@1.0.2:
     resolution: {integrity: sha512-LHE+8BuR7RYGDKvnrmcuSq3tDcKv9OFEXQt/HpbZhY7V6h0zlUXutnAD82GiFx9rdieCMjkvtcsPqBwgUl1Iiw==}
     engines: {node: '>= 0.4'}
@@ -2282,6 +2292,10 @@ packages:
     resolution: {integrity: sha512-8QmQKqEASLd5nx0U1B1okLElbUuuttJ/AnYmRXbbbGDWh6uS208EjD4Xqq/I9wK7u0v6O08XhTWnt5XtEbR6Dg==}
     engines: {node: '>= 0.4'}
 
+  dequal@2.0.3:
+    resolution: {integrity: sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==}
+    engines: {node: '>=6'}
+
   detect-libc@1.0.3:
     resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
     engines: {node: '>=0.10'}
@@ -2580,9 +2594,6 @@ packages:
 
   flat-cache@6.1.23:
     resolution: {integrity: sha512-f++BY9pTk+983xK1FLzlLpmM0i0z+jHmx3QESGkURMXujQZz1k5wzwX6hjnQ8goaD0B+sYnDK1yZ6MTyZfUaqA==}
-
-  flatted@3.3.3:
-    resolution: {integrity: sha512-GX+ysw4PBCz0PzosHDepZGANEuFCMLrnRTiEy9McGjmkCQYwRq4A/X786G/fjM/+OjsWSU1ZrY5qyARZmO/uwg==}
 
   flatted@3.4.4:
     resolution: {integrity: sha512-5+ybhBZANEJxaH3X5evAFatUxLfEHSr7n6kYJ+1Qd0mUqr4eu9gIf6GDbWHf8RJijHrjjO8G+la14SlL2SeS1Q==}
@@ -4924,9 +4935,9 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@deot/dev-builder@2.9.14(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)':
+  '@deot/dev-builder@2.9.14(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)':
     dependencies:
-      '@deot/dev-react': 2.9.13(@testing-library/dom@9.3.4)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))
+      '@deot/dev-react': 2.9.13(@testing-library/dom@10.4.1)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))
       '@deot/dev-shared': 2.9.13
       '@deot/dev-vue': 2.9.13(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)
       '@microsoft/api-extractor': 7.58.12(@types/node@25.9.5)
@@ -4964,14 +4975,14 @@ snapshots:
       - tsx
       - yaml
 
-  '@deot/dev-cli@2.9.15(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)':
+  '@deot/dev-cli@2.9.15(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)':
     dependencies:
       '@deot/dev-adder': 2.9.13(@types/node@25.9.5)
-      '@deot/dev-builder': 2.9.14(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)
+      '@deot/dev-builder': 2.9.14(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)
       '@deot/dev-linker': 2.9.13
       '@deot/dev-releaser': 2.9.13(@types/node@25.9.5)
       '@deot/dev-shared': 2.9.13
-      '@deot/dev-tester': 2.9.14(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      '@deot/dev-tester': 2.9.14(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
       '@deot/dev-updater': 2.9.13
       commander: 15.0.0
     transitivePeerDependencies:
@@ -5024,9 +5035,9 @@ snapshots:
       - jiti
       - supports-color
 
-  '@deot/dev-dever@2.9.13(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)':
+  '@deot/dev-dever@2.9.13(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)':
     dependencies:
-      '@deot/dev-react': 2.9.13(@testing-library/dom@9.3.4)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))
+      '@deot/dev-react': 2.9.13(@testing-library/dom@10.4.1)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))
       '@deot/dev-shared': 2.9.13
       '@deot/dev-vue': 2.9.13(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)
       ejs: 6.0.1
@@ -5079,9 +5090,9 @@ snapshots:
       chalk: 5.6.2
       ora: 9.4.1
 
-  '@deot/dev-react@2.9.13(@testing-library/dom@9.3.4)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))':
+  '@deot/dev-react@2.9.13(@testing-library/dom@10.4.1)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))':
     dependencies:
-      '@testing-library/react': 16.3.2(@testing-library/dom@9.3.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@testing-library/react': 16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@vitejs/plugin-react-swc': 4.3.3(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -5126,9 +5137,9 @@ snapshots:
       - utf-8-validate
       - yauzl
 
-  '@deot/dev-tester@2.9.14(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)':
+  '@deot/dev-tester@2.9.14(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)':
     dependencies:
-      '@deot/dev-react': 2.9.13(@testing-library/dom@9.3.4)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))
+      '@deot/dev-react': 2.9.13(@testing-library/dom@10.4.1)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))
       '@deot/dev-shared': 2.9.13
       '@deot/dev-vue': 2.9.13(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)
       '@vitest/coverage-istanbul': 4.1.10(vitest@4.1.10)
@@ -5207,21 +5218,21 @@ snapshots:
       - typescript
       - yaml
 
-  '@deot/dev@2.9.15(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@typescript-eslint/utils@8.65.0(eslint@10.8.0)(typescript@6.0.3))(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(eslint@10.8.0)(postcss-html@1.8.1)(postcss@8.5.25)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(vue-eslint-parser@10.4.1(eslint@10.8.0))(yaml@2.9.0)':
+  '@deot/dev@2.9.15(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@typescript-eslint/utils@8.65.0(eslint@10.8.0)(typescript@6.0.3))(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(eslint@10.8.0)(postcss-html@1.8.1)(postcss@8.5.25)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(vue-eslint-parser@10.4.1(eslint@10.8.0))(yaml@2.9.0)':
     dependencies:
       '@deot/dev-adder': 2.9.13(@types/node@25.9.5)
-      '@deot/dev-builder': 2.9.14(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)
-      '@deot/dev-cli': 2.9.15(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      '@deot/dev-builder': 2.9.14(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)
+      '@deot/dev-cli': 2.9.15(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
       '@deot/dev-commitlint': 2.9.13
       '@deot/dev-deps': 2.9.13
-      '@deot/dev-dever': 2.9.13(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)
+      '@deot/dev-dever': 2.9.13(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(yaml@2.9.0)
       '@deot/dev-eslint': 2.9.13(@typescript-eslint/utils@8.65.0(eslint@10.8.0)(typescript@6.0.3))(eslint@10.8.0)(typescript@6.0.3)(vue-eslint-parser@10.4.1(eslint@10.8.0))
       '@deot/dev-linker': 2.9.13
       '@deot/dev-releaser': 2.9.13(@types/node@25.9.5)
       '@deot/dev-shared': 2.9.13
       '@deot/dev-stylelint': 2.9.13(postcss-html@1.8.1)(postcss@8.5.25)
       '@deot/dev-test': 2.9.13
-      '@deot/dev-tester': 2.9.14(@testing-library/dom@9.3.4)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
+      '@deot/dev-tester': 2.9.14(@testing-library/dom@10.4.1)(@types/node@25.9.5)(@vue/compiler-dom@3.5.40)(@vue/compiler-sfc@3.5.40)(@vue/server-renderer@3.5.40)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(typescript@6.0.3)(vite@8.2.0(@types/node@25.9.5)(esbuild@0.28.1)(sass@1.102.0)(tsx@4.23.1)(yaml@2.9.0))(yaml@2.9.0)
       '@deot/dev-updater': 2.9.13
     transitivePeerDependencies:
       - '@edge-runtime/vm'
@@ -5491,7 +5502,7 @@ snapshots:
   '@eslint/config-array@0.23.5':
     dependencies:
       '@eslint/object-schema': 3.0.5
-      debug: 4.4.1
+      debug: 4.4.3
       minimatch: 10.2.6
     transitivePeerDependencies:
       - supports-color
@@ -6041,6 +6052,17 @@ snapshots:
     dependencies:
       '@swc/counter': 0.1.3
 
+  '@testing-library/dom@10.4.1':
+    dependencies:
+      '@babel/code-frame': 7.29.7
+      '@babel/runtime': 7.27.6
+      '@types/aria-query': 5.0.4
+      aria-query: 5.3.0
+      dom-accessibility-api: 0.5.16
+      lz-string: 1.5.0
+      picocolors: 1.1.1
+      pretty-format: 27.5.1
+
   '@testing-library/dom@9.3.4':
     dependencies:
       '@babel/code-frame': 7.27.1
@@ -6052,10 +6074,10 @@ snapshots:
       lz-string: 1.5.0
       pretty-format: 27.5.1
 
-  '@testing-library/react@16.3.2(@testing-library/dom@9.3.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@babel/runtime': 7.27.6
-      '@testing-library/dom': 9.3.4
+      '@testing-library/dom': 10.4.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
@@ -6577,6 +6599,10 @@ snapshots:
     dependencies:
       deep-equal: 2.2.3
 
+  aria-query@5.3.0:
+    dependencies:
+      dequal: 2.0.3
+
   array-buffer-byte-length@1.0.2:
     dependencies:
       call-bound: 1.0.4
@@ -6950,6 +6976,8 @@ snapshots:
       has-property-descriptors: 1.0.2
       object-keys: 1.1.1
 
+  dequal@2.0.3: {}
+
   detect-libc@1.0.3:
     optional: true
 
@@ -7148,7 +7176,7 @@ snapshots:
   eslint-scope@9.1.2:
     dependencies:
       '@types/esrecurse': 4.3.1
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       esrecurse: 4.3.0
       estraverse: 5.3.0
 
@@ -7169,10 +7197,10 @@ snapshots:
       '@humanfs/node': 0.16.6
       '@humanwhocodes/module-importer': 1.0.1
       '@humanwhocodes/retry': 0.4.3
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       ajv: 6.15.0
       cross-spawn: 7.0.6
-      debug: 4.4.1
+      debug: 4.4.3
       escape-string-regexp: 4.0.0
       eslint-scope: 9.1.2
       eslint-visitor-keys: 5.0.1
@@ -7286,7 +7314,7 @@ snapshots:
 
   flat-cache@4.0.1:
     dependencies:
-      flatted: 3.3.3
+      flatted: 3.4.4
       keyv: 4.5.4
 
   flat-cache@6.1.23:
@@ -7294,8 +7322,6 @@ snapshots:
       cacheable: 2.5.0
       flatted: 3.4.4
       hookified: 1.15.1
-
-  flatted@3.3.3: {}
 
   flatted@3.4.4: {}
 

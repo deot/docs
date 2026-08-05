@@ -1,33 +1,38 @@
 ## 标题
 
-:::RUNTIME {"views":["runtime"]}
+:::RUNTIME
+<!--
+<config lang="json5">
+{
+	views: ['runtime'],
+}
+</config>
+-->
 ```vue
 <template>
 	<Button @click="expanded = !expanded">切换高度</Button>
-	<div v-if="expanded" style="height: 220px">异步展开内容</div>
-	<img
-		alt="自动高度图片"
-		:src="image"
-	>
+	<div v-if="expanded" style="height: 220px">展开的内容</div>
 </template>
 <script setup>
 import { ref } from 'vue';
 import { Button } from '@deot/vc';
 
 const expanded = ref(false);
-const image = [
-	'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22',
-	' width=%22120%22 height=%2240%22%3E%3Crect width=%22120%22 height=%2240%22',
-	' fill=%22%235495f6%22/%3E%3C/svg%3E'
-].join('');
-setTimeout(() => (expanded.value = true), 300);
 </script>
 ```
 :::
 
 ## 响应式运行时尺寸
 
-:::RUNTIME {"viewport":"auto","viewportOptions":["auto",375,[375,667],768]}
+:::RUNTIME
+<!--
+<config lang="json5">
+{
+	viewport: 'auto',
+	viewportOptions: ['auto', 375, [375, 667], 768],
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="viewport-demo">
@@ -53,15 +58,23 @@ setTimeout(() => (expanded.value = true), 300);
 
 ## 仅文件预览
 
-:::RUNTIME {"entry":"main.js","views":["files"] }
-```js main.js
+:::RUNTIME
+<!--
+<config lang="json5">
+{
+	entry: 'main.js',
+	views: ['files'],
+}
+</config>
+-->
+```js [main.js]
 import { createApp } from 'vue';
 import App from './App.vue';
 
 createApp(App).mount('#app');
 ```
 
-```vue App.vue
+```vue [App.vue]
 <script setup>
 import { message } from './message.js';
 </script>
@@ -71,14 +84,22 @@ import { message } from './message.js';
 </template>
 ```
 
-```js message.js
+```js [message.js]
 export const message = 'Hello from RUNTIME files';
 ```
 :::
 
 ## 文件预览 / 运行时预览
 
-:::RUNTIME {"entry":"App.vue","views":["files","runtime"]}
+:::RUNTIME
+<!--
+<config lang="json5">
+{
+	entry: 'App.vue',
+	views: ['files', 'runtime'],
+}
+</config>
+-->
 ```vue App.vue
 <script setup>
 import Child from './Child.vue';
@@ -102,7 +123,15 @@ defineProps({ label: String });
 
 ## 运行时预览 / 文件预览
 
-:::RUNTIME {"entry":"App.vue","views":["runtime","files"]}
+:::RUNTIME
+<!--
+<config lang="json5">
+{
+	entry: 'App.vue',
+	views: ['runtime', 'files'],
+}
+</config>
+-->
 ```vue App.vue
 <script setup>
 import Child from './Child.vue';
@@ -126,7 +155,15 @@ defineProps({ label: String });
 
 ## 固定高度运行时预览
 
-:::RUNTIME {"views":["runtime"],"style":"height:200px"}
+:::RUNTIME
+<!--
+<config lang="json5">
+{
+	views: ['runtime'],
+	style: 'height:200px',
+}
+</config>
+-->
 ```vue
 <template>
 	<div style="height: 320px">固定 200px，内部可滚动</div>

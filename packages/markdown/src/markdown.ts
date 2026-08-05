@@ -2,6 +2,7 @@ import Config from 'markdown-it-chain';
 import anchor from 'markdown-it-anchor';
 import mdContainer from 'markdown-it-container';
 import markdownIt from 'markdown-it';
+import JSON5 from 'json5';
 
 const HTML_MD_SIGN = 'md';
 const RUNTIME = 'RUNTIME';
@@ -40,9 +41,10 @@ config
 
 const md = config.toMd(markdownIt);
 
-const runtimeInfoRE = new RegExp(`^${RUNTIME}\\s*(.*)$`);
 const runtimeOpen = `container_${RUNTIME}_open`;
 const runtimeClose = `container_${RUNTIME}_close`;
+const htmlCommentRE = /<!--([\s\S]*?)-->/g;
+const runtimeConfigRE = /<config\s+lang\s*=\s*["']json5["']\s*>([\s\S]*?)<\/config>/i;
 const renderRuntimeError = (message: string) =>
 	`<div class="docs-runtime-error">RUNTIME: ${md.utils.escapeHtml(message)}</div>\n`;
 const runtimeViews = ['runtime', 'files'];
@@ -89,6 +91,31 @@ const validateRuntimeViewport = (propsData: Record<string, unknown>) => {
 	}
 	return '';
 };
+const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>) => {
+	for (const token of tokens) {
+		const sources: string[] = [];
+		if (token.type === 'html_block' && token.content) sources.push(token.content);
+		if (token.type === 'inline' && token.content) sources.push(token.content);
+		for (const source of sources) {
+			htmlCommentRE.lastIndex = 0;
+			let commentMatch = htmlCommentRE.exec(source);
+			while (commentMatch) {
+				const configMatch = commentMatch[1].match(runtimeConfigRE);
+				if (configMatch) {
+					try {
+						const parsed = JSON5.parse(configMatch[1]);
+						if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+							return parsed as Record<string, unknown>;
+						}
+					} catch { /* malformed config remains empty */ }
+				}
+				commentMatch = htmlCommentRE.exec(source);
+			}
+		}
+	}
+	return {};
+};
+const renderPlaygroundAttrs = (propsData: Record<string, unknown>) => `data-props="${md.utils.escapeHtml(JSON.stringify(propsData))}"`;
 
 md.core.ruler.after('block', 'runtime-files', (state) => {
 	for (let index = 0; index < state.tokens.length; index++) {
@@ -103,18 +130,13 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 			if (depth === 0) break;
 		}
 
-		const fences = state.tokens
-			.slice(index + 1, closeIndex)
-			.filter(token => token.type === 'fence');
-		const propsSource = openToken.info.match(runtimeInfoRE)?.[1]?.trim() || '';
+		const innerTokens = state.tokens.slice(index + 1, closeIndex);
+		const fences = innerTokens.filter(token => token.type === 'fence');
 		const placeholder = new state.Token('html_block', '', 0);
 		placeholder.block = true;
-		let propsData: Record<string, unknown> = {};
-		try {
-			const parsed = JSON.parse(propsSource || '{}');
-			if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) propsData = parsed;
-		} catch { /* malformed props remain backward compatible */ }
+		const propsData = parseRuntimeProps(innerTokens);
 		const propsError = validateRuntimeViews(propsData) || validateRuntimeViewport(propsData);
+		const propsAttr = renderPlaygroundAttrs(propsData);
 
 		if (!fences.length) {
 			placeholder.content = renderRuntimeError('至少需要声明一个代码文件');
@@ -131,7 +153,7 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 				placeholder.content = [
 					'<div data-playground',
 					`data-code="${md.utils.escapeHtml(fences[0].content)}"`,
-					`data-props="${md.utils.escapeHtml(propsSource)}"></div>\n`
+					`${propsAttr}></div>\n`
 				].join(' ');
 			} else {
 				const missingFilename = fileEntries.some(([filename]) => !filename);
@@ -156,7 +178,7 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 						'<div data-playground',
 						`data-files="${md.utils.escapeHtml(JSON.stringify(files))}"`,
 						`data-entry="${md.utils.escapeHtml(entry)}"`,
-						`data-props="${md.utils.escapeHtml(propsSource)}"></div>\n`
+						`${propsAttr}></div>\n`
 					].join(' ');
 				}
 			}

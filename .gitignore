@@ -60,3 +60,6 @@ user.config.js
 # lock
 yarn.lock
 # package-lock.json
+
+# store
+.pnpm-store
