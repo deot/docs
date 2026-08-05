@@ -77,14 +77,14 @@ const expanded = ref(false);
 }
 </config>
 -->
-```js [main.js]
+```js main.js
 import { createApp } from 'vue';
 import App from './App.vue';
 
 createApp(App).mount('#app');
 ```
 
-```vue [App.vue]
+```vue App.vue
 <script setup>
 import { message } from './message.js';
 </script>
@@ -94,7 +94,7 @@ import { message } from './message.js';
 </template>
 ```
 
-```js [message.js]
+```js message.js
 export const message = 'Hello from RUNTIME files';
 ```
 :::

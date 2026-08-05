@@ -300,14 +300,13 @@ watch(() => props.entry, (entry) => {
 @include block(docs-playground) {
 	@include element(header) {
 		display: flex;
-		height: 48px;
 		padding: 0 12px;
 		background: #f7f8fa !important;
 		box-shadow: inset 0 -1px #edeff1;
 		box-sizing: border-box;
 		justify-content: flex-end;
 		align-items: center;
-		flex: 0 0 48px;
+		flex: 0 0 44px;
 	}
 
 	@include element(views) {
@@ -317,8 +316,8 @@ watch(() => props.entry, (entry) => {
 
 	@include element(view) {
 		display: inline-flex;
-		width: 30px;
-		height: 30px;
+		width: 28px;
+		height: 28px;
 		padding: 0;
 		font: inherit;
 		color: #64748b;
@@ -346,8 +345,8 @@ watch(() => props.entry, (entry) => {
 
 	@include element(tool) {
 		display: inline-flex;
-		width: 30px;
-		height: 30px;
+		width: 28px;
+		height: 28px;
 		padding: 0;
 		font: inherit;
 		color: #64748b;

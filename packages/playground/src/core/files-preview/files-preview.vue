@@ -6,10 +6,10 @@
 				:auto-resize="true"
 				:native="false"
 				:show-bar="true"
-				height="48"
+				height="44"
 				content-class="docs-playground-files__tabs"
-				content-style="height: 48px; overflow: hidden;"
-				wrapper-style="height: 48px; overflow-x: auto; overflow-y: hidden;"
+				content-style="height: 44px; overflow: hidden;"
+				wrapper-style="height: 44px; overflow-x: auto; overflow-y: hidden;"
 			>
 				<button
 					v-for="filename in filenames"
@@ -93,23 +93,22 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 
 	@include element(toolbar) {
 		display: flex;
-		height: 48px;
 		overflow: hidden;
 		box-shadow: inset 0 -1px #dedede;
 		box-sizing: border-box;
-		flex: 0 0 48px;
+		flex: 0 0 44px;
 	}
 
 	@include element(scroller) {
 		width: 0;
-		height: 48px;
+		height: 44px;
 		min-width: 0;
 		overflow: hidden;
 		background: #f7f8fa;
 		flex: 1 1 auto;
 
 		.vc-scroller__wrapper {
-			height: 48px;
+			height: 44px;
 			overflow-y: hidden !important;
 			scrollbar-width: none;
 
@@ -125,9 +124,9 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 
 	@include element(tabs) {
 		display: inline-flex;
-		height: 48px;
+		height: 44px;
 		min-width: 100%;
-		padding: 0 20px;
+		padding: 0 10px;
 		box-sizing: border-box;
 		gap: 4px;
 	}
@@ -135,11 +134,11 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 	@include element(tab) {
 		position: relative;
 		display: inline-flex;
-		height: 48px;
+		height: 44px;
 		padding: 0 14px;
 		font: inherit;
 		font-size: 15px;
-		line-height: 48px;
+		line-height: 44px;
 		color: #52525b;
 		white-space: nowrap;
 		cursor: pointer;
@@ -173,7 +172,7 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 
 	@include element(actions) {
 		display: flex;
-		height: 48px;
+		height: 44px;
 		background: #f7f8fa;
 		box-sizing: border-box;
 		flex: 0 0 auto;
@@ -191,7 +190,7 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 	@include element(views) {
 		@include modifier(files) {
 			display: flex;
-			height: 48px;
+			height: 44px;
 			padding: 0 12px;
 			box-sizing: border-box;
 			gap: 4px;
@@ -201,8 +200,8 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 
 	@include element(view) {
 		display: inline-flex;
-		width: 30px;
-		height: 30px;
+		width: 28px;
+		height: 28px;
 		padding: 0;
 		font: inherit;
 		color: #64748b;

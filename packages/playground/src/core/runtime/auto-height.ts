@@ -6,7 +6,7 @@ import {
 } from 'vue';
 import type { Ref, ShallowRef } from 'vue';
 
-export const MIN_RUNTIME_HEIGHT = 28;
+export const MIN_RUNTIME_HEIGHT = 24;
 
 type SandboxContainer = HTMLElement | null | Readonly<ShallowRef<HTMLElement | null>>;
 
