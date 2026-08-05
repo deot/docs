@@ -526,7 +526,7 @@ $sign: md;
 		border: 0;
 	}
 
-	& .TIP[#{$sign}] {
+	& .tip[#{$sign}] {
 		padding: 8px 16px;
 		margin: 20px 0;
 		background-color: #f9f0ff;
@@ -538,7 +538,7 @@ $sign: md;
 		}
 	}
 
-	& .WARNING[#{$sign}] {
+	& .warning[#{$sign}] {
 		padding: 8px 16px;
 		margin: 20px 0;
 		background-color: #fff6f7;
@@ -557,7 +557,7 @@ $sign: md;
 		border-radius: 2px;
 	}
 
-	& .TIP[#{$sign}] {
+	& .tip[#{$sign}] {
 		code:not(.hljs)  {
 			color: #445368;
 			background-color: #ffffffb3;

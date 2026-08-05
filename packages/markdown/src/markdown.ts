@@ -5,9 +5,9 @@ import markdownIt from 'markdown-it';
 import JSON5 from 'json5';
 
 const HTML_MD_SIGN = 'md';
-const RUNTIME = 'RUNTIME';
-const TIP = 'TIP';
-const WARNING = 'WARNING';
+const PLAYGROUND = 'playground';
+const TIP = 'tip';
+const WARNING = 'warning';
 const config = new Config();
 
 config
@@ -27,8 +27,8 @@ config
 
 	.plugin('container')
 	.use(($md) => {
-		const reg = new RegExp(`^${RUNTIME}\\s*(.*)$`);
-		$md.use(mdContainer, RUNTIME, {
+		const reg = new RegExp(`^${PLAYGROUND}\\s*(.*)$`);
+		$md.use(mdContainer, PLAYGROUND, {
 			validate(params) {
 				return params.trim().match(reg);
 			}
@@ -41,12 +41,12 @@ config
 
 const md = config.toMd(markdownIt);
 
-const runtimeOpen = `container_${RUNTIME}_open`;
-const runtimeClose = `container_${RUNTIME}_close`;
+const playgroundOpen = `container_${PLAYGROUND}_open`;
+const playgroundClose = `container_${PLAYGROUND}_close`;
 const htmlCommentRE = /<!--([\s\S]*?)-->/g;
 const runtimeConfigRE = /<config\s+lang\s*=\s*["']json5["']\s*>([\s\S]*?)<\/config>/i;
-const renderRuntimeError = (message: string) =>
-	`<div class="docs-runtime-error">RUNTIME: ${md.utils.escapeHtml(message)}</div>\n`;
+const renderPlaygroundError = (message: string) =>
+	`<div class="docs-playground-error">PLAYGROUND: ${md.utils.escapeHtml(message)}</div>\n`;
 const runtimeViews = ['runtime', 'files'];
 const isRuntimeViewport = (viewport: unknown) => {
 	if (viewport === 'auto') return true;
@@ -120,13 +120,13 @@ const renderPlaygroundAttrs = (propsData: Record<string, unknown>) => `data-prop
 md.core.ruler.after('block', 'runtime-files', (state) => {
 	for (let index = 0; index < state.tokens.length; index++) {
 		const openToken = state.tokens[index];
-		if (openToken.type !== runtimeOpen) continue;
+		if (openToken.type !== playgroundOpen) continue;
 
 		let depth = 1;
 		let closeIndex = index + 1;
 		for (; closeIndex < state.tokens.length; closeIndex++) {
-			if (state.tokens[closeIndex].type === runtimeOpen) depth++;
-			if (state.tokens[closeIndex].type === runtimeClose) depth--;
+			if (state.tokens[closeIndex].type === playgroundOpen) depth++;
+			if (state.tokens[closeIndex].type === playgroundClose) depth--;
 			if (depth === 0) break;
 		}
 
@@ -139,9 +139,9 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 		const propsAttr = renderPlaygroundAttrs(propsData);
 
 		if (!fences.length) {
-			placeholder.content = renderRuntimeError('至少需要声明一个代码文件');
+			placeholder.content = renderPlaygroundError('至少需要声明一个代码文件');
 		} else if (propsError) {
-			placeholder.content = renderRuntimeError(propsError);
+			placeholder.content = renderPlaygroundError(propsError);
 		} else {
 			const fileEntries = fences.map((token) => {
 				const [, filename = ''] = token.info.trim().split(/\s+/, 2);
@@ -167,11 +167,11 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 				const entry = configuredEntry || filenames[0];
 
 				if (missingFilename) {
-					placeholder.content = renderRuntimeError('多文件模式下每个代码块都必须声明文件名');
+					placeholder.content = renderPlaygroundError('多文件模式下每个代码块都必须声明文件名');
 				} else if (duplicateFilename) {
-					placeholder.content = renderRuntimeError(`文件名 ${duplicateFilename} 重复`);
+					placeholder.content = renderPlaygroundError(`文件名 ${duplicateFilename} 重复`);
 				} else if (!filenames.includes(entry)) {
-					placeholder.content = renderRuntimeError(`入口文件 ${entry} 不存在`);
+					placeholder.content = renderPlaygroundError(`入口文件 ${entry} 不存在`);
 				} else {
 					const files = Object.fromEntries(fileEntries);
 					placeholder.content = [
@@ -190,7 +190,7 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 
 const renderAttrs = md.renderer.renderAttrs;
 md.renderer.renderAttrs = (token) => {
-	const reg = new RegExp(`container_${RUNTIME}|fence|text`);
+	const reg = new RegExp(`container_${PLAYGROUND}|fence|text`);
 	if (token.type && !reg.test(token.type)) {
 		token.attrPush([HTML_MD_SIGN, '']);
 	}

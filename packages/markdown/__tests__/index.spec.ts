@@ -11,7 +11,7 @@ const { codePreviewUnmounted, playgroundUnmounted } = vi.hoisted(() => ({
 }));
 
 const runtimeWithConfig = (config: string, body: string) => [
-	':::RUNTIME',
+	':::playground',
 	'<!--',
 	'<config lang="json5">',
 	config,
@@ -93,7 +93,7 @@ describe('markdown', () => {
 			'',
 			'https://example.com',
 			'',
-			'::: TIP',
+			':::tip',
 			'help',
 			':::',
 			'',
@@ -104,12 +104,12 @@ describe('markdown', () => {
 
 		expect(html).toContain('class="header-anchor"');
 		expect(html).toContain('href="https://example.com"');
-		expect(html).toContain('class="TIP"');
+		expect(html).toContain('class="tip"');
 		expect(html).toContain('md=""');
 		expect(html).toContain('<code class="language-ts">');
 	});
 
-	it('keeps an unnamed single-file RUNTIME block', () => {
+	it('keeps an unnamed single-file playground block', () => {
 		const html = MarkdownRenderer.render(runtimeWithConfig(
 			'{ views: [\'runtime\'] }',
 			'```vue\n<template>ok</template>\n```'
@@ -200,7 +200,7 @@ describe('markdown', () => {
 
 	it('cleans up mounted previews when source changes and the wrapper unmounts', async () => {
 		const source = (language: string, value: number) => [
-			':::RUNTIME',
+			':::playground',
 			'```vue',
 			`<template>${value}</template>`,
 			'```',
@@ -262,7 +262,7 @@ describe('markdown', () => {
 		[['files'], '["files"]'],
 		[['files', 'runtime'], '["files","runtime"]'],
 		[['runtime', 'files'], '["runtime","files"]']
-	])('passes RUNTIME views %j to Playground', async (views, expected) => {
+	])('passes playground views %j to Playground', async (views, expected) => {
 		const source = runtimeWithConfig(
 			`{ views: ${JSON.stringify(views)} }`,
 			'```vue\n<template />\n```'
@@ -272,7 +272,7 @@ describe('markdown', () => {
 		expect(wrapper.find('.playground').text()).toContain(expected);
 	});
 
-	it('passes RUNTIME viewport props to Playground', async () => {
+	it('passes playground viewport props to Playground', async () => {
 		const source = runtimeWithConfig(
 			`{
 				viewport: [375, 667],
@@ -288,9 +288,9 @@ describe('markdown', () => {
 		expect(text).toContain('["auto",375,[375,667],768]');
 	});
 
-	it('ignores inline RUNTIME props on the opening line', () => {
+	it('ignores inline playground props on the opening line', () => {
 		const html = MarkdownRenderer.render([
-			':::RUNTIME { "views": ["files"], "entry": "missing.js" }',
+			':::playground { "views": ["files"], "entry": "missing.js" }',
 			'```vue',
 			'<template />',
 			'```',
@@ -304,7 +304,7 @@ describe('markdown', () => {
 
 	it('ignores plain HTML comments without a json5 config', () => {
 		const html = MarkdownRenderer.render([
-			':::RUNTIME',
+			':::playground',
 			'<!-- note only -->',
 			'```vue',
 			'<template />',
@@ -317,8 +317,8 @@ describe('markdown', () => {
 	});
 
 	it('reports invalid multi-file declarations', () => {
-		const missingName = MarkdownRenderer.render(':::RUNTIME\n```vue App.vue\n<template />\n```\n```ts\ncode\n```\n:::');
-		const duplicateName = MarkdownRenderer.render(':::RUNTIME\n```vue App.vue\na\n```\n```vue App.vue\nb\n```\n:::');
+		const missingName = MarkdownRenderer.render(':::playground\n```vue App.vue\n<template />\n```\n```ts\ncode\n```\n:::');
+		const duplicateName = MarkdownRenderer.render(':::playground\n```vue App.vue\na\n```\n```vue App.vue\nb\n```\n:::');
 		const missingEntry = MarkdownRenderer.render(runtimeWithConfig(
 			'{ entry: \'main.js\' }',
 			'```vue App.vue\na\n```'
@@ -329,7 +329,7 @@ describe('markdown', () => {
 		expect(missingEntry).toContain('入口文件 main.js 不存在');
 	});
 
-	it('reports invalid RUNTIME views', () => {
+	it('reports invalid playground views', () => {
 		const render = (config: string) => MarkdownRenderer.render(
 			runtimeWithConfig(config, '```vue\n<template />\n```')
 		);
@@ -341,7 +341,7 @@ describe('markdown', () => {
 		expect(render('{ view: \'files\' }')).toContain('不支持 view 参数');
 	});
 
-	it('reports invalid RUNTIME viewport declarations', () => {
+	it('reports invalid playground viewport declarations', () => {
 		const render = (config: string) => MarkdownRenderer.render(
 			runtimeWithConfig(config, '```vue\n<template />\n```')
 		);
@@ -365,7 +365,7 @@ describe('markdown', () => {
 			attachTo: document.body
 		});
 		mount(Markdown, {
-			props: { value: ':::RUNTIME\n```vue\nsecond\n```\n:::' },
+			props: { value: ':::playground\n```vue\nsecond\n```\n:::' },
 			attachTo: document.body
 		});
 		await nextTick();

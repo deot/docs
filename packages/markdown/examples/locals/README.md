@@ -1,6 +1,6 @@
 ## 标题
 
-:::RUNTIME
+:::playground
 <!--
 <config lang="json5">
 {
@@ -24,7 +24,7 @@ const expanded = ref(false);
 
 ## 响应式运行时尺寸
 
-:::RUNTIME
+:::playground
 <!--
 <config lang="json5">
 {
@@ -58,7 +58,7 @@ const expanded = ref(false);
 
 ## 仅文件预览
 
-:::RUNTIME
+:::playground
 <!--
 <config lang="json5">
 {
@@ -91,7 +91,7 @@ export const message = 'Hello from RUNTIME files';
 
 ## 文件预览 / 运行时预览
 
-:::RUNTIME
+:::playground
 <!--
 <config lang="json5">
 {
@@ -123,7 +123,7 @@ defineProps({ label: String });
 
 ## 运行时预览 / 文件预览
 
-:::RUNTIME
+:::playground
 <!--
 <config lang="json5">
 {
@@ -155,7 +155,7 @@ defineProps({ label: String });
 
 ## 固定高度运行时预览
 
-:::RUNTIME
+:::playground
 <!--
 <config lang="json5">
 {

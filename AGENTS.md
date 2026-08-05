@@ -11,7 +11,7 @@ This is a **pnpm monorepo** for `@deot/docs`, a Vue 3 documentation toolchain. I
 | `packages/client` | `@deot/docs-client` | Vue application shell and router |
 | `packages/cli` | `@deot/docs-cli` | `doc dev` / `doc build` command entry |
 | `packages/dever` | `@deot/docs-dever` | Vite dev-server and build implementation used by the CLI |
-| `packages/markdown` | `@deot/docs-markdown` | Markdown renderer, highlighting, and `RUNTIME` playground blocks |
+| `packages/markdown` | `@deot/docs-markdown` | Markdown renderer, highlighting, and `playground` container blocks |
 | `packages/playground` | `@deot/docs-playground` | Vue REPL preview and editor UI |
 | `packages/index` | `@deot/docs` | Umbrella package |
 
@@ -42,7 +42,7 @@ Valid package folder names for targeted tests and builds are `cli`, `client`, `d
 - `npm run dev` scans `packages/*/examples` and serves the Markdown and Playground examples. `npm run cli:dev` instead runs this repository's `doc dev` command against the default `site/` workspace. Both are long-running Vite processes.
 - Tests use Vitest through `ddc test`. Browser-facing tests normally declare `// @vitest-environment jsdom`; CLI and build tests use the Node environment and dry-run paths so they do not start persistent servers.
 - The CLI tests and `cli:*` scripts invoke `tsx`, which creates a local IPC socket. In a restricted sandbox they can fail with `listen EPERM .../tsx-*.pipe`; rerun them with permission to create that socket rather than treating this as a product regression.
-- `RUNTIME` fenced blocks in the Markdown package are converted into Playground mount points. Changes to this syntax usually require coordinated tests in both `packages/markdown` and `packages/playground`.
+- `playground` container blocks in the Markdown package are converted into Playground mount points. Changes to this syntax usually require coordinated tests in both `packages/markdown` and `packages/playground`.
 - The Playground loads its live preview dependencies from public CDNs. Unit tests mock those integrations, but manual preview testing requires network access.
 - Build configuration treats `playground` and `markdown` as Vue packages and externalizes `vue` and `@deot/vc`. Keep package entry points in `src/index.ts` and update the umbrella package dependencies when adding a public package.
 - The repository uses tabs for source files and two spaces for JSON, as defined in `.editorconfig`. `npm run lint:style` fixes files in place rather than performing a read-only check.
