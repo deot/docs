@@ -7,7 +7,7 @@
 	<meta charset="UTF-8">
 </head>
 <body>
-	<div id="app">%BASE_URL%</div>
+	<div id="app"></div>
 	<script>
 		window.$docs = {
 			locales: {
@@ -17,28 +17,15 @@
 			routes: {
 				'/': '/index',
 				'/index': {
-					default: '',
+					content: './components/index.vue',
 					sidebar: null,
 					header: 'default',
 					footer: 'default',
 					extra: null,
 				},
 				'/components/:name': {
-					default: 'default',
-					sidebar: {
-						type: 'json',
-						path: './sidebar.json'
-					},
-					header: 'default',
-					footer: 'default',
-					extra: null,
-				},
-				'/api/:name': {
-					default: 'default',
-					sidebar: {
-						type: 'json',
-						path: './sidebar.json'
-					},
+					content: 'default',
+					sidebar: './sidebar.json',
 					header: 'default',
 					footer: 'default',
 					extra: null,
