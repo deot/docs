@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { defineComponent, h, nextTick } from 'vue';
-import { mount } from '@vue/test-utils';
+import { defineComponent, h } from 'vue';
+import { flushPromises, mount } from '@vue/test-utils';
 import { Markdown as MarkdownRenderer } from '../src/markdown';
 import { Markdown } from '../src';
 
@@ -77,6 +77,10 @@ vi.mock('@deot/docs-playground', async () => {
 });
 
 describe('markdown', () => {
+	beforeAll(async () => {
+		await import('@deot/docs-playground');
+	});
+
 	beforeEach(() => {
 		codePreviewUnmounted.mockReset();
 		playgroundUnmounted.mockReset();
@@ -157,7 +161,10 @@ describe('markdown', () => {
 			'```'
 		].join('\n');
 		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
-		await nextTick();
+		await vi.waitFor(
+			() => expect(document.querySelector('.playground')).not.toBeNull(),
+			{ timeout: 5000 }
+		);
 
 		expect(wrapper.find('h1').text()).toContain('Hello');
 		expect(document.querySelector('.playground')?.textContent).toContain('<template>demo</template>');
@@ -188,9 +195,8 @@ describe('markdown', () => {
 			'```'
 		].join('\n');
 		const wrapper = mount(Markdown, { props: { modelValue: source } });
-		await nextTick();
+		await vi.waitFor(() => expect(wrapper.findAll('.docs-code-preview')).toHaveLength(3));
 
-		expect(wrapper.findAll('.docs-code-preview')).toHaveLength(3);
 		expect(wrapper.findAll('.docs-code-preview__language').map(item => item.text())).toEqual(['vue', 'js']);
 		expect(wrapper.findAll('.docs-code-preview code')[0].html()).toContain('hljs-tag');
 		expect(wrapper.findAll('.docs-code-preview code')[1].html()).toContain('hljs-keyword');
@@ -211,19 +217,19 @@ describe('markdown', () => {
 			'```'
 		].join('\n');
 		const wrapper = mount(Markdown, { props: { modelValue: source('js', 1) } });
-		await nextTick();
+		await vi.waitFor(() => expect(wrapper.findAll('.docs-code-preview')).toHaveLength(1));
 		expect(wrapper.findAll('.docs-code-preview')).toHaveLength(1);
 		expect(wrapper.findAll('.playground')).toHaveLength(1);
 		const previewElement = wrapper.find('.docs-code-preview').element;
 
 		await wrapper.setProps({ value: 'unrelated' });
-		await nextTick();
+		await flushPromises();
 		expect(wrapper.find('.docs-code-preview').element).toBe(previewElement);
 		expect(codePreviewUnmounted).not.toHaveBeenCalled();
 		expect(playgroundUnmounted).not.toHaveBeenCalled();
 
 		await wrapper.setProps({ modelValue: source('ts', 2) });
-		await nextTick();
+		await vi.waitFor(() => expect(wrapper.find('.docs-code-preview__language').text()).toBe('ts'));
 		expect(wrapper.findAll('.docs-code-preview')).toHaveLength(1);
 		expect(wrapper.findAll('.playground')).toHaveLength(1);
 		expect(wrapper.find('.docs-code-preview__language').text()).toBe('ts');
@@ -248,7 +254,7 @@ describe('markdown', () => {
 			].join('\n')
 		);
 		mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
-		await nextTick();
+		await vi.waitFor(() => expect(document.querySelector('.playground')).not.toBeNull());
 
 		const text = document.querySelector('.playground')?.textContent || '';
 		expect(text).toContain('-App.vue-');
@@ -268,7 +274,7 @@ describe('markdown', () => {
 			'```vue\n<template />\n```'
 		);
 		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
-		await nextTick();
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
 		expect(wrapper.find('.playground').text()).toContain(expected);
 	});
 
@@ -281,7 +287,7 @@ describe('markdown', () => {
 			'```vue\n<template />\n```'
 		);
 		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
-		await nextTick();
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
 
 		const text = wrapper.find('.playground').text();
 		expect(text).toContain('[375,667]');
@@ -368,7 +374,7 @@ describe('markdown', () => {
 			props: { value: ':::playground\n```vue\nsecond\n```\n:::' },
 			attachTo: document.body
 		});
-		await nextTick();
+		await vi.waitFor(() => expect(document.querySelectorAll('.playground')).toHaveLength(2));
 		expect(document.querySelectorAll('.playground')).toHaveLength(2);
 		expect(document.body.innerHTML).toContain('data-props="{}"');
 

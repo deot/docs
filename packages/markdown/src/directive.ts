@@ -1,9 +1,13 @@
 import { createApp, h } from 'vue';
 import type { App, DirectiveBinding } from 'vue';
-import * as DocsPlayground from '@deot/docs-playground';
 import { Markdown } from './markdown';
 
 const mountedApps = new WeakMap<HTMLElement, App[]>();
+const renderVersions = new WeakMap<HTMLElement, number>();
+let playgroundModule: Promise<typeof import('@deot/docs-playground')> | undefined;
+const loadPlayground = () => (
+	playgroundModule ||= import('@deot/docs-playground')
+);
 
 const cleanup = (el: HTMLElement) => {
 	for (const app of mountedApps.get(el) || []) app.unmount();
@@ -17,12 +21,21 @@ const resolveBlockLanguage = (block: Element) => {
 	return languageClass?.slice('language-'.length) || '';
 };
 
-const render = (el: HTMLElement, binding: DirectiveBinding<string | undefined>) => {
+const render = async (el: HTMLElement, binding: DirectiveBinding<string | undefined>) => {
 	cleanup(el);
+	const version = (renderVersions.get(el) || 0) + 1;
+	renderVersions.set(el, version);
 	el.innerHTML = binding.value ? Markdown.render(binding.value) : '';
 
 	const apps: App[] = [];
 	const blocks = el.querySelectorAll('pre code');
+	const playgrounds = el.querySelectorAll<HTMLElement>('div[data-playground]');
+	if (!blocks.length && !playgrounds.length) {
+		mountedApps.set(el, apps);
+		return;
+	}
+	const DocsPlayground = await loadPlayground();
+	if (renderVersions.get(el) !== version) return;
 	blocks.forEach((block) => {
 		const pre = block.parentElement;
 		if (!pre) return;
@@ -37,7 +50,6 @@ const render = (el: HTMLElement, binding: DirectiveBinding<string | undefined>) 
 		apps.push(app);
 	});
 
-	const playgrounds = el.querySelectorAll<HTMLElement>('div[data-playground]');
 	playgrounds.forEach((item) => {
 		const code = item.dataset.code;
 		let files;
@@ -63,11 +75,14 @@ const render = (el: HTMLElement, binding: DirectiveBinding<string | undefined>) 
 };
 
 const update = (el: HTMLElement, binding: DirectiveBinding<string | undefined>) => {
-	if (binding.value !== binding.oldValue) render(el, binding);
+	if (binding.value !== binding.oldValue) void render(el, binding);
 };
 
 export const vMarkdown = {
-	mounted: render,
+	mounted: (el: HTMLElement, binding: DirectiveBinding<string | undefined>) => void render(el, binding),
 	updated: update,
-	beforeUnmount: cleanup
+	beforeUnmount: (el: HTMLElement) => {
+		renderVersions.set(el, (renderVersions.get(el) || 0) + 1);
+		cleanup(el);
+	}
 };
