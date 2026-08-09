@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { defineComponent, nextTick } from 'vue';
+import { defineComponent, nextTick, ref } from 'vue';
 import { mount } from '@vue/test-utils';
 import { useStore } from '@vue/repl';
 import Playground from '../src/playground.vue';
@@ -43,7 +43,12 @@ vi.mock('@vue/repl', () => ({
 	Sandbox: defineComponent({
 		name: 'Sandbox',
 		props: ['store', 'autoStoreInit', 'clearConsole', 'previewOptions'],
-		template: '<div class="sandbox" />'
+		setup(_props, { expose }) {
+			const container = ref<HTMLElement | null>(null);
+			expose({ container });
+			return { container };
+		},
+		template: '<div ref="container" class="sandbox"><iframe /></div>'
 	}),
 	useStore: vi.fn((options) => {
 		store.options = options;
@@ -101,6 +106,66 @@ describe('Playground', () => {
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML).toContain('@deot/style');
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
 			.toContain('name="viewport"');
+		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
+			.toContain('docs:navigate');
+	});
+
+	it('merges instance preview options and validates DocsLink bridge messages', async () => {
+		const navigate = vi.fn();
+		const wrapper = mount(Playground, {
+			props: {
+				modelValue: '<template>bridge</template>',
+				onNavigate: navigate,
+				previewOptions: {
+					headHTML: '<meta name="instance-preview">',
+					customCode: { importCode: 'const imported = true', useCode: 'void imported' }
+				}
+			}
+		});
+		await nextTick();
+		const sandbox = wrapper.findComponent({ name: 'Sandbox' });
+		const previewOptions = sandbox.props('previewOptions');
+		expect(previewOptions.headHTML).toContain('docs:navigate');
+		expect(previewOptions.headHTML).toContain('instance-preview');
+		expect(previewOptions.customCode).toEqual({
+			importCode: 'const imported = true',
+			useCode: 'void imported'
+		});
+
+		window.dispatchEvent(new MessageEvent('message', {
+			data: { action: 'docs:navigate', to: '/ignored' },
+			source: window
+		}));
+		window.dispatchEvent(new MessageEvent('message', {
+			data: { action: 'other', to: '/ignored' },
+			source: wrapper.find('iframe').element.contentWindow
+		}));
+		expect(navigate).not.toHaveBeenCalled();
+
+		window.dispatchEvent(new MessageEvent('message', {
+			data: { action: 'docs:navigate', to: '/guide' },
+			source: wrapper.find('iframe').element.contentWindow
+		}));
+		expect(navigate).toHaveBeenCalledWith('/guide');
+
+		wrapper.unmount();
+		window.dispatchEvent(new MessageEvent('message', {
+			data: { action: 'docs:navigate', to: '/after-unmount' },
+			source: window
+		}));
+		expect(navigate).toHaveBeenCalledTimes(1);
+	});
+
+	it('forwards runtime navigation in standard and styleless layouts', async () => {
+		const standard = mount(Playground, { props: { modelValue: '<template />' } });
+		standard.findComponent({ name: 'Runtime' }).vm.$emit('navigate', '/standard');
+		expect(standard.emitted('navigate')).toEqual([['/standard']]);
+
+		const styleless = mount(Playground, {
+			props: { modelValue: '<template />', styleless: true }
+		});
+		styleless.findComponent({ name: 'Runtime' }).vm.$emit('navigate', '/styleless');
+		expect(styleless.emitted('navigate')).toEqual([['/styleless']]);
 	});
 
 	it('switches the default responsive viewports without recreating the sandbox', async () => {

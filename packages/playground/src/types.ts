@@ -1,4 +1,4 @@
-import type { ImportMap, StoreState } from '@vue/repl';
+import type { ImportMap, SandboxProps, StoreState } from '@vue/repl';
 
 export type PlaygroundFiles = Record<string, string>;
 
@@ -11,3 +11,5 @@ export type PlaygroundOptions = Omit<Partial<StoreState>,
 > & {
 	builtinImportMap?: ImportMap;
 };
+
+export type PlaygroundPreviewOptions = SandboxProps['previewOptions'];

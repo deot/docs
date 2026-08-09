@@ -4,10 +4,12 @@
 		:files="sourceFiles"
 		:entry="currentEntry"
 		:options="options"
+		:preview-options="previewOptions"
 		:styleless="true"
 		:viewport="activeViewport"
 		:viewport-options="selectableViewportOptions"
 		@files-change="handleFilesChange"
+		@navigate="emit('navigate', $event)"
 		@viewport-change="handleViewport"
 	/>
 	<div
@@ -24,11 +26,13 @@
 			:files="sourceFiles"
 			:entry="currentEntry"
 			:options="options"
+			:preview-options="previewOptions"
 			:active-view="activeView"
 			:views="normalizedViews"
 			:viewport="activeViewport"
 			:viewport-options="selectableViewportOptions"
 			@files-change="handleFilesChange"
+			@navigate="emit('navigate', $event)"
 			@view-change="handleView"
 			@viewport-change="handleViewport"
 		/>
@@ -53,6 +57,7 @@ import type { EditorFilesChangeAction } from './editor';
 import type {
 	PlaygroundFiles,
 	PlaygroundOptions,
+	PlaygroundPreviewOptions,
 	PlaygroundView,
 	PlaygroundViewport
 } from './types';
@@ -71,6 +76,7 @@ const emit = defineEmits<{
 	'update:entry': [entry: string];
 	'update:viewport': [viewport: PlaygroundViewport];
 	'change': [value: string];
+	'navigate': [to: string];
 }>();
 const props = withDefaults(defineProps<{
 	modelValue?: string;
@@ -81,6 +87,7 @@ const props = withDefaults(defineProps<{
 	viewportOptions?: PlaygroundViewport[];
 	styleless?: boolean;
 	options?: PlaygroundOptions;
+	previewOptions?: PlaygroundPreviewOptions;
 }>(), {
 	modelValue: '',
 	files: () => ({}),

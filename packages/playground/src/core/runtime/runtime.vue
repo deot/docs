@@ -9,7 +9,7 @@
 				ref="sandboxRef"
 				:store="store"
 				:auto-store-init="false"
-				:preview-options="runtimePreviewOptions"
+				:preview-options="mergedPreviewOptions"
 			/>
 		</div>
 	</div>
@@ -101,7 +101,7 @@
 						:store="store"
 						:auto-store-init="false"
 						:clear-console="clearConsole"
-						:preview-options="runtimePreviewOptions"
+						:preview-options="mergedPreviewOptions"
 					/>
 				</div>
 			</div>
@@ -109,7 +109,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { Clipboard, Dropdown, DropdownItem, DropdownMenu } from '@deot/vc';
 import { Sandbox } from '@vue/repl';
 import { PLAYGROUND_VIEW_TEXT } from '../../constants';
@@ -119,10 +119,11 @@ import PlaygroundIcon from '../../icon';
 import type {
 	PlaygroundFiles,
 	PlaygroundOptions,
+	PlaygroundPreviewOptions,
 	PlaygroundView,
 	PlaygroundViewport
 } from '../../types';
-import { useSandboxAutoHeight } from './auto-height';
+import { resolveSandboxContainer, useSandboxAutoHeight } from './auto-height';
 import type { SandboxExposed } from './auto-height';
 import { useSandboxRuntimeErrorGuard } from './error-guard';
 import {
@@ -143,6 +144,7 @@ const props = withDefaults(defineProps<{
 	files: PlaygroundFiles;
 	entry: string;
 	options: PlaygroundOptions;
+	previewOptions?: PlaygroundPreviewOptions;
 	styleless?: boolean;
 	activeView?: PlaygroundView;
 	views?: PlaygroundView[];
@@ -159,7 +161,18 @@ const emit = defineEmits<{
 	'files-change': [files: PlaygroundFiles, entry: string, action: EditorFilesChangeAction];
 	'view-change': [view: PlaygroundView];
 	'viewport-change': [viewport: PlaygroundViewport];
+	'navigate': [to: string];
 }>();
+
+const mergedPreviewOptions = computed(() => ({
+	...runtimePreviewOptions,
+	...props.previewOptions,
+	headHTML: [runtimePreviewOptions?.headHTML, props.previewOptions?.headHTML].filter(Boolean).join('\n'),
+	customCode: {
+		importCode: props.previewOptions?.customCode?.importCode,
+		useCode: props.previewOptions?.customCode?.useCode
+	}
+}));
 
 const env = (import.meta as ImportMeta & { env: { MODE?: string } }).env;
 const clearConsole = env.MODE !== 'development';
@@ -168,6 +181,19 @@ const store = createRuntimeStore(props.files, props.entry, props.options);
 const sandboxRef = ref<SandboxExposed | null>(null);
 const runtimeHeight = useSandboxAutoHeight(sandboxRef);
 useSandboxRuntimeErrorGuard(sandboxRef);
+const handleBridgeMessage = (event: MessageEvent) => {
+	const iframe = resolveSandboxContainer(sandboxRef.value)?.querySelector('iframe');
+	if (!iframe || event.source !== iframe.contentWindow) return;
+	const data = event.data;
+	if (
+		!data
+		|| data.action !== 'docs:navigate'
+		|| typeof data.to !== 'string'
+	) return;
+	emit('navigate', data.to);
+};
+if (typeof window !== 'undefined') window.addEventListener('message', handleBridgeMessage);
+onBeforeUnmount(() => window.removeEventListener('message', handleBridgeMessage));
 const viewportMenuVisible = ref(false);
 const viewportLabel = computed(() => formatViewportLabel(props.viewport));
 const desiredViewportHeight = computed(() => getViewportHeight(props.viewport) || runtimeHeight.value);
