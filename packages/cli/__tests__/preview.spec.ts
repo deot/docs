@@ -1,14 +1,14 @@
 import { resolve } from 'node:path';
 import { Command } from '@deot/dev-test';
 
-describe('build.ts', () => {
-	it('doc build', async () => {
+describe('preview.ts', () => {
+	it('doc preview', async () => {
 		expect.hasAssertions();
 		const instance = new Command(
 			'cross-env NODE_ENV=UNIT tsx',
 			[
 				resolve(__dirname, '../src/index.ts'),
-				'build',
+				'preview',
 				'--dry-run'
 			]
 		);
@@ -16,7 +16,7 @@ describe('build.ts', () => {
 		await instance.stop();
 
 		expect(instance.code).toBe(0);
-		expect(instance.stdout.includes('build')).toBe(true);
+		expect(instance.stdout.includes('preview')).toBe(true);
 		expect(instance.stderr).toBe('');
 	}, 60000);
 });

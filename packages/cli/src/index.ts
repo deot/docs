@@ -1,4 +1,4 @@
-import { program, Option } from 'commander';
+import { InvalidArgumentError, program, Option } from 'commander';
 import type { Command } from 'commander';
 import { createRequire } from 'node:module';
 
@@ -7,21 +7,16 @@ import * as Dever from '@deot/docs-dever';
 const require = createRequire(import.meta.url);
 
 const defaultOptions: Option[] = [
-	// new Option('--workspace <string>', 'Select Workspace', 'clients'),
-	new Option('--dry-run [boolean]', 'Dry Run'),
+	// workspace 选项示例：new Option('--workspace <string>', 'Select Workspace', 'clients'),
+	new Option('--dry-run [boolean]', 'Dry Run').argParser((value) => {
+		if (value === 'true') return true;
+		if (value === 'false') return false;
+		throw new InvalidArgumentError('Expected true or false');
+	}),
 	new Option('--custom <string>', 'Any Custom Info')
 ];
 
-/**
- * 后置公共options
- * ctx.option('--no-dry-run').option('--dry-run')
- * 默认 -> dryRun: true.目前这是期望的
- *
- * ctx.option('--dry-run').option('--no-dry-run')
- * 默认 -> dryRun: undefined
- * @param ctx ~
- * @param action ~
- */
+// 在绑定执行函数前，为每个命令追加相同的传输层选项。
 const addOptions = (ctx: Command, action: any) => {
 	defaultOptions.forEach(i => ctx.addOption(i));
 	ctx.action(action);
@@ -34,7 +29,7 @@ program
 program
 	.usage('<cmd>');
 
-// doc dev
+// doc dev 开发命令。
 addOptions(
 	program
 		.command('dev')
@@ -44,7 +39,7 @@ addOptions(
 	Dever.run
 );
 
-// doc build
+// doc build 构建命令。
 addOptions(
 	program
 		.command('build')
@@ -58,8 +53,29 @@ addOptions(
 	}
 );
 
-program.parse(process.argv);
+// doc preview 预览命令。
+addOptions(
+	program
+		.command('preview')
+		.option('--workspace <string>', 'Select Workspace')
+		.option('--host <string>', 'Select Host')
+		.option('--port <number>', 'Select Port', value => Number(value))
+		.option('--package-name <string>', 'Select PackageName')
+		.description('preview workspace in production mode'),
+	(options: any) => {
+		options.preview = true;
+		return Dever.run(options);
+	}
+);
 
-if (!program.args.length) {
-	program.help();
-}
+const main = async () => {
+	try {
+		await program.parseAsync(process.argv);
+		if (!program.args.length) program.help();
+	} catch (reason) {
+		process.exitCode = 1;
+		console.error(reason instanceof Error ? reason.message : reason);
+	}
+};
+
+void main();
