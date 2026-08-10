@@ -9,33 +9,107 @@
 <body>
 	<div id="app"></div>
 	<script>
+		const repository = 'https://raw.githubusercontent.com/deot/docs/refs/heads/main/';
+		const locales = {
+			'zh-CN': '简体中文',
+			'en-US': 'English'
+		};
+		const packages = [
+			{ label: '@deot/docs', value: 'index' },
+			{ label: '@deot/docs-client', value: 'client' },
+			{ label: '@deot/docs-cli', value: 'cli' },
+			{ label: '@deot/docs-dever', value: 'dever' },
+			{ label: '@deot/docs-markdown', value: 'markdown' },
+			{ label: '@deot/docs-playground', value: 'playground' }
+		];
+		const packageReadmes = Object.fromEntries(packages.map(item => [
+			item.value,
+			`packages/${item.value}/README.md`
+		]));
+		const readmeRoutes = Object.fromEntries(packages.map(item => [
+			packageReadmes[item.value],
+			`/${item.value}`
+		]));
+		const localeReadmes = Object.fromEntries(Object.keys(locales).map(lang => [
+			lang,
+			packageReadmes
+		]));
+		const sidebarSource = './sidebar.json';
+		const sidebarUrl = `data:application/json;charset=utf-8,${encodeURIComponent(
+			JSON.stringify(packages.map(item => ({
+				label: item.label,
+				value: `/${item.value}`
+			})))
+		)}`;
+		const pathSegments = location.pathname.split('/');
+		const localeIndex = pathSegments.findIndex(segment => Boolean(locales[segment]));
+		const basePath = localeIndex >= 0
+			? `${pathSegments.slice(0, localeIndex).join('/')}/`
+			: location.pathname.endsWith('/')
+				? location.pathname
+				: new URL('./', location.href).pathname;
 		window.$docs = {
-			locales: {
-				'zh-CN': '简体中文',
-				'en-US': 'English'
-			},
-			routes: {
-				'/': '/index',
-				'/index': {
-					content: './components/index.vue',
-					sidebar: null,
-					header: 'default',
-					footer: 'default',
-					extra: null,
-				},
-				'/components/:name': {
+			base: new URL(basePath, location.origin).href,
+			namespace: '@deot/docs-site',
+			locales,
+			routes: Object.fromEntries([
+				['/', '/index'],
+				...packages.map(item => [`/${item.value}`, {
+					value: item.value,
 					content: 'default',
-					sidebar: './sidebar.json',
+					sidebar: sidebarSource,
 					header: 'default',
 					footer: 'default',
-					extra: null,
+					extra: null
+				}]),
+				['*', '/index']
+			]),
+			resolve: {
+				// 两种语言暂时共用仓库内的 README，后续可只替换对应语言的映射。
+				markdown: ({ lang, value }) => (
+					localeReadmes[lang] || localeReadmes['zh-CN']
+				)[value],
+				resource: ({ source, type, runtime }) => {
+					if (type === 'sidebar' && source === sidebarSource) return sidebarUrl;
+					if (/^packages\/[^/]+\/README\.md$/.test(source)) {
+						return runtime.mode === 'development'
+							? `/${source}`
+							: new URL(source, repository).href;
+					}
+					return source;
 				},
-				'*': (to) => {
-					return '/zh-CN/index';
+				link: ({ href, lang, source }) => {
+					const logicalOrigin = 'https://docs.local';
+					let target;
+					try {
+						target = new URL(href, new URL(source, `${logicalOrigin}/`));
+					} catch {
+						return;
+					}
+					if (target.origin !== logicalOrigin) return;
+					const route = readmeRoutes[target.pathname.replace(/^\//, '')];
+					return route
+						? `/${lang}${route}${target.search}${target.hash}`
+						: undefined;
 				}
-			}
+			},
+			modules: {}
 		}
 	</script>
-	<script type="module" src="./packages/client/src/index.ts"></script>
+	<script>
+		if (window.__DOCS_RUNTIME__?.mode !== 'development') {
+			const stylesheet = document.createElement('link');
+			stylesheet.rel = 'stylesheet';
+			stylesheet.href = '//unpkg.com/@deot/docs-client/dist/index.style.css';
+			document.head.appendChild(stylesheet);
+		}
+
+		const script = document.createElement('script');
+		script.type = 'module';
+		script.src = window.__DOCS_RUNTIME__?.mode === 'development'
+			? '/packages/client/src/index.ts'
+			: '//unpkg.com/@deot/docs-client/dist/index.js';
+		document.body.appendChild(script);
+	</script>
 </body>
 </html>

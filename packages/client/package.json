@@ -1,7 +1,9 @@
 {
   "name": "@deot/docs-client",
   "version": "1.0.0",
+  "type": "module",
   "main": "dist/index.js",
+  "style": "dist/index.style.css",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
@@ -10,9 +12,19 @@
   "publishConfig": {
     "access": "public"
   },
-  "devDependencies": {
+  "dependencies": {
+    "@deot/docs-markdown": "*",
+    "@deot/docs-playground": "*",
+    "@deot/helper-cache": "^1.1.10",
+    "@deot/helper-fp": "^1.1.5",
+    "@deot/http": "^1.1.10",
     "@deot/vc": "^1.0.71",
+    "es-module-lexer": "^2.3.1"
+  },
+  "devDependencies": {
+    "@deot/style": "^1.1.4",
     "echarts": "^6.1.0",
+    "fake-indexeddb": "^6.2.5",
     "photoswipe": "^5.4.4",
     "vue": "^3.5.39",
     "vue-router": "^5.2.0"

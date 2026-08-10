@@ -1,19 +1,150 @@
 // @vitest-environment jsdom
 
-import { mount } from '@vue/test-utils';
-import Home from '../src/pages/home/index.vue';
-import { router } from '../src/router';
+vi.mock('../src/components/layout', () => ({ ResourceSlot: { name: 'ResourceSlot' } }));
 
-describe('router', () => {
-	it('redirects home and renders the home page', async () => {
+import { createDocsRouter, getRouteValue, localizePath } from '../src/router';
+import type { DocsConfig } from '../src/types';
+
+const config: DocsConfig = {
+	locales: { 'zh-CN': '简体中文', 'en-US': 'English' },
+	routes: {
+		'/': '/index',
+		'/index': { content: './components/index.vue' },
+		'/components/:name': { content: 'default' },
+		'*': '/index'
+	}
+};
+
+describe('docs router', () => {
+	it('adds the default language and preserves explicit languages', async () => {
+		const router = createDocsRouter(config);
 		await router.push('/');
 		await router.isReady();
-		expect(router.currentRoute.value.path).toBe('/home');
+		expect(router.currentRoute.value.path).toBe('/zh-CN/index');
+		await router.push('/en-US/components/button');
+		expect(router.currentRoute.value.params).toMatchObject({ lang: 'en-US', name: 'button' });
+		expect(localizePath(config, 'zh-CN', '/quickstart')).toBe('/zh-CN/quickstart');
+		expect(localizePath(config, 'zh-CN', '/en-US/index')).toBe('/en-US/index');
+		expect(localizePath(config, 'zh-CN', '/en-US?tab=api#title'))
+			.toBe('/en-US?tab=api#title');
+		expect(localizePath(config, 'zh-CN', 'quickstart')).toBe('/zh-CN/quickstart');
+		expect(localizePath(config, 'zh-CN', '/')).toBe('/zh-CN');
+		expect(localizePath(config, 'zh-CN', 'https://example.com/docs')).toBe('https://example.com/docs');
+		expect(localizePath(config, 'zh-CN', 'mailto:docs@example.com')).toBe('mailto:docs@example.com');
 
-		const push = vi.spyOn(router, 'push').mockResolvedValue(undefined as any);
-		const wrapper = mount(Home, { global: { plugins: [router] } });
-		expect(wrapper.text()).toBe('a/Home');
-		await wrapper.trigger('click');
-		expect(push).toHaveBeenCalledWith('/about/main');
+		await router.push('/components/button');
+		expect(router.currentRoute.value.path).toBe('/zh-CN/components/button');
+
+		await router.push('/db');
+		expect(router.currentRoute.value.path).toBe('/db');
+		expect(router.currentRoute.value.meta.docsDatabase).toBe(true);
+	});
+
+	it('derives content values from explicit config, params and path', async () => {
+		const router = createDocsRouter(config);
+		await router.push('/zh-CN/components/button');
+		const route = router.currentRoute.value;
+		expect(getRouteValue(route, {})).toBe('button');
+		expect(getRouteValue(route, { value: 'fixed' })).toBe('fixed');
+		expect(getRouteValue(route, { value: to => String(to.params.lang) })).toBe('zh-CN');
+	});
+
+	it('supports route functions, object roots and an internal default fallback', async () => {
+		const functionConfig: DocsConfig = {
+			locales: { en: 'English' },
+			routes: {
+				'/': { content: 'default' },
+				'/guide': to => `/target-${String(to.params.lang)}`,
+				'/target-:locale': { content: null }
+			}
+		};
+		const router = createDocsRouter(functionConfig);
+		await router.push('/');
+		expect(router.currentRoute.value.path).toBe('/en');
+		expect(getRouteValue(router.currentRoute.value, {})).toBe('index');
+		await router.push('/en/guide');
+		expect(router.currentRoute.value.path).toBe('/en/target-en');
+		await router.push('/en/missing');
+		expect(router.currentRoute.value.path).toBe('/en');
+		expect(getRouteValue({
+			path: '/en/static',
+			params: { lang: 'en' }
+		} as any, {})).toBe('static');
+	});
+
+	it('normalizes route keys and invalid languages without a configured root', async () => {
+		const minimal: DocsConfig = {
+			locales: { en: 'English' },
+			routes: {
+				'guide': '/en/target',
+				'/target': { content: 'default' }
+			}
+		};
+		const router = createDocsRouter(minimal);
+		await router.push('/');
+		expect(router.currentRoute.value.path).toBe('/en');
+		await router.push('/fr/guide?tab=api#title');
+		expect(router.currentRoute.value.fullPath).toBe('/en/target?tab=api#title');
+		await router.push('/guide');
+		expect(router.currentRoute.value.path).toBe('/en/target');
+		expect(getRouteValue({ path: '/', params: {} } as any, {})).toBe('index');
+
+		const noLocales = createDocsRouter({ locales: {}, routes: {} });
+		await noLocales.push('/');
+		expect(noLocales.currentRoute.value.path).toBe('/zh-CN');
+		expect(localizePath({ locales: {}, routes: {} }, 'zh-CN', '/zh-CN?tab=api'))
+			.toBe('/zh-CN?tab=api');
+	});
+
+	it('distinguishes a missing language slug from an invalid localized route', async () => {
+		const dynamic: DocsConfig = {
+			locales: { 'zh-CN': '简体中文', 'en-US': 'English' },
+			routes: {
+				'/': '/index',
+				'/index': { content: 'default' },
+				'/:name': { content: 'default' },
+				'*': '/index'
+			}
+		};
+		const router = createDocsRouter(dynamic);
+		await router.push('/installation?tab=api#title');
+		expect(router.currentRoute.value.fullPath)
+			.toBe('/zh-CN/installation?tab=api#title');
+		await router.push('/fr/installation?tab=api#title');
+		expect(router.currentRoute.value.fullPath)
+			.toBe('/zh-CN/installation?tab=api#title');
+	});
+
+	it('keeps the page subpath independent from the resource base', () => {
+		const previous = location.pathname;
+		window.history.replaceState({}, '', '/docs/site/zh-CN/index');
+		try {
+			const external = createDocsRouter({
+				...config,
+				base: 'https://cdn.example.com/docs/'
+			});
+			expect(external.resolve('/zh-CN/index').href)
+				.toBe('/docs/site/zh-CN/index');
+
+			const sameOriginResources = createDocsRouter({
+				...config,
+				base: `${location.origin}/assets/docs/`
+			});
+			expect(sameOriginResources.resolve('/zh-CN/index').href)
+				.toBe('/docs/site/zh-CN/index');
+		} finally {
+			window.history.replaceState({}, '', previous || '/');
+		}
+	});
+
+	it('recognizes configured language keys even when their labels are empty', async () => {
+		const router = createDocsRouter({
+			locales: { en: '' },
+			routes: { '/': { content: null } }
+		});
+		await router.push('/en');
+		expect(router.currentRoute.value.path).toBe('/en');
+		expect(localizePath({ locales: { en: '' }, routes: {} }, 'en', '/en/guide'))
+			.toBe('/en/guide');
 	});
 });

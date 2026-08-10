@@ -14,12 +14,13 @@
     "link": "ddc link",
     "dev": "ddc dev --vue-package 'playground,markdown'",
     "update": "ddc update",
-		"build": "ddc build --vue-package 'client,playground,markdown' --external vue,@deot/vc",
+    "build": "ddc build --vue-package 'client,playground,markdown' --external vue,@deot/vc",
     "test": "ddc test",
     "add": "ddc add",
     "release": "ddc release",
     "typecheck": "vue-tsc --noEmit --skipLibCheck",
     "cli:dev": "tsx ./packages/cli/src/index.ts dev",
+    "cli:preview": "tsx ./packages/cli/src/index.ts preview",
     "cli:build": "tsx --tsconfig ./tsconfig.json ./packages/cli/src/index.ts build"
   },
   "scripts-info": {
