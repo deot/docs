@@ -19,9 +19,10 @@ config
 
 	.plugin('anchor')
 	.use(anchor, [{
-		permalink: true,
-		permalinkBefore: true,
-		permalinkSymbol: '#'
+		permalink: anchor.permalink.linkInsideHeader({
+			placement: 'before',
+			symbol: '#'
+		})
 	}])
 	.end()
 
@@ -107,7 +108,7 @@ const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>) =>
 						if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
 							return parsed as Record<string, unknown>;
 						}
-					} catch { /* malformed config remains empty */ }
+					} catch { /* 配置格式异常时保持为空 */ }
 				}
 				commentMatch = htmlCommentRE.exec(source);
 			}
@@ -191,7 +192,8 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 const renderAttrs = md.renderer.renderAttrs;
 md.renderer.renderAttrs = (token) => {
 	const reg = new RegExp(`container_${PLAYGROUND}|fence|text`);
-	if (token.type && !reg.test(token.type)) {
+	// 结束标记会复用 renderAttrs，但语法上不能携带属性。
+	if (token.nesting !== -1 && token.type && !reg.test(token.type)) {
 		token.attrPush([HTML_MD_SIGN, '']);
 	}
 

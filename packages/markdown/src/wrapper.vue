@@ -1,18 +1,23 @@
 <template>
-	<div class="docs-markdown-reset" v-markdown="modelValue || value"></div>
+	<div class="docs-markdown-reset" v-markdown="source"></div>
 </template>
 <script setup lang="ts">
+import { computed } from 'vue';
 import { vMarkdown } from './directive';
 
-// 后续再做change
+// 后续再处理内容变更。
 defineEmits<{
 	'update:modelValue': [value: string];
 	'change': [value: string];
 }>();
-defineProps<{
+const props = defineProps<{
 	modelValue?: string;
 	value?: string;
 }>();
+// 即使 modelValue 是合法的空文档，它仍然是唯一可信的数据源。
+const source = computed(() => typeof props.modelValue === 'string'
+	? props.modelValue
+	: props.value);
 </script>
 <style lang="scss">
 @use '@deot/style/src/mixins/bem' as *;

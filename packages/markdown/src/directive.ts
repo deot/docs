@@ -56,10 +56,10 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<string | undefi
 		let propsData = {};
 		try {
 			propsData = JSON.parse(item.dataset.props || '{}');
-		} catch { /* empty */ }
+		} catch { /* 忽略无效的属性配置 */ }
 		try {
 			files = item.dataset.files ? JSON.parse(item.dataset.files) : undefined;
-		} catch { /* empty */ }
+		} catch { /* 忽略无效的文件配置 */ }
 		const runtimeProps = files
 			? { files, entry: item.dataset.entry }
 			: { modelValue: code };
