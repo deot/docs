@@ -7,27 +7,31 @@ import { SANDBOX_RUNTIME_ERROR_CAPTURE_HTML } from './runtime/error-guard';
 
 const cdnURL = 'https://cdn.jsdelivr.net/npm';
 
-const DOCS_LINK_BRIDGE_HTML = [
-	'<script>',
-	'document.addEventListener("click",function(event){',
-	'const link=event.target&&event.target.closest&&event.target.closest("docslink");',
-	'if(!link)return;',
-	'event.preventDefault();',
-	'window.parent.postMessage({action:"docs:navigate",to:link.getAttribute("to")||""},"*");',
-	'});',
-	'</script>'
+const DOCS_LINK_IMPORT_CODE = 'import { h as __docsH } from "vue"';
+const DOCS_LINK_USE_CODE = [
+	'app.component("DocsLink",{',
+	'props:{to:{type:String,default:""}},',
+	'setup(props,{slots}){return()=>__docsH("a",{',
+	'href:props.to,',
+	'style:{color:"inherit",textDecoration:"none"},',
+	'onClick(event){event.preventDefault();window.parent.postMessage({action:"docs:navigate",to:props.to},"*")}',
+	'},slots.default?.())}',
+	'})'
 ].join('');
 
 export const runtimePreviewOptions: SandboxProps['previewOptions'] = {
 	headHTML: [
 		SANDBOX_RUNTIME_ERROR_CAPTURE_HTML,
-		DOCS_LINK_BRIDGE_HTML,
 		'<meta name="viewport" content="width=device-width, initial-scale=1">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/style/dist/index.normalize-only.css">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/vc-components/dist/index.style.css">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/style/dist/index.css">',
 		'<style> body{ background: white } </style>'
-	].join('\n')
+	].join('\n'),
+	customCode: {
+		importCode: DOCS_LINK_IMPORT_CODE,
+		useCode: DOCS_LINK_USE_CODE
+	}
 };
 
 export const toReplFilename = (filename: string) => filename.startsWith('src/')
@@ -44,7 +48,6 @@ export const createRuntimeStore = (
 	entry: string,
 	options: PlaygroundOptions
 ) => {
-	const configuredSfcOptions = options.sfcOptions?.value;
 	const replFiles = ref<Record<string, ReplFile>>(Object.fromEntries(
 		Object.entries(files).map(([filename, code]) => {
 			const file = createReplFile(filename, code);
@@ -88,16 +91,6 @@ export const createRuntimeStore = (
 				'vue': 'https://play.vuejs.org/vue.runtime.esm-browser.js',
 				'vue/server-renderer': 'https://play.vuejs.org/server-renderer.esm-browser.js',
 				...options.builtinImportMap?.imports
-			}
-		}),
-		sfcOptions: ref({
-			...configuredSfcOptions,
-			template: {
-				...configuredSfcOptions?.template,
-				compilerOptions: {
-					...configuredSfcOptions?.template?.compilerOptions,
-					isCustomElement: (tag: string) => tag.toLowerCase() === 'docslink'
-				}
 			}
 		}),
 		template: ref({

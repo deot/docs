@@ -164,13 +164,20 @@ const emit = defineEmits<{
 	'navigate': [to: string];
 }>();
 
+const joinCode = (...values: Array<string | undefined>) => values.filter(Boolean).join('\n');
 const mergedPreviewOptions = computed(() => ({
 	...runtimePreviewOptions,
 	...props.previewOptions,
 	headHTML: [runtimePreviewOptions?.headHTML, props.previewOptions?.headHTML].filter(Boolean).join('\n'),
 	customCode: {
-		importCode: props.previewOptions?.customCode?.importCode,
-		useCode: props.previewOptions?.customCode?.useCode
+		importCode: joinCode(
+			runtimePreviewOptions?.customCode?.importCode,
+			props.previewOptions?.customCode?.importCode
+		),
+		useCode: joinCode(
+			runtimePreviewOptions?.customCode?.useCode,
+			props.previewOptions?.customCode?.useCode
+		)
 	}
 }));
 
