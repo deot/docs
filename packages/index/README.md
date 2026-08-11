@@ -1,6 +1,6 @@
 # @deot/docs
 
-`@deot/docs` 是 `@deot/docs` 工具链的聚合包。当前公共入口只导出 `Dever` 命名空间，用于以编程方式创建或运行文档开发、构建和预览服务。
+`@deot/docs` 是 `@deot/docs` 工具链的聚合包。公共入口导出 `Dever` 与 `Locale` 命名空间，分别用于文档服务和界面国际化。
 
 ## 安装
 
@@ -40,6 +40,7 @@ await Dever.run({
 | `Dever.getDeverMode(options)` | 返回 `development`、`build` 或 `preview`。 |
 | `Dever.DeverOptions` | `@deot/docs-dever` 提供的运行选项类型。 |
 | `Dever.DeverMode` | 三种运行模式的联合类型。 |
+| `Locale` | `@deot/docs-locale` 的语言包、Translator 与 Vue Provider API。 |
 
 更完整的选项和运行规则请查看 [`@deot/docs-dever`](../dever/README.md)。命令行用法请查看 [`@deot/docs-cli`](../cli/README.md)。
 
