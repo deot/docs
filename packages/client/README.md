@@ -57,7 +57,7 @@ import { bootstrap } from '@deot/docs-client';
 const { app, router, disconnect } = bootstrap(window.$docs);
 ```
 
-`disconnect()` 用于关闭当前实例创建的 SSE 连接。
+`disconnect()` 用于关闭当前实例创建的 SSE、空闲预加载和联网恢复监听。
 
 ## `$docs` 配置
 
@@ -68,6 +68,7 @@ const { app, router, disconnect } = bootstrap(window.$docs);
 | `base` | production 资源的基准 URL。 |
 | `namespace` | IndexedDB 缓存隔离标识；未设置时使用规范化后的 `base`。 |
 | `modules` | 远程 SFC 中裸模块名到 URL 的映射。 |
+| `prefetch` | 空闲预加载开关或 `{ batchSize, idleTimeout }` 配置，默认开启。 |
 | `resolve.markdown` | 根据 `lang`、`value` 和当前路由生成 Markdown 逻辑地址。 |
 | `resolve.resource` | 将任意逻辑资源转换为最终 URL。 |
 | `resolve.link` | 将 Markdown 原始链接同步转换为外链或包含语言的站内 Router 地址。 |
@@ -81,6 +82,22 @@ const { app, router, disconnect } = bootstrap(window.$docs);
 - `.vue`：通过独立 Playground iframe 渲染远程 SFC。
 
 sidebar JSON 使用递归的 `{ label, value?, children? }` 结构。
+
+### 空闲预加载
+
+首屏路由就绪后，Client 默认在浏览器空闲阶段预加载已配置资源。它会先准备 sidebar、SFC 及递归依赖，再按 sidebar 的深度优先顺序加载 Markdown；当前路由请求始终使用更高优先级。每批默认提交 2 个资源，单次等待空闲最长 1500ms：
+
+```js
+window.$docs = {
+	// 其他配置
+	prefetch: {
+		batchSize: 2,
+		idleTimeout: 1500
+	}
+};
+```
+
+设置 `prefetch: false` 可关闭自动预加载，`/db` 页面的手动 Prefetch 不受影响。离线失败会保留历史内容和 error 状态；浏览器恢复联网后，只补充本会话失败、未完成和新发现的资源。
 
 ## Runtime 与资源寻址
 
@@ -144,7 +161,7 @@ const unsubscribe = Gateway.subscribe(identity, () => undefined);
 | --- | --- |
 | `load(identity, options?)` | 优先返回可用缓存，并默认在后台重新校验。 |
 | `revalidate(identity, options?)` | 等待一次网络校验完成。 |
-| `prefetch(identities)` | 将资源标记为预加载并批量加入调度队列。 |
+| `prefetch(identities, options?)` | 将资源标记为预加载并批量加入调度队列；支持 priority 和 signal。 |
 | `subscribe(identity, listener)` | 仅在成功内容 hash 变化时通知。 |
 | `subscribeStatus(listener)` | 订阅 `waiting`、`pending`、`success`、`error` 请求状态。 |
 | `poll(identityOrIdentities, options?)` | 显式开启单资源或批量轮询，并返回停止函数。 |
@@ -161,7 +178,7 @@ const unsubscribe = Gateway.subscribe(identity, () => undefined);
 
 - Runtime：`initializeDocsRuntime`、`getDocsConfig`、`getDocsRuntime`。
 - Resolver：`getDocsBase`、`getDocsDeploymentBase`、`getDefaultLanguage`、`getDocsNamespace`、`resolveResource`、`createResourceIdentity`、`resourceIdentityKey`。
-- 类型：`DocsConfig`、`DocsRoute`、`DocsRuntime`、`DocsLinkContext`、`ResourceIdentity`、`ResourceRecord`、`ResourceContentRecord`、`ResourceLoadOptions` 等。
+- 类型：`DocsConfig`、`DocsPrefetchOptions`、`DocsRoute`、`DocsRuntime`、`DocsLinkContext`、`ResourceIdentity`、`ResourceRecord`、`ResourceContentRecord`、`ResourceLoadOptions`、`ResourcePrefetchOptions` 等。
 
 ## 仓库内验证
 

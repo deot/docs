@@ -21,6 +21,7 @@ import type {
 	ResourceLoadOptions,
 	ResourceMutationToken,
 	ResourcePollOptions,
+	ResourcePrefetchOptions,
 	ResourceRecord,
 	ResourceRecordInput,
 	ResourceRequest,
@@ -51,6 +52,7 @@ export type {
 	ResourceGatewayOptions,
 	ResourceLoadOptions,
 	ResourcePollOptions,
+	ResourcePrefetchOptions,
 	ResourceRecord,
 	ResourceStatus,
 	ResourceStatusHistory,
@@ -113,10 +115,16 @@ export class ResourceGateway {
 	}
 
 	// 入队前标记热资源，使 SSE 能在资源未展示时继续维护它们。
-	async prefetch(identities: ResourceIdentity[]) {
+	async prefetch(
+		identities: ResourceIdentity[],
+		options: ResourcePrefetchOptions = {}
+	) {
 		identities.forEach(identity => this.prefetched.add(resourceIdentityKey(identity)));
 		return Promise.allSettled(identities.map(identity => (
-			this.revalidateInternal(identity, { priority: 25 }, true, false)
+			this.revalidateInternal(identity, {
+				priority: options.priority ?? 25,
+				signal: options.signal
+			}, true, false)
 		)));
 	}
 

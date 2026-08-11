@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
 import 'fake-indexeddb/auto';
-import { ResourceGateway } from '../src/network/gateway';
-import { IndexedDBResourceCache } from '../src/network/gateway/cache';
-import type { ResourceRecord } from '../src/network/gateway';
+import { ResourceGateway } from '../src/modules/gateway';
+import { IndexedDBResourceCache } from '../src/modules/gateway/cache';
+import type { ResourceRecord } from '../src/modules/gateway';
 import { resourceIdentityKey } from '../src/utils/resolver';
 
 const deleteDatabase = async () => {

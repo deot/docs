@@ -3,11 +3,13 @@
 import { createApp } from 'vue';
 import type { DocsConfig } from '../src/types';
 
-const { use, mount, disconnect, router } = vi.hoisted(() => ({
+const { use, mount, disconnectEvents, router, startIdlePrefetch, stopPrefetch } = vi.hoisted(() => ({
 	use: vi.fn(),
 	mount: vi.fn(),
-	disconnect: vi.fn(),
-	router: { name: 'router' }
+	disconnectEvents: vi.fn(),
+	startIdlePrefetch: vi.fn(),
+	stopPrefetch: vi.fn(),
+	router: { name: 'router', isReady: vi.fn(async () => undefined) }
 }));
 vi.mock('vue', async original => ({
 	...await original<any>(),
@@ -15,7 +17,15 @@ vi.mock('vue', async original => ({
 }));
 vi.mock('../src/app.vue', () => ({ default: { name: 'DocsApp' } }));
 vi.mock('../src/router', () => ({ createDocsRouter: vi.fn(() => router) }));
-vi.mock('../src/events', () => ({ connectResourceEvents: vi.fn(() => disconnect) }));
+vi.mock('../src/events', () => ({ connectResourceEvents: vi.fn(() => disconnectEvents) }));
+vi.mock('../src/modules/idle-prefetch', () => ({
+	IdlePrefetch: {
+		start: vi.fn((config) => {
+			startIdlePrefetch(config);
+			return stopPrefetch;
+		})
+	}
+}));
 
 describe('client entry', () => {
 	it('normalizes runtime and mounts the configured application', async () => {
@@ -23,6 +33,7 @@ describe('client entry', () => {
 		window.$docs = { locales: { 'zh-CN': '简体中文' }, routes: {} };
 		window.__DOCS_RUNTIME__ = { mode: 'development', workspace: '/site/' };
 		const client = await import('../src');
+		await Promise.resolve();
 		expect(window.$docs.runtime).toEqual({ mode: 'development', workspace: '/site/' });
 		expect(createApp).toHaveBeenCalledOnce();
 		expect(use).toHaveBeenCalledWith(router);
@@ -32,8 +43,13 @@ describe('client entry', () => {
 		expect(client.Gateway).toBeInstanceOf(client.ResourceGateway);
 
 		const explicit: DocsConfig = { locales: { en: 'English' }, routes: {} };
-		client.bootstrap(explicit);
+		const instance = client.bootstrap(explicit);
+		await Promise.resolve();
 		expect(window.$docs).toBe(explicit);
 		expect(explicit.runtime).toEqual({ mode: 'development', workspace: '/site/' });
+		expect(startIdlePrefetch).toHaveBeenCalledWith(explicit);
+		instance.disconnect();
+		expect(disconnectEvents).toHaveBeenCalled();
+		expect(stopPrefetch).toHaveBeenCalled();
 	});
 });

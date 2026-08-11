@@ -2,6 +2,9 @@
 
 import { flushPromises, mount } from '@vue/test-utils';
 import DatabasePage from '../src/pages/db/index.vue';
+import type { ResourceContentRecord } from '../src/modules';
+import type { ResourceIdentity } from '../src/types';
+import { ResourcePlan } from '../src/modules/resource-plan';
 import { getList as getDatabaseList } from '../src/pages/db/api';
 
 const {
@@ -70,7 +73,7 @@ const {
 	};
 });
 
-vi.mock('../src/network', () => ({
+vi.mock('../src/modules', () => ({
 	Gateway: {
 		list,
 		revalidate,
@@ -79,6 +82,12 @@ vi.mock('../src/network', () => ({
 		invalidate,
 		clear,
 		subscribeStatus
+	}
+}));
+vi.mock('../src/modules/gateway', () => ({
+	Gateway: {
+		list,
+		prefetch
 	}
 }));
 vi.mock('@deot/vc', async () => {
@@ -415,6 +424,69 @@ describe('database page', () => {
 		));
 		expect(sources).toEqual(['./index.md', './demo.vue', './logic.ts', './theme.css']);
 		expect(messageSuccess).toHaveBeenCalledWith('Prefetched 4');
+	});
+
+	it('loads graph descriptors before Markdown for automatic idle plans', async () => {
+		const importedAgain = await import('../src/modules/resource-plan');
+		expect(importedAgain.ResourcePlan).toBe(ResourcePlan);
+		window.$docs.routes = {
+			'/guide': { content: './guide.md' },
+			'/demo': { content: './demo.vue' }
+		};
+		const sfc = {
+			...record,
+			identity: { ...record.identity, type: 'sfc', source: './demo.vue' },
+			url: 'https://docs.example.com/zh-CN/demo.vue',
+			content: '<template>demo</template>'
+		};
+		list.mockResolvedValue([sfc]);
+
+		await ResourcePlan.build({
+			config: window.$docs,
+			graphFirst: true
+		});
+
+		expect(prefetch.mock.calls.map(([identities]) => (
+			(identities as Array<{ source: string }>).map(item => item.source)
+		))).toEqual([
+			['./demo.vue'],
+			['./index.md', './guide.md']
+		]);
+	});
+
+	it('rejects a strict plan when a discovered dependency is unavailable', async () => {
+		window.$docs.routes = {
+			'/demo': { content: './demo.vue' }
+		};
+		const sfc = {
+			...record,
+			identity: { ...record.identity, type: 'sfc' as const, source: './demo.vue' },
+			url: 'https://docs.example.com/zh-CN/demo.vue',
+			content: '<script src="./logic.ts"></script>'
+		};
+		list.mockResolvedValue([sfc]);
+		const fulfilledValue: ResourceContentRecord = {
+			...sfc,
+			status: 'success',
+			requestStatus: 'success',
+			hash: 'sfc-hash',
+			updatedAt: 1
+		};
+		const loadResources = vi.fn(async (
+			identities: ResourceIdentity[]
+		): Promise<PromiseSettledResult<ResourceContentRecord>[]> => (
+			identities.map(identity => identity.source === './logic.ts'
+				? { status: 'rejected' as const, reason: new Error('offline') }
+				: { status: 'fulfilled' as const, value: fulfilledValue })
+		));
+
+		await expect(ResourcePlan.build({
+			config: window.$docs,
+			prefetchResources: loadResources,
+			strict: true
+		})).rejects.toThrow(
+			'Cannot build a complete prefetch plan: dependency unavailable (./logic.ts)'
+		);
 	});
 
 	it('reports partial prefetch failures and ignores invalid sidebar content', async () => {

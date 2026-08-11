@@ -6,6 +6,7 @@ export type {
 	ResourceGatewayOptions,
 	ResourceLoadOptions,
 	ResourcePollOptions,
+	ResourcePrefetchOptions,
 	ResourceRecord,
 	ResourceStatus,
 	ResourceStatusHistory,

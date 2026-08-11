@@ -18,7 +18,7 @@
 import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue';
 import type { Component } from 'vue';
 import { useRouter } from 'vue-router';
-import { Gateway } from '../../network';
+import { Gateway } from '../../modules';
 import { createResourceIdentity, resolveResource, resourceIdentityKey } from '../../utils/resolver';
 import {
 	collectResourceImports,
@@ -28,7 +28,7 @@ import {
 	toLogicalResourceSource
 } from '../../utils/resource-graph';
 import { getDocsConfig } from '../../utils/runtime';
-import type { ResourceContentRecord } from '../../network';
+import type { ResourceContentRecord } from '../../modules';
 
 const props = defineProps<{ source: string; lang: string }>();
 const router = useRouter();

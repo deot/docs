@@ -7,7 +7,7 @@ const { http, cancel, removeShared, indexedData } = vi.hoisted(() => ({
 	indexedData: new Map<string, unknown>()
 }));
 
-vi.mock('../src/network/network', () => ({
+vi.mock('../src/modules/network', () => ({
 	Network: { http, removeShared }
 }));
 vi.mock('@deot/helper-cache', () => ({
@@ -19,9 +19,9 @@ vi.mock('@deot/helper-cache', () => ({
 	}
 }));
 
-import { ResourceGateway } from '../src/network/gateway';
-import type { ResourceCache, ResourceRecord } from '../src/network/gateway';
-import { RequestScheduler } from '../src/network/gateway/scheduler';
+import { ResourceGateway } from '../src/modules/gateway';
+import type { ResourceCache, ResourceRecord } from '../src/modules/gateway';
+import { RequestScheduler } from '../src/modules/gateway/scheduler';
 import { resourceIdentityKey } from '../src/utils/resolver';
 import type { ResourceIdentity } from '../src/types';
 

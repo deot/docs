@@ -15,7 +15,7 @@ const { gateway, runtime, config } = vi.hoisted(() => ({
 	} as any
 }));
 
-vi.mock('../src/network', () => ({ Gateway: gateway }));
+vi.mock('../src/modules', () => ({ Gateway: gateway }));
 vi.mock('../src/utils/runtime', () => ({
 	getDocsRuntime: () => runtime,
 	getDocsConfig: () => config

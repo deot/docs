@@ -150,8 +150,8 @@ import type {
 } from '../../components/paging';
 import { getDocsNamespace, resourceIdentityKey } from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
-import { Gateway } from '../../network';
-import type { ResourceRecord, ResourceStatus } from '../../network';
+import { Gateway } from '../../modules';
+import type { ResourceRecord, ResourceStatus } from '../../modules';
 
 const records = ref<ResourceRecord[]>([]);
 const paging = ref<PagingExpose<ResourceRecord>>();

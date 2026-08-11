@@ -80,6 +80,13 @@ export interface ResourcePollOptions {
 	priority?: number;
 }
 
+export interface ResourcePrefetchOptions {
+	/** 预加载进入共享 Scheduler 时使用的优先级，默认 25。 */
+	priority?: number;
+	/** 取消当前调用方；没有其他 consumer 时同时取消底层请求。 */
+	signal?: AbortSignal;
+}
+
 export interface ResourceGatewayOptions {
 	concurrency?: number;
 	cache?: ResourceCache;

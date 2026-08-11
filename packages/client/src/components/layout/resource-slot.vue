@@ -28,7 +28,7 @@ import DefaultFooter from './default-footer.vue';
 import DefaultHeader from './default-header.vue';
 import DefaultSidebar from './default-sidebar.vue';
 import RemoteSfc from '../remote-sfc';
-import { Gateway } from '../../network';
+import { Gateway } from '../../modules';
 import { isExternalLink, isPlainNavigationClick } from '../../utils/link';
 import { createResourceIdentity, resolveResource } from '../../utils/resolver';
 import { getRouteValue } from '../../utils/route';

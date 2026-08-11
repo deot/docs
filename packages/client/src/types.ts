@@ -8,6 +8,13 @@ export interface DocsRuntime {
 	events?: string;
 }
 
+export interface DocsPrefetchOptions {
+	/** 每个空闲批次提交的资源数量，默认 2，限制为 1～20。 */
+	batchSize?: number;
+	/** requestIdleCallback 最长等待时间，默认 1500ms。 */
+	idleTimeout?: number;
+}
+
 export interface DocsResourceContext {
 	source: string;
 	type: DocsResourceType;
@@ -55,6 +62,7 @@ export interface DocsConfig {
 	base?: string;
 	namespace?: string;
 	modules?: Record<string, string>;
+	prefetch?: boolean | DocsPrefetchOptions;
 	resolve?: {
 		markdown?: (context: DocsMarkdownContext) => string | Promise<string>;
 		resource?: (context: DocsResourceContext) => string | Promise<string>;

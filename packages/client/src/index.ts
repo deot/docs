@@ -3,6 +3,7 @@ import '../../../node_modules/@deot/style/dist/index.normalize-only.css';
 import '../../../node_modules/@deot/vc-components/dist/index.style.css';
 import App from './app.vue';
 import { connectResourceEvents } from './events';
+import { IdlePrefetch } from './modules/idle-prefetch';
 import { createDocsRouter } from './router';
 import { initializeDocsRuntime } from './utils/runtime';
 import type { DocsConfig } from './types';
@@ -10,16 +11,17 @@ import type { DocsConfig } from './types';
 export * from './utils/resolver';
 export * from './utils/runtime';
 export * from './types';
-export { Gateway, Network, ResourceGateway } from './network';
+export { Gateway, Network, ResourceGateway } from './modules';
 export type {
 	ResourceContentRecord,
 	ResourceLoadOptions,
 	ResourcePollOptions,
+	ResourcePrefetchOptions,
 	ResourceRecord,
 	ResourceStatus,
 	ResourceStatusHistory,
 	ResourceVersion
-} from './network';
+} from './modules';
 
 export const bootstrap = (config?: DocsConfig) => {
 	config ||= window.$docs || { locales: {}, routes: {} };
@@ -28,7 +30,24 @@ export const bootstrap = (config?: DocsConfig) => {
 	const app = createApp(App);
 	app.use(router);
 	app.mount('#app');
-	const disconnect = connectResourceEvents();
+	const disconnectEvents = connectResourceEvents();
+	let disconnected = false;
+	let stopPrefetch: () => void = () => undefined;
+	// 首屏路由和插槽先完成加载，再让低优先级资源进入空闲队列。
+	void (async () => {
+		try {
+			await router.isReady();
+			if (!disconnected) stopPrefetch = IdlePrefetch.start(config);
+		} catch {
+			// Router 启动失败时应用本身会呈现错误，不再启动后台预加载。
+		}
+	})();
+	const disconnect = () => {
+		if (disconnected) return;
+		disconnected = true;
+		disconnectEvents();
+		stopPrefetch();
+	};
 	return { app, router, disconnect };
 };
 

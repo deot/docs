@@ -50,7 +50,7 @@ vi.mock('vue-router', async original => ({
 	useRouter: () => ({ push: routerPush, resolve: routerResolve })
 }));
 vi.mock('../src/router', () => ({ getRouteValue: () => 'installation' }));
-vi.mock('../src/network', () => ({
+vi.mock('../src/modules', () => ({
 	Gateway: {
 		load,
 		subscribe: (identity: any, listener: (record: { content: string }) => void) => {

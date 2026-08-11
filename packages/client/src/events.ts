@@ -1,4 +1,4 @@
-import { Gateway } from './network';
+import { Gateway } from './modules';
 import { createResourceIdentity, getDefaultLanguage } from './utils/resolver';
 import { getDocsConfig, getDocsRuntime } from './utils/runtime';
 import type { DocsResourceType } from './types';
