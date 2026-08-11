@@ -2,8 +2,9 @@
 
 import { defineComponent, provide, ref } from 'vue';
 import { flushPromises, mount } from '@vue/test-utils';
+import { zhCN } from '@deot/docs-locale';
 import { Markdown as MarkdownRenderer } from '../src/markdown';
-import { Markdown } from '../src';
+import { Markdown, parseMarkdownSearchSections } from '../src';
 
 const { codePreviewUnmounted, getScrollerMock, playgroundUnmounted } = vi.hoisted(() => ({
 	codePreviewUnmounted: vi.fn(),
@@ -147,6 +148,43 @@ vi.mock('@deot/docs-playground', async () => {
 });
 
 describe('markdown', () => {
+	it('extracts searchable sections with renderer heading anchors', () => {
+		const parsed = parseMarkdownSearchSections([
+			'# 文档标题',
+			'',
+			'正文 **内容** 与 `inline code`。',
+			'',
+			'```ts',
+			'const hidden = true;',
+			'```',
+			'',
+			'<div>hidden html</div>',
+			'',
+			'## 重复',
+			'',
+			'第一节内容',
+			'',
+			'## 重复',
+			'',
+			'Second section',
+			'',
+			'| Field | Value |',
+			'| --- | --- |',
+			'| searchable | table cell |'
+		].join('\n'));
+
+		expect(parsed.title).toBe('文档标题');
+		expect(parsed.sections.map(section => section.anchor)).toEqual([
+			encodeURIComponent('文档标题'),
+			encodeURIComponent('重复'),
+			`${encodeURIComponent('重复')}-1`
+		]);
+		expect(parsed.text).toContain('正文 内容 与 inline code');
+		expect(parsed.text).not.toContain('const hidden');
+		expect(parsed.text).not.toContain('hidden html');
+		expect(parsed.text).toContain('searchable table cell');
+		expect(parsed.sections[1].text).toBe('第一节内容');
+	});
 	beforeAll(async () => {
 		await import('@deot/docs-playground');
 	});
@@ -322,6 +360,22 @@ describe('markdown', () => {
 
 		await wrapper.setProps({ indicator: false });
 		expect(wrapper.find('.docs-markdown-indicator').exists()).toBe(false);
+	});
+
+	it('uses the explicit locale for indicator UI', async () => {
+		const wrapper = mount(Markdown, {
+			props: {
+				locale: zhCN,
+				modelValue: '# First\n\nParagraph'
+			},
+			attachTo: document.body
+		});
+
+		await vi.waitFor(() => {
+			expect(wrapper.find('.docs-markdown-indicator').exists()).toBe(true);
+		});
+		expect(wrapper.get('.docs-markdown-indicator').attributes('aria-label'))
+			.toBe('文档指示器');
 	});
 
 	it('prefers the injected Scroller before searching for a native scroll host', async () => {

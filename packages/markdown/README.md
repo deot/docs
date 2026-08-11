@@ -5,19 +5,20 @@
 ## 安装
 
 ```bash
-pnpm add @deot/docs-markdown @deot/vc vue
+pnpm add @deot/docs-markdown @deot/docs-locale @deot/vc vue
 ```
 
 ## 快速开始
 
 ```vue
 <template>
-	<Markdown :value="source" />
+	<Markdown :value="source" :locale="zhCN" />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Markdown } from '@deot/docs-markdown';
+import { zhCN } from '@deot/docs-locale';
 import '@deot/docs-markdown/dist/index.style.css';
 
 const source = ref('# Hello @deot/docs');
@@ -25,6 +26,7 @@ const source = ref('# Hello @deot/docs');
 ```
 
 组件接受 `modelValue` 或 `value` 字符串。当前组件负责渲染，不会修改传入的 Markdown 内容。
+`locale` 可显式传入 `Language`；未传入时优先使用上层 `provideLocale()`，否则回退到 `en-US`。
 
 ## 文档指示器
 
@@ -118,8 +120,9 @@ Playground 只在页面出现 fence 或 `:::playground` 时动态加载。使用
 | 导出 | 说明 |
 | --- | --- |
 | `Markdown` | Vue Markdown 渲染组件。 |
+| `parseMarkdownSearchSections(content)` | 使用渲染器相同的标题锚点规则提取文档标题、正文和小节，供搜索索引使用。 |
 
-底层 markdown-it 实例和内部指令不是包入口的公共导出。
+底层 markdown-it 实例和内部指令不是包入口的公共导出。搜索解析结果不会包含代码围栏和 HTML 内容。
 
 ## 仓库内验证
 

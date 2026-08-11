@@ -201,3 +201,79 @@ md.renderer.renderAttrs = (token) => {
 };
 
 export const Markdown = md;
+
+export interface MarkdownSearchSection {
+	title: string;
+	anchor: string;
+	level: number;
+	text: string;
+}
+
+export interface MarkdownSearchDocument {
+	title: string;
+	text: string;
+	sections: MarkdownSearchSection[];
+}
+
+const normalizeSearchText = (value: string) => value.replace(/\s+/gu, ' ').trim();
+
+/**
+ * 从 inline token 中提取用户可见文本。HTML token 不进入索引，避免标签、
+ * 注释或嵌入代码污染搜索结果；链接仍保留其可见标题。
+ * @param token Markdown-It inline token。
+ * @returns 规范化后的可搜索文本。
+ */
+const getInlineSearchText = (token: ReturnType<typeof md.parse>[number]) => {
+	if (!token.children) return normalizeSearchText(token.content);
+	return normalizeSearchText(token.children.map((child) => {
+		if (child.type === 'html_inline') return '';
+		if (child.type === 'softbreak' || child.type === 'hardbreak') return ' ';
+		return ['text', 'code_inline'].includes(child.type) ? child.content : '';
+	}).join(' '));
+};
+
+/**
+ * 使用页面渲染共用的 Markdown Engine 生成搜索文档。heading ID 直接读取
+ * markdown-it-anchor 处理后的 token，确保重复标题和中文标题的跳转地址
+ * 与实际页面一致。
+ * @param content Markdown 原文。
+ * @returns 文档标题、正文和按标题划分的小节。
+ */
+export const parseMarkdownSearchSections = (content: string): MarkdownSearchDocument => {
+	const tokens = md.parse(content, {});
+	const sections: MarkdownSearchSection[] = [];
+	const documentParts: string[] = [];
+	let activeSection: MarkdownSearchSection | undefined;
+
+	for (let index = 0; index < tokens.length; index++) {
+		const token = tokens[index];
+		if (token.type === 'heading_open') {
+			const inline = tokens[index + 1];
+			if (inline?.type !== 'inline') continue;
+			const title = getInlineSearchText(inline);
+			if (!title) continue;
+			activeSection = {
+				title,
+				anchor: token.attrGet('id') || '',
+				level: Number(token.tag.slice(1)) || 1,
+				text: ''
+			};
+			sections.push(activeSection);
+			continue;
+		}
+		// 除标题外的 inline token 都是可见正文，包含段落、列表和表格单元格。
+		if (token.type !== 'inline' || tokens[index - 1]?.type === 'heading_open') continue;
+		const text = getInlineSearchText(token);
+		if (!text) continue;
+		documentParts.push(text);
+		if (activeSection) {
+			activeSection.text = normalizeSearchText(`${activeSection.text} ${text}`);
+		}
+	}
+
+	return {
+		title: sections.find(section => section.level === 1)?.title || sections[0]?.title || '',
+		text: normalizeSearchText(documentParts.join(' ')),
+		sections
+	};
+};
