@@ -39,7 +39,7 @@ describe('RemoteSfc', () => {
 		listeners.clear();
 		notifyOnLoad.value = false;
 		window.$docs = {
-			locales: { 'zh-CN': '简体中文', 'en-US': 'English' },
+			locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
 			routes: {},
 			modules: { lodash: 'https://esm.sh/lodash' },
 			namespace: 'remote-test',

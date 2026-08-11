@@ -30,6 +30,9 @@ importers:
 
   packages/client:
     dependencies:
+      '@deot/docs-locale':
+        specifier: '*'
+        version: link:../locale
       '@deot/docs-markdown':
         specifier: '*'
         version: link:../markdown
@@ -112,6 +115,9 @@ importers:
       '@deot/docs-dever':
         specifier: '*'
         version: link:../dever
+      '@deot/docs-locale':
+        specifier: '*'
+        version: link:../locale
       '@deot/docs-markdown':
         specifier: '*'
         version: link:../markdown
@@ -119,8 +125,17 @@ importers:
         specifier: '*'
         version: link:../playground
 
+  packages/locale:
+    devDependencies:
+      vue:
+        specifier: ^3.5.39
+        version: 3.5.40(typescript@6.0.3)
+
   packages/markdown:
     dependencies:
+      '@deot/docs-locale':
+        specifier: '*'
+        version: link:../locale
       '@deot/docs-playground':
         specifier: '*'
         version: link:../playground
@@ -164,6 +179,9 @@ importers:
 
   packages/playground:
     dependencies:
+      '@deot/docs-locale':
+        specifier: '*'
+        version: link:../locale
       '@codemirror/lang-javascript':
         specifier: ^6.2.4
         version: 6.2.4

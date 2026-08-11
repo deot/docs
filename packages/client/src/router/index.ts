@@ -132,11 +132,31 @@ const createRouteRecord = (
 
 export const createDocsRouter = (config: DocsConfig) => {
 	const defaultLanguage = getDefaultLanguage(config);
-	const routes: RouteRecordRaw[] = [{
-		path: '/db',
-		component: DatabasePage,
-		meta: { docsDatabase: true }
-	}];
+	const hasConfiguredDatabaseRoute = Object.keys(config.routes).some(path => (
+		(path.startsWith('/') ? path : `/${path}`) === '/db'
+	));
+	const routes: RouteRecordRaw[] = [
+		{
+			path: '/:lang/__docs/db',
+			component: DatabasePage,
+			meta: { docsDatabase: true, docsLocalized: true }
+		}
+	];
+	if (!hasConfiguredDatabaseRoute) routes.push(
+		{
+			path: '/db',
+			redirect: to => ({
+				path: `/${defaultLanguage}/db`,
+				query: to.query,
+				hash: to.hash
+			})
+		},
+		{
+			path: '/:lang/db',
+			component: DatabasePage,
+			meta: { docsDatabase: true, docsLocalized: true }
+		}
+	);
 	const root = config.routes['/'];
 	routes.push({
 		path: '/',
@@ -185,7 +205,6 @@ export const createDocsRouter = (config: DocsConfig) => {
 	const historyBase = new URL(deploymentBase).pathname;
 	const router = createRouter({ history: createWebHistory(historyBase), routes });
 	router.beforeEach((to) => {
-		if (to.meta.docsDatabase) return true;
 		const lang = String(to.params.lang || '');
 		const configuredLanguages = Object.keys(config.locales);
 		if (lang && (

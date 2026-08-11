@@ -1,6 +1,11 @@
 <template>
-	<footer class="docs-footer">Powered by @deot/docs</footer>
+	<footer class="docs-footer">{{ t('client.common.poweredBy') }}</footer>
 </template>
+<script setup lang="ts">
+import { useLocale } from '@deot/docs-locale';
+
+const { t } = useLocale();
+</script>
 <style lang="scss">
 @use '../../styles/bem' as *;
 

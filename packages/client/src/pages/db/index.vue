@@ -2,17 +2,17 @@
 	<section class="docs-database">
 		<header class="docs-database__header">
 			<div>
-				<h1>IndexedDB Resources</h1>
+				<h1>{{ t('client.database.title') }}</h1>
 				<p>
-					deot-docs / resources · {{ records.length }} records
+					deot-docs / resources · {{ t('client.database.records', { count: records.length }) }}
 					· <span :title="currentNamespace">{{ currentNamespace }}</span>
-					cache {{ namespaceCacheSize }}
+					{{ t('client.database.cache', { size: namespaceCacheSize }) }}
 				</p>
 			</div>
 			<div class="docs-database__toolbar">
 				<div class="docs-database__toolbar-primary">
 					<Popover trigger="click" placement="bottom-right">
-						<Button type="primary" :disabled="loading">Columns</Button>
+						<Button type="primary" :disabled="loading">{{ t('client.database.columns') }}</Button>
 						<template #content>
 							<div class="docs-database__columns">
 								<Checkbox
@@ -26,25 +26,25 @@
 						</template>
 					</Popover>
 					<Button type="primary" :disabled="loading" @click="handleRefresh">
-						Refresh
+						{{ t('client.database.refresh') }}
 					</Button>
 					<Button
 						type="primary"
 						:disabled="loading || !records.length"
 						@click="handleReloadAll"
 					>
-						Update all
+						{{ t('client.database.updateAll') }}
 					</Button>
 					<Button type="primary" :disabled="loading" @click="handlePrefetch">
-						Prefetch
+						{{ t('client.database.prefetch') }}
 					</Button>
 				</div>
 				<div class="docs-database__toolbar-danger">
 					<Button type="error" :disabled="loading || !records.length" @click="handleClearAll">
-						Clear
+						{{ t('client.database.clear') }}
 					</Button>
 					<Button type="error" :disabled="loading || !records.length" @click="handlePrune">
-						Prune
+						{{ t('client.database.prune') }}
 					</Button>
 				</div>
 			</div>
@@ -58,17 +58,17 @@
 			:default-page-size="20"
 			:affix="true"
 		>
-			<TableColumn label="URL" :min-width="260" fixed="left">
+			<TableColumn :label="t('client.database.url')" :min-width="260" fixed="left">
 				<template #default="{ row }">
 					<span class="docs-database__ellipsis" :title="row.url">{{ row.url }}</span>
 				</template>
 			</TableColumn>
-			<TableColumn v-if="isColumnVisible('source')" label="Source" :min-width="190">
+			<TableColumn v-if="isColumnVisible('source')" :label="t('client.database.source')" :min-width="190">
 				<template #default="{ row }">
 					<span class="docs-database__ellipsis" :title="row.identity.source">{{ row.identity.source }}</span>
 				</template>
 			</TableColumn>
-			<TableColumn label="Content Status" :width="130" align="center">
+			<TableColumn :label="t('client.database.contentStatus')" :width="130" align="center">
 				<template #default="{ row }">
 					<Popover :disabled="row.status !== 'error'" placement="top">
 						<Tag :type="row.status">{{ getStatusLabel(row.status) }}</Tag>
@@ -76,7 +76,7 @@
 					</Popover>
 				</template>
 			</TableColumn>
-			<TableColumn label="Request Status" :width="135" align="center">
+			<TableColumn :label="t('client.database.requestStatus')" :width="135" align="center">
 				<template #default="{ row }">
 					<Popover :disabled="row.requestStatus !== 'error'" placement="top">
 						<Tag :type="row.requestStatus">{{ getStatusLabel(row.requestStatus) }}</Tag>
@@ -84,34 +84,34 @@
 					</Popover>
 				</template>
 			</TableColumn>
-			<TableColumn v-if="isColumnVisible('namespace')" label="Namespace" :min-width="150">
+			<TableColumn v-if="isColumnVisible('namespace')" :label="t('client.database.namespace')" :min-width="150">
 				<template #default="{ row }">{{ row.identity.namespace }}</template>
 			</TableColumn>
-			<TableColumn v-if="isColumnVisible('language')" label="Language" :width="100">
+			<TableColumn v-if="isColumnVisible('language')" :label="t('client.database.language')" :width="100">
 				<template #default="{ row }">{{ row.identity.lang }}</template>
 			</TableColumn>
-			<TableColumn v-if="isColumnVisible('type')" label="Type" :width="90">
+			<TableColumn v-if="isColumnVisible('type')" :label="t('client.database.type')" :width="90">
 				<template #default="{ row }">{{ row.identity.type }}</template>
 			</TableColumn>
-			<TableColumn v-if="isColumnVisible('hash')" label="Hash" :width="110">
+			<TableColumn v-if="isColumnVisible('hash')" :label="t('client.database.hash')" :width="110">
 				<template #default="{ row }">{{ row.hash || '-' }}</template>
 			</TableColumn>
-			<TableColumn v-if="isColumnVisible('content')" label="Content" :width="100">
+			<TableColumn v-if="isColumnVisible('content')" :label="t('client.database.content')" :width="100">
 				<template #default="{ row }">{{ formatSize(row.content) }}</template>
 			</TableColumn>
-			<TableColumn label="Updated" :min-width="170">
+			<TableColumn :label="t('client.database.updated')" :min-width="170">
 				<template #default="{ row }">{{ formatTime(row.updatedAt) }}</template>
 			</TableColumn>
-			<TableColumn label="Checked" :min-width="170">
+			<TableColumn :label="t('client.database.checked')" :min-width="170">
 				<template #default="{ row }">{{ formatTime(row.checkedAt) }}</template>
 			</TableColumn>
-			<TableColumn label="Accessed" :min-width="170">
+			<TableColumn :label="t('client.database.accessed')" :min-width="170">
 				<template #default="{ row }">{{ formatTime(row.accessedAt) }}</template>
 			</TableColumn>
-			<TableColumn label="Previous" :width="90" align="center">
-				<template #default="{ row }">{{ row.previous ? 'Yes' : '-' }}</template>
+			<TableColumn :label="t('client.database.previous')" :width="90" align="center">
+				<template #default="{ row }">{{ row.previous ? t('client.common.yes') : '-' }}</template>
 			</TableColumn>
-			<TableColumn label="Actions" :width="190" align="center" fixed="right">
+			<TableColumn :label="t('client.database.actions')" :width="190" align="center" fixed="right">
 				<template #default="{ row }">
 					<div class="docs-database__actions">
 						<Button
@@ -120,7 +120,7 @@
 							:disabled="loading || busyKeys.has(getKey(row))"
 							@click="handleReload(row)"
 						>
-							Update
+							{{ t('client.database.update') }}
 						</Button>
 						<Button
 							class="docs-database__action"
@@ -128,7 +128,7 @@
 							:disabled="loading || busyKeys.has(getKey(row))"
 							@click="handleRemove(row)"
 						>
-							Delete
+							{{ t('client.database.delete') }}
 						</Button>
 					</div>
 				</template>
@@ -139,6 +139,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Button, Checkbox, Message, Popover, TableColumn } from '@deot/vc';
+import { useLocale } from '@deot/docs-locale';
 import * as api from './api';
 import { Paging } from '../../components/paging';
 import { Tag } from '../../components/tag';
@@ -154,20 +155,18 @@ import { Gateway } from '../../modules';
 import type { ResourceRecord, ResourceStatus } from '../../modules';
 
 const records = ref<ResourceRecord[]>([]);
+const { t } = useLocale();
 const paging = ref<PagingExpose<ResourceRecord>>();
 const loadingCount = ref(0);
 const loading = computed(() => loadingCount.value > 0);
 const busyKeys = ref(new Set<string>());
 const tableOptions = { class: 'docs-database__table', rowHeight: 52, border: true };
-const optionalColumns = [
-	{ label: 'Source', value: 'source' },
-	{ label: 'Namespace', value: 'namespace' },
-	{ label: 'Language', value: 'language' },
-	{ label: 'Type', value: 'type' },
-	{ label: 'Hash', value: 'hash' },
-	{ label: 'Content', value: 'content' }
-] as const;
-type OptionalColumn = typeof optionalColumns[number]['value'];
+const OPTIONAL_COLUMN_VALUES = ['source', 'namespace', 'language', 'type', 'hash', 'content'] as const;
+type OptionalColumn = typeof OPTIONAL_COLUMN_VALUES[number];
+const optionalColumns = computed(() => OPTIONAL_COLUMN_VALUES.map(value => ({
+	value,
+	label: t(`client.database.${value}`)
+})));
 const visibleColumns = ref<OptionalColumn[]>([]);
 const STATUS = {
 	WAITING: 'WAITING',
@@ -211,35 +210,35 @@ const filterModules = computed<PagingFilterModule[]>(() => [
 	{
 		type: 'input',
 		field: 'source',
-		label: 'Source',
-		placeholder: 'Source'
+		label: t('client.database.source'),
+		placeholder: t('client.database.source')
 	},
 	{
 		type: 'select',
 		field: 'type',
-		label: 'Type',
-		placeholder: 'Type',
+		label: t('client.database.type'),
+		placeholder: t('client.database.type'),
 		data: typeOptions.value
 	},
 	{
 		type: 'select',
 		field: 'language',
-		label: 'Language',
-		placeholder: 'Language',
+		label: t('client.database.language'),
+		placeholder: t('client.database.language'),
 		data: languageOptions.value
 	},
 	{
 		type: 'select',
 		field: 'status',
-		label: 'Content Status',
-		placeholder: 'Content Status',
+		label: t('client.database.contentStatus'),
+		placeholder: t('client.database.contentStatus'),
 		data: STATUS_OPTIONS
 	},
 	{
 		type: 'select',
 		field: 'requestStatus',
-		label: 'Request Status',
-		placeholder: 'Request Status',
+		label: t('client.database.requestStatus'),
+		placeholder: t('client.database.requestStatus'),
 		data: STATUS_OPTIONS
 	}
 ]);
@@ -274,7 +273,7 @@ const loadData: PagingLoadData<ResourceRecord> = async (_page, _pageSize, keywor
 		if (requestId === listRequestId) records.value = nextRecords;
 		return nextRecords.filter(record => filterRecord(record, keywords));
 	} catch (reason) {
-		if (requestId === listRequestId) Message.error(getErrorMessage(reason, 'Load failed'));
+		if (requestId === listRequestId) Message.error(getErrorMessage(reason, t('client.database.loadFailed')));
 		return [];
 	} finally {
 		endLoading();
@@ -290,7 +289,7 @@ const formatSize = (value?: string) => {
 	return formatBytes(getTextBytes(value));
 };
 const getErrorReason = (record: ResourceRecord) => (
-	record.reason || 'Resource request failed'
+	record.reason || t('client.common.resourceRequestFailed')
 );
 const isColumnVisible = (column: OptionalColumn) => visibleColumns.value.includes(column);
 const handleColumnChange = (column: OptionalColumn, checked: boolean) => {
@@ -314,44 +313,44 @@ const run = async (action: () => Promise<void>, success: string) => {
 		await paging.value?.reset();
 		if (success) Message.success(success);
 	} catch (reason) {
-		Message.error(getErrorMessage(reason, 'Operation failed'));
+		Message.error(getErrorMessage(reason, t('client.database.operationFailed')));
 	} finally {
 		endLoading();
 	}
 };
 
-const handleRefresh = () => run(async () => void 0, 'Refreshed');
+const handleRefresh = () => run(async () => void 0, t('client.database.refreshed'));
 const handleReload = async (record: ResourceRecord) => {
 	const key = getKey(record);
 	setBusy(key, true);
 	try {
 		await api.reload(record);
 		await paging.value?.reset();
-		Message.success(`${record.identity.source} updated`);
+		Message.success(t('client.database.updatedSource', { source: record.identity.source }));
 	} catch (reason) {
-		Message.error(getErrorMessage(reason, 'Reload failed'));
+		Message.error(getErrorMessage(reason, t('client.database.reloadFailed')));
 	} finally {
 		setBusy(key, false);
 	}
 };
 const handleRemove = (record: ResourceRecord) => run(
 	() => api.remove(record),
-	`${record.identity.source} deleted`
+	t('client.database.deletedSource', { source: record.identity.source })
 );
-const handleReloadAll = () => run(() => api.reloadAll(records.value), 'Updated all');
-const handleClearAll = () => run(api.clear, 'Cleared all');
+const handleReloadAll = () => run(() => api.reloadAll(records.value), t('client.database.updatedAll'));
+const handleClearAll = () => run(api.clear, t('client.database.clearedAll'));
 const handlePrefetch = async () => {
 	beginLoading();
 	try {
 		const result = await api.prefetch();
 		await paging.value?.reset();
 		if (result.rejected) {
-			Message.error(`Prefetch: ${result.fulfilled} ok, ${result.rejected} failed`);
+			Message.error(t('client.database.prefetchSummary', result));
 		} else {
-			Message.success(`Prefetched ${result.total}`);
+			Message.success(t('client.database.prefetched', { total: result.total }));
 		}
 	} catch (reason) {
-		Message.error(getErrorMessage(reason, 'Prefetch failed'));
+		Message.error(getErrorMessage(reason, t('client.database.prefetchFailed')));
 	} finally {
 		endLoading();
 	}
@@ -361,9 +360,9 @@ const handlePrune = async () => {
 	try {
 		const removed = await api.prune();
 		await paging.value?.reset();
-		Message.success(`Pruned ${removed}`);
+		Message.success(t('client.database.pruned', { count: removed }));
 	} catch (reason) {
-		Message.error(getErrorMessage(reason, 'Garbage cleanup failed'));
+		Message.error(getErrorMessage(reason, t('client.database.pruneFailed')));
 	} finally {
 		endLoading();
 	}

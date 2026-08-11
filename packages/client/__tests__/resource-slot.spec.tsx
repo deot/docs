@@ -119,7 +119,7 @@ describe('ResourceSlot', () => {
 			fullPath: target
 		}));
 		window.$docs = {
-			locales: { 'zh-CN': '简体中文' },
+			locales: { 'zh-CN': { label: '简体中文' } },
 			routes: {},
 			namespace: 'test',
 			runtime: { mode: 'development', workspace: '/site/' }

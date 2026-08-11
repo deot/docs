@@ -1,15 +1,16 @@
 <template>
 	<header class="docs-header">
 		<RouterLink class="docs-header__brand" :to="`/${lang}`">
-			@deot/docs
+			{{ t('client.header.brand') }}
 		</RouterLink>
+		<div class="docs-header__search"><DocsSearch /></div>
 		<nav class="docs-header__locales">
 			<RouterLink
-				v-for="(label, locale) in config.locales"
+				v-for="(localeConfig, locale) in config.locales"
 				:key="locale"
 				:to="localePath(locale)"
 			>
-				{{ label }}
+				{{ localeConfig.label }}
 			</RouterLink>
 		</nav>
 	</header>
@@ -17,10 +18,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
+import { useLocale } from '@deot/docs-locale';
+import DocsSearch from '../search';
 import { getDocsConfig } from '../../utils/runtime';
 
 const route = useRoute();
 const config = getDocsConfig();
+const { t } = useLocale();
 const lang = computed(() => String(route.params.lang));
 const localePath = (locale: string) => {
 	const segments = route.path.split('/').filter(Boolean);
@@ -37,7 +41,7 @@ const localePath = (locale: string) => {
 
 @include block(docs-header) {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-columns: minmax(160px, 1fr) minmax(180px, 320px) minmax(160px, 1fr);
 	width: 100%;
 	height: 60px;
 	padding: 0 30px;
@@ -58,6 +62,7 @@ const localePath = (locale: string) => {
 		grid-auto-flow: column;
 		height: 60px;
 		align-items: stretch;
+		justify-self: end;
 
 		a {
 			display: grid;
@@ -74,6 +79,26 @@ const localePath = (locale: string) => {
 
 			&.router-link-active {
 				box-shadow: inset 0 2px 0 #873bf4;
+			}
+		}
+	}
+
+	@include element(search) {
+		display: grid;
+		min-width: 0;
+		justify-items: center;
+	}
+}
+
+@media screen and (width <= 768px) {
+	@include block(docs-header) {
+		grid-template-columns: minmax(110px, 1fr) 34px auto;
+		padding: 0 12px;
+
+		@include element(locales) {
+			a {
+				padding-right: 8px;
+				padding-left: 8px;
 			}
 		}
 	}

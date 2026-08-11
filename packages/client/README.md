@@ -20,8 +20,13 @@ pnpm add @deot/docs-client
 		base: new URL('./', document.baseURI).href,
 		namespace: 'my-docs',
 		locales: {
-			'zh-CN': '简体中文',
-			'en-US': 'English'
+			'zh-CN': {
+				label: '简体中文',
+				client: {
+					search: { placeholder: '搜索文档' }
+				}
+			},
+			'en-US': { label: 'English' }
 		},
 		routes: {
 			'/': '/index',
@@ -63,7 +68,7 @@ const { app, router, disconnect } = bootstrap(window.$docs);
 
 | 字段 | 说明 |
 | --- | --- |
-| `locales` | 语言代码到显示名称的映射；第一项是默认语言。 |
+| `locales` | 语言代码到 `{ label, client?, markdown?, playground? }` 的映射；第一项是默认文档语言。 |
 | `routes` | 去掉语言前缀后的路由配置。字符串和函数表示重定向。 |
 | `base` | production 资源的基准 URL。 |
 | `namespace` | IndexedDB 缓存隔离标识；未设置时使用规范化后的 `base`。 |
@@ -83,6 +88,10 @@ const { app, router, disconnect } = bootstrap(window.$docs);
 
 sidebar JSON 使用递归的 `{ label, value?, children? }` 结构。
 
+### Locale 与 lang
+
+`lang` 始终来自当前路由，用于文档资源寻址、搜索与缓存隔离；`locale` 只负责界面文案。Client 会在路由切换时同步 `<html lang>`。内置 `zh-CN` 和 `en-US`，自定义语言或缺少字段会逐字段回退到 `en-US`。翻译 key 必须属于 `client.*`、`markdown.*` 或 `playground.*`。
+
 ### 空闲预加载
 
 首屏路由就绪后，Client 默认在浏览器空闲阶段预加载已配置资源。它会先准备 sidebar、SFC 及递归依赖，再按 sidebar 的深度优先顺序加载 Markdown；当前路由请求始终使用更高优先级。每批默认提交 2 个资源，单次等待空闲最长 1500ms：
@@ -97,7 +106,7 @@ window.$docs = {
 };
 ```
 
-设置 `prefetch: false` 可关闭自动预加载，`/db` 页面的手动 Prefetch 不受影响。离线失败会保留历史内容和 error 状态；浏览器恢复联网后，只补充本会话失败、未完成和新发现的资源。
+设置 `prefetch: false` 可关闭自动预加载，不影响诊断页的手动 Prefetch。诊断页默认位于 `/:lang/db`，`/db` 会跳转到默认语言；若站点声明了 `/db` 内容路由，诊断页改从 `/:lang/__docs/db` 访问。离线失败会保留历史内容和 error 状态；浏览器恢复联网后，只补充本会话失败、未完成和新发现的资源。
 
 ## Runtime 与资源寻址
 
@@ -173,6 +182,12 @@ const unsubscribe = Gateway.subscribe(identity, () => undefined);
 | `setConcurrency(value)` | 调整全局请求并发数。 |
 
 默认缓存数据库名为 `deot-docs`。有旧内容但最新请求失败时，内容状态仍为 `success`，请求状态为 `error`；内容订阅不会被纯请求状态变化触发。
+
+## Header 搜索
+
+内置 Header 会搜索当前 namespace、当前语言下已进入 Gateway 缓存的 Markdown。空查询展示最近访问结果；选择文档或小节后会记录历史，并支持收藏和删除。搜索不会主动请求资源，后台空闲预加载完成后会静默扩充结果。
+
+搜索历史独立保存在 `deot-docs-search` 数据库中，最多保留 20 条，Gateway 的 Clear 和 Prune 不会删除这些导航历史。
 
 ## 其他公共导出
 

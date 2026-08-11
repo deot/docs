@@ -11,14 +11,15 @@
 	<script>
 		const repository = 'https://raw.githubusercontent.com/deot/docs/refs/heads/main/';
 		const locales = {
-			'zh-CN': '简体中文',
-			'en-US': 'English'
+			'zh-CN': { label: '简体中文' },
+			'en-US': { label: 'English' }
 		};
 		const packages = [
 			{ label: '@deot/docs', value: 'index' },
 			{ label: '@deot/docs-client', value: 'client' },
 			{ label: '@deot/docs-cli', value: 'cli' },
 			{ label: '@deot/docs-dever', value: 'dever' },
+			{ label: '@deot/docs-locale', value: 'locale' },
 			{ label: '@deot/docs-markdown', value: 'markdown' },
 			{ label: '@deot/docs-playground', value: 'playground' }
 		];
@@ -67,7 +68,7 @@
 			resolve: {
 				// 两种语言暂时共用仓库内的 README，后续可只替换对应语言的映射。
 				markdown: ({ lang, value }) => (
-					localeReadmes[lang] || localeReadmes['zh-CN']
+					localeReadmes[lang] || localeReadmes['en-US']
 				)[value],
 				resource: ({ source, type, runtime }) => {
 					if (type === 'sidebar' && source === sidebarSource) return sidebarUrl;

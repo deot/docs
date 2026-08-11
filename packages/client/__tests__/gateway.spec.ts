@@ -47,7 +47,7 @@ describe('ResourceGateway', () => {
 		vi.clearAllMocks();
 		indexedData.clear();
 		window.$docs = {
-			locales: { 'zh-CN': '简体中文' },
+			locales: { 'zh-CN': { label: '简体中文' } },
 			routes: {},
 			base: 'https://docs.example.com/',
 			namespace: 'docs'
@@ -628,7 +628,7 @@ describe('ResourceGateway', () => {
 		}), { cancel });
 		http.mockReturnValueOnce(leaf);
 		window.$docs = {
-			locales: { 'zh-CN': '简体中文' },
+			locales: { 'zh-CN': { label: '简体中文' } },
 			routes: {},
 			base: 'https://docs.example.com/',
 			namespace: 'default-adapter'

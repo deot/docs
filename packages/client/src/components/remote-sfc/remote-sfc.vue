@@ -1,7 +1,7 @@
 <template>
 	<div class="docs-remote-sfc">
 		<div v-if="error" class="docs-remote-sfc__error">{{ error }}</div>
-		<div v-else-if="loading" class="docs-remote-sfc__loading">Loading…</div>
+		<div v-else-if="loading" class="docs-remote-sfc__loading">{{ t('client.common.loading') }}</div>
 		<component
 			:is="PlaygroundComponent"
 			v-else-if="PlaygroundComponent"
@@ -9,6 +9,7 @@
 			:files="files"
 			:entry="entry"
 			:options="playgroundOptions"
+			:locale="locale"
 			:styleless="true"
 			@navigate="handleNavigate"
 		/>
@@ -17,6 +18,7 @@
 <script setup lang="ts">
 import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue';
 import type { Component } from 'vue';
+import { useLocale } from '@deot/docs-locale';
 import { useRouter } from 'vue-router';
 import { Gateway } from '../../modules';
 import { createResourceIdentity, resolveResource, resourceIdentityKey } from '../../utils/resolver';
@@ -31,6 +33,7 @@ import { getDocsConfig } from '../../utils/runtime';
 import type { ResourceContentRecord } from '../../modules';
 
 const props = defineProps<{ source: string; lang: string }>();
+const { locale, t } = useLocale();
 const router = useRouter();
 const config = getDocsConfig();
 const loading = ref(true);
@@ -129,7 +132,7 @@ const loadFiles = async () => {
 	} catch (reason) {
 		activeController.abort();
 		if (current === generation && controller === activeController) {
-			error.value = reason instanceof Error ? reason.message : 'Resource request failed';
+			error.value = reason instanceof Error ? reason.message : t('client.common.resourceRequestFailed');
 		}
 	} finally {
 		// 缓存加载返回后可能仍有静默刷新，因此在下一张资源图替换它或组件
