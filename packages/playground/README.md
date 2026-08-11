@@ -5,7 +5,7 @@
 ## 安装
 
 ```bash
-pnpm add @deot/docs-playground @deot/vc vue
+pnpm add @deot/docs-playground @deot/docs-locale @deot/vc vue
 ```
 
 ## 快速开始
@@ -18,12 +18,14 @@ pnpm add @deot/docs-playground @deot/vc vue
 		v-model:viewport="viewport"
 		:views="['runtime', 'files']"
 		:viewport-options="['auto', 375, [375, 667]]"
+		:locale="zhCN"
 	/>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Playground } from '@deot/docs-playground';
+import { zhCN } from '@deot/docs-locale';
 import '@deot/docs-playground/dist/index.style.css';
 
 const entry = ref('App.vue');
@@ -49,6 +51,7 @@ const files = ref({
 | `styleless` | `boolean` | `false` | 只渲染无工具栏的运行时预览。 |
 | `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项。 |
 | `previewOptions` | `SandboxProps['previewOptions']` | `undefined` | 传给当前 iframe 的 preview 选项。 |
+| `locale` | `Language` | `en-US` | 界面语言；未传入时使用上层 Locale Provider。 |
 
 ## 事件与双向绑定
 

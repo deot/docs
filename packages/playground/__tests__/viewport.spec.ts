@@ -34,7 +34,8 @@ describe('playground viewport', () => {
 	});
 
 	it('formats menu labels', () => {
-		expect(formatViewportLabel('auto')).toBe('自适应');
+		expect(formatViewportLabel('auto')).toBe('Auto');
+		expect(formatViewportLabel('auto', '自适应')).toBe('自适应');
 		expect(formatViewportLabel(375)).toBe('375px');
 		expect(formatViewportLabel([375, 667])).toBe('375 × 667px');
 	});

@@ -2,6 +2,7 @@
 
 import { defineComponent, nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
+import { zhCN } from '@deot/docs-locale';
 import EditorWrapper from '../src/editor/editor.vue';
 
 const { destroy, focus, listener, dragOff, javascriptMode, messageError, vueMode, scrollerRefresh, setScrollLeft } = vi.hoisted(() => ({
@@ -92,6 +93,20 @@ describe('editor', () => {
 		expect(destroy).toHaveBeenCalled();
 	});
 
+	it('uses the locale passed through the editor portal props', async () => {
+		const wrapper = mount(EditorWrapper, {
+			props: {
+				files: { 'App.vue': '<template />' },
+				entry: 'App.vue',
+				locale: zhCN
+			}
+		});
+		await nextTick();
+
+		expect(wrapper.find('button[title="新建文件"]').exists()).toBe(true);
+		expect(wrapper.find('button[title="入口文件不能删除"]').exists()).toBe(true);
+	});
+
 	it('switches files and edits non-entry code', async () => {
 		const onFilesChange = vi.fn();
 		const onActiveChange = vi.fn();
@@ -127,7 +142,7 @@ describe('editor', () => {
 		});
 		await nextTick();
 
-		await wrapper.find('button[title="新建文件"]').trigger('click');
+		await wrapper.find('button[title="Create file"]').trigger('click');
 		await nextTick();
 		expect(onFilesChange).toHaveBeenLastCalledWith(
 			expect.objectContaining({ 'comp1.vue': expect.stringContaining('<slot />') }),
@@ -146,7 +161,7 @@ describe('editor', () => {
 			{ type: 'rename', filename: 'config.json', previousFilename: 'comp1.vue' }
 		);
 
-		await wrapper.find('button[title="设为入口"]').trigger('click');
+		await wrapper.find('button[title="Set as entry"]').trigger('click');
 		expect(onFilesChange).toHaveBeenLastCalledWith(
 			expect.any(Object),
 			'config.json',
@@ -184,7 +199,7 @@ describe('editor', () => {
 			{ type: 'rename', filename: 'Root.vue', previousFilename: 'App.vue' }
 		);
 
-		await wrapper.find('button[title="新建文件"]').trigger('click');
+		await wrapper.find('button[title="Create file"]').trigger('click');
 		expect(onFilesChange.mock.calls.at(-1)?.[0]['comp2.vue']).toContain('<slot />');
 	});
 
@@ -198,10 +213,10 @@ describe('editor', () => {
 			}
 		});
 		await nextTick();
-		expect(wrapper.find('button[title="入口文件不能删除"]').attributes('disabled')).toBeDefined();
+		expect(wrapper.find('button[title="The entry file cannot be deleted"]').attributes('disabled')).toBeDefined();
 		const utilPopconfirm = wrapper.findComponent({ name: 'Popconfirm' });
 		expect(utilPopconfirm.props('portal')).toBe(true);
-		await utilPopconfirm.find('button[title="删除文件"]').trigger('click');
+		await utilPopconfirm.find('button[title="Delete file"]').trigger('click');
 		expect(utilPopconfirm.emitted('trigger')).toHaveLength(1);
 		expect(onActiveChange).not.toHaveBeenCalled();
 	});
@@ -229,11 +244,11 @@ describe('editor', () => {
 	});
 
 	it.each([
-		['', '请输入文件名'],
-		['/root.vue', '相对 POSIX'],
-		['bad\\file.vue', '相对 POSIX'],
-		['notes.txt', '不支持'],
-		['Other.vue', '已存在']
+		['', 'Enter a filename'],
+		['/root.vue', 'relative POSIX'],
+		['bad\\file.vue', 'relative POSIX'],
+		['notes.txt', 'Unsupported'],
+		['Other.vue', 'already exists']
 	])('rejects invalid filename %s', async (filename, message) => {
 		const wrapper = mount(EditorWrapper, {
 			props: {

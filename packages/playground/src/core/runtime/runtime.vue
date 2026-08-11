@@ -28,8 +28,8 @@
 						type="button"
 						class="docs-playground__tool docs-playground__viewport-trigger"
 						:class="{ 'is-active': viewport !== 'auto' }"
-						:title="`视口：${viewportLabel}`"
-						:aria-label="`视口：${viewportLabel}`"
+						:title="t('playground.runtime.viewport', { value: viewportLabel })"
+						:aria-label="t('playground.runtime.viewport', { value: viewportLabel })"
 						:aria-expanded="viewportMenuVisible"
 						aria-haspopup="menu"
 					>
@@ -39,7 +39,7 @@
 						<DropdownMenu
 							class="docs-playground__viewport-options"
 							role="menu"
-							aria-label="运行时视口"
+							:aria-label="t('playground.runtime.viewportMenu')"
 						>
 							<DropdownItem
 								v-for="(item, index) in viewportOptions"
@@ -51,7 +51,7 @@
 								:aria-checked="viewportEquals(item, viewport)"
 								@click="handleViewport(index)"
 							>
-								{{ formatViewportLabel(item) }}
+								{{ formatViewportLabel(item, t('playground.runtime.auto')) }}
 							</DropdownItem>
 						</DropdownMenu>
 					</template>
@@ -61,8 +61,8 @@
 					:value="copyValue"
 					tag="button"
 					type="button"
-					title="复制"
-					aria-label="复制"
+					:title="t('playground.common.copy')"
+					:aria-label="t('playground.common.copy')"
 				>
 					<PlaygroundIcon name="copy" />
 				</Clipboard>
@@ -70,8 +70,8 @@
 					type="button"
 					class="docs-playground__tool docs-playground__editor"
 					data-action="edit"
-					title="编辑文件"
-					aria-label="编辑文件"
+					:title="t('playground.runtime.editFiles')"
+					:aria-label="t('playground.runtime.editFiles')"
 					@click="handleEditor"
 				>
 					<PlaygroundIcon name="editor" />
@@ -84,8 +84,8 @@
 					type="button"
 					class="docs-playground__view"
 					:class="{ 'is-active': item === activeView }"
-					:title="PLAYGROUND_VIEW_TEXT[item]"
-					:aria-label="PLAYGROUND_VIEW_TEXT[item]"
+					:title="getViewText(item)"
+					:aria-label="getViewText(item)"
 					:aria-pressed="item === activeView"
 					@click="handleView(item)"
 				>
@@ -111,8 +111,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { Clipboard, Dropdown, DropdownItem, DropdownMenu } from '@deot/vc';
+import { useLocale } from '@deot/docs-locale';
 import { Sandbox } from '@vue/repl';
-import { PLAYGROUND_VIEW_TEXT } from '../../constants';
 import { Editor } from '../../editor';
 import type { EditorFilesChangeAction } from '../../editor';
 import PlaygroundIcon from '../../icon';
@@ -157,6 +157,10 @@ const props = withDefaults(defineProps<{
 	viewport: 'auto',
 	viewportOptions: () => ['auto', 375]
 });
+const { locale, t } = useLocale();
+const getViewText = (view: PlaygroundView) => t(
+	view === 'runtime' ? 'playground.runtime.preview' : 'playground.runtime.files'
+);
 const emit = defineEmits<{
 	'files-change': [files: PlaygroundFiles, entry: string, action: EditorFilesChangeAction];
 	'view-change': [view: PlaygroundView];
@@ -202,7 +206,10 @@ const handleBridgeMessage = (event: MessageEvent) => {
 if (typeof window !== 'undefined') window.addEventListener('message', handleBridgeMessage);
 onBeforeUnmount(() => window.removeEventListener('message', handleBridgeMessage));
 const viewportMenuVisible = ref(false);
-const viewportLabel = computed(() => formatViewportLabel(props.viewport));
+const viewportLabel = computed(() => formatViewportLabel(
+	props.viewport,
+	t('playground.runtime.auto')
+));
 const desiredViewportHeight = computed(() => getViewportHeight(props.viewport) || runtimeHeight.value);
 const previewStyle = computed(() => ({ height: `${desiredViewportHeight.value + 20}px` }));
 const stylelessStyle = computed(() => ({ height: `${desiredViewportHeight.value}px` }));
@@ -262,6 +269,7 @@ const handleEditor = () => {
 	Editor.popup({
 		files: { ...props.files },
 		entry: props.entry,
+		locale: locale.value,
 		getCodeErrors: () => store.errors,
 		onFilesChange: handleFilesChange,
 		onActiveChange: (filename: string) => store.setActive(toReplFilename(filename))

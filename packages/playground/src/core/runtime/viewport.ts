@@ -54,8 +54,8 @@ export const getViewportWidth = (viewport: PlaygroundViewport) => {
 export const getViewportHeight = (viewport: PlaygroundViewport) =>
 	Array.isArray(viewport) ? viewport[1] : null;
 
-export const formatViewportLabel = (viewport: PlaygroundViewport) => {
-	if (viewport === 'auto') return '自适应';
+export const formatViewportLabel = (viewport: PlaygroundViewport, autoLabel = 'Auto') => {
+	if (viewport === 'auto') return autoLabel;
 	return Array.isArray(viewport)
 		? `${viewport[0]} × ${viewport[1]}px`
 		: `${viewport}px`;

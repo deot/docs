@@ -21,7 +21,7 @@
 					@click="handleActive(filename)"
 				>
 					<span>{{ filename }}</span>
-					<small v-if="filename === entry" class="docs-playground-files__entry">入口</small>
+					<small v-if="filename === entry" class="docs-playground-files__entry">{{ t('playground.files.entry') }}</small>
 				</button>
 			</Scroller>
 			<div class="docs-playground-files__actions">
@@ -32,8 +32,8 @@
 						type="button"
 						class="docs-playground__view"
 						:class="{ 'is-active': item === activeView }"
-						:title="PLAYGROUND_VIEW_TEXT[item]"
-						:aria-label="PLAYGROUND_VIEW_TEXT[item]"
+						:title="getViewText(item)"
+						:aria-label="getViewText(item)"
 						:aria-pressed="item === activeView"
 						@click="handleView(item)"
 					>
@@ -46,14 +46,14 @@
 			class="docs-playground-files__body"
 			:code="activeCode"
 			:filename="activeFilename"
-			copy-label="复制当前文件"
+			:copy-label="t('playground.common.copyCurrentFile')"
 		/>
 	</div>
 </template>
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { Scroller } from '@deot/vc';
-import { PLAYGROUND_VIEW_TEXT } from '../../constants';
+import { useLocale } from '@deot/docs-locale';
 import PlaygroundIcon from '../../icon';
 import type { PlaygroundFiles, PlaygroundView } from '../../types';
 import CodePreview from '../code-preview';
@@ -65,6 +65,10 @@ const props = defineProps<{
 	activeView: PlaygroundView;
 	views: PlaygroundView[];
 }>();
+const { t } = useLocale();
+const getViewText = (view: PlaygroundView) => t(
+	view === 'runtime' ? 'playground.runtime.preview' : 'playground.runtime.files'
+);
 const emit = defineEmits<{
 	'active-change': [filename: string];
 	'view-change': [view: PlaygroundView];
