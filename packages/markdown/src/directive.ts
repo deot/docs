@@ -1,5 +1,6 @@
 import { createApp, h } from 'vue';
 import type { App, DirectiveBinding } from 'vue';
+import type { Language } from '@deot/docs-locale';
 import { Markdown } from './markdown';
 
 const mountedApps = new WeakMap<HTMLElement, App[]>();
@@ -21,11 +22,16 @@ const resolveBlockLanguage = (block: Element) => {
 	return languageClass?.slice('language-'.length) || '';
 };
 
-const render = async (el: HTMLElement, binding: DirectiveBinding<string | undefined>) => {
+interface MarkdownDirectiveValue {
+	source?: string;
+	locale: Language;
+}
+
+const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirectiveValue>) => {
 	cleanup(el);
 	const version = (renderVersions.get(el) || 0) + 1;
 	renderVersions.set(el, version);
-	el.innerHTML = binding.value ? Markdown.render(binding.value) : '';
+	el.innerHTML = binding.value.source ? Markdown.render(binding.value.source) : '';
 
 	const apps: App[] = [];
 	const blocks = el.querySelectorAll('pre code');
@@ -44,7 +50,8 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<string | undefi
 		pre.replaceWith(mountPoint);
 		const app = createApp(() => h(DocsPlayground.CodePreview, {
 			code: block.textContent || '',
-			language: resolveBlockLanguage(block)
+			language: resolveBlockLanguage(block),
+			locale: binding.value.locale
 		}));
 		app.mount(mountPoint);
 		apps.push(app);
@@ -65,7 +72,8 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<string | undefi
 			: { modelValue: code };
 		const app = createApp(() => h(DocsPlayground.Playground, {
 			...(typeof propsData === 'object' ? propsData : {}),
-			...runtimeProps
+			...runtimeProps,
+			locale: binding.value.locale
 		}));
 		app.mount(item);
 		apps.push(app);
@@ -74,12 +82,13 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<string | undefi
 	mountedApps.set(el, apps);
 };
 
-const update = (el: HTMLElement, binding: DirectiveBinding<string | undefined>) => {
-	if (binding.value !== binding.oldValue) void render(el, binding);
+const update = (el: HTMLElement, binding: DirectiveBinding<MarkdownDirectiveValue>) => {
+	if (binding.value.source !== binding.oldValue?.source
+		|| binding.value.locale !== binding.oldValue?.locale) void render(el, binding);
 };
 
 export const vMarkdown = {
-	mounted: (el: HTMLElement, binding: DirectiveBinding<string | undefined>) => void render(el, binding),
+	mounted: (el: HTMLElement, binding: DirectiveBinding<MarkdownDirectiveValue>) => void render(el, binding),
 	updated: update,
 	beforeUnmount: (el: HTMLElement) => {
 		renderVersions.set(el, (renderVersions.get(el) || 0) + 1);

@@ -11,6 +11,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@deot/docs-locale": "*",
     "@deot/docs-playground": "*",
     "@deot/helper-dom": "^1.1.5",
     "json5": "^2.2.3",

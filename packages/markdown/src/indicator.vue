@@ -5,7 +5,7 @@
 		class="docs-markdown-indicator"
 		:class="`is-${options.position || 'right'}`"
 		:style="rootStyle"
-		aria-label="Document indicator"
+		:aria-label="t('markdown.indicator.label')"
 	>
 		<div
 			ref="viewport"
@@ -75,6 +75,7 @@ import {
 } from 'vue';
 import { getScroller } from '@deot/helper-dom';
 import { Scroller } from '@deot/vc';
+import { useLocale } from '@deot/docs-locale';
 import type { ScrollerExposed } from '@deot/vc';
 import type { CSSProperties } from 'vue';
 import type { MarkdownIndicatorOptions } from './types';
@@ -131,6 +132,7 @@ const props = defineProps<{
 	options: MarkdownIndicatorOptions;
 	target?: HTMLElement;
 }>();
+const { t } = useLocale();
 
 const parentScroller = inject<ParentScrollerContext | null>('vc-scroller', null);
 const indicatorRoot = ref<HTMLElement>();
@@ -183,7 +185,7 @@ const getBlockText = (element: HTMLElement) => (
  * @returns 单行章节标题。
  */
 const getHeadingTitle = (element: HTMLElement) => (
-	getBlockText(element).replace(/^#\s*/, '').replace(/\s+/g, ' ').trim() || 'Untitled section'
+	getBlockText(element).replace(/^#\s*/, '').replace(/\s+/g, ' ').trim() || t('markdown.indicator.untitled')
 );
 
 /**
@@ -309,7 +311,7 @@ const refreshMarkers = () => {
 	}
 	const elements = [...target.querySelectorAll<HTMLElement>(BLOCK_SELECTOR)]
 		.filter(element => !isNestedBlock(element));
-	let sectionTitle = 'Document';
+	let sectionTitle = t('markdown.indicator.document');
 	markers.value = elements.map((element, index) => {
 		const isHeading = /^H[1-6]$/.test(element.tagName);
 		if (isHeading) sectionTitle = getHeadingTitle(element);
