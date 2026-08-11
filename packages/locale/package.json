@@ -1,0 +1,20 @@
+{
+  "name": "@deot/docs-locale",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.39"
+  },
+  "devDependencies": {
+    "vue": "^3.5.39"
+  }
+}

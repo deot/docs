@@ -1,0 +1,54 @@
+import type { ComputedRef, Ref } from 'vue';
+
+export interface ClientLocaleMessages {
+	common: Record<string, string>;
+	header: Record<string, string>;
+	search: Record<string, string>;
+	database: Record<string, string>;
+	paging: Record<string, string>;
+}
+
+export interface MarkdownLocaleMessages {
+	indicator: Record<string, string>;
+}
+
+export interface PlaygroundLocaleMessages {
+	common: Record<string, string>;
+	runtime: Record<string, string>;
+	files: Record<string, string>;
+	editor: Record<string, string>;
+	validation: Record<string, string>;
+}
+
+export interface DocsLocaleMessages {
+	client: ClientLocaleMessages;
+	markdown: MarkdownLocaleMessages;
+	playground: PlaygroundLocaleMessages;
+}
+
+export interface Language extends DocsLocaleMessages {
+	/** 最终生效的规范化 UI 语言代码。 */
+	name: string;
+}
+
+export type DeepPartial<T> = {
+	[P in keyof T]?: T[P] extends object
+		? DeepPartial<T[P]>
+		: T[P];
+};
+
+export type DocsLocaleEntry = {
+	/** Header 展示名称，不进入翻译字典。 */
+	label: string;
+} & DeepPartial<DocsLocaleMessages>;
+
+export type LocaleNamespace = 'client' | 'markdown' | 'playground';
+export type LocaleKey = `${LocaleNamespace}.${string}`;
+export type TranslatorOption = Record<string, string | number>;
+export type Translator = (path: LocaleKey, options?: TranslatorOption) => string;
+
+export interface LocaleContext {
+	locale: Ref<Language>;
+	lang: ComputedRef<string>;
+	t: Translator;
+}
