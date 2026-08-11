@@ -11,7 +11,7 @@
 		<DefaultSidebar v-else-if="sidebarItems" :items="sidebarItems" />
 		<RemoteSfc v-else-if="resourceType === 'sfc' && source" :source="source" :lang="lang" />
 		<div v-else-if="error" class="docs-resource-slot__error">{{ error }}</div>
-		<div v-else-if="loading" class="docs-resource-slot__loading">Loading…</div>
+		<div v-else-if="loading" class="docs-resource-slot__loading">{{ t('client.common.loading') }}</div>
 		<Markdown
 			v-else-if="resourceType === 'markdown'"
 			:value="content"
@@ -24,6 +24,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Markdown } from '@deot/docs-markdown';
+import { useLocale } from '@deot/docs-locale';
 import DefaultFooter from './default-footer.vue';
 import DefaultHeader from './default-header.vue';
 import DefaultSidebar from './default-sidebar.vue';
@@ -39,6 +40,7 @@ const props = defineProps<{ name: 'header' | 'sidebar' | 'content' | 'footer' | 
 const route = useRoute();
 const router = useRouter();
 const docs = getDocsConfig();
+const { t } = useLocale();
 const content = ref('');
 const error = ref('');
 const loading = ref(false);

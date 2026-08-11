@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
-import { reactive } from 'vue';
+import { defineComponent, reactive } from 'vue';
+import { provideLocale, resolveLocale } from '@deot/docs-locale';
 import App from '../src/app.vue';
 import DefaultFooter from '../src/components/layout/default-footer.vue';
 import DefaultHeader from '../src/components/layout/default-header.vue';
@@ -56,7 +57,7 @@ describe('client layout components', () => {
 		route.query = { tab: 'api' };
 		route.hash = '#props';
 		window.$docs = {
-			locales: { 'zh-CN': '简体中文', 'en-US': 'English' },
+			locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
 			routes: {}
 		};
 	});
@@ -104,6 +105,22 @@ describe('client layout components', () => {
 			'/en-US/components/button'
 		]);
 		expect(wrapper.text()).toContain('@deot/docs');
+	});
+
+	it('uses locale overrides for built-in header text', () => {
+		const Host = defineComponent({
+			setup() {
+				provideLocale(resolveLocale('zh-CN', {
+					'zh-CN': {
+						label: '简体中文',
+						client: { header: { brand: '@deot/docs 文档' } }
+					}
+				}));
+				return () => <DefaultHeader />;
+			}
+		});
+
+		expect(mount(Host).find('.docs-header__brand').text()).toBe('@deot/docs 文档');
 	});
 
 	it('renders recursive sidebar items and preserves external links', () => {

@@ -32,14 +32,14 @@ type PrefetchResources = (identities: ResourceIdentity[]) => Promise<ResourceRes
 
 interface RouteCandidate {
 	config: DocsRouteConfig;
-	params: Record<string, string>;
+	params: Record<string, string | string[]>;
 	pattern: string;
 	score: number;
 }
 
 interface RouteContentMatch {
 	config: DocsRoute;
-	params: Record<string, string>;
+	params: Record<string, string | string[]>;
 }
 
 interface RouteMatch extends RouteContentMatch {
@@ -64,6 +64,12 @@ export interface PrefetchPlan {
 	config: DocsConfig;
 	collector: ResourceCollector;
 	results: ResourceResult[];
+}
+
+export interface RouteResource {
+	identity: ResourceIdentity;
+	/** 已包含语言前缀、可直接交给 Vue Router 的站内路径。 */
+	path: string;
 }
 
 const getLanguages = (config: DocsConfig) => (
@@ -95,7 +101,7 @@ const matchRoute = (
 		if (!config || pattern === '*') continue;
 		const parts = pattern.split('/').filter(Boolean);
 		if (parts.length !== target.length && !parts.includes('*')) continue;
-		const params: Record<string, string> = {};
+		const params: Record<string, string | string[]> = {};
 		const matches = parts.every((part, index) => {
 			if (part === '*') return true;
 			if (part.startsWith(':')) {
@@ -119,7 +125,9 @@ const matchRoute = (
 	return fallback
 		? {
 				config: fallback,
-				params: {},
+				// Vue Router 的 catch-all 会把剩余路径作为 pathMatch 数组交给
+				// redirect/value 函数；资源计划必须提供同样的 route shape。
+				params: { pathMatch: target },
 				pattern: '*',
 				score: -1
 			}
@@ -129,7 +137,7 @@ const matchRoute = (
 const createRouteShape = (
 	lang: string,
 	pathname: string,
-	params: Record<string, string> = {}
+	params: Record<string, string | string[]> = {}
 ): RouteLocationNormalized => {
 	const normalizedPath = `/${pathname.split('/').filter(Boolean).join('/')}`;
 	const localizedPath = `/${lang}${normalizedPath === '/' ? '' : normalizedPath}`;
@@ -220,6 +228,30 @@ const createCollector = (config: DocsConfig): ResourceCollector => {
 	return { identities, add };
 };
 
+const resolveRouteContentIdentity = async (
+	config: DocsConfig,
+	lang: string,
+	pathname: string,
+	routeMatch: RouteContentMatch | null
+) => {
+	if (!routeMatch) return null;
+	const route = createRouteShape(lang, pathname, routeMatch.params);
+	const slot = typeof routeMatch.config.content === 'undefined'
+		? 'default'
+		: routeMatch.config.content;
+	if (slot === null) return null;
+	if (slot !== 'default') {
+		return createResourceIdentity(config, lang, classify(slot), slot);
+	}
+	const params = Object.values(routeMatch.params).flatMap(value => value).filter(Boolean);
+	const value = typeof routeMatch.config.value === 'function'
+		? routeMatch.config.value(route)
+		: routeMatch.config.value || params.at(-1)
+			|| pathname.split('/').filter(Boolean).at(-1) || 'index';
+	const source = await config.resolve?.markdown?.({ lang, value, route }) || `./${value}.md`;
+	return createResourceIdentity(config, lang, 'markdown', source);
+};
+
 const addRouteContent = async (
 	config: DocsConfig,
 	collector: ResourceCollector,
@@ -227,23 +259,8 @@ const addRouteContent = async (
 	pathname: string,
 	routeMatch: RouteContentMatch | null
 ) => {
-	if (!routeMatch) return;
-	const route = createRouteShape(lang, pathname, routeMatch.params);
-	const slot = typeof routeMatch.config.content === 'undefined'
-		? 'default'
-		: routeMatch.config.content;
-	if (slot === null) return;
-	if (slot !== 'default') {
-		collector.add(lang, slot);
-		return;
-	}
-	const params = Object.values(routeMatch.params).filter(Boolean);
-	const value = typeof routeMatch.config.value === 'function'
-		? routeMatch.config.value(route)
-		: routeMatch.config.value || params.at(-1)
-			|| pathname.split('/').filter(Boolean).at(-1) || 'index';
-	const source = await config.resolve?.markdown?.({ lang, value, route }) || `./${value}.md`;
-	collector.add(lang, source);
+	const identity = await resolveRouteContentIdentity(config, lang, pathname, routeMatch);
+	if (identity) collector.add(lang, identity.source);
 };
 
 const collectConfiguredResources = async (
@@ -415,6 +432,79 @@ const collectConfiguredOrder = async (
 		.map(resourceIdentityKey));
 	await collectSidebarResources(config, collector, records, sidebarKeys);
 	return collectResourcesDepthFirst(config, collector, records);
+};
+
+const toLocalizedRoutePath = (lang: string, pathname: string) => {
+	const normalized = `/${pathname.split('/').filter(Boolean).join('/')}`;
+	return `/${lang}${normalized === '/' ? '' : normalized}`;
+};
+
+/**
+ * 建立可搜索 Markdown identity 与规范站内路由的对应关系。静态路由先于
+ * sidebar 动态路由写入，因此同一内容存在别名时会稳定使用配置中的主路径。
+ * @param config 当前文档配置。
+ * @param records Gateway 已知资源，用于读取 sidebar 的动态路由值。
+ * @returns 按语言和配置顺序去重后的 Markdown 路由资源。
+ */
+const collectRouteResources = async (
+	config: DocsConfig,
+	records: ResourceRecord[]
+) => {
+	const resources = new Map<string, RouteResource>();
+	const add = async (lang: string, pathname: string) => {
+		const match = resolveRouteMatch(config, lang, pathname);
+		if (!match) return;
+		const identity = await resolveRouteContentIdentity(
+			config,
+			lang,
+			match.pathname,
+			match
+		);
+		if (!identity || identity.type !== 'markdown') return;
+		const key = resourceIdentityKey(identity);
+		if (!resources.has(key)) resources.set(key, {
+			identity,
+			path: toLocalizedRoutePath(lang, match.pathname)
+		});
+	};
+
+	const configured = createCollector(config);
+	await collectConfiguredResources(config, configured);
+	const sidebarKeys = new Set([...configured.identities.values()]
+		.filter(identity => identity.type === 'sidebar')
+		.map(resourceIdentityKey));
+
+	for (const lang of getLanguages(config)) {
+		await add(lang, '/');
+		for (const [pathname, routeConfig] of Object.entries(config.routes)) {
+			if (!routeConfig || pathname === '*') continue;
+			if (typeof routeConfig === 'object') {
+				if (
+					(!pathname.includes(':') && !pathname.includes('*'))
+					|| typeof routeConfig.value === 'string'
+				) await add(lang, pathname);
+			} else if (typeof routeConfig === 'string' || !pathname.includes(':')) {
+				await add(lang, pathname);
+			}
+		}
+	}
+
+	for (const record of records) {
+		if (record.identity.type !== 'sidebar'
+			|| !sidebarKeys.has(resourceIdentityKey(record.identity))
+			|| typeof record.content !== 'string') continue;
+		let items: unknown;
+		try {
+			items = JSON.parse(record.content);
+		} catch {
+			continue;
+		}
+		for (const pathname of getSidebarValuesDepthFirst(items)) {
+			await add(record.identity.lang, pathname);
+		}
+	}
+
+	return [...resources.values()];
 };
 
 /**
@@ -636,6 +726,16 @@ const buildPrefetchPlan = async (
  * 统一封装资源计划能力；实例本身不保存配置或请求状态。
  */
 class ResourcePlanner {
+	/**
+	 * 收集已配置 Markdown 资源及其可导航路由，供本地搜索索引复用。
+	 * @param config 当前文档配置。
+	 * @param records Gateway 已知资源。
+	 * @returns Markdown identity 与本地化路径的稳定映射。
+	 */
+	collectRouteResources(config: DocsConfig, records: ResourceRecord[]) {
+		return collectRouteResources(config, records);
+	}
+
 	/**
 	 * 根据配置与现有缓存生成稳定的深度优先资源顺序。
 	 * @param config 当前文档配置。

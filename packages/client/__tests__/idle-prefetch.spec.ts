@@ -25,7 +25,7 @@ const identity = (source: string): ResourceIdentity => ({
 });
 
 const config = (prefetchConfig?: DocsConfig['prefetch']): DocsConfig => ({
-	locales: { 'zh-CN': '简体中文' },
+	locales: { 'zh-CN': { label: '简体中文' } },
 	namespace: 'idle-test',
 	prefetch: prefetchConfig,
 	routes: {}

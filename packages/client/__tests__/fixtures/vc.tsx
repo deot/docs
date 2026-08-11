@@ -1,5 +1,5 @@
-import { defineComponent, inject, provide } from 'vue';
-import type { PropType } from 'vue';
+import { createApp, defineComponent, h, inject, provide } from 'vue';
+import type { App, Component, PropType } from 'vue';
 
 interface VcStubOptions {
 	message?: {
@@ -11,6 +11,46 @@ interface VcStubOptions {
 
 const getInputValue = (event: Event) => (event.target as HTMLInputElement).value;
 
+class PortalStub {
+	private app?: App;
+	private container?: HTMLElement;
+	private onDestroyed?: () => void;
+
+	constructor(private readonly wrapper: Component) {}
+
+	popup(options: Record<string, any> = {}) {
+		this.destroy();
+		const props = { ...options };
+		const onDestroyed = props.onDestroyed;
+		delete props.onDestroyed;
+		delete props.leaveDelay;
+		delete props.multiple;
+		delete props.name;
+		this.onDestroyed = onDestroyed;
+		this.container = document.createElement('div');
+		document.body.appendChild(this.container);
+		this.app = createApp({
+			render: () => h(this.wrapper, {
+				...props,
+				onPortalFulfilled: () => this.destroy()
+			})
+		});
+		this.app.mount(this.container);
+		return { destroy: () => this.destroy() };
+	}
+
+	destroy() {
+		if (!this.app && !this.container) return;
+		this.app?.unmount();
+		this.container?.remove();
+		this.app = undefined;
+		this.container = undefined;
+		const onDestroyed = this.onDestroyed;
+		this.onDestroyed = undefined;
+		onDestroyed?.();
+	}
+}
+
 /**
  * 为 Client 单元测试构造 VC 组件的轻量渲染函数替身。
  * 使用 TSX 与 d-vc 的测试风格保持一致，并避免额外的模板编译路径
@@ -20,6 +60,7 @@ const getInputValue = (event: Event) => (event.target as HTMLInputElement).value
  */
 export const createVcStubs = (options: VcStubOptions = {}) => ({
 	Message: options.message,
+	Portal: PortalStub,
 	Affix: defineComponent({
 		props: {
 			disabled: Boolean,

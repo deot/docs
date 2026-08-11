@@ -127,7 +127,7 @@ describe('database page', () => {
 		vi.clearAllMocks();
 		statusListeners.clear();
 		window.$docs = {
-			locales: { 'zh-CN': '简体中文' },
+			locales: { 'zh-CN': { label: '简体中文' } },
 			routes: {},
 			base: 'https://docs.example.com/',
 			namespace: 'docs'

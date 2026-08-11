@@ -1,10 +1,12 @@
-import { createApp } from 'vue';
+import { computed, createApp, watch } from 'vue';
+import { provideLocale, resolveLocale } from '@deot/docs-locale';
 import '../../../node_modules/@deot/style/dist/index.normalize-only.css';
 import '../../../node_modules/@deot/vc-components/dist/index.style.css';
 import App from './app.vue';
 import { connectResourceEvents } from './events';
 import { IdlePrefetch } from './modules/idle-prefetch';
 import { createDocsRouter } from './router';
+import { getDefaultLanguage } from './utils/resolver';
 import { initializeDocsRuntime } from './utils/runtime';
 import type { DocsConfig } from './types';
 
@@ -29,6 +31,14 @@ export const bootstrap = (config?: DocsConfig) => {
 	const router = createDocsRouter(config);
 	const app = createApp(App);
 	app.use(router);
+	const locale = computed(() => resolveLocale(
+		String(router.currentRoute.value.params.lang || getDefaultLanguage(config)),
+		config.locales
+	));
+	provideLocale(locale, app);
+	const stopDocumentLanguage = watch(locale, (value) => {
+		document.documentElement.lang = value.name;
+	}, { immediate: true });
 	app.mount('#app');
 	const disconnectEvents = connectResourceEvents();
 	let disconnected = false;
@@ -47,6 +57,7 @@ export const bootstrap = (config?: DocsConfig) => {
 		disconnected = true;
 		disconnectEvents();
 		stopPrefetch();
+		stopDocumentLanguage();
 	};
 	return { app, router, disconnect };
 };

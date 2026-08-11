@@ -13,14 +13,15 @@
 			@search="handleSearch"
 		/>
 		<div class="docs-paging-filter__operate">
-			<Button type="primary" @click="handleSearch">Search</Button>
-			<Button @click="handleReset">Reset</Button>
+			<Button type="primary" @click="handleSearch">{{ t('client.paging.search') }}</Button>
+			<Button @click="handleReset">{{ t('client.paging.reset') }}</Button>
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import { reactive, watch } from 'vue';
 import { Button } from '@deot/vc';
+import { useLocale } from '@deot/docs-locale';
 import FilterItem from './filter-item.vue';
 import type {
 	PagingFilterModule,
@@ -29,6 +30,7 @@ import type {
 } from '../types';
 
 const props = defineProps<{ modules: PagingFilterModule[] }>();
+const { t } = useLocale();
 const emit = defineEmits<{
 	search: [keywords: PagingKeywords];
 	reset: [keywords: PagingKeywords];

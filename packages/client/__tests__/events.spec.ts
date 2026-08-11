@@ -9,7 +9,7 @@ const { gateway, runtime, config } = vi.hoisted(() => ({
 	},
 	runtime: { mode: 'development', events: '/__docs/events' } as any,
 	config: {
-		locales: { 'zh-CN': '简体中文', 'en-US': 'English' },
+		locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
 		routes: {},
 		namespace: 'events-test'
 	} as any

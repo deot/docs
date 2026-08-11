@@ -1,4 +1,7 @@
 import type { RouteLocationNormalized } from 'vue-router';
+import type { DocsLocaleEntry } from '@deot/docs-locale';
+
+export type { DocsLocaleEntry, Language } from '@deot/docs-locale';
 
 export type DocsResourceType = 'markdown' | 'sidebar' | 'sfc' | 'module' | 'style';
 
@@ -57,7 +60,7 @@ export type DocsRouteConfig = DocsRoute
 	| ((to: RouteLocationNormalized) => string);
 
 export interface DocsConfig {
-	locales: Record<string, string>;
+	locales: Record<string, DocsLocaleEntry>;
 	routes: Record<string, DocsRouteConfig>;
 	base?: string;
 	namespace?: string;

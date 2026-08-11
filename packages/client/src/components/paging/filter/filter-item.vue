@@ -27,7 +27,7 @@
 			:model-value="getTextValue(modelValue)"
 			:data-filter="module.field"
 			clearable
-			:placeholder="module.placeholder || 'Enter'"
+			:placeholder="module.placeholder || t('client.paging.enter')"
 			v-bind="module.options"
 			@update:model-value="handleModelValueUpdate"
 			@change="handleInputChange"
@@ -39,7 +39,7 @@
 			:data-filter="module.field"
 			:data="module.data || []"
 			clearable
-			:placeholder="module.placeholder || 'Select'"
+			:placeholder="module.placeholder || t('client.paging.select')"
 			v-bind="module.options"
 			@update:model-value="handleModelValueUpdate"
 			@change="handleImmediateChange"
@@ -50,7 +50,7 @@
 			:data-filter="module.field"
 			:confirm="false"
 			clearable
-			:placeholder="module.placeholder || 'Pick date'"
+			:placeholder="module.placeholder || t('client.paging.pickDate')"
 			v-bind="module.options"
 			@update:model-value="handleModelValueUpdate"
 			@change="handleImmediateChange"
@@ -60,6 +60,7 @@
 </template>
 <script setup lang="ts">
 import { DatePicker, Input, InputNumber, Select } from '@deot/vc';
+import { useLocale } from '@deot/docs-locale';
 import type { PagingFilterModule, PagingFilterValue } from '../types';
 
 const props = defineProps<{
@@ -68,6 +69,7 @@ const props = defineProps<{
 	startValue?: PagingFilterValue;
 	endValue?: PagingFilterValue;
 }>();
+const { t } = useLocale();
 const emit = defineEmits<{
 	'update:modelValue': [value: PagingFilterValue];
 	'update:startValue': [value: PagingFilterValue];
@@ -86,7 +88,9 @@ const getDateValue = (value?: PagingFilterValue): string | unknown[] | Date | un
 );
 const getRangePlaceholder = (index: number) => {
 	const placeholder = props.module.placeholder;
-	return Array.isArray(placeholder) ? placeholder[index] : (placeholder || (index ? 'Max' : 'Min'));
+	return Array.isArray(placeholder)
+		? placeholder[index]
+		: (placeholder || t(index ? 'client.paging.max' : 'client.paging.min'));
 };
 const handleModelValueUpdate = (value: PagingFilterValue) => {
 	emit('update:modelValue', value);

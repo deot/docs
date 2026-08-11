@@ -6,7 +6,7 @@ import { createDocsRouter, getRouteValue, localizePath } from '../src/router';
 import type { DocsConfig } from '../src/types';
 
 const config: DocsConfig = {
-	locales: { 'zh-CN': '简体中文', 'en-US': 'English' },
+	locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
 	routes: {
 		'/': '/index',
 		'/index': { content: './components/index.vue' },
@@ -35,9 +35,14 @@ describe('docs router', () => {
 		await router.push('/components/button');
 		expect(router.currentRoute.value.path).toBe('/zh-CN/components/button');
 
-		await router.push('/db');
-		expect(router.currentRoute.value.path).toBe('/db');
+		await router.push('/db?tab=cache#records');
+		expect(router.currentRoute.value.fullPath).toBe('/zh-CN/db?tab=cache#records');
 		expect(router.currentRoute.value.meta.docsDatabase).toBe(true);
+		await router.push('/en-US/db');
+		expect(router.currentRoute.value.params.lang).toBe('en-US');
+		expect(router.currentRoute.value.meta.docsDatabase).toBe(true);
+		await router.push('/fr-FR/db');
+		expect(router.currentRoute.value.path).toBe('/zh-CN/db');
 	});
 
 	it('derives content values from explicit config, params and path', async () => {
@@ -51,7 +56,7 @@ describe('docs router', () => {
 
 	it('supports route functions, object roots and an internal default fallback', async () => {
 		const functionConfig: DocsConfig = {
-			locales: { en: 'English' },
+			locales: { en: { label: 'English' } },
 			routes: {
 				'/': { content: 'default' },
 				'/guide': to => `/target-${String(to.params.lang)}`,
@@ -72,9 +77,24 @@ describe('docs router', () => {
 		} as any, {})).toBe('static');
 	});
 
+	it('keeps an explicitly configured /db document route available', async () => {
+		const dbRoute = { content: null };
+		const router = createDocsRouter({
+			...config,
+			routes: { ...config.routes, '/db': dbRoute }
+		});
+		await router.push('/zh-CN/db');
+		expect(router.currentRoute.value.meta.docsRoute).toBe(dbRoute);
+		expect(router.currentRoute.value.meta.docsDatabase).toBeUndefined();
+
+		await router.push('/en-US/__docs/db');
+		expect(router.currentRoute.value.meta.docsDatabase).toBe(true);
+		expect(router.currentRoute.value.params.lang).toBe('en-US');
+	});
+
 	it('normalizes route keys and invalid languages without a configured root', async () => {
 		const minimal: DocsConfig = {
-			locales: { en: 'English' },
+			locales: { en: { label: 'English' } },
 			routes: {
 				'guide': '/en/target',
 				'/target': { content: 'default' }
@@ -98,7 +118,7 @@ describe('docs router', () => {
 
 	it('distinguishes a missing language slug from an invalid localized route', async () => {
 		const dynamic: DocsConfig = {
-			locales: { 'zh-CN': '简体中文', 'en-US': 'English' },
+			locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
 			routes: {
 				'/': '/index',
 				'/index': { content: 'default' },
@@ -139,12 +159,12 @@ describe('docs router', () => {
 
 	it('recognizes configured language keys even when their labels are empty', async () => {
 		const router = createDocsRouter({
-			locales: { en: '' },
+			locales: { en: { label: '' } },
 			routes: { '/': { content: null } }
 		});
 		await router.push('/en');
 		expect(router.currentRoute.value.path).toBe('/en');
-		expect(localizePath({ locales: { en: '' }, routes: {} }, 'en', '/en/guide'))
+		expect(localizePath({ locales: { en: { label: '' } }, routes: {} }, 'en', '/en/guide'))
 			.toBe('/en/guide');
 	});
 });

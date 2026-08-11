@@ -10,7 +10,7 @@ import {
 import type { DocsConfig } from '../src/types';
 
 const createConfig = (overrides: Partial<DocsConfig> = {}): DocsConfig => ({
-	locales: { 'zh-CN': '简体中文' },
+	locales: { 'zh-CN': { label: '简体中文' } },
 	routes: {},
 	runtime: { mode: 'production' },
 	...overrides
