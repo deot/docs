@@ -83,6 +83,7 @@ describe('dever configuration', () => {
 		const development = Dever.createDeverConfig({ workspace: 'site' } as any);
 		expect(development.root).toBe(process.cwd());
 		expect(development.resolve?.alias).toMatchObject({
+			'@deot/docs-locale': expect.stringContaining('packages/locale/src/index.ts'),
 			'@deot/docs-markdown': expect.stringContaining('packages/markdown/src/index.ts'),
 			'@deot/docs-playground': expect.stringContaining('packages/playground/src/index.ts')
 		});

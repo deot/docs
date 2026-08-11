@@ -72,7 +72,7 @@ export const createDeverConfig = (options: DeverOptions): InlineConfig => {
 	const workspaceRoot = path.resolve(cwd, workspace);
 	const outDir = path.resolve(cwd, String(options.outDir || 'dist'));
 	if (build) assertSafeBuildOutDir(workspaceRoot, outDir);
-	const localAliases = ['markdown', 'playground'].reduce<Record<string, string>>((result, name) => {
+	const localAliases = ['locale', 'markdown', 'playground'].reduce<Record<string, string>>((result, name) => {
 		const source = path.resolve(cwd, `packages/${name}/src/index.ts`);
 		if (fs.existsSync(source)) result[`@deot/docs-${name}`] = source;
 		return result;
