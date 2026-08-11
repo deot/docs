@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 
-import { defineComponent } from 'vue';
+import { defineComponent, provide, ref } from 'vue';
 import { flushPromises, mount } from '@vue/test-utils';
 import { Markdown as MarkdownRenderer } from '../src/markdown';
 import { Markdown } from '../src';
 
-const { codePreviewUnmounted, playgroundUnmounted } = vi.hoisted(() => ({
+const { codePreviewUnmounted, getScrollerMock, playgroundUnmounted } = vi.hoisted(() => ({
 	codePreviewUnmounted: vi.fn(),
+	getScrollerMock: vi.fn(),
 	playgroundUnmounted: vi.fn()
 }));
 
@@ -21,6 +22,42 @@ const runtimeWithConfig = (config: string, body: string) => [
 	':::'
 ].join('\n');
 
+const dispatchPointer = (
+	element: Element,
+	type: string,
+	options: { button?: number; clientY?: number; pointerId?: number } = {}
+) => {
+	const event = new MouseEvent(type, {
+		bubbles: true,
+		button: options.button || 0,
+		clientY: options.clientY || 0
+	});
+	Object.defineProperty(event, 'pointerId', { value: options.pointerId || 1 });
+	element.dispatchEvent(event);
+};
+
+const mockAnimationFrames = () => {
+	let nextId = 0;
+	const callbacks = new Map<number, FrameRequestCallback>();
+	const request = vi.fn((callback: FrameRequestCallback) => {
+		const id = ++nextId;
+		callbacks.set(id, callback);
+		return id;
+	});
+	const cancel = vi.fn((id: number) => callbacks.delete(id));
+	vi.stubGlobal('requestAnimationFrame', request);
+	vi.stubGlobal('cancelAnimationFrame', cancel);
+	return {
+		cancel,
+		flush: () => {
+			const pending = [...callbacks.entries()];
+			callbacks.clear();
+			pending.forEach(([, callback]) => callback(0));
+		},
+		request
+	};
+};
+
 vi.mock('@deot/vc', () => ({
 	Clipboard: defineComponent({
 		name: 'Clipboard',
@@ -28,8 +65,40 @@ vi.mock('@deot/vc', () => ({
 		setup: (_, { slots }) => () => (
 			<button class="clipboard">{slots.default?.()}</button>
 		)
+	}),
+	Scroller: defineComponent({
+		name: 'Scroller',
+		props: ['height', 'wrapperStyle'],
+		setup(props, { attrs, expose, slots }) {
+			const wrapper = ref<HTMLElement>();
+			expose({
+				setScrollTop: (value: number) => {
+					if (wrapper.value) wrapper.value.scrollTop = value;
+				}
+			});
+			return () => (
+				<div {...attrs} class={['vc-scroller', attrs.class]}>
+					<div
+						ref={wrapper}
+						class="vc-scroller__wrapper"
+						style={[props.wrapperStyle, { height: props.height }]}
+					>
+						<div class="vc-scroller__content">{slots.default?.()}</div>
+					</div>
+				</div>
+			);
+		}
 	})
 }));
+
+vi.mock('@deot/helper-dom', async () => {
+	const actual = await vi.importActual<typeof import('@deot/helper-dom')>('@deot/helper-dom');
+	getScrollerMock.mockImplementation(actual.getScroller);
+	return {
+		...actual,
+		getScroller: getScrollerMock
+	};
+});
 
 vi.mock('@deot/docs-playground', async () => {
 	const { default: RealCodePreview } = await import('../../playground/src/core/code-preview/code-preview.vue');
@@ -84,12 +153,15 @@ describe('markdown', () => {
 
 	beforeEach(() => {
 		codePreviewUnmounted.mockReset();
+		getScrollerMock.mockClear();
 		playgroundUnmounted.mockReset();
 	});
 
 	afterEach(() => {
 		document.body.innerHTML = '';
 		document.getElementById('docs-code-preview-style')?.remove();
+		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
 	});
 
 	it('renders markdown features and adds the md marker', () => {
@@ -181,6 +253,269 @@ describe('markdown', () => {
 		expect(wrapper.findAll('.docs-markdown-code-preview')).toHaveLength(1);
 		expect(wrapper.find('.playground .playground-code').exists()).toBe(true);
 		expect(wrapper.find('.playground .docs-code-preview').exists()).toBe(false);
+	});
+
+	it('builds a configurable document indicator from rendered blocks', async () => {
+		const frames = mockAnimationFrames();
+		const scrollTo = vi.fn();
+		vi.stubGlobal('scrollTo', scrollTo);
+		const wrapper = mount(Markdown, {
+			props: {
+				indicator: {
+					draggable: true,
+					height: 480,
+					position: 'left',
+					preview: true,
+					top: '12px'
+				},
+				modelValue: [
+					'# Alpha',
+					'',
+					'Intro paragraph',
+					'',
+					'## Beta',
+					'',
+					'- One',
+					'- Two',
+					'',
+					':::tip',
+					'Tip paragraph',
+					':::'
+				].join('\n')
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => {
+			expect(wrapper.findAll('.docs-markdown-indicator__marker')).toHaveLength(6);
+		});
+
+		const indicator = wrapper.get('.docs-markdown-indicator');
+		expect(indicator.classes()).toContain('is-left');
+		const markerLabels = wrapper.findAll('.docs-markdown-indicator__marker')
+			.map(marker => marker.attributes('aria-label'));
+		expect(markerLabels).toEqual([
+			'Alpha: Intro paragraph',
+			'Alpha: Intro paragraph',
+			'Beta: One',
+			'Beta: One',
+			'Beta: Two',
+			'Beta: Tip paragraph'
+		]);
+		expect(indicator.attributes('style')).toContain('--docs-markdown-indicator-height: 480px');
+		expect(indicator.attributes('style')).toContain('--docs-markdown-indicator-top: 12px');
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[0].attributes('style'))
+			.toContain('width: 8px');
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[1].attributes('style'))
+			.toContain('width: 8px');
+
+		await wrapper.findAll('.docs-markdown-indicator__marker')[1].trigger('click');
+		expect(scrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: -24 });
+
+		await wrapper.setProps({ modelValue: '# Updated\n\nOnly one paragraph' });
+		await flushPromises();
+		frames.flush();
+		await vi.waitFor(() => {
+			expect(wrapper.findAll('.docs-markdown-indicator__marker')).toHaveLength(2);
+		});
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[0].attributes('aria-label'))
+			.toBe('Updated: Only one paragraph');
+
+		await wrapper.setProps({ indicator: false });
+		expect(wrapper.find('.docs-markdown-indicator').exists()).toBe(false);
+	});
+
+	it('prefers the injected Scroller before searching for a native scroll host', async () => {
+		const on = vi.fn();
+		const off = vi.fn();
+		const setScrollTop = vi.fn();
+		const Host = defineComponent({
+			setup() {
+				provide('vc-scroller', {
+					off,
+					on,
+					scrollTop: 0,
+					setScrollTop
+				});
+				return () => <Markdown modelValue="# First\n\nParagraph" />;
+			}
+		});
+		const wrapper = mount(Host, { attachTo: document.body });
+
+		await vi.waitFor(() => expect(on).toHaveBeenCalledTimes(1));
+		expect(getScrollerMock).not.toHaveBeenCalled();
+
+		wrapper.unmount();
+		expect(off).toHaveBeenCalledTimes(1);
+	});
+
+	it('previews, scrolls and drags through a Scroller document map', async () => {
+		const frames = mockAnimationFrames();
+		const host = document.createElement('div');
+		host.className = 'vc-scroller__wrapper';
+		host.style.overflow = 'auto';
+		document.body.appendChild(host);
+		const scrollTo = vi.fn();
+		host.scrollTo = scrollTo;
+		Object.defineProperty(host, 'scrollTop', { value: 50, writable: true });
+		Object.defineProperty(host, 'clientHeight', { value: 600 });
+		Object.defineProperty(host, 'scrollHeight', { value: 1200 });
+		vi.spyOn(host, 'getBoundingClientRect').mockReturnValue({
+			left: 0,
+			top: 20,
+			right: 800,
+			bottom: 620,
+			width: 800,
+			height: 600,
+			x: 0,
+			y: 20,
+			toJSON: () => ({})
+		});
+		const wrapper = mount(Markdown, {
+			props: {
+				modelValue: '# First\n\nParagraph\n\n## Second\n\nLast paragraph'
+			},
+			attachTo: host
+		});
+		await vi.waitFor(() => {
+			expect(wrapper.findAll('.docs-markdown-indicator__marker')).toHaveLength(4);
+		});
+		expect(wrapper.get('.docs-markdown-indicator').classes()).toContain('is-right');
+
+		const blocks = wrapper.find('.docs-markdown-reset').element.querySelectorAll<HTMLElement>('h1,p,h2');
+		[40, 100, 220, 360].forEach((top, index) => {
+			vi.spyOn(blocks[index], 'getBoundingClientRect').mockReturnValue({
+				left: 100,
+				top,
+				right: 700,
+				bottom: top + 40,
+				width: 600,
+				height: 40,
+				x: 100,
+				y: top,
+				toJSON: () => ({})
+			});
+		});
+		const indicatorRoot = wrapper.get('.docs-markdown-indicator').element as HTMLElement;
+		const viewport = wrapper.get('.docs-markdown-indicator__viewport').element as HTMLElement;
+		const indicatorWrapper = wrapper.get(
+			'.docs-markdown-indicator__scroller .vc-scroller__wrapper'
+		).element as HTMLElement;
+		vi.spyOn(indicatorRoot, 'getBoundingClientRect').mockReturnValue({
+			left: 40,
+			top: 100,
+			right: 80,
+			bottom: 500,
+			width: 40,
+			height: 400,
+			x: 40,
+			y: 100,
+			toJSON: () => ({})
+		});
+		vi.spyOn(viewport, 'getBoundingClientRect').mockReturnValue({
+			left: 40,
+			top: 100,
+			right: 80,
+			bottom: 500,
+			width: 40,
+			height: 400,
+			x: 40,
+			y: 100,
+			toJSON: () => ({})
+		});
+		vi.spyOn(indicatorWrapper, 'getBoundingClientRect').mockReturnValue({
+			left: 40,
+			top: 100,
+			right: 80,
+			bottom: 110,
+			width: 40,
+			height: 10,
+			x: 40,
+			y: 100,
+			toJSON: () => ({})
+		});
+		const markerElements = wrapper.findAll('.docs-markdown-indicator__marker')
+			.map(marker => marker.element as HTMLElement);
+		[100, 108, 116, 124].forEach((top, index) => {
+			vi.spyOn(markerElements[index], 'getBoundingClientRect').mockReturnValue({
+				left: 40,
+				top,
+				right: 44,
+				bottom: top + 2,
+				width: 4,
+				height: 2,
+				x: 40,
+				y: top,
+				toJSON: () => ({})
+			});
+		});
+		const setPointerCapture = vi.fn();
+		const releasePointerCapture = vi.fn();
+		viewport.setPointerCapture = setPointerCapture;
+		viewport.hasPointerCapture = vi.fn(() => true);
+		viewport.releasePointerCapture = releasePointerCapture;
+
+		host.dispatchEvent(new Event('scroll'));
+		host.dispatchEvent(new Event('scroll'));
+		expect(frames.request).toHaveBeenCalledTimes(1);
+		frames.flush();
+		await flushPromises();
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[1].classes())
+			.toContain('is-active');
+		expect(indicatorWrapper.scrollTop).toBeGreaterThan(0);
+
+		host.scrollTop = 600;
+		host.dispatchEvent(new Event('scroll'));
+		frames.flush();
+		await flushPromises();
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[3].classes())
+			.toContain('is-active');
+		host.scrollTop = 50;
+		host.dispatchEvent(new Event('scroll'));
+		frames.flush();
+		await flushPromises();
+
+		const markerTops = markerElements.map(marker => marker.getBoundingClientRect().top);
+		dispatchPointer(viewport, 'pointermove', { clientY: 100 });
+		await flushPromises();
+		expect(wrapper.get('.docs-markdown-indicator__preview-title').text()).toBe('First');
+		expect(wrapper.get('.docs-markdown-indicator__preview-content').text()).toBe('Paragraph');
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[0].attributes('style'))
+			.toContain('width: 28px');
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[1].attributes('style'))
+			.toContain('width: 22px');
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[2].attributes('style'))
+			.toContain('width: 16px');
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[3].attributes('style'))
+			.toContain('width: 10px');
+		expect(markerElements.map(marker => marker.getBoundingClientRect().top)).toEqual(markerTops);
+		expect(markerElements.every(marker => !marker.style.top)).toBe(true);
+
+		dispatchPointer(viewport, 'pointerdown', { clientY: 124, pointerId: 7 });
+		expect(setPointerCapture).toHaveBeenCalledWith(7);
+		expect(scrollTo).toHaveBeenLastCalledWith({ behavior: 'auto', top: 366 });
+		dispatchPointer(viewport, 'pointermove', { clientY: 108 });
+		expect(scrollTo).toHaveBeenLastCalledWith({ behavior: 'auto', top: 106 });
+		dispatchPointer(viewport, 'pointerleave');
+		await flushPromises();
+		expect(wrapper.find('.docs-markdown-indicator__preview').exists()).toBe(true);
+		dispatchPointer(viewport, 'pointerup', { pointerId: 7 });
+		expect(releasePointerCapture).toHaveBeenCalledWith(7);
+		dispatchPointer(viewport, 'pointerleave');
+		await flushPromises();
+		expect(wrapper.find('.docs-markdown-indicator__preview').exists()).toBe(false);
+
+		await wrapper.setProps({ indicator: { draggable: false, preview: false } });
+		scrollTo.mockClear();
+		dispatchPointer(viewport, 'pointerdown', { clientY: 116 });
+		dispatchPointer(viewport, 'pointermove', { clientY: 124 });
+		await flushPromises();
+		expect(scrollTo).not.toHaveBeenCalled();
+		expect(wrapper.find('.docs-markdown-indicator__preview').exists()).toBe(false);
+
+		dispatchPointer(viewport, 'pointerdown', { button: 2, clientY: 116 });
+		host.dispatchEvent(new Event('scroll'));
+		wrapper.unmount();
+		expect(frames.cancel).toHaveBeenCalled();
 	});
 
 	it('passes Vue, JavaScript and unnamed fences to shared code previews', async () => {

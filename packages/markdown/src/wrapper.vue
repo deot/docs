@@ -1,19 +1,38 @@
 <template>
-	<div class="docs-markdown-reset" v-markdown="source"></div>
+	<div class="docs-markdown">
+		<MarkdownIndicator
+			v-if="indicatorOptions"
+			:target="content"
+			:options="indicatorOptions"
+		/>
+		<div ref="content" class="docs-markdown-reset" v-markdown="source"></div>
+	</div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { vMarkdown } from './directive';
+import MarkdownIndicator from './indicator.vue';
+import type { MarkdownIndicatorConfig, MarkdownIndicatorOptions } from './types';
 
 // 后续再处理内容变更。
 defineEmits<{
 	'update:modelValue': [value: string];
 	'change': [value: string];
 }>();
-const props = defineProps<{
+const props = withDefaults(defineProps<{
+	indicator?: MarkdownIndicatorConfig;
 	modelValue?: string;
 	value?: string;
-}>();
+}>(), {
+	indicator: true
+});
+
+const content = ref<HTMLElement>();
+const indicatorOptions = computed<MarkdownIndicatorOptions | undefined>(() => {
+	if (props.indicator === false) return undefined;
+	return typeof props.indicator === 'object' ? props.indicator : {};
+});
+
 // 即使 modelValue 是合法的空文档，它仍然是唯一可信的数据源。
 const source = computed(() => typeof props.modelValue === 'string'
 	? props.modelValue
@@ -61,6 +80,10 @@ h6:hover .header-anchor {
 }
 
 $sign: md;
+
+@include block(docs-markdown) {
+	position: relative;
+}
 
 @include block(docs-markdown-reset) {
 	font-family:

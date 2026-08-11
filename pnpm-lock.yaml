@@ -124,6 +124,9 @@ importers:
       '@deot/docs-playground':
         specifier: '*'
         version: link:../playground
+      '@deot/helper-dom':
+        specifier: ^1.1.5
+        version: 1.1.5
       json5:
         specifier: ^2.2.3
         version: 2.2.3
