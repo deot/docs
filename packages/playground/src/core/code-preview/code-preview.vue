@@ -10,8 +10,8 @@
 			:value="code"
 			tag="button"
 			type="button"
-			:title="copyLabel"
-			:aria-label="copyLabel"
+			:title="resolvedCopyLabel"
+			:aria-label="resolvedCopyLabel"
 		>
 			<PlaygroundIcon name="copy" />
 		</Clipboard>
@@ -22,6 +22,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Clipboard } from '@deot/vc';
+import { useLocale } from '@deot/docs-locale';
+import type { Language } from '@deot/docs-locale';
 import {
 	highlightCodeByLanguage,
 	resolveHighlightLanguage
@@ -36,11 +38,14 @@ const props = withDefaults(defineProps<{
 	filename?: string;
 	language?: string;
 	copyLabel?: string;
+	locale?: Language;
 }>(), {
 	filename: '',
 	language: '',
-	copyLabel: '复制代码'
+	copyLabel: undefined
 });
+const { t } = useLocale(computed(() => props.locale));
+const resolvedCopyLabel = computed(() => props.copyLabel || t('playground.common.copyCode'));
 
 const languageLabels: Record<string, string> = {
 	javascript: 'js',

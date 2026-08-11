@@ -4,7 +4,7 @@
 			<div v-show="isActive" ref="wrapper" class="docs-playground-editor__wrapper">
 				<div ref="bar" class="docs-playground-editor__header">
 					<span>&lt;/&gt;</span>
-					<span style="cursor: pointer;" @click="handleHide">&#10005;</span>
+					<span :title="t('playground.common.close')" style="cursor: pointer;" @click="handleHide">&#10005;</span>
 				</div>
 				<div class="docs-playground-editor__files">
 					<Scroller
@@ -38,20 +38,20 @@
 								@keydown.esc.prevent="handleRenameCancel"
 							>
 							<template v-else>
-								<span v-if="filename === currentEntry" title="入口文件">●</span>
+								<span v-if="filename === currentEntry" :title="t('playground.editor.entry')">●</span>
 								<span>{{ filename }}</span>
 								<button
 									v-if="filename === currentEntry"
 									type="button"
 									class="docs-playground-editor__close"
-									title="入口文件不能删除"
-									aria-label="入口文件不能删除"
+									:title="t('playground.editor.entryCannotDelete')"
+									:aria-label="t('playground.editor.entryCannotDelete')"
 									disabled
 								></button>
 								<Popconfirm
 									v-else
 									class="docs-playground-editor__delete"
-									:title="`确认删除 ${filename}？`"
+									:title="t('playground.editor.confirmDelete', { filename })"
 									:portal="true"
 									placement="bottom"
 									@ok="handleDelete(filename)"
@@ -59,22 +59,22 @@
 									<button
 										type="button"
 										class="docs-playground-editor__close"
-										title="删除文件"
-										:aria-label="`删除 ${filename}`"
+										:title="t('playground.editor.deleteFile')"
+										:aria-label="t('playground.editor.confirmDelete', { filename })"
 									></button>
 								</Popconfirm>
 							</template>
 						</div>
 					</Scroller>
 					<div class="docs-playground-editor__actions">
-						<button type="button" title="新建文件" @click="handleCreate">＋</button>
+						<button type="button" :title="t('playground.editor.createFile')" @click="handleCreate">＋</button>
 						<button
 							type="button"
-							title="设为入口"
+							:title="t('playground.editor.setEntry')"
 							:disabled="activeFilename === currentEntry"
 							@click="handleEntry"
 						>
-							设为入口
+							{{ t('playground.editor.setEntry') }}
 						</button>
 					</div>
 				</div>
@@ -90,6 +90,8 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { ComponentPublicInstance } from 'vue';
 import { Message, Popconfirm, Scroller, TransitionFade } from '@deot/vc';
+import { useLocale } from '@deot/docs-locale';
+import type { Language } from '@deot/docs-locale';
 import { EditorView, basicSetup } from 'codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { vue } from '@codemirror/lang-vue';
@@ -109,6 +111,7 @@ const props = withDefaults(defineProps<{
 	onFilesChange?: EditorFilesChange;
 	onActiveChange?: (filename: string) => void;
 	getCodeErrors?: () => Array<string | Error>;
+	locale?: Language;
 }>(), {
 	value: '',
 	files: () => ({}),
@@ -118,6 +121,7 @@ const props = withDefaults(defineProps<{
 	onActiveChange: () => {},
 	getCodeErrors: () => []
 });
+const { t } = useLocale(computed(() => props.locale));
 
 const initialFiles = Object.keys(props.files).length
 	? props.files
@@ -246,11 +250,11 @@ const handleRenameCancel = () => {
 };
 
 const validateFilename = (filename: string, previousFilename = '') => {
-	if (!filename) return '请输入文件名';
-	if (filename.startsWith('/') || filename.includes('\\')) return '文件名必须是相对 POSIX 路径';
-	if (filename.split('/').some(part => !part || part === '.' || part === '..')) return '文件路径不能包含空段、. 或 ..';
-	if (!SUPPORTED_FILE_RE.test(filename)) return '不支持该文件类型';
-	if (filename !== previousFilename && editorFiles.value[filename] !== undefined) return '文件名已存在';
+	if (!filename) return t('playground.validation.filenameRequired');
+	if (filename.startsWith('/') || filename.includes('\\')) return t('playground.validation.filenameRelative');
+	if (filename.split('/').some(part => !part || part === '.' || part === '..')) return t('playground.validation.filenameSegments');
+	if (!SUPPORTED_FILE_RE.test(filename)) return t('playground.validation.fileTypeUnsupported');
+	if (filename !== previousFilename && editorFiles.value[filename] !== undefined) return t('playground.validation.filenameExists');
 	return '';
 };
 

@@ -3,6 +3,7 @@
 import { defineComponent, nextTick, ref } from 'vue';
 import { mount } from '@vue/test-utils';
 import { useStore } from '@vue/repl';
+import { zhCN } from '@deot/docs-locale';
 import Playground from '../src/playground.vue';
 
 const { popup, store, setFiles } = vi.hoisted(() => ({
@@ -123,7 +124,7 @@ describe('Playground', () => {
 		});
 
 		expect(wrapper.classes()).toContain('docs-playground');
-		expect(wrapper.find('.clipboard').attributes('aria-label')).toBe('复制');
+		expect(wrapper.find('.clipboard').attributes('aria-label')).toBe('Copy');
 		expect(store.options.template.value.welcomeSFC).toContain('hello');
 		expect(store.options.builtinImportMap.value.imports.vue).toBe('/vue.js');
 		expect(store.options.builtinImportMap.value.imports.custom).toBe('/custom.js');
@@ -137,6 +138,20 @@ describe('Playground', () => {
 			.toContain('app.component("DocsLink"');
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').customCode.useCode)
 			.toContain('textDecoration:"none"');
+	});
+
+	it('uses the explicit locale across nested preview controls', () => {
+		const wrapper = mount(Playground, {
+			props: {
+				locale: zhCN,
+				modelValue: '<template>locale</template>'
+			}
+		});
+
+		expect(wrapper.find('.clipboard').attributes('aria-label')).toBe('复制');
+		expect(wrapper.find('.docs-playground__viewport-trigger').attributes('aria-label'))
+			.toBe('视口：自适应');
+		expect(wrapper.findAll('.docs-playground__viewport-option')[0].text()).toBe('自适应');
 	});
 
 	it('merges instance preview options and validates DocsLink bridge messages', async () => {
@@ -202,10 +217,10 @@ describe('Playground', () => {
 		const sandbox = wrapper.find('.sandbox').element;
 		const options = wrapper.findAll('.docs-playground__viewport-option');
 
-		expect(options.map(item => item.text())).toEqual(['自适应', '375px']);
+		expect(options.map(item => item.text())).toEqual(['Auto', '375px']);
 		expect(viewport.attributes('style')).toContain('width: 100%');
 		expect(wrapper.find('.docs-playground__viewport-trigger').attributes('aria-label'))
-			.toBe('视口：自适应');
+			.toBe('Viewport: Auto');
 
 		await options[1].trigger('click');
 		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
@@ -246,7 +261,7 @@ describe('Playground', () => {
 		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
 			.toContain('width: 375px');
 		expect(wrapper.findAll('.docs-playground__viewport-option').map(item => item.text()))
-			.toEqual(['自适应', '375 × 667px', '768px']);
+			.toEqual(['Auto', '375 × 667px', '768px']);
 		expect(wrapper.find('.docs-playground__viewport-option[aria-checked="true"]').text())
 			.toBe('375 × 667px');
 
@@ -437,7 +452,7 @@ describe('Playground', () => {
 		expect(files.find('.docs-playground-files').exists()).toBe(true);
 		expect(files.find('.docs-playground__header').exists()).toBe(false);
 		expect(files.find('.docs-playground__tools').exists()).toBe(false);
-		expect(files.find('.docs-code-preview__copy').attributes('aria-label')).toBe('复制当前文件');
+		expect(files.find('.docs-code-preview__copy').attributes('aria-label')).toBe('Copy current file');
 		expect(files.find('code.hljs').html()).toContain('hljs-tag');
 		expect(files.find('code.hljs').html()).not.toContain('<strong>files</strong>');
 		expect(files.find('pre').element.childNodes).toHaveLength(1);
@@ -456,7 +471,7 @@ describe('Playground', () => {
 		});
 		expect(useStore).not.toHaveBeenCalled();
 		const buttons = wrapper.findAll('.docs-playground__view');
-		expect(buttons.map(item => item.attributes('aria-label'))).toEqual(['文件预览', '运行时预览']);
+		expect(buttons.map(item => item.attributes('aria-label'))).toEqual(['File preview', 'Runtime preview']);
 		expect(buttons[0].classes()).toContain('is-active');
 		expect(wrapper.find('.sandbox').exists()).toBe(false);
 		expect(wrapper.find('.docs-playground__header').exists()).toBe(false);

@@ -51,6 +51,8 @@
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { provideLocale, useLocale } from '@deot/docs-locale';
+import type { Language } from '@deot/docs-locale';
 import { DEFAULT_ENTRY, NEW_SFC_CODE } from './constants';
 import { FilesPreview, RuntimePreview } from './core';
 import type { EditorFilesChangeAction } from './editor';
@@ -88,6 +90,7 @@ const props = withDefaults(defineProps<{
 	styleless?: boolean;
 	options?: PlaygroundOptions;
 	previewOptions?: PlaygroundPreviewOptions;
+	locale?: Language;
 }>(), {
 	modelValue: '',
 	files: () => ({}),
@@ -96,6 +99,10 @@ const props = withDefaults(defineProps<{
 	styleless: false,
 	options: () => ({})
 });
+const inheritedLocale = useLocale();
+const locale = computed(() => props.locale || inheritedLocale.locale.value);
+provideLocale(locale);
+const { t } = useLocale(locale);
 
 const filesEqual = (a: PlaygroundFiles, b: PlaygroundFiles) => {
 	const aKeys = Object.keys(a);
@@ -134,8 +141,14 @@ const selectableViewportOptions = computed(() => includeActiveViewport(
 	activeViewport.value
 ));
 const error = ref(props.entry && initialFiles[props.entry] === undefined
-	? `入口文件 ${props.entry} 不存在`
+	? t('playground.validation.entryMissing', { filename: props.entry })
 	: '');
+
+watch(locale, () => {
+	if (props.entry && sourceFiles.value[props.entry] === undefined) {
+		error.value = t('playground.validation.entryMissing', { filename: props.entry });
+	}
+});
 
 const emitFiles = () => emit('update:files', { ...sourceFiles.value });
 
@@ -205,7 +218,7 @@ watch(() => props.files, (files) => {
 	sourceFiles.value = { ...files };
 	currentEntry.value = entry;
 	error.value = props.entry && files[props.entry] === undefined
-		? `入口文件 ${props.entry} 不存在`
+		? t('playground.validation.entryMissing', { filename: props.entry })
 		: '';
 	if (files[fileActiveFilename.value] === undefined || fileActiveFilename.value === previousEntry) {
 		fileActiveFilename.value = entry;
@@ -215,7 +228,7 @@ watch(() => props.files, (files) => {
 watch(() => props.entry, (entry) => {
 	if (!entry || entry === currentEntry.value || !Object.keys(props.files).length) return;
 	if (sourceFiles.value[entry] === undefined) {
-		error.value = `入口文件 ${entry} 不存在`;
+		error.value = t('playground.validation.entryMissing', { filename: entry });
 		return;
 	}
 	const previousEntry = currentEntry.value;
