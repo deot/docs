@@ -100,3 +100,67 @@ code.hljs {
 	color: #b31d28;
 	background-color: #ffeef0;
 }
+
+[data-doc-theme='dark'] .hljs,
+[data-vc-theme='dark'] .hljs {
+	color: #c9d1d9;
+	background: #0d1117;
+}
+
+[data-doc-theme='dark'] .hljs-doctag,
+[data-doc-theme='dark'] .hljs-keyword,
+[data-doc-theme='dark'] .hljs-meta .hljs-keyword,
+[data-doc-theme='dark'] .hljs-template-tag,
+[data-doc-theme='dark'] .hljs-template-variable,
+[data-doc-theme='dark'] .hljs-type,
+[data-doc-theme='dark'] .hljs-variable.language_,
+[data-vc-theme='dark'] .hljs-doctag,
+[data-vc-theme='dark'] .hljs-keyword,
+[data-vc-theme='dark'] .hljs-meta .hljs-keyword,
+[data-vc-theme='dark'] .hljs-template-tag,
+[data-vc-theme='dark'] .hljs-template-variable,
+[data-vc-theme='dark'] .hljs-type,
+[data-vc-theme='dark'] .hljs-variable.language_ {
+	color: #ff7b72;
+}
+
+[data-doc-theme='dark'] .hljs-title,
+[data-doc-theme='dark'] .hljs-title.class_,
+[data-doc-theme='dark'] .hljs-title.function_,
+[data-vc-theme='dark'] .hljs-title,
+[data-vc-theme='dark'] .hljs-title.class_,
+[data-vc-theme='dark'] .hljs-title.function_ {
+	color: #d2a8ff;
+}
+
+[data-doc-theme='dark'] .hljs-attr,
+[data-doc-theme='dark'] .hljs-literal,
+[data-doc-theme='dark'] .hljs-number,
+[data-doc-theme='dark'] .hljs-variable,
+[data-vc-theme='dark'] .hljs-attr,
+[data-vc-theme='dark'] .hljs-literal,
+[data-vc-theme='dark'] .hljs-number,
+[data-vc-theme='dark'] .hljs-variable {
+	color: #79c0ff;
+}
+
+[data-doc-theme='dark'] .hljs-regexp,
+[data-doc-theme='dark'] .hljs-string,
+[data-vc-theme='dark'] .hljs-regexp,
+[data-vc-theme='dark'] .hljs-string {
+	color: #a5d6ff;
+}
+
+[data-doc-theme='dark'] .hljs-comment,
+[data-doc-theme='dark'] .hljs-code,
+[data-vc-theme='dark'] .hljs-comment,
+[data-vc-theme='dark'] .hljs-code {
+	color: #8b949e;
+}
+
+[data-doc-theme='dark'] .hljs-name,
+[data-doc-theme='dark'] .hljs-selector-tag,
+[data-vc-theme='dark'] .hljs-name,
+[data-vc-theme='dark'] .hljs-selector-tag {
+	color: #7ee787;
+}

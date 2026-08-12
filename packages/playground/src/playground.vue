@@ -263,6 +263,7 @@ watch(normalizedViewportOptions, (options) => {
 </script>
 <style lang="scss">
 @use './style' as *;
+@use '@deot/docs-theme/variables';
 
 @include block(docs-playground) {
 	display: flex;
@@ -280,7 +281,7 @@ watch(normalizedViewportOptions, (options) => {
 		height: 100%;
 		min-height: 0;
 		overflow: hidden;
-		background: #f6f8fa;
+		background: var(--docs-code-background, var(--vc-background-color, #f6f8fa));
 		box-shadow: none;
 	}
 

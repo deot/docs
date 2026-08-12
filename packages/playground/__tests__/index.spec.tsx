@@ -140,6 +140,40 @@ describe('Playground', () => {
 			.toContain('textDecoration:"none"');
 	});
 
+	it('keeps the sandbox body theme in sync with the host document', async () => {
+		document.body.setAttribute('data-doc-theme', 'dark');
+		const wrapper = mount(Playground, {
+			attachTo: document.body,
+			props: { modelValue: '<template>theme</template>' }
+		});
+		await nextTick();
+		await nextTick();
+		const iframe = wrapper.find('iframe').element as HTMLIFrameElement;
+
+		expect(iframe.contentDocument?.body.getAttribute('data-doc-theme')).toBe('dark');
+		expect(iframe.contentDocument?.body.getAttribute('data-vc-theme')).toBe('dark');
+		expect(iframe.contentDocument?.documentElement.getAttribute('data-vc-theme')).toBe('dark');
+		expect(iframe.contentDocument?.documentElement.style.colorScheme).toBe('dark');
+
+		document.body.setAttribute('data-doc-theme', 'light');
+		document.body.setAttribute('data-vc-theme', 'light');
+		await new Promise<void>(resolve => queueMicrotask(resolve));
+
+		expect(iframe.contentDocument?.body.getAttribute('data-doc-theme')).toBe('light');
+		expect(iframe.contentDocument?.body.getAttribute('data-vc-theme')).toBe('light');
+		expect(iframe.contentDocument?.documentElement.getAttribute('data-vc-theme')).toBe('light');
+		expect(iframe.contentDocument?.documentElement.style.colorScheme).toBe('light');
+		document.body.removeAttribute('data-doc-theme');
+		document.body.removeAttribute('data-vc-theme');
+		await new Promise<void>(resolve => queueMicrotask(resolve));
+
+		expect(iframe.contentDocument?.body.hasAttribute('data-doc-theme')).toBe(false);
+		expect(iframe.contentDocument?.body.hasAttribute('data-vc-theme')).toBe(false);
+		expect(iframe.contentDocument?.documentElement.hasAttribute('data-vc-theme')).toBe(false);
+		expect(iframe.contentDocument?.documentElement.style.colorScheme).toBe('');
+		wrapper.unmount();
+	});
+
 	it('uses the explicit locale across nested preview controls', () => {
 		const wrapper = mount(Playground, {
 			props: {

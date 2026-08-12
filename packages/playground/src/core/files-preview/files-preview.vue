@@ -91,14 +91,14 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 	max-height: 100%;
 	min-height: 0;
 	overflow: hidden;
-	background: #f7f8fa;
+	background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa));
 	flex: 1 1 auto;
 	flex-direction: column;
 
 	@include element(toolbar) {
 		display: flex;
 		overflow: hidden;
-		box-shadow: inset 0 -1px #dedede;
+		box-shadow: inset 0 -1px var(--docs-border-color, var(--vc-color-light-deeper, #dedede));
 		box-sizing: border-box;
 		flex: 0 0 44px;
 	}
@@ -108,7 +108,7 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 		height: 44px;
 		min-width: 0;
 		overflow: hidden;
-		background: #f7f8fa;
+		background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa));
 		flex: 1 1 auto;
 
 		.vc-scroller__wrapper {
@@ -143,7 +143,7 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 		font: inherit;
 		font-size: 15px;
 		line-height: 44px;
-		color: #52525b;
+		color: var(--docs-foreground-color-light, var(--vc-color-dark-lighter, #52525b));
 		white-space: nowrap;
 		cursor: pointer;
 		background: transparent;
@@ -153,7 +153,7 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 		align-items: center;
 
 		@include when(active) {
-			color: #18181b;
+			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
 
 			&::after {
 				position: absolute;
@@ -171,13 +171,13 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 	@include element(entry) {
 		font-size: 10px;
 		line-height: 16px;
-		color: #71717a;
+		color: var(--docs-foreground-color-mute, var(--vc-color-dark-extralight, #71717a));
 	}
 
 	@include element(actions) {
 		display: flex;
 		height: 44px;
-		background: #f7f8fa;
+		background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa));
 		box-sizing: border-box;
 		flex: 0 0 auto;
 		align-items: center;
@@ -208,7 +208,7 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 		height: 28px;
 		padding: 0;
 		font: inherit;
-		color: #64748b;
+		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
 		cursor: pointer;
 		background: transparent;
 		border: 0;

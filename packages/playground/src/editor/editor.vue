@@ -332,10 +332,11 @@ onBeforeUnmount(() => {
 @include block(docs-playground-editor) {
 	button {
 		padding: 3px 7px;
+		color: var(--docs-foreground-color-light, var(--vc-color-dark-lighter));
 		white-space: nowrap;
 		cursor: pointer;
-		background: white;
-		border: 1px solid #d1d5db;
+		background: var(--docs-background-color, var(--vc-background-color-light));
+		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper));
 		border-radius: 8px;
 
 		&:disabled {
@@ -351,7 +352,8 @@ onBeforeUnmount(() => {
 		z-index: 1001;
 		width: 680px;
 		font-size: 13px;
-		background: white;
+		color: var(--docs-foreground-color-light, var(--vc-color-dark-lighter));
+		background: var(--docs-background-color, var(--vc-background-color-light));
 		border-radius: 8px;
 		opacity: 1;
 		box-shadow: 0 0 50px rgb(0 0 0 / 20%);
@@ -363,7 +365,7 @@ onBeforeUnmount(() => {
 		font-size: 20px;
 		line-height: 20px;
 		cursor: move;
-		background: #f6f8fa !important;
+		background: var(--docs-background-color-soft, var(--vc-background-color)) !important;
 		justify-content: space-between;
 		align-items: center;
 	}
@@ -374,9 +376,9 @@ onBeforeUnmount(() => {
 		min-width: 0;
 		padding: 6px 8px;
 		overflow: hidden;
-		background: #f6f8fa;
-		border-top: 1px solid #e5e7eb;
-		border-bottom: 1px solid #e5e7eb;
+		background: var(--docs-background-color-soft, var(--vc-background-color));
+		border-top: 1px solid var(--docs-border-color, var(--vc-color-light-deeper));
+		border-bottom: 1px solid var(--docs-border-color, var(--vc-color-light-deeper));
 		box-sizing: border-box;
 		gap: 8px;
 		justify-content: space-between;
@@ -419,8 +421,8 @@ onBeforeUnmount(() => {
 		line-height: 18px;
 		white-space: nowrap;
 		cursor: pointer;
-		background: white;
-		border: 1px solid #d1d5db;
+		background: var(--docs-background-color, var(--vc-background-color-light));
+		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper));
 		border-radius: 8px;
 		box-sizing: border-box;
 		gap: 5px;
@@ -439,7 +441,9 @@ onBeforeUnmount(() => {
 		padding: 0 3px;
 		font: inherit;
 		line-height: 16px;
-		border: 1px solid #d1d5db;
+		color: var(--docs-foreground-color-light, var(--vc-color-dark-lighter));
+		background: var(--docs-background-color, var(--vc-background-color-light));
+		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper));
 		box-sizing: border-box;
 	}
 
@@ -487,15 +491,15 @@ onBeforeUnmount(() => {
 
 	@include element(error) {
 		padding: 5px 10px;
-		color: #b91c1c;
+		color: var(--vc-color-error, #b91c1c);
 		white-space: pre-wrap;
-		background: #fef2f2;
+		background: var(--docs-error-background, #fef2f2);
 	}
 
 	@include element(editor) {
 		min-height: 240px;
 		padding: 1px;
-		background: #f6f8fa !important;
+		background: var(--docs-code-background, var(--vc-background-color)) !important;
 	}
 }
 </style>

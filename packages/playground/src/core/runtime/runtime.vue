@@ -126,6 +126,7 @@ import type {
 import { resolveSandboxContainer, useSandboxAutoHeight } from './auto-height';
 import type { SandboxExposed } from './auto-height';
 import { useSandboxRuntimeErrorGuard } from './error-guard';
+import { useSandboxTheme } from './theme';
 import {
 	formatViewportLabel,
 	getViewportHeight,
@@ -192,6 +193,7 @@ const store = createRuntimeStore(props.files, props.entry, props.options);
 const sandboxRef = ref<SandboxExposed | null>(null);
 const runtimeHeight = useSandboxAutoHeight(sandboxRef);
 useSandboxRuntimeErrorGuard(sandboxRef);
+useSandboxTheme(sandboxRef);
 const handleBridgeMessage = (event: MessageEvent) => {
 	const iframe = resolveSandboxContainer(sandboxRef.value)?.querySelector('iframe');
 	if (!iframe || event.source !== iframe.contentWindow) return;
@@ -342,8 +344,8 @@ watch(() => props.entry, (entry) => {
 	@include element(header) {
 		display: flex;
 		padding: 0 12px;
-		background: #f7f8fa !important;
-		box-shadow: inset 0 -1px #edeff1;
+		background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa)) !important;
+		box-shadow: inset 0 -1px var(--docs-border-color, var(--vc-color-light-deeper, #edeff1));
 		box-sizing: border-box;
 		justify-content: flex-end;
 		align-items: center;
@@ -361,7 +363,7 @@ watch(() => props.entry, (entry) => {
 		height: 28px;
 		padding: 0;
 		font: inherit;
-		color: #64748b;
+		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -370,7 +372,7 @@ watch(() => props.entry, (entry) => {
 		align-items: center;
 
 		@include when(active) {
-			color: #fff;
+			color: var(--vc-color-light, #fff);
 			background: #2563eb;
 		}
 	}
@@ -390,7 +392,7 @@ watch(() => props.entry, (entry) => {
 		height: 28px;
 		padding: 0;
 		font: inherit;
-		color: #64748b;
+		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -400,12 +402,12 @@ watch(() => props.entry, (entry) => {
 
 		&:hover {
 			color: #2563eb;
-			background: #e8eef8;
+			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
 		}
 
 		@include when(active) {
 			color: #2563eb;
-			background: #e8eef8;
+			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
 		}
 	}
 
@@ -439,7 +441,7 @@ watch(() => props.entry, (entry) => {
 		min-height: 0;
 		padding: 10px;
 		overflow: hidden;
-		background: #fff;
+		background: var(--docs-background-color, var(--vc-background-color-light, #fff));
 		box-sizing: border-box;
 		flex: 1 1 auto;
 	}

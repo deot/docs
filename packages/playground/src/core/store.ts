@@ -26,7 +26,7 @@ export const runtimePreviewOptions: SandboxProps['previewOptions'] = {
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/style/dist/index.normalize-only.css">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/vc-components/dist/index.style.css">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/style/dist/index.css">',
-		'<style> body{ background: white } </style>'
+		'<style>body{color:var(--vc-foreground-color,#080f20);background:var(--vc-background-color-light,#fff)}</style>'
 	].join('\n'),
 	customCode: {
 		importCode: DOCS_LINK_IMPORT_CODE,

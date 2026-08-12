@@ -5,7 +5,7 @@
 	display: flex;
 	min-height: 0;
 	overflow: hidden;
-	background: #f7f8fa;
+	background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa));
 	border-radius: 8px;
 
 	@include element(language) {
@@ -19,7 +19,7 @@
 		overflow: hidden;
 		font-size: 12px;
 		line-height: 18px;
-		color: #71717a;
+		color: var(--docs-foreground-color-mute, var(--vc-color-dark-extralight, #71717a));
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		justify-content: center;
@@ -35,11 +35,11 @@
 		width: 28px;
 		height: 28px;
 		padding: 0;
-		color: #71717a;
+		color: var(--docs-foreground-color-mute, var(--vc-color-dark-extralight, #71717a));
 		pointer-events: none;
 		cursor: pointer;
-		background: #f7f8fa;
-		border: 1px solid #d4d4d8;
+		background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa));
+		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #d4d4d8));
 		border-radius: 8px;
 		opacity: 0;
 		transition: opacity 0.15s ease, background-color 0.15s ease;
@@ -47,7 +47,7 @@
 		align-items: center;
 
 		&:hover {
-			background: #fff;
+			background: var(--docs-background-color, var(--vc-background-color-light, #fff));
 		}
 
 		&:focus-visible {
@@ -68,13 +68,13 @@
 		min-height: 0;
 		margin: 0;
 		overflow: auto;
-		background: #f7f8fa;
+		background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa));
 		flex: 1 1 auto;
 
 		code.hljs {
 			min-height: 100%;
 			padding: 12px 56px 12px 24px;
-			background: #f7f8fa;
+			background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa));
 			box-sizing: border-box;
 		}
 	}
