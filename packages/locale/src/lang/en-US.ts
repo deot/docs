@@ -5,13 +5,18 @@ const enUS = {
 	client: {
 		common: {
 			close: 'Close',
+			invalidSidebar: 'Invalid sidebar resource',
 			loading: 'Loading…',
 			poweredBy: 'Powered by @deot/docs',
 			resourceRequestFailed: 'Resource request failed',
 			yes: 'Yes'
 		},
 		header: {
-			brand: '@deot/docs'
+			brand: '@deot/docs',
+			database: 'Open resource database',
+			language: 'Switch language',
+			switchToDark: 'Switch to dark theme',
+			switchToLight: 'Switch to light theme'
 		},
 		search: {
 			trigger: 'Search docs',
@@ -39,6 +44,8 @@ const enUS = {
 		},
 		database: {
 			title: 'IndexedDB Resources',
+			back: 'Back',
+			home: 'Home',
 			records: '{count} records',
 			cache: 'cache {size}',
 			columns: 'Columns',

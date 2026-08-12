@@ -5,13 +5,18 @@ const zhCN = {
 	client: {
 		common: {
 			close: '关闭',
+			invalidSidebar: '侧边栏数据无效',
 			loading: '加载中…',
 			poweredBy: '由 @deot/docs 提供支持',
 			resourceRequestFailed: '资源请求失败',
 			yes: '是'
 		},
 		header: {
-			brand: '@deot/docs'
+			brand: '@deot/docs',
+			database: '打开资源数据库',
+			language: '切换语言',
+			switchToDark: '切换至深色主题',
+			switchToLight: '切换至浅色主题'
 		},
 		search: {
 			trigger: '搜索文档',
@@ -39,6 +44,8 @@ const zhCN = {
 		},
 		database: {
 			title: 'IndexedDB 资源',
+			back: '返回',
+			home: '回到首页',
 			records: '{count} 条记录',
 			cache: '缓存 {size}',
 			columns: '列',
