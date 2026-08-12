@@ -142,6 +142,7 @@ const configureWorkspaceServer = (options: DocsPluginOptions) => (server: ViteDe
 	const realWorkspace = fs.existsSync(workspace) ? fs.realpathSync(workspace) : workspace;
 	const packages = path.resolve(root, 'packages');
 	const realPackages = fs.existsSync(packages) ? fs.realpathSync(packages) : packages;
+	const rootReadme = path.resolve(root, 'README.md');
 	const urlPrefix = options.preview ? '/' : `/${workspaceName}/`;
 
 	server.middlewares.use((req, res, next) => {
@@ -150,6 +151,11 @@ const configureWorkspaceServer = (options: DocsPluginOptions) => (server: ViteDe
 		let realResourceRoot = realWorkspace;
 		try {
 			decoded = decodeWorkspacePath(req.url || '/', urlPrefix);
+			if (decoded === null && !options.preview && getRawPathname(req.url || '/') === '/README.md') {
+				decoded = 'README.md';
+				resourceRoot = root;
+				realResourceRoot = fs.realpathSync(root);
+			}
 			if (decoded === null && !options.preview) {
 				const packagePath = decodeWorkspacePath(req.url || '/', '/packages/');
 				if (packagePath !== null && isPackageReadme(packagePath)) {
@@ -225,7 +231,7 @@ const configureWorkspaceServer = (options: DocsPluginOptions) => (server: ViteDe
 		res.end(content);
 	});
 
-	if (!options.preview) configureEvents(server, workspace, packages);
+	if (!options.preview) configureEvents(server, workspace, packages, rootReadme);
 };
 
 const createWorkspacePlugin = (options: DocsPluginOptions): Plugin => ({
@@ -239,11 +245,13 @@ const createWorkspacePlugin = (options: DocsPluginOptions): Plugin => ({
 const configureEvents = (
 	server: ViteDevServer,
 	workspace: string,
-	packages: string
+	packages: string,
+	rootReadme: string
 ) => {
 	const clients = new Set<import('node:http').ServerResponse>();
 	// packages 不一定进入 Vite 模块图，必须显式加入 watcher 才能广播 README 更新。
 	server.watcher.add(packages);
+	server.watcher.add(rootReadme);
 	server.middlewares.use('/__docs/events', (req, res) => {
 		res.statusCode = 200;
 		res.setHeader('Content-Type', 'text/event-stream');
@@ -256,6 +264,18 @@ const configureEvents = (
 
 	const send = (type: 'add' | 'change' | 'unlink', filename: string) => {
 		const absolute = path.resolve(filename);
+		if (absolute === rootReadme) {
+			const payload = JSON.stringify({
+				type,
+				// 根 README 被多种语言共用，空语言要求 Client 更新全部 identity。
+				lang: '',
+				source: 'README.md',
+				resourceType: 'markdown',
+				timestamp: Date.now()
+			});
+			clients.forEach(client => client.write(`data: ${payload}\n\n`));
+			return;
+		}
 		const inWorkspace = isInside(workspace, absolute);
 		const inPackages = isInside(packages, absolute);
 		if (!inWorkspace && !inPackages) return;

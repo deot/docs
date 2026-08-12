@@ -18,6 +18,10 @@ const zhCN = {
 			switchToDark: '切换至深色主题',
 			switchToLight: '切换至浅色主题'
 		},
+		home: {
+			greeting: '你好 @deot/docs',
+			quickStart: '开始使用'
+		},
 		search: {
 			trigger: '搜索文档',
 			untitled: '未命名文档',

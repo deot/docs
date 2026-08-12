@@ -18,6 +18,10 @@ const enUS = {
 			switchToDark: 'Switch to dark theme',
 			switchToLight: 'Switch to light theme'
 		},
+		home: {
+			greeting: 'Hello @deot/docs',
+			quickStart: 'Quick Start'
+		},
 		search: {
 			trigger: 'Search docs',
 			untitled: 'Untitled',

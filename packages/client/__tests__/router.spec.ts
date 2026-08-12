@@ -103,6 +103,13 @@ describe('docs router', () => {
 		const router = createDocsRouter(minimal);
 		await router.push('/');
 		expect(router.currentRoute.value.path).toBe('/en');
+		expect(router.currentRoute.value.meta.docsHome).toBe(true);
+		expect(router.currentRoute.value.meta.docsRoute).toMatchObject({
+			content: null,
+			sidebar: null,
+			header: 'default',
+			footer: 'default'
+		});
 		await router.push('/fr/guide?tab=api#title');
 		expect(router.currentRoute.value.fullPath).toBe('/en/target?tab=api#title');
 		await router.push('/guide');
@@ -114,6 +121,22 @@ describe('docs router', () => {
 		expect(noLocales.currentRoute.value.path).toBe('/zh-CN');
 		expect(localizePath({ locales: {}, routes: {} }, 'zh-CN', '/zh-CN?tab=api'))
 			.toBe('/zh-CN?tab=api');
+	});
+
+	it('lets any explicit root configuration override the built-in home', async () => {
+		const roots: DocsConfig['routes'][] = [
+			{ '/': { content: null } },
+			{ '/': '/guide', '/guide': { content: null } },
+			{ '/': () => '/guide', '/guide': { content: null } }
+		];
+		for (const routes of roots) {
+			const router = createDocsRouter({
+				locales: { 'en-US': { label: 'English' } },
+				routes
+			});
+			await router.push('/');
+			expect(router.currentRoute.value.meta.docsHome).toBeUndefined();
+		}
 	});
 
 	it('distinguishes a missing language slug from an invalid localized route', async () => {

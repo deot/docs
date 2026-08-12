@@ -28,21 +28,35 @@
 			item.value,
 			`packages/${item.value}/README.md`
 		]));
-		const readmeRoutes = Object.fromEntries(packages.map(item => [
-			packageReadmes[item.value],
-			`/${item.value}`
+		const readmes = {
+			guide: 'README.md',
+			...packageReadmes
+		};
+		const readmeRoutes = Object.fromEntries(Object.entries(readmes).map(([value, source]) => [
+			source,
+			`/packages/${value}`
 		]));
 		const localeReadmes = Object.fromEntries(Object.keys(locales).map(lang => [
 			lang,
-			packageReadmes
+			readmes
 		]));
 		const sidebarSource = './sidebar.json';
-		const sidebarUrl = `data:application/json;charset=utf-8,${encodeURIComponent(
-			JSON.stringify(packages.map(item => ({
-				label: item.label,
-				value: `/${item.value}`
-			})))
-		)}`;
+		const sidebarUrls = Object.fromEntries(Object.keys(locales).map(lang => [
+			lang,
+			`data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify([
+				{
+					label: lang === 'zh-CN' ? '简介' : 'Introduction',
+					value: '/packages/guide'
+				},
+				{
+					label: lang === 'zh-CN' ? '包' : 'Packages',
+					children: packages.map(item => ({
+						label: item.label,
+						value: `/packages/${item.value}`
+					}))
+				}
+			]))}`
+		]));
 		const pathSegments = location.pathname.split('/');
 		const localeIndex = pathSegments.findIndex(segment => Boolean(locales[segment]));
 		const basePath = localeIndex >= 0
@@ -56,24 +70,30 @@
 			theme: { default: 'system' },
 			locales,
 			routes: Object.fromEntries([
-				['/', '/index'],
-				...packages.map(item => [`/${item.value}`, {
-					value: item.value,
+				...Object.keys(readmes).map(value => [`/packages/${value}`, {
+					value,
 					content: 'default',
 					sidebar: sidebarSource,
 					header: 'default',
 					footer: 'default',
 					extra: null
 				}]),
-				['*', '/index']
+				['*', '/packages/guide']
 			]),
 			resolve: {
 				// 两种语言暂时共用仓库内的 README，后续可只替换对应语言的映射。
 				markdown: ({ lang, value }) => (
 					localeReadmes[lang] || localeReadmes['en-US']
 				)[value],
-				resource: ({ source, type, runtime }) => {
-					if (type === 'sidebar' && source === sidebarSource) return sidebarUrl;
+				resource: ({ source, type, lang, runtime }) => {
+					if (type === 'sidebar' && source === sidebarSource) {
+						return sidebarUrls[lang] || sidebarUrls['en-US'];
+					}
+					if (source === 'README.md') {
+						return runtime.mode === 'development'
+							? '/README.md'
+							: new URL(source, repository).href;
+					}
 					if (/^packages\/[^/]+\/README\.md$/.test(source)) {
 						return runtime.mode === 'development'
 							? `/${source}`

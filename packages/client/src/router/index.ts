@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 import { ResourceSlot } from '../components/layout';
 import DatabasePage from '../pages/db/index.vue';
+import HomePage from '../pages/home/index.vue';
 import {
 	getDefaultLanguage,
 	getDocsDeploymentBase
@@ -132,6 +133,7 @@ const createRouteRecord = (
 
 export const createDocsRouter = (config: DocsConfig) => {
 	const defaultLanguage = getDefaultLanguage(config);
+	const hasConfiguredRoot = Object.prototype.hasOwnProperty.call(config.routes, '/');
 	const hasConfiguredDatabaseRoute = Object.keys(config.routes).some(path => (
 		(path.startsWith('/') ? path : `/${path}`) === '/db'
 	));
@@ -157,19 +159,35 @@ export const createDocsRouter = (config: DocsConfig) => {
 			meta: { docsDatabase: true, docsLocalized: true }
 		}
 	);
-	const root = config.routes['/'];
 	routes.push({
 		path: '/',
 		redirect: `/${defaultLanguage}`
 	});
-	// 即使缺少根配置，也需要生成明确的 /:lang 路由；否则 catch-all
-	// 重定向回相同语言路径时会产生无限循环。
-	routes.push(createRouteRecord(
-		config,
-		'/:lang',
-		root || { content: 'default' },
-		{ localized: true, languageRoot: true }
-	));
+	if (hasConfiguredRoot) {
+		routes.push(createRouteRecord(
+			config,
+			'/:lang',
+			config.routes['/'],
+			{ localized: true, languageRoot: true }
+		));
+	} else {
+		routes.push({
+			path: '/:lang',
+			component: HomePage,
+			meta: {
+				docsHome: true,
+				docsLocalized: true,
+				docsLanguageRoot: true,
+				docsRoute: {
+					content: null,
+					sidebar: null,
+					header: 'default',
+					footer: 'default',
+					extra: null
+				}
+			}
+		});
+	}
 
 	Object.entries(config.routes).forEach(([path, routeConfig]) => {
 		if (path === '/' || path === '*') return;

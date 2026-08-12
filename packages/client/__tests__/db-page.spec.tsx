@@ -335,14 +335,13 @@ describe('database page', () => {
 			(identities as Array<{ source: string }>).map(item => item.source)
 		));
 		expect(sources).toEqual(expect.arrayContaining([
-			'./index.md',
 			'./sidebar.json',
 			'./demo.vue',
 			'./guide.md',
 			'./nested.md'
 		]));
-		expect(new Set(sources)).toHaveProperty('size', 5);
-		expect(messageSuccess).toHaveBeenCalledWith('Prefetched 5');
+		expect(new Set(sources)).toHaveProperty('size', 4);
+		expect(messageSuccess).toHaveBeenCalledWith('Prefetched 4');
 	});
 
 	it('sorts configured sidebar routes depth first and leaves garbage at the end', async () => {
@@ -446,8 +445,8 @@ describe('database page', () => {
 		const sources = prefetch.mock.calls.flatMap(([identities]) => (
 			(identities as Array<{ source: string }>).map(item => item.source)
 		));
-		expect(sources).toEqual(['./index.md', './demo.vue', './logic.ts', './theme.css']);
-		expect(messageSuccess).toHaveBeenCalledWith('Prefetched 4');
+		expect(sources).toEqual(['./demo.vue', './logic.ts', './theme.css']);
+		expect(messageSuccess).toHaveBeenCalledWith('Prefetched 3');
 	});
 
 	it('loads graph descriptors before Markdown for automatic idle plans', async () => {
@@ -474,7 +473,7 @@ describe('database page', () => {
 			(identities as Array<{ source: string }>).map(item => item.source)
 		))).toEqual([
 			['./demo.vue'],
-			['./index.md', './guide.md']
+			['./guide.md']
 		]);
 	});
 
@@ -542,7 +541,7 @@ describe('database page', () => {
 		await flushPromises();
 
 		await click(wrapper, 'Prefetch');
-		expect(messageError).toHaveBeenCalledWith('Prefetch: 2 ok, 1 failed');
+		expect(messageError).toHaveBeenCalledWith('Prefetch: 1 ok, 1 failed');
 	});
 
 	it('prunes records outside the complete prefetch plan', async () => {
@@ -600,11 +599,11 @@ describe('database page', () => {
 		await click(wrapper, 'Prune');
 		expect(prefetch).not.toHaveBeenCalled();
 		const identities = gatewayPrune.mock.calls[0][1] as Array<{ source: string }>;
-		expect(identities.map(item => item.source)).toEqual(['./index.md', './guide.md']);
+		expect(identities.map(item => item.source)).toEqual(['./guide.md']);
 		expect(messageSuccess).toHaveBeenCalledWith('Pruned 0');
 	});
 
-	it('retains the implicit default-language index when locales and routes are empty', async () => {
+	it('does not invent a Markdown resource for the built-in home', async () => {
 		window.$docs.locales = {};
 		window.$docs.routes = {};
 		const wrapper = mount(DatabasePage);
@@ -616,9 +615,7 @@ describe('database page', () => {
 			lang: string;
 			source: string;
 		}>;
-		expect(identities).toEqual([
-			expect.objectContaining({ lang: 'zh-CN', source: './index.md' })
-		]);
+		expect(identities).toEqual([]);
 	});
 
 	it('refuses cleanup when dynamic Markdown routes cannot be enumerated', async () => {
@@ -659,7 +656,6 @@ describe('database page', () => {
 		await click(wrapper, 'Prune');
 		const identities = gatewayPrune.mock.calls[0][1] as Array<{ source: string }>;
 		expect(identities.map(item => item.source)).toEqual([
-			'./index.md',
 			'./sidebar.json',
 			'./guide.md'
 		]);
@@ -693,7 +689,6 @@ describe('database page', () => {
 		await click(wrapper, 'Prune');
 		const identities = gatewayPrune.mock.calls[0][1] as Array<{ source: string }>;
 		expect(identities.map(item => item.source)).toEqual([
-			'./zh-CN.md',
 			'./zh-CN/guide.md'
 		]);
 	});
@@ -766,6 +761,7 @@ describe('database page', () => {
 		await click(wrapper, 'Clear');
 		expect(messageError).toHaveBeenCalledWith('Operation failed');
 
+		window.$docs.routes = { '/guide': { content: './guide.md' } };
 		prefetch.mockRejectedValueOnce(new Error('Plan failed'));
 		await click(wrapper, 'Prefetch');
 		expect(messageError).toHaveBeenCalledWith('Plan failed');

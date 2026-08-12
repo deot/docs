@@ -29,19 +29,14 @@ pnpm add @deot/docs-client
 			'en-US': { label: 'English' }
 		},
 		routes: {
-			'/': '/index',
-			'/index': {
+			'/components/:name': {
 				content: 'default',
 				sidebar: './sidebar.json',
 				header: 'default',
 				footer: 'default',
 				extra: null
 			},
-			'/:name': {
-				content: 'default',
-				sidebar: './sidebar.json'
-			},
-			'*': '/index'
+			'*': '/components/installation'
 		},
 		resolve: {
 			markdown: ({ value }) => `./${value}.md`
@@ -88,6 +83,19 @@ const { app, router, disconnect } = bootstrap(window.$docs);
 - `.vue`：通过独立 Playground iframe 渲染远程 SFC。
 
 sidebar JSON 使用递归的 `{ label, value?, children? }` 结构。
+
+### 默认首页
+
+未配置 `routes['/']` 时，Client 使用内置首页；中文显示“你好 @deot/docs - 开始使用”，English 显示“Hello @deot/docs - Quick Start”。首页保留默认 Header/Footer、不展示 Sidebar，内容最小高度为 600px。
+
+首页入口完全由业务 routes 和 Sidebar 决定：
+
+1. 按 routes 的声明顺序选择路由模式；
+2. 静态内容路由可以直接作为入口；
+3. 动态路由按 Sidebar 深度优先顺序寻找第一个完整匹配的 value；
+4. 当前模式无法实例化时继续下一模式。
+
+`/packages/:name`、`/components/:name`、`/api/:version/:name` 等只是业务配置，Client 不固定前缀、参数名或参数数量。配置对象、字符串或函数形式的 `routes['/']` 可以完全覆盖内置首页。
 
 ### Locale 与 lang
 

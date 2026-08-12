@@ -3,6 +3,7 @@ import type { ComputedRef, Ref } from 'vue';
 export interface ClientLocaleMessages {
 	common: Record<string, string>;
 	header: Record<string, string>;
+	home: Record<string, string>;
 	search: Record<string, string>;
 	database: Record<string, string>;
 	paging: Record<string, string>;

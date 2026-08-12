@@ -2,6 +2,7 @@ import { Gateway } from '../gateway';
 import {
 	createResourceIdentity,
 	getDefaultLanguage,
+	resolveResource,
 	resourceIdentityKey
 } from '../../utils/resolver';
 import {
@@ -11,7 +12,8 @@ import {
 	toLogicalResourceSource
 } from '../../utils/resource-graph';
 import { getDocsConfig } from '../../utils/runtime';
-import type { RouteLocationNormalized } from 'vue-router';
+import { createRouterMatcher } from 'vue-router';
+import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 import type {
 	DocsConfig,
 	DocsResourceType,
@@ -70,6 +72,15 @@ export interface RouteResource {
 	identity: ResourceIdentity;
 	/** 已包含语言前缀、可直接交给 Vue Router 的站内路径。 */
 	path: string;
+}
+
+export interface ResolveHomeEntryOptions {
+	signal?: AbortSignal;
+}
+
+interface InternalRouteTarget {
+	path: string;
+	pathname: string;
 }
 
 /** Client 内所有调用方共用的无状态资源计划实例。 */
@@ -183,9 +194,7 @@ class ResourcePlanner {
 				throw new Error(`Cannot build a complete prefetch plan: redirect cycle (${currentPath})`);
 			}
 			visited.add(currentPath);
-			if (currentPath === '/' && !config.routes['/']) {
-				return { config: { content: 'default' }, params: {}, pathname: currentPath };
-			}
+			if (currentPath === '/' && !config.routes['/']) return null;
 			const match = this.matchRoute(config.routes, currentPath);
 			if (!match) return null;
 			if (typeof match.config === 'object') return {
@@ -214,6 +223,144 @@ class ResourcePlanner {
 			this.getSidebarValuesDepthFirst(sidebarItem.children, values);
 		});
 		return values;
+	}
+
+	private parseInternalRouteTarget(
+		config: DocsConfig,
+		lang: string,
+		value: string
+	): InternalRouteTarget | null {
+		if (!value || /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith('//')) return null;
+		let target: URL;
+		try {
+			target = new URL(value, 'https://docs.local/');
+		} catch {
+			return null;
+		}
+		if (target.origin !== 'https://docs.local') return null;
+		const segments = target.pathname.split('/').filter(Boolean);
+		const explicitLanguage = segments[0] && Object.prototype.hasOwnProperty.call(
+			config.locales,
+			segments[0]
+		)
+			? segments.shift()
+			: '';
+		const pathname = `/${segments.join('/')}`;
+		if (pathname === '/') return null;
+		return {
+			pathname,
+			path: `/${explicitLanguage || lang}${pathname}${target.search}${target.hash}`
+		};
+	}
+
+	/*
+	 * 首页入口必须使用 Vue Router 自己的 matcher。业务路由可能包含多个参数、
+	 * 可选参数或自定义正则，自行拆分路径会与真正导航时的匹配结果产生偏差。
+	 */
+	private matchesRoutePattern(pattern: string, pathname: string) {
+		const normalized = pattern.startsWith('/') ? pattern : `/${pattern}`;
+		let matcher;
+		try {
+			matcher = createRouterMatcher([{
+				path: normalized,
+				component: {}
+			} as RouteRecordRaw], {});
+			const matched = matcher.resolve(
+				{ path: pathname },
+				{
+					path: '/',
+					name: undefined,
+					params: {},
+					matched: [],
+					meta: {}
+				}
+			);
+			return matched.matched.length > 0;
+		} catch {
+			return false;
+		}
+	}
+
+	private getConfiguredSidebarSources(config: DocsConfig) {
+		const sources: string[] = [];
+		const seen = new Set<string>();
+		for (const route of Object.values(config.routes)) {
+			if (!route || typeof route !== 'object') continue;
+			const source = route.sidebar === 'default'
+				? './sidebar.json'
+				: route.sidebar;
+			if (typeof source !== 'string' || !source || seen.has(source)) continue;
+			seen.add(source);
+			sources.push(source);
+		}
+		return sources;
+	}
+
+	private async loadConfiguredSidebarValues(
+		config: DocsConfig,
+		lang: string,
+		options: ResolveHomeEntryOptions
+	) {
+		const values: string[] = [];
+		for (const source of this.getConfiguredSidebarSources(config)) {
+			if (options.signal?.aborted) break;
+			try {
+				const identity = createResourceIdentity(config, lang, 'sidebar', source);
+				const url = await resolveResource(config, {
+					source,
+					type: 'sidebar',
+					lang
+				});
+				if (options.signal?.aborted) break;
+				const record = await Gateway.load(identity, {
+					url,
+					priority: 100,
+					signal: options.signal
+				});
+				const items = JSON.parse(record.content);
+				this.getSidebarValuesDepthFirst(items, values);
+			} catch {
+				// 一个 Sidebar 不可用时继续尝试其他业务路由，不让默认首页进入错误态。
+			}
+		}
+		return values;
+	}
+
+	/**
+	 * 按业务 routes 声明顺序解析默认首页的首个真实文档入口。动态路由由
+	 * Sidebar value 提供具体参数，Client 不理解也不限制业务路径前缀。
+	 * @param config 当前文档配置。
+	 * @param lang 当前路由语言。
+	 * @param options 本次解析使用的取消信号。
+	 * @returns 已包含语言的 Router 地址；没有可达内容时返回 null。
+	 */
+	async resolveHomeEntry(
+		config: DocsConfig,
+		lang: string,
+		options: ResolveHomeEntryOptions = {}
+	): Promise<string | null> {
+		let sidebarValues: string[] | null = null;
+		for (const [pattern, route] of Object.entries(config.routes)) {
+			const normalizedPattern = pattern.startsWith('/') ? pattern : `/${pattern}`;
+			if (!route || pattern === '/' || pattern === '*' || normalizedPattern === '/db') continue;
+			if (typeof route === 'object' && route.content === null) continue;
+			if (typeof route === 'string' && (
+				/^[a-z][a-z\d+.-]*:/i.test(route) || route.startsWith('//')
+			)) continue;
+			const dynamic = pattern.includes(':') || pattern.includes('*');
+			if (!dynamic) {
+				const target = this.parseInternalRouteTarget(config, lang, pattern);
+				if (target && this.matchesRoutePattern(pattern, target.pathname)) return target.path;
+				continue;
+			}
+			sidebarValues ||= await this.loadConfiguredSidebarValues(config, lang, options);
+			if (options.signal?.aborted) return null;
+			for (const value of sidebarValues) {
+				const target = this.parseInternalRouteTarget(config, lang, value);
+				if (target && this.matchesRoutePattern(pattern, target.pathname)) return target.path;
+			}
+		}
+		return null;
 	}
 
 	private createCollector(config: DocsConfig): ResourceCollector {
@@ -269,12 +416,6 @@ class ResourcePlanner {
 		collector: ResourceCollector
 	): Promise<void> {
 		for (const lang of this.getLanguages(config)) {
-			if (!config.routes['/']) {
-				await this.addRouteContent(config, collector, lang, '/', {
-					config: { content: 'default' },
-					params: {}
-				});
-			}
 			for (const [pathname, routeConfig] of Object.entries(config.routes)) {
 				if (!routeConfig || pathname === '*') continue;
 				if (typeof routeConfig !== 'object') {

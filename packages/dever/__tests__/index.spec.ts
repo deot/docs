@@ -23,14 +23,28 @@ describe('dever configuration', () => {
 		vm.runInNewContext(configScript!, {
 			window: target,
 			location: {
-				pathname: '/zh-CN/client',
+				pathname: '/zh-CN/packages/client',
 				origin: 'http://localhost:4173',
-				href: 'http://localhost:4173/zh-CN/client'
+				href: 'http://localhost:4173/zh-CN/packages/client'
 			},
 			URL,
 			encodeURIComponent
 		});
 		const config = target.$docs;
+		const guideSource = config.resolve.markdown({ lang: 'en-US', value: 'guide' });
+		expect(guideSource).toBe('README.md');
+		expect(config.resolve.resource({
+			source: guideSource,
+			type: 'markdown',
+			lang: 'en-US',
+			runtime: { mode: 'development' }
+		})).toBe('/README.md');
+		expect(config.resolve.resource({
+			source: guideSource,
+			type: 'markdown',
+			lang: 'en-US',
+			runtime: { mode: 'production' }
+		})).toBe('https://raw.githubusercontent.com/deot/docs/refs/heads/main/README.md');
 		const source = config.resolve.markdown({ lang: 'en-US', value: 'client' });
 		expect(source).toBe('packages/client/README.md');
 		expect(config.resolve.markdown({ lang: 'zh-CN', value: 'client' })).toBe(source);
@@ -47,15 +61,20 @@ describe('dever configuration', () => {
 			'https://raw.githubusercontent.com/deot/docs/refs/heads/main/packages/client/README.md'
 		);
 		expect(config.resolve.link({
+			href: 'packages/client/README.md',
+			lang: 'en-US',
+			source: 'README.md'
+		})).toBe('/en-US/packages/client');
+		expect(config.resolve.link({
 			href: '../dever/README.md?tab=api#rules',
 			lang: 'en-US',
 			source: 'packages/index/README.md'
-		})).toBe('/en-US/dever?tab=api#rules');
+		})).toBe('/en-US/packages/dever?tab=api#rules');
 		expect(config.resolve.link({
 			href: '../cli/README.md',
 			lang: 'zh-CN',
 			source: 'packages/index/README.md'
-		})).toBe('/zh-CN/cli');
+		})).toBe('/zh-CN/packages/cli');
 		expect(config.resolve.link({
 			href: 'https://example.com/docs',
 			lang: 'en-US',
@@ -72,10 +91,26 @@ describe('dever configuration', () => {
 			runtime: { mode: 'production' }
 		});
 		expect(JSON.parse(decodeURIComponent(sidebar.split(',')[1])))
-			.toEqual(expect.arrayContaining([
-				{ label: '@deot/docs', value: '/index' },
-				{ label: '@deot/docs-client', value: '/client' }
-			]));
+			.toEqual([
+				{ label: 'Introduction', value: '/packages/guide' },
+				{
+					label: 'Packages',
+					children: expect.arrayContaining([
+						{ label: '@deot/docs', value: '/packages/index' },
+						{ label: '@deot/docs-client', value: '/packages/client' }
+					])
+				}
+			]);
+		expect(config.routes['/']).toBeUndefined();
+		expect(config.routes['/packages/guide']).toMatchObject({ value: 'guide' });
+		const zhSidebar = config.resolve.resource({
+			source: './sidebar.json',
+			type: 'sidebar',
+			lang: 'zh-CN',
+			runtime: { mode: 'production' }
+		});
+		expect(JSON.parse(decodeURIComponent(zhSidebar.split(',')[1]))[0])
+			.toEqual({ label: '简介', value: '/packages/guide' });
 	});
 
 	it('exports run and creates isolated development, build and preview configs', () => {
@@ -370,6 +405,7 @@ describe('dever configuration', () => {
 		workspacePlugin.configureServer(server);
 		const middleware = middlewares[0];
 		expect(server.watcher.add).toHaveBeenCalledWith(path.resolve('packages'));
+		expect(server.watcher.add).toHaveBeenCalledWith(path.resolve('README.md'));
 		const createResponse = () => ({
 			statusCode: 200,
 			setHeader: vi.fn(),
@@ -386,6 +422,27 @@ describe('dever configuration', () => {
 			'text/markdown; charset=utf-8'
 		);
 		expect(markdownResponse.end).toHaveBeenCalledWith(expect.any(Buffer));
+
+		const rootReadmeResponse = createResponse();
+		middleware({
+			url: '/README.md',
+			headers: { accept: 'text/plain' }
+		}, rootReadmeResponse, vi.fn());
+		expect(rootReadmeResponse.setHeader).toHaveBeenCalledWith(
+			'Content-Type',
+			'text/markdown; charset=utf-8'
+		);
+		expect(rootReadmeResponse.setHeader).toHaveBeenCalledWith('ETag', expect.any(String));
+		expect(rootReadmeResponse.end).toHaveBeenCalledWith(expect.any(Buffer));
+		const rootReadmeEtag = rootReadmeResponse.setHeader.mock.calls
+			.find(([name]) => name === 'ETag')?.[1];
+		const notModifiedResponse = createResponse();
+		middleware({
+			url: '/README.md',
+			headers: { 'accept': 'text/plain', 'if-none-match': rootReadmeEtag }
+		}, notModifiedResponse, vi.fn());
+		expect(notModifiedResponse.statusCode).toBe(304);
+		expect(notModifiedResponse.end).toHaveBeenCalledWith();
 
 		const traversalResponse = createResponse();
 		middleware({
@@ -493,12 +550,16 @@ describe('dever configuration', () => {
 		expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
 			'"lang":"","source":"packages/client/README.md","resourceType":"markdown"'
 		));
+		watcherHandlers.get('change')!(path.resolve('README.md'));
+		expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
+			'"lang":"","source":"README.md","resourceType":"markdown"'
+		));
 
 		watcherHandlers.get('change')!(path.resolve('site/index.html'));
 		expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining('"type":"reload"'));
 		closeClient!();
 		watcherHandlers.get('unlink')!(path.resolve('site/zh-CN/guide.md'));
-		expect(response.write).toHaveBeenCalledTimes(4);
+		expect(response.write).toHaveBeenCalledTimes(5);
 
 		eventsMiddleware(request, response);
 		closeServer!();
