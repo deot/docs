@@ -85,7 +85,9 @@ describe('dever configuration', () => {
 		expect(development.resolve?.alias).toMatchObject({
 			'@deot/docs-locale': expect.stringContaining('packages/locale/src/index.ts'),
 			'@deot/docs-markdown': expect.stringContaining('packages/markdown/src/index.ts'),
-			'@deot/docs-playground': expect.stringContaining('packages/playground/src/index.ts')
+			'@deot/docs-playground': expect.stringContaining('packages/playground/src/index.ts'),
+			'@deot/docs-theme': expect.stringContaining('packages/theme/src/index.ts'),
+			'@deot/docs-theme/variables': expect.stringContaining('packages/theme/src/variables.scss')
 		});
 		expect(development.server?.watch?.ignored).toEqual(['**/coverage/**', '**/dist/**']);
 

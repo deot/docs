@@ -91,11 +91,19 @@ const ensureLocalClientDist = async (cwd: string) => {
 	const stylesheet = path.join(localClient.clientDist, 'index.style.css');
 	const inputs = [
 		localClient.packageFile,
+		path.resolve(cwd, 'packages/locale/package.json'),
+		path.resolve(cwd, 'packages/markdown/package.json'),
+		path.resolve(cwd, 'packages/playground/package.json'),
+		path.resolve(cwd, 'packages/theme/package.json'),
+		path.resolve(cwd, 'packages/shims.d.ts'),
 		path.resolve(cwd, 'z.build.config.ts'),
+		path.resolve(cwd, 'tsconfig.json'),
 		path.resolve(cwd, 'pnpm-lock.yaml'),
 		path.resolve(cwd, 'packages/client/src'),
+		path.resolve(cwd, 'packages/locale/src'),
 		path.resolve(cwd, 'packages/markdown/src'),
-		path.resolve(cwd, 'packages/playground/src')
+		path.resolve(cwd, 'packages/playground/src'),
+		path.resolve(cwd, 'packages/theme/src')
 	];
 	const outputTime = getLatestModification(output);
 	const inputTime = Math.max(...inputs.map(getLatestModification));

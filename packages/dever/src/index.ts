@@ -72,9 +72,20 @@ export const createDeverConfig = (options: DeverOptions): InlineConfig => {
 	const workspaceRoot = path.resolve(cwd, workspace);
 	const outDir = path.resolve(cwd, String(options.outDir || 'dist'));
 	if (build) assertSafeBuildOutDir(workspaceRoot, outDir);
-	const localAliases = ['locale', 'markdown', 'playground'].reduce<Record<string, string>>((result, name) => {
+	const localAliases = ['locale', 'markdown', 'playground', 'theme'].reduce<Record<string, string>>((result, name) => {
 		const source = path.resolve(cwd, `packages/${name}/src/index.ts`);
-		if (fs.existsSync(source)) result[`@deot/docs-${name}`] = source;
+		if (fs.existsSync(source)) {
+			if (name === 'theme') {
+				// SCSS 子路径必须在根入口别名之前声明，避免被拼接为 index.ts/functions。
+				for (const resource of ['functions', 'mixins', 'theme', 'variables']) {
+					result[`@deot/docs-theme/${resource}`] = path.resolve(
+						cwd,
+						`packages/theme/src/${resource}.scss`
+					);
+				}
+			}
+			result[`@deot/docs-${name}`] = source;
+		}
 		return result;
 	}, {});
 	const server = preview
