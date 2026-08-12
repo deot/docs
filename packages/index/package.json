@@ -16,6 +16,7 @@
     "@deot/docs-dever": "*",
     "@deot/docs-locale": "*",
     "@deot/docs-markdown": "*",
-    "@deot/docs-playground": "*"
+    "@deot/docs-playground": "*",
+    "@deot/docs-theme": "*"
   }
 }
