@@ -47,6 +47,7 @@ const markdownBinding = computed(() => ({ source: source.value, locale: locale.v
 </script>
 <style lang="scss">
 @use '@deot/style/src/mixins/bem' as *;
+@use '@deot/docs-theme/variables';
 
 *,
 *::before,
@@ -55,7 +56,7 @@ const markdownBinding = computed(() => ({ source: source.value, locale: locale.v
 }
 
 a {
-	color: #333;
+	color: var(--docs-foreground-color, var(--vc-foreground-color, #333));
 	text-decoration: none;
 }
 
@@ -107,7 +108,7 @@ $sign: md;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	line-height: 1.5;
-	color: #515a6e;
+	color: var(--docs-foreground-color-light, var(--vc-color-dark-lighter, #515a6e));
 	overflow-wrap: break-word;
 }
 
@@ -145,7 +146,7 @@ $sign: md;
 	}
 
 	& .absent[#{$sign}] {
-		color: #cb2431;
+		color: var(--vc-color-error, #cb2431);
 	}
 
 	& .anchor[#{$sign}] {
@@ -178,14 +179,14 @@ $sign: md;
 		height: 0.25em;
 		padding: 0;
 		margin: 24px 0;
-		background-color: #e1e4e8;
+		background-color: var(--docs-border-color, #e1e4e8);
 		border: 0;
 	}
 
 	& blockquote[#{$sign}] {
 		padding: 0 1em;
-		color: #6a737d;
-		border-left: 0.25em solid #dfe2e5;
+		color: var(--docs-foreground-color-mute, #6a737d);
+		border-left: 0.25em solid var(--docs-border-color, #dfe2e5);
 	}
 
 	& blockquote[#{$sign}]>:first-child {
@@ -201,13 +202,13 @@ $sign: md;
 		padding: 3px 5px;
 		font-size: 11px;
 		line-height: 10px;
-		color: #444d56;
+		color: var(--docs-foreground-color-light, #444d56);
 		vertical-align: middle;
-		background-color: #fafbfc;
-		border: solid 1px #c6cbd1;
-		border-bottom-color: #959da5;
+		background-color: var(--docs-background-color-soft, #fafbfc);
+		border: solid 1px var(--docs-border-color, #c6cbd1);
+		border-bottom-color: var(--docs-foreground-color-mute, #959da5);
 		border-radius: 3px;
-		box-shadow: inset 0 -1px 0 #959da5;
+		box-shadow: inset 0 -1px 0 var(--docs-foreground-color-mute, #959da5);
 	}
 
 	& h1[#{$sign}],
@@ -228,7 +229,7 @@ $sign: md;
 	& h4 .octicon-link[#{$sign}],
 	& h5 .octicon-link[#{$sign}],
 	& h6 .octicon-link[#{$sign}] {
-		color: #1b1f23;
+		color: var(--docs-foreground-color, #1b1f23);
 		vertical-align: middle;
 		visibility: hidden;
 	}
@@ -270,13 +271,13 @@ $sign: md;
 	& h1[#{$sign}] {
 		padding-bottom: 0.3em;
 		font-size: 2em;
-		border-bottom: 1px solid #eaecef;
+		border-bottom: 1px solid var(--docs-border-color, #eaecef);
 	}
 
 	& h2[#{$sign}] {
 		padding-bottom: 0.3em;
 		font-size: 1.5em;
-		border-bottom: 1px solid #eaecef;
+		border-bottom: 1px solid var(--docs-border-color, #eaecef);
 	}
 
 	& h3[#{$sign}] {
@@ -293,7 +294,7 @@ $sign: md;
 
 	& h6[#{$sign}] {
 		font-size: 0.85em;
-		color: #6a737d;
+		color: var(--docs-foreground-color-mute, #6a737d);
 	}
 
 	& ul[#{$sign}],
@@ -359,16 +360,16 @@ $sign: md;
 	& table th[#{$sign}],
 	& table td[#{$sign}] {
 		padding: 6px 13px;
-		border: 1px solid #dfe2e5;
+		border: 1px solid var(--docs-border-color, #dfe2e5);
 	}
 
 	& table tr[#{$sign}] {
-		background-color: #fff;
-		border-top: 1px solid #c6cbd1;
+		background-color: var(--docs-background-color, #fff);
+		border-top: 1px solid var(--docs-border-color, #c6cbd1);
 	}
 
 	& table tr[#{$sign}]:nth-child(2n) {
-		background-color: #f6f8fa;
+		background-color: var(--docs-code-background, #f6f8fa);
 	}
 
 	& table img[#{$sign}] {
@@ -377,7 +378,7 @@ $sign: md;
 
 	& img[#{$sign}] {
 		max-width: 100%;
-		background-color: #fff;
+		background-color: var(--docs-background-color, #fff);
 		box-sizing: content-box;
 	}
 
@@ -407,7 +408,7 @@ $sign: md;
 		padding: 7px;
 		margin: 13px 0 0;
 		overflow: hidden;
-		border: 1px solid #dfe2e5;
+		border: 1px solid var(--docs-border-color, #dfe2e5);
 	}
 
 	& span.frame span img[#{$sign}] {
@@ -419,7 +420,7 @@ $sign: md;
 		display: block;
 		padding: 5px 0 0;
 		clear: both;
-		color: #24292e;
+		color: var(--docs-foreground-color, #24292e);
 	}
 
 	& span.align-center[#{$sign}] {
@@ -496,7 +497,7 @@ $sign: md;
 	& .csv-data .blob-num[#{$sign}] {
 		padding: 10px 8px 9px;
 		text-align: right;
-		background: #fff;
+		background: var(--docs-background-color, #fff);
 		border: 0;
 	}
 
@@ -506,7 +507,7 @@ $sign: md;
 
 	& .csv-data th[#{$sign}] {
 		font-weight: 600;
-		background: #f6f8fa;
+		background: var(--docs-code-background, #f6f8fa);
 		border-top: 0;
 	}
 
@@ -545,7 +546,7 @@ $sign: md;
 		overflow: auto;
 		font-size: 85%;
 		line-height: 1.45;
-		background-color: #f6f8fa;
+		background-color: var(--docs-code-background, #f6f8fa);
 		border-radius: 3px;
 	}
 
@@ -564,8 +565,8 @@ $sign: md;
 	& .tip[#{$sign}] {
 		padding: 8px 16px;
 		margin: 20px 0;
-		background-color: #f9f0ff;
-		border-left: 5px solid #873bf4;
+		background-color: var(--docs-tip-background, #f9f0ff);
+		border-left: 5px solid var(--docs-primary-color, #873bf4);
 		border-radius: 4px;
 
 		p {
@@ -576,7 +577,7 @@ $sign: md;
 	& .warning[#{$sign}] {
 		padding: 8px 16px;
 		margin: 20px 0;
-		background-color: #fff6f7;
+		background-color: var(--docs-warning-background, #fff6f7);
 		border-left: 5px solid #fe6c6f;
 		border-radius: 4px;
 
@@ -587,20 +588,64 @@ $sign: md;
 
 	& code[#{$sign}]:not(.hljs)  {
 		padding: 0 4px;
-		background-color: #f9fafc;
-		border: 1px solid #eaeefb;
+		background-color: var(--docs-code-background, #f9fafc);
+		border: 1px solid var(--docs-border-color, #eaeefb);
 		border-radius: 2px;
 	}
 
 	& .tip[#{$sign}] {
 		code:not(.hljs)  {
-			color: #445368;
-			background-color: #ffffffb3;
+			color: var(--docs-foreground-color-light, #445368);
+			background-color: color-mix(
+				in srgb,
+				var(--docs-background-color, #fff) 70%,
+				transparent
+			);
 		}
 	}
 
 	& p a[#{$sign}] {
-		color: #2d8cf0;
+		color: var(--docs-link-color, #2d8cf0);
+	}
+}
+
+[data-doc-theme='dark'] .docs-markdown-reset,
+[data-vc-theme='dark'] .docs-markdown-reset {
+	color: var(--docs-foreground-color-light, #d9d9d9);
+
+	hr[md] {
+		background-color: var(--docs-border-color, #3b4355);
+	}
+
+	blockquote[md] {
+		color: var(--docs-foreground-color-mute, #b9b9b9);
+		border-left-color: var(--docs-border-color, #3b4355);
+	}
+
+	kbd[md],
+	table tr[md],
+	img[md] {
+		color: var(--docs-foreground-color-light, #d9d9d9);
+		background-color: var(--docs-background-color, #171b24);
+		border-color: var(--docs-border-color, #3b4355);
+	}
+
+	h1[md],
+	h2[md],
+	table th[md],
+	table td[md],
+	span.frame > span[md] {
+		border-color: var(--docs-border-color, #3b4355);
+	}
+
+	table tr[md]:nth-child(2n),
+	.csv-data th[md] {
+		background-color: var(--docs-background-color-soft, #252b3a);
+	}
+
+	.tip[md] code:not(.hljs) {
+		color: var(--docs-foreground-color-light, #d9d9d9);
+		background-color: var(--docs-background-color-mute, #303748);
 	}
 }
 </style>

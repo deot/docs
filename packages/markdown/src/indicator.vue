@@ -132,7 +132,7 @@ const props = defineProps<{
 	options: MarkdownIndicatorOptions;
 	target?: HTMLElement;
 }>();
-const { t } = useLocale();
+const { lang: localeName, t } = useLocale();
 
 const parentScroller = inject<ParentScrollerContext | null>('vc-scroller', null);
 const indicatorRoot = ref<HTMLElement>();
@@ -150,6 +150,7 @@ let usesParentScroller = false;
 let captureTarget: HTMLElement | undefined;
 let refreshFrame = 0;
 let activeFrame = 0;
+let targetGeneration = 0;
 
 const toCssLength = (value: number | string | undefined, fallback: string) => (
 	typeof value === 'number' ? `${value}px` : value || fallback
@@ -351,8 +352,11 @@ const cleanupTarget = () => {
 
 /** 为当前 Markdown DOM 建立内容观察与滚动同步。 */
 const setupTarget = async () => {
+	const generation = ++targetGeneration;
 	cleanupTarget();
 	await nextTick();
+	// target 切换或组件卸载后，旧 nextTick 任务不得重新注册 observer 和滚动监听。
+	if (generation !== targetGeneration) return;
 	if (!props.target) {
 		markers.value = [];
 		return;
@@ -515,9 +519,10 @@ const getMarkerStyle = (index: number) => {
 	};
 };
 
-watch(() => props.target, setupTarget, { immediate: true });
+watch([() => props.target, localeName], setupTarget, { immediate: true });
 
 onBeforeUnmount(() => {
+	targetGeneration++;
 	cleanupTarget();
 	if (refreshFrame) cancelAnimationFrame(refreshFrame);
 	if (activeFrame) cancelAnimationFrame(activeFrame);
@@ -568,7 +573,7 @@ onBeforeUnmount(() => {
 		flex: 0 0 2px;
 		height: 2px;
 		padding: 0;
-		background: #c5c8ce;
+		background: var(--docs-border-color, var(--vc-color-light-deepest, #c5c8ce));
 		border: 0;
 		border-radius: 2px;
 		outline: 0;
@@ -577,7 +582,7 @@ onBeforeUnmount(() => {
 
 		&.is-active,
 		&.is-hovered {
-			background: #515a6e;
+			background: var(--docs-foreground-color-light, var(--vc-color-dark-lighter, #515a6e));
 			opacity: 1;
 		}
 	}
@@ -589,20 +594,20 @@ onBeforeUnmount(() => {
 		padding: 10px 12px;
 		font-size: 12px;
 		line-height: 1.6;
-		color: #17233d;
+		color: var(--docs-foreground-color, var(--vc-foreground-color, #17233d));
 		pointer-events: none;
-		background: #fff;
-		border: 1px solid #dcdee2;
+		background: var(--docs-background-color, var(--vc-background-color-light, #fff));
+		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #dcdee2));
 		border-radius: 6px;
 		transform: translateY(-50%);
-		box-shadow: 0 4px 12px rgb(0 0 0 / 14%);
+		box-shadow: 0 4px 12px var(--docs-shadow-color, rgb(0 0 0 / 14%));
 		overflow-wrap: anywhere;
 	}
 
 	@include element(preview-title) {
 		overflow: hidden;
 		font-weight: 600;
-		color: #17233d;
+		color: var(--docs-foreground-color, var(--vc-foreground-color, #17233d));
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
@@ -611,7 +616,7 @@ onBeforeUnmount(() => {
 		display: -webkit-box;
 		margin-top: 4px;
 		overflow: hidden;
-		color: #808695;
+		color: var(--docs-foreground-color-mute, var(--vc-color-dark-extralight, #808695));
 		white-space: pre-line;
 		-webkit-box-orient: vertical;
 		-webkit-line-clamp: 4;
