@@ -1,0 +1,25 @@
+/**
+ * Docs 只声明文档自身的语义色；组件库已有颜色继续复用 --vc-*。
+ * map 值允许为 light/dark 对象，单值表示两个主题保持一致。
+ */
+$theme: (
+	background-color: (light: #fff, dark: #171b24),
+	background-color-soft: (light: #f7f8fa, dark: #252b3a),
+	background-color-mute: (light: #f2f3f5, dark: #303748),
+	foreground-color: (light: #17233d, dark: #f8f8f8),
+	foreground-color-light: (light: #515a6e, dark: #d9d9d9),
+	foreground-color-mute: (light: #808695, dark: #b9b9b9),
+	border-color: (light: #e8eaec, dark: #3b4355),
+	border-color-light: (light: #f0f1f2, dark: #303748),
+	primary-color: #873bf4,
+	primary-color-light: (light: #f2ebfe, dark: #35244d),
+	link-color: (light: #2d8cf0, dark: #6daeff),
+	mask-color: (light: rgb(255 255 255 / 72%), dark: rgb(10 13 18 / 76%)),
+	shadow-color: (light: rgb(0 0 0 / 14%), dark: rgb(0 0 0 / 45%)),
+	code-background: (light: #f6f8fa, dark: #202630),
+	footer-background: (light: #141313, dark: #0d0f14),
+	footer-foreground: #999,
+	tip-background: (light: #f9f0ff, dark: #30223f),
+	warning-background: (light: #fff6f7, dark: #3d2529),
+	error-background: (light: #fef2f2, dark: #41272b)
+) !default;

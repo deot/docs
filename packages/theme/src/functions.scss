@@ -1,0 +1,19 @@
+@use 'sass:map';
+@use 'sass:meta';
+@use './theme' as *;
+
+/** 返回 Docs 语义变量，可为组件提供更细粒度的覆盖入口。 */
+@function varfix($value, $component-name: false, $fallback: false) {
+	$theme-value: map.get($theme, $value);
+	$has-component: meta.type-of($component-name) == 'string';
+
+	@if $has-component and $theme-value {
+		@return #{'var(--docs-#{$component-name}-#{$value}, var(--docs-'}#{$value}#{'))'};
+	} @else if $has-component and $fallback {
+		@return #{'var(--docs-'}#{$component-name}-#{$value}#{','}#{$fallback}#{')'};
+	} @else if $theme-value {
+		@return #{'var(--docs-'}#{$value}#{')'};
+	}
+
+	@error '#{$value} is not a valid docs theme value.';
+}

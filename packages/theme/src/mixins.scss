@@ -1,0 +1,28 @@
+/** 为需要强制覆盖的组件分别生成 Light/Dark 样式。 */
+@mixin themefix($light: true) {
+	@if $light {
+		@media (prefers-color-scheme: light) {
+			:root {
+				@content;
+			}
+		}
+
+		// 显式属性的权重必须高于 :root 媒体规则，调用 Light/Dark mixin 的
+		// 先后顺序才不会让系统主题覆盖用户选择。
+		[data-doc-theme='light'][data-doc-theme],
+		[data-vc-theme='light'][data-vc-theme] {
+			@content;
+		}
+	} @else {
+		@media (prefers-color-scheme: dark) {
+			:root {
+				@content;
+			}
+		}
+
+		[data-doc-theme='dark'][data-doc-theme],
+		[data-vc-theme='dark'][data-vc-theme] {
+			@content;
+		}
+	}
+}

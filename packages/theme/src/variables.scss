@@ -1,0 +1,45 @@
+@use 'sass:map';
+@use 'sass:meta';
+@use './theme' as *;
+
+@mixin generate-theme($light: true) {
+	@each $key, $value in $theme {
+		$theme-value: $value;
+
+		@if meta.type-of($value) == 'map' {
+			$light-value: map.get($value, light);
+			$dark-value: map.get($value, dark);
+
+			// 自定义主题只声明 Light 值时，Dark 继续使用该值而不是输出空变量。
+			$theme-value: $light-value;
+
+			@if not $light and $dark-value {
+				$theme-value: $dark-value;
+			}
+		}
+
+		--docs-#{$key}: #{$theme-value};
+	}
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		@include generate-theme(true);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		@include generate-theme(false);
+	}
+}
+
+[data-doc-theme='light'],
+[data-vc-theme='light'] {
+	@include generate-theme(true);
+}
+
+[data-doc-theme='dark'],
+[data-vc-theme='dark'] {
+	@include generate-theme(false);
+}

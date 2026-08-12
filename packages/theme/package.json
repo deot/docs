@@ -1,0 +1,38 @@
+{
+  "name": "@deot/docs-theme",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sass": "src/variables.scss",
+  "style": "dist/index.style.css",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./functions": "./src/functions.scss",
+    "./mixins": "./src/mixins.scss",
+    "./theme": "./src/theme.scss",
+    "./variables": {
+      "types": "./src/variables.d.ts",
+      "sass": "./src/variables.scss",
+      "style": "./src/variables.scss",
+      "default": "./src/variables.scss"
+    },
+    "./style.css": "./dist/index.style.css"
+  },
+  "files": [
+    "dist",
+    "src/*.scss",
+    "src/*.d.ts"
+  ],
+  "sideEffects": [
+    "**/*.scss"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}
