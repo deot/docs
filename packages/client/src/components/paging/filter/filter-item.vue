@@ -121,14 +121,14 @@ const handleImmediateChange = (value: PagingFilterValue) => {
 	grid-template-columns: max-content minmax(0, 1fr);
 	height: 32px;
 	min-width: 220px;
-	background: #f2f3f5;
+	background: varfix(background-color-mute);
 	border-radius: 8px;
 	align-items: center;
 
 	@include element(label) {
 		padding: 0 12px;
 		line-height: 32px;
-		color: #4e5969;
+		color: varfix(foreground-color-light);
 		white-space: nowrap;
 	}
 
@@ -140,7 +140,7 @@ const handleImmediateChange = (value: PagingFilterValue) => {
 
 	@include element(separator) {
 		padding: 0 6px;
-		color: #86909c;
+		color: varfix(foreground-color-mute);
 	}
 
 	.vc-input,
@@ -148,7 +148,7 @@ const handleImmediateChange = (value: PagingFilterValue) => {
 	.vc-select,
 	.vc-date-picker {
 		width: 100%;
-		background: #f2f3f5;
+		background: varfix(background-color-mute);
 	}
 
 	.vc-input {

@@ -18,6 +18,8 @@ const {
 	statusListeners,
 	messageSuccess,
 	messageError,
+	routerBack,
+	routerPush,
 	record
 } = vi.hoisted(() => {
 	const fixture = {
@@ -69,9 +71,17 @@ const {
 		}),
 		statusListeners: listeners,
 		messageSuccess: vi.fn(),
-		messageError: vi.fn()
+		messageError: vi.fn(),
+		routerBack: vi.fn(),
+		routerPush: vi.fn()
 	};
 });
+
+vi.mock('vue-router', async original => ({
+	...await original<any>(),
+	useRoute: () => ({ params: { lang: 'zh-CN' } }),
+	useRouter: () => ({ back: routerBack, push: routerPush })
+}));
 
 vi.mock('../src/modules', () => ({
 	Gateway: {
@@ -153,6 +163,11 @@ describe('database page', () => {
 		expect(wrapper.find('.docs-database__header p').text())
 			.toContain(`docs cache ${getFixtureSize()} B`);
 
+		await click(wrapper, 'Back');
+		expect(routerBack).toHaveBeenCalledOnce();
+		await click(wrapper, 'Home');
+		expect(routerPush).toHaveBeenCalledWith('/zh-CN');
+
 		await click(wrapper, 'Update');
 		expect(revalidate).toHaveBeenCalledWith(record.identity, {
 			url: record.url,
@@ -191,15 +206,24 @@ describe('database page', () => {
 	it('keeps destructive actions at the far right and highlights other tools', async () => {
 		const wrapper = mount(DatabasePage);
 		await flushPromises();
-		const labels = ['Columns', 'Refresh', 'Update all', 'Prefetch', 'Clear', 'Prune'];
+		const labels = [
+			'Back',
+			'Home',
+			'Columns',
+			'Refresh',
+			'Update all',
+			'Prefetch',
+			'Clear',
+			'Prune'
+		];
 		const buttons = wrapper.find('.docs-database__toolbar').findAll('button')
 			.filter(button => labels.includes(button.text().trim()));
 
 		expect(buttons.map(button => button.text().trim())).toEqual(labels);
-		expect(buttons.slice(0, 4).every(button => (
+		expect(buttons.slice(0, 6).every(button => (
 			button.attributes('data-type') === 'primary'
 		))).toBe(true);
-		expect(buttons.slice(4).every(button => (
+		expect(buttons.slice(6).every(button => (
 			button.attributes('data-type') === 'error'
 		))).toBe(true);
 		expect(wrapper.find('.docs-database__toolbar-danger').text())

@@ -74,6 +74,7 @@ const { app, router, disconnect } = bootstrap(window.$docs);
 | `namespace` | IndexedDB 缓存隔离标识；未设置时使用规范化后的 `base`。 |
 | `modules` | 远程 SFC 中裸模块名到 URL 的映射。 |
 | `prefetch` | 空闲预加载开关或 `{ batchSize, idleTimeout }` 配置，默认开启。 |
+| `theme` | 主题开关或 `{ default: 'system' \| 'light' \| 'dark' }`，默认跟随系统。 |
 | `resolve.markdown` | 根据 `lang`、`value` 和当前路由生成 Markdown 逻辑地址。 |
 | `resolve.resource` | 将任意逻辑资源转换为最终 URL。 |
 | `resolve.link` | 将 Markdown 原始链接同步转换为外链或包含语言的站内 Router 地址。 |
@@ -91,6 +92,23 @@ sidebar JSON 使用递归的 `{ label, value?, children? }` 结构。
 ### Locale 与 lang
 
 `lang` 始终来自当前路由，用于文档资源寻址、搜索与缓存隔离；`locale` 只负责界面文案。Client 会在路由切换时同步 `<html lang>`。内置 `zh-CN` 和 `en-US`，自定义语言或缺少字段会逐字段回退到 `en-US`。翻译 key 必须属于 `client.*`、`markdown.*` 或 `playground.*`。
+
+### Theme
+
+内置 Header 在启用主题时展示切换入口。Client 同步维护 `<body data-doc-theme>` 与 `<body data-vc-theme>`，因此 Docs 和 `@deot/vc` 会使用同一套 Light/Dark 状态。用户选择按站点 namespace 保存到 IndexedDB；首次进入时依次使用已保存设置、HTML 预设、配置默认值和系统偏好。
+
+公共主题类型、`--docs-*` 语义变量和 SCSS 工具由 `@deot/docs-theme` 提供；Client 仅负责运行时状态、持久化和切换动画。Markdown、Playground 和 Client 的构建都会内联同一份变量样式，不要求页面额外加载主题 CSS。
+
+```js
+window.$docs = {
+	// 其他配置
+	theme: {
+		default: 'system'
+	}
+};
+```
+
+设置 `theme: false` 可关闭内置主题控制。自定义 Header 可以从 `@deot/docs-client` 导入共享的 `Theme`，读取 `current/enabled/ready`，或调用 `Theme.set()`、`Theme.toggle()`；传入触发元素时，支持 View Transition 的浏览器会以该元素为圆心切换。
 
 ### 空闲预加载
 

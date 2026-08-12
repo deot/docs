@@ -1,7 +1,10 @@
 import type { RouteLocationNormalized } from 'vue-router';
+import type { Ref } from 'vue';
 import type { DocsLocaleEntry } from '@deot/docs-locale';
+import type { DocsTheme, DocsThemeOptions } from '@deot/docs-theme';
 
 export type { DocsLocaleEntry, Language } from '@deot/docs-locale';
+export type { DocsTheme, DocsThemeOptions, DocsThemePreference } from '@deot/docs-theme';
 
 export type DocsResourceType = 'markdown' | 'sidebar' | 'sfc' | 'module' | 'style';
 
@@ -16,6 +19,14 @@ export interface DocsPrefetchOptions {
 	batchSize?: number;
 	/** requestIdleCallback 最长等待时间，默认 1500ms。 */
 	idleTimeout?: number;
+}
+
+export interface DocsThemeController {
+	readonly current: Readonly<Ref<DocsTheme>>;
+	readonly enabled: Readonly<Ref<boolean>>;
+	readonly ready: Readonly<Ref<boolean>>;
+	set(theme: DocsTheme, origin?: HTMLElement): Promise<void>;
+	toggle(origin?: HTMLElement): Promise<void>;
 }
 
 export interface DocsResourceContext {
@@ -66,6 +77,7 @@ export interface DocsConfig {
 	namespace?: string;
 	modules?: Record<string, string>;
 	prefetch?: boolean | DocsPrefetchOptions;
+	theme?: boolean | DocsThemeOptions;
 	resolve?: {
 		markdown?: (context: DocsMarkdownContext) => string | Promise<string>;
 		resource?: (context: DocsResourceContext) => string | Promise<string>;

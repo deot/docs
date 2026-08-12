@@ -16,6 +16,7 @@
     "@deot/docs-locale": "*",
     "@deot/docs-markdown": "*",
     "@deot/docs-playground": "*",
+    "@deot/docs-theme": "*",
     "@deot/helper-cache": "^1.1.10",
     "@deot/helper-fp": "^1.1.5",
     "@deot/http": "^1.1.10",

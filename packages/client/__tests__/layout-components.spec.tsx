@@ -7,8 +7,12 @@ import App from '../src/app.vue';
 import DefaultFooter from '../src/components/layout/default-footer.vue';
 import DefaultHeader from '../src/components/layout/default-header.vue';
 import DefaultSidebar from '../src/components/layout/default-sidebar.vue';
+import ClientIcon from '../src/components/icon';
+import ThemeToggler from '../src/components/theme-toggler/index.vue';
+import { Theme } from '../src/modules/theme';
 
-const { route: routeState, setScrollTop } = vi.hoisted(() => ({
+const { push, route: routeState, setScrollTop } = vi.hoisted(() => ({
+	push: vi.fn(),
 	route: {
 		path: '/zh-CN/components/button',
 		query: { tab: 'api' },
@@ -31,6 +35,7 @@ vi.mock('../src/components/layout', async () => ({
 vi.mock('vue-router', async original => ({
 	...await original<any>(),
 	useRoute: () => route,
+	useRouter: () => ({ push }),
 	RouterLink: (await import('vue')).defineComponent({
 		props: { to: { type: [String, Object], required: true } },
 		setup: (props, { slots }) => () => (
@@ -96,15 +101,38 @@ describe('client layout components', () => {
 			.toBe(false);
 	});
 
-	it('keeps the active path when switching locale', () => {
+	it('keeps the active path when switching locale from the dropdown', async () => {
 		const wrapper = mount(() => (<DefaultHeader />));
-		const links = wrapper.findAll('a');
-		expect(links.map(link => link.attributes('href'))).toEqual([
+		expect(wrapper.findAll('a').map(link => link.attributes('href'))).toEqual([
 			'/zh-CN',
-			'/zh-CN/components/button',
-			'/en-US/components/button'
+			'/zh-CN/db'
 		]);
+		expect(wrapper.find('.docs-header__database').attributes('aria-label'))
+			.toBe('Open resource database');
+		expect(wrapper.find('[data-icon="database"]').exists()).toBe(true);
+		expect(wrapper.find('[data-icon="language"]').exists()).toBe(true);
+		expect(wrapper.find('.docs-header__actions').element.lastElementChild?.classList)
+			.toContain('docs-header__database');
+		expect(wrapper.find('.docs-header__locale-trigger').attributes('aria-label'))
+			.toBe('Switch language');
+		const items = wrapper.findAllComponents({ name: 'DropdownItem' });
+		expect(items.map(item => item.text())).toEqual(['简体中文', 'English']);
+		expect(items[0].classes()).toContain('is-selected');
+		await items[1].trigger('click');
+		expect(push).toHaveBeenCalledWith({
+			path: '/en-US/components/button',
+			query: { tab: 'api' },
+			hash: '#props'
+		});
 		expect(wrapper.text()).toContain('@deot/docs');
+	});
+
+	it('hides the language dropdown when only one locale is configured', () => {
+		window.$docs = {
+			locales: { 'en-US': { label: 'English' } },
+			routes: {}
+		};
+		expect(mount(() => (<DefaultHeader />)).find('.docs-header__locales').exists()).toBe(false);
 	});
 
 	it('uses locale overrides for built-in header text', () => {
@@ -121,6 +149,29 @@ describe('client layout components', () => {
 		});
 
 		expect(mount(Host).find('.docs-header__brand').text()).toBe('@deot/docs 文档');
+	});
+
+	it('uses the complete theme toggler as the transition origin', async () => {
+		const toggle = vi.spyOn(Theme, 'toggle').mockResolvedValue();
+		const wrapper = mount(() => <ThemeToggler />);
+		await wrapper.find('.vc-switch').trigger('click', { clientX: 120, clientY: 30 });
+		expect(toggle).toHaveBeenCalledWith(wrapper.find('.theme-toggler').element);
+		toggle.mockRestore();
+	});
+
+	it('renders filled and outlined client icons through one component', () => {
+		const language = mount(() => <ClientIcon name="language" />);
+		const database = mount(() => <ClientIcon name="database" />);
+		expect(language.find('svg').attributes()).toMatchObject({
+			'data-icon': 'language',
+			'fill': 'currentColor',
+			'stroke': 'none'
+		});
+		expect(database.find('svg').attributes()).toMatchObject({
+			'data-icon': 'database',
+			'fill': 'none',
+			'stroke': 'currentColor'
+		});
 	});
 
 	it('renders recursive sidebar items and preserves external links', () => {

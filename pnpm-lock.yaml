@@ -39,6 +39,9 @@ importers:
       '@deot/docs-playground':
         specifier: '*'
         version: link:../playground
+      '@deot/docs-theme':
+        specifier: '*'
+        version: link:../theme
       '@deot/helper-cache':
         specifier: ^1.1.10
         version: 1.1.10
@@ -124,6 +127,9 @@ importers:
       '@deot/docs-playground':
         specifier: '*'
         version: link:../playground
+      '@deot/docs-theme':
+        specifier: '*'
+        version: link:../theme
 
   packages/locale:
     devDependencies:
@@ -139,6 +145,9 @@ importers:
       '@deot/docs-playground':
         specifier: '*'
         version: link:../playground
+      '@deot/docs-theme':
+        specifier: '*'
+        version: link:../theme
       '@deot/helper-dom':
         specifier: ^1.1.5
         version: 1.1.5
@@ -179,9 +188,6 @@ importers:
 
   packages/playground:
     dependencies:
-      '@deot/docs-locale':
-        specifier: '*'
-        version: link:../locale
       '@codemirror/lang-javascript':
         specifier: ^6.2.4
         version: 6.2.4
@@ -191,6 +197,12 @@ importers:
       '@codemirror/view':
         specifier: ^6.38.0
         version: 6.38.0
+      '@deot/docs-locale':
+        specifier: '*'
+        version: link:../locale
+      '@deot/docs-theme':
+        specifier: '*'
+        version: link:../theme
       '@vue/repl':
         specifier: ^4.6.1
         version: 4.6.1
@@ -219,6 +231,8 @@ importers:
       vue:
         specifier: ^3.5.39
         version: 3.5.40(typescript@6.0.3)
+
+  packages/theme: {}
 
 packages:
 

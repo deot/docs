@@ -51,20 +51,20 @@ const toPath = (value: string) => {
 			padding-left: 54px;
 			font-size: 14px;
 			font-weight: 400;
-			color: #697b8c;
+			color: varfix(foreground-color-light);
 			cursor: pointer;
 			border-right: 3px solid transparent;
 			align-items: center;
 
 			&:hover {
-				color: #2d8cf0;
-				background: #f9f9f9;
+				color: varfix(link-color);
+				background: varfix(background-color-soft);
 			}
 
 			&.router-link-active {
-				color: #873bf4;
-				background: #f9f0ff;
-				border-right-color: #873bf4;
+				color: varfix(primary-color);
+				background: varfix(primary-color-light);
+				border-right-color: varfix(primary-color);
 			}
 		}
 	}
@@ -75,7 +75,7 @@ const toPath = (value: string) => {
 		padding-left: 42px;
 		font-size: 14px;
 		font-weight: 600;
-		color: #333;
+		color: varfix(foreground-color);
 		align-items: center;
 	}
 
@@ -84,7 +84,7 @@ const toPath = (value: string) => {
 		padding: 10px 0 0 54px;
 		font-size: 12px;
 		font-weight: 400;
-		color: #999;
+		color: varfix(foreground-color-mute);
 		align-items: end;
 	}
 }

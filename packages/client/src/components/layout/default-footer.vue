@@ -14,9 +14,9 @@ const { t } = useLocale();
 	padding: 100px 48px 48px;
 	font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 	font-size: 14px;
-	color: #999;
+	color: varfix(footer-foreground);
 	text-align: center;
-	background: #141313;
+	background: varfix(footer-background);
 	place-items: start center;
 }
 </style>

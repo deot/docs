@@ -166,12 +166,12 @@ onBeforeUnmount(() => {
 @include block(docs-remote-sfc) {
 	@include element(loading) {
 		padding: 16px;
-		color: #6e7781;
+		color: varfix(foreground-color-mute);
 	}
 
 	@include element(error) {
 		padding: 16px;
-		color: #cf222e;
+		color: var(--vc-color-error);
 	}
 }
 </style>

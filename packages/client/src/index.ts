@@ -5,6 +5,7 @@ import '../../../node_modules/@deot/vc-components/dist/index.style.css';
 import App from './app.vue';
 import { connectResourceEvents } from './events';
 import { IdlePrefetch } from './modules/idle-prefetch';
+import { ThemeRuntime } from './modules/theme';
 import { createDocsRouter } from './router';
 import { getDefaultLanguage } from './utils/resolver';
 import { initializeDocsRuntime } from './utils/runtime';
@@ -13,7 +14,7 @@ import type { DocsConfig } from './types';
 export * from './utils/resolver';
 export * from './utils/runtime';
 export * from './types';
-export { Gateway, Network, ResourceGateway } from './modules';
+export { Gateway, Network, ResourceGateway, Theme } from './modules';
 export type {
 	ResourceContentRecord,
 	ResourceLoadOptions,
@@ -28,6 +29,7 @@ export type {
 export const bootstrap = (config?: DocsConfig) => {
 	config ||= window.$docs || { locales: {}, routes: {} };
 	initializeDocsRuntime(window, config);
+	const stopTheme = ThemeRuntime.start(config);
 	const router = createDocsRouter(config);
 	const app = createApp(App);
 	app.use(router);
@@ -58,6 +60,7 @@ export const bootstrap = (config?: DocsConfig) => {
 		disconnectEvents();
 		stopPrefetch();
 		stopDocumentLanguage();
+		stopTheme();
 	};
 	return { app, router, disconnect };
 };

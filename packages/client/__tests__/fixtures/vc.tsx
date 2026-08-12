@@ -90,6 +90,37 @@ export const createVcStubs = (options: VcStubOptions = {}) => ({
 			<button disabled={props.disabled} data-type={props.type}>{slots.default?.()}</button>
 		)
 	}),
+	Dropdown: defineComponent({
+		name: 'Dropdown',
+		props: { modelValue: Boolean },
+		emits: ['update:modelValue'],
+		setup: (_, { slots }) => () => (
+			<div class="dropdown">
+				{slots.default?.()}
+				<div class="dropdown-content">{slots.content?.()}</div>
+			</div>
+		)
+	}),
+	DropdownMenu: defineComponent({
+		name: 'DropdownMenu',
+		setup: (_, { slots }) => () => <ul class="dropdown-menu">{slots.default?.()}</ul>
+	}),
+	DropdownItem: defineComponent({
+		name: 'DropdownItem',
+		props: {
+			selected: Boolean,
+			value: [String, Number]
+		},
+		emits: ['click'],
+		setup: (props, { emit, slots }) => () => (
+			<li
+				class={{ 'dropdown-item': true, 'is-selected': props.selected }}
+				onClick={event => emit('click', props.value, event)}
+			>
+				{slots.default?.()}
+			</li>
+		)
+	}),
 	Input: defineComponent({
 		props: { modelValue: [String, Number] },
 		emits: ['update:modelValue', 'change', 'enter'],
@@ -122,6 +153,21 @@ export const createVcStubs = (options: VcStubOptions = {}) => ({
 					<option value={String(item.value)}>{item.label}</option>
 				))}
 			</select>
+		)
+	}),
+	Switch: defineComponent({
+		name: 'Switch',
+		props: {
+			modelValue: [String, Number, Boolean],
+			checkedValue: [String, Number, Boolean],
+			uncheckedValue: [String, Number, Boolean]
+		},
+		emits: ['click'],
+		setup: (props, { emit }) => () => (
+			<button
+				class={{ 'vc-switch': true, 'is-checked': props.modelValue === props.checkedValue }}
+				onClick={event => emit('click', event)}
+			/>
 		)
 	}),
 	DatePicker: defineComponent({

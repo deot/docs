@@ -44,11 +44,11 @@ onBeforeUnmount(() => DocsSearch.destroy());
 	height: 34px;
 	padding: 0 12px;
 	font: inherit;
-	color: #8c96a5;
+	color: varfix(foreground-color-mute);
 	text-align: left;
 	cursor: pointer;
-	background: #f7f8fa;
-	border: 1px solid #e8eaec;
+	background: varfix(background-color-soft);
+	border: 1px solid varfix(border-color);
 	border-radius: 5px;
 	grid-template-columns: 16px minmax(0, 1fr);
 	gap: 8px;
@@ -56,8 +56,8 @@ onBeforeUnmount(() => DocsSearch.destroy());
 
 	&:hover,
 	&:focus-visible {
-		color: #873bf4;
-		border-color: #c9a8f8;
+		color: varfix(primary-color);
+		border-color: varfix(primary-color);
 		outline: none;
 	}
 

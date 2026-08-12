@@ -1,5 +1,6 @@
 export { Network } from './network';
 export { Gateway, ResourceGateway } from './gateway';
+export { Theme } from './theme';
 export type {
 	ResourceCache,
 	ResourceContentRecord,

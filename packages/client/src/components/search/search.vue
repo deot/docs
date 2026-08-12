@@ -353,7 +353,7 @@ onBeforeUnmount(() => {
 	inset: 60px 0 0;
 	display: grid;
 	padding: 0 12px;
-	background: rgb(255 255 255 / 72%);
+	background: varfix(mask-color);
 	backdrop-filter: blur(5px);
 	place-items: start center;
 }
@@ -365,17 +365,17 @@ onBeforeUnmount(() => {
 	height: min(646px, calc(100vh - 86px));
 	margin-top: 2px;
 	overflow: hidden;
-	background: #fff;
+	background: varfix(background-color);
 	border-radius: 3px;
-	box-shadow: 0 10px 30px rgb(0 0 0 / 14%);
+	box-shadow: 0 10px 30px varfix(shadow-color);
 
 	@include element(header) {
 		display: grid;
 		grid-template-columns: 24px minmax(0, 1fr) max-content;
 		gap: 10px;
 		padding: 0 12px 0 18px;
-		background: #fafafa;
-		border-bottom: 1px solid #dcdfea;
+		background: varfix(background-color-soft);
+		border-bottom: 1px solid varfix(border-color);
 		align-items: center;
 	}
 
@@ -383,7 +383,7 @@ onBeforeUnmount(() => {
 		position: relative;
 		width: 18px;
 		height: 18px;
-		color: #5364a3;
+		color: varfix(foreground-color-light);
 		border: 1.5px solid currentcolor;
 		border-radius: 50%;
 
@@ -405,7 +405,7 @@ onBeforeUnmount(() => {
 		padding: 0;
 		font: inherit;
 		font-size: 18px;
-		color: #515a6e;
+		color: varfix(foreground-color-light);
 		background: transparent;
 		border: 0;
 		outline: 0;
@@ -419,7 +419,7 @@ onBeforeUnmount(() => {
 	@include element(clear) {
 		padding: 5px 8px;
 		font: inherit;
-		color: #2d8cf0;
+		color: varfix(link-color);
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -439,7 +439,7 @@ onBeforeUnmount(() => {
 		height: 28px;
 		padding: 0;
 		font: inherit;
-		color: #5364a3;
+		color: varfix(foreground-color-light);
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -449,8 +449,8 @@ onBeforeUnmount(() => {
 
 		&:hover,
 		&:focus-visible {
-			color: #fff;
-			background: #873bf4;
+			color: var(--vc-color-light);
+			background: varfix(primary-color);
 			outline: none;
 		}
 	}
@@ -484,7 +484,7 @@ onBeforeUnmount(() => {
 
 	@include element(body) {
 		min-height: 0;
-		background: #fafafa;
+		background: varfix(background-color-soft);
 	}
 
 	@include element(scroller) {
@@ -499,7 +499,7 @@ onBeforeUnmount(() => {
 	@include element(group-title) {
 		padding: 0 0 10px;
 		font-weight: 600;
-		color: #606266;
+		color: varfix(foreground-color-light);
 	}
 
 	@include element(result) {
@@ -508,10 +508,10 @@ onBeforeUnmount(() => {
 		min-height: 56px;
 		padding: 9px 14px;
 		font: inherit;
-		color: #515a6e;
+		color: varfix(foreground-color-light);
 		text-align: left;
 		cursor: pointer;
-		background: #fff;
+		background: varfix(background-color);
 		border: 0;
 		border-radius: 4px;
 		grid-template-columns: 24px minmax(0, 1fr) 24px;
@@ -523,8 +523,8 @@ onBeforeUnmount(() => {
 		}
 
 		@include modifier(active) {
-			color: #2d8cf0;
-			background: #eef1ff;
+			color: varfix(link-color);
+			background: varfix(primary-color-light);
 		}
 
 		@include modifier(section) {
@@ -538,8 +538,8 @@ onBeforeUnmount(() => {
 				left: 0;
 				width: 10px;
 				height: 24px;
-				border-bottom: 1px solid #c9cdd4;
-				border-left: 1px solid #c9cdd4;
+				border-bottom: 1px solid varfix(border-color);
+				border-left: 1px solid varfix(border-color);
 				content: "";
 			}
 		}
@@ -547,7 +547,7 @@ onBeforeUnmount(() => {
 
 	@include element(result-icon) {
 		font-size: 17px;
-		color: #5364a3;
+		color: varfix(foreground-color-light);
 		text-align: center;
 	}
 
@@ -566,20 +566,20 @@ onBeforeUnmount(() => {
 
 	@include element(result-parent) {
 		font-size: 12px;
-		color: #5364a3;
+		color: varfix(foreground-color-light);
 	}
 
 	@include element(result-excerpt) {
 		overflow: hidden;
 		font-size: 12px;
-		color: #8c96a5;
+		color: varfix(foreground-color-mute);
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
 	@include element(enter) {
 		font-size: 20px;
-		color: #2d8cf0;
+		color: varfix(link-color);
 		text-align: center;
 	}
 
@@ -590,7 +590,7 @@ onBeforeUnmount(() => {
 		min-height: 56px;
 		padding: 9px 10px 9px 14px;
 		cursor: pointer;
-		background: #fff;
+		background: varfix(background-color);
 		border-radius: 4px;
 		align-items: center;
 
@@ -599,14 +599,14 @@ onBeforeUnmount(() => {
 		}
 
 		@include modifier(active) {
-			color: #2d8cf0;
-			background: #eef1ff;
+			color: varfix(link-color);
+			background: varfix(primary-color-light);
 		}
 	}
 
 	@include element(history-icon) {
 		font-size: 22px;
-		color: #5364a3;
+		color: varfix(foreground-color-light);
 	}
 
 	@include element(history-action) {
@@ -615,25 +615,25 @@ onBeforeUnmount(() => {
 		padding: 0;
 		font: inherit;
 		font-size: 18px;
-		color: #8c96a5;
+		color: varfix(foreground-color-mute);
 		cursor: pointer;
 		background: transparent;
 		border: 0;
 
 		&:hover,
 		&--active {
-			color: #2d8cf0;
+			color: varfix(link-color);
 		}
 	}
 
 	@include element(state) {
 		display: grid;
 		min-height: 120px;
-		color: #8c96a5;
+		color: varfix(foreground-color-mute);
 		place-items: center;
 
 		@include modifier(error) {
-			color: #ed4014;
+			color: var(--vc-color-error);
 		}
 	}
 
@@ -644,9 +644,9 @@ onBeforeUnmount(() => {
 		gap: 22px;
 		padding: 0 12px;
 		font-size: 13px;
-		color: #5364a3;
-		background: #fff;
-		border-top: 1px solid #dcdfea;
+		color: varfix(foreground-color-light);
+		background: varfix(background-color);
+		border-top: 1px solid varfix(border-color);
 		align-items: center;
 
 		span {
@@ -662,7 +662,7 @@ onBeforeUnmount(() => {
 			font: inherit;
 			font-size: 11px;
 			text-align: center;
-			background: #f4f5fb;
+			background: varfix(background-color-mute);
 			border: 0;
 			border-radius: 2px;
 			box-shadow: none;

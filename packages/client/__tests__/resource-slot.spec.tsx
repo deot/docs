@@ -473,7 +473,7 @@ describe('ResourceSlot', () => {
 		const object = mount(ResourceSlot, { props: { name: 'sidebar' } });
 		await flushPromises();
 		expect(object.find('.docs-sidebar').exists()).toBe(false);
-		expect(object.text()).toContain('Sidebar root must be an array');
+		expect(object.text()).toContain('Invalid sidebar resource');
 	});
 
 	it('renders request failures and ignores aborted work on unmount', async () => {

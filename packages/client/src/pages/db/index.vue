@@ -11,6 +11,18 @@
 			</div>
 			<div class="docs-database__toolbar">
 				<div class="docs-database__toolbar-primary">
+					<Button type="primary" :disabled="loading" @click="handleBack">
+						<span class="docs-database__button-content">
+							<ClientIcon name="back" />
+							{{ t('client.database.back') }}
+						</span>
+					</Button>
+					<Button type="primary" :disabled="loading" @click="handleHome">
+						<span class="docs-database__button-content">
+							<ClientIcon name="home" />
+							{{ t('client.database.home') }}
+						</span>
+					</Button>
 					<Popover trigger="click" placement="bottom-right">
 						<Button type="primary" :disabled="loading">{{ t('client.database.columns') }}</Button>
 						<template #content>
@@ -140,7 +152,9 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Button, Checkbox, Message, Popover, TableColumn } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
+import { useRoute, useRouter } from 'vue-router';
 import * as api from './api';
+import ClientIcon from '../../components/icon';
 import { Paging } from '../../components/paging';
 import { Tag } from '../../components/tag';
 import type {
@@ -155,6 +169,8 @@ import { Gateway } from '../../modules';
 import type { ResourceRecord, ResourceStatus } from '../../modules';
 
 const records = ref<ResourceRecord[]>([]);
+const route = useRoute();
+const router = useRouter();
 const { t } = useLocale();
 const paging = ref<PagingExpose<ResourceRecord>>();
 const loadingCount = ref(0);
@@ -319,6 +335,8 @@ const run = async (action: () => Promise<void>, success: string) => {
 	}
 };
 
+const handleBack = () => router.back();
+const handleHome = () => void router.push(`/${String(route.params.lang || '')}`);
 const handleRefresh = () => run(async () => void 0, t('client.database.refreshed'));
 const handleReload = async (record: ResourceRecord) => {
 	const key = getKey(record);
@@ -402,7 +420,7 @@ onBeforeUnmount(() => {
 	min-width: 960px;
 	min-height: 100vh;
 	padding: 28px 32px 40px;
-	background: #f7f8fa;
+	background: varfix(background-color-soft);
 
 	@include element(header) {
 		display: grid;
@@ -414,12 +432,12 @@ onBeforeUnmount(() => {
 		h1 {
 			margin: 0 0 6px;
 			font-size: 24px;
-			color: #17233d;
+			color: varfix(foreground-color);
 		}
 
 		p {
 			margin: 0;
-			color: #808695;
+			color: varfix(foreground-color-mute);
 		}
 	}
 
@@ -445,6 +463,19 @@ onBeforeUnmount(() => {
 		gap: 10px;
 	}
 
+	@include element(button-content) {
+		display: inline-grid;
+		grid-auto-flow: column;
+		grid-auto-columns: max-content;
+		align-items: center;
+		gap: 5px;
+
+		.docs-client-icon {
+			width: 15px;
+			height: 15px;
+		}
+	}
+
 	@include element(columns) {
 		display: grid;
 		min-width: 140px;
@@ -453,7 +484,7 @@ onBeforeUnmount(() => {
 	}
 
 	@include element(table) {
-		background: #fff;
+		background: varfix(background-color);
 	}
 
 	@include element(ellipsis) {
@@ -471,7 +502,7 @@ onBeforeUnmount(() => {
 		gap: 8px;
 
 		.docs-database__action {
-			color: #2b72fd;
+			color: varfix(link-color);
 		}
 	}
 

@@ -185,12 +185,14 @@ const applyContent = (value: string, current = generation) => {
 	if (props.name === 'sidebar' && resourceType.value === 'sidebar') {
 		try {
 			const parsed = JSON.parse(value);
-			if (!Array.isArray(parsed)) throw new TypeError('Sidebar root must be an array');
+			if (!Array.isArray(parsed)) throw new TypeError(t('client.common.invalidSidebar'));
 			sidebarItems.value = parsed as SidebarItem[];
 			error.value = '';
 		} catch (reason) {
 			sidebarItems.value = null;
-			error.value = reason instanceof Error ? reason.message : 'Invalid sidebar resource';
+			error.value = reason instanceof Error
+				? reason.message
+				: t('client.common.invalidSidebar');
 		}
 	} else {
 		error.value = '';
@@ -333,7 +335,9 @@ const load = async () => {
 		}
 	} catch (reason) {
 		if (current === generation && !activeController?.signal.aborted) {
-			error.value = reason instanceof Error ? reason.message : 'Resource request failed';
+			error.value = reason instanceof Error
+				? reason.message
+				: t('client.common.resourceRequestFailed');
 		}
 	} finally {
 		// 保持 signal 有效：缓存读取可能早于静默刷新完成。
@@ -371,12 +375,12 @@ onBeforeUnmount(() => {
 @include block(docs-resource-slot) {
 	@include element(loading) {
 		padding: 16px;
-		color: #6e7781;
+		color: varfix(foreground-color-mute);
 	}
 
 	@include element(error) {
 		padding: 16px;
-		color: #cf222e;
+		color: var(--vc-color-error);
 	}
 }
 </style>

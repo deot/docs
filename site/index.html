@@ -21,7 +21,8 @@
 			{ label: '@deot/docs-dever', value: 'dever' },
 			{ label: '@deot/docs-locale', value: 'locale' },
 			{ label: '@deot/docs-markdown', value: 'markdown' },
-			{ label: '@deot/docs-playground', value: 'playground' }
+			{ label: '@deot/docs-playground', value: 'playground' },
+			{ label: '@deot/docs-theme', value: 'theme' }
 		];
 		const packageReadmes = Object.fromEntries(packages.map(item => [
 			item.value,
@@ -52,6 +53,7 @@
 		window.$docs = {
 			base: new URL(basePath, location.origin).href,
 			namespace: '@deot/docs-site',
+			theme: { default: 'system' },
 			locales,
 			routes: Object.fromEntries([
 				['/', '/index'],

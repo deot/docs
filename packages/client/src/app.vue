@@ -56,6 +56,7 @@ watch(
 );
 </script>
 <style lang="scss">
+@use '@deot/docs-theme/variables';
 @use './styles/bem' as *;
 
 html,
@@ -73,7 +74,22 @@ body,
 body {
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
 	font-size: 14px;
-	color: #515a6e;
+	color: varfix(foreground-color-light);
+	background: varfix(background-color);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+	z-index: 1;
+}
+
+::view-transition-new(root) {
+	z-index: 2147483646;
 }
 
 a {
@@ -123,7 +139,7 @@ a {
 		height: 1px;
 		pointer-events: none;
 		content: "";
-		box-shadow: 0 2px 8px #f0f1f2;
+		box-shadow: 0 2px 8px varfix(border-color-light);
 	}
 
 	&:not(:has(.docs-sidebar)) {
@@ -162,8 +178,8 @@ a {
 		width: 100%;
 		min-height: 0;
 		overflow: hidden;
-		background: #fff;
-		border-right: 1px solid #ededed;
+		background: varfix(background-color);
+		border-right: 1px solid varfix(border-color);
 	}
 
 	@include element(sidebar-scroller) {

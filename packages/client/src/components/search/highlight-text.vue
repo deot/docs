@@ -20,9 +20,11 @@ const parts = computed(() => {
 });
 </script>
 <style lang="scss">
+@use '../../styles/bem' as *;
+
 .docs-search-highlight {
 	padding: 0;
-	color: #2d8cf0;
+	color: varfix(link-color);
 	background: transparent;
 }
 </style>

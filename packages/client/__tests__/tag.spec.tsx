@@ -8,7 +8,7 @@ describe('Tag', () => {
 		const wrapper = mount(() => (<Tag type="pending">pending</Tag>));
 
 		expect(wrapper.attributes('data-type')).toBe('pending');
-		expect(wrapper.attributes('style')).toContain('background-color: rgb(250, 237, 219)');
+		expect(wrapper.attributes('style')).toContain('var(--vc-color-warning)');
 		expect(wrapper.text()).toBe('pending');
 		expect(wrapper.find('i, svg').exists()).toBe(false);
 	});
