@@ -4,6 +4,7 @@ import * as http from 'node:http';
 import * as path from 'node:path';
 import { Shell } from '@deot/dev-shared';
 import type { DeverOptions } from './index';
+import { resolveDocsWorkspace } from './workspace';
 
 export interface PreviewRequestHandlerOptions {
 	workspace: string;
@@ -256,14 +257,14 @@ export const createPreviewRequestHandler = (options: PreviewRequestHandlerOption
  */
 export const startPreviewServer = async (options: DeverOptions) => {
 	const cwd = process.cwd();
-	const workspace = path.resolve(cwd, String(options.workspace || 'site'));
-	if (!fs.existsSync(path.join(workspace, 'index.html'))) {
-		throw new Error(`Cannot preview workspace without index.html: ${workspace}`);
-	}
+	const workspace = resolveDocsWorkspace(cwd, options.workspace);
 	// 源码仓库必须预览当前待审代码，而不是 CDN 上的任意软件包版本。
 	// 复用仓库统一 DDC build，仅在相关源码更新时重新构建。
 	const clientDist = await ensureLocalClientDist(cwd);
-	const server = http.createServer(createPreviewRequestHandler({ workspace, clientDist }));
+	const server = http.createServer(createPreviewRequestHandler({
+		workspace: workspace.root,
+		clientDist
+	}));
 	const port = Number(options.port ?? 4173);
 	const host = String(options.host || '0.0.0.0');
 	if (!Number.isInteger(port) || port < 0 || port > 65535) {

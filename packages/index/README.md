@@ -38,6 +38,7 @@ await Dever.run({
 | `Dever.run(options)` | 运行 development、build 或 preview 模式。 |
 | `Dever.createDeverConfig(options)` | 根据当前工作目录和选项生成 Vite 配置。 |
 | `Dever.getDeverMode(options)` | 返回 `development`、`build` 或 `preview`。 |
+| `Dever.resolveDocsWorkspace(cwd?, workspace?)` | 解析项目内的根目录或子目录文档 workspace。 |
 | `Dever.DeverOptions` | `@deot/docs-dever` 提供的运行选项类型。 |
 | `Dever.DeverMode` | 三种运行模式的联合类型。 |
 | `Locale` | `@deot/docs-locale` 的语言包、Translator 与 Vue Provider API。 |

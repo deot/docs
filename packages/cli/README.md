@@ -10,7 +10,9 @@ pnpm add -D @deot/docs-cli
 
 ## 快速开始
 
-项目默认使用 `site` 作为 workspace，其中必须包含 `index.html`：
+workspace 必须位于当前项目内，并在自身根部包含 `index.html`。未传参数时
+优先使用 `site/index.html`，不存在时回退到项目根 `index.html`；入口文件本身
+不能是符号链接：
 
 ```bash
 pnpm exec doc dev
@@ -20,6 +22,12 @@ pnpm exec doc dev
 
 ```bash
 pnpm exec doc dev --workspace docs
+```
+
+也可以将项目根作为完整 workspace：
+
+```bash
+pnpm exec doc dev --workspace .
 ```
 
 ## 命令
@@ -52,7 +60,7 @@ pnpm exec doc preview --workspace site
 
 | 选项 | 适用命令 | 说明 |
 | --- | --- | --- |
-| `--workspace <path>` | 全部 | workspace 路径，默认 `site`。 |
+| `--workspace <path>` | 全部 | 项目内的 workspace；未指定时依次探测 `site` 和项目根。 |
 | `--out-dir <path>` | `build` | 输出目录，默认 `dist`。 |
 | `--host <host>` | `preview` | 监听地址，默认 `0.0.0.0`。 |
 | `--port <port>` | `preview` | 监听端口，默认 `4173`。 |

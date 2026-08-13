@@ -12,9 +12,106 @@ import {
 	isNotModified
 } from '../src/plugins';
 import { createPreviewRequestHandler } from '../src/preview';
+import { resolveDocsWorkspace } from '../src/workspace';
 
 // @vitest-environment node
 describe('dever configuration', () => {
+	it('resolves default, root and explicit project workspaces safely', () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-workspace-'));
+		const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-workspace-outside-'));
+		try {
+			fs.mkdirSync(path.join(root, 'site'), { recursive: true });
+			fs.mkdirSync(path.join(root, 'docs/nested'), { recursive: true });
+			fs.mkdirSync(path.join(root, 'docs #v1'), { recursive: true });
+			fs.mkdirSync(path.join(root, '..docs'), { recursive: true });
+			fs.writeFileSync(path.join(root, 'index.html'), '<div>root</div>');
+			fs.writeFileSync(path.join(root, 'site/index.html'), '<div>site</div>');
+			fs.writeFileSync(path.join(root, 'docs/nested/index.html'), '<div>nested</div>');
+			fs.writeFileSync(path.join(root, 'docs #v1/index.html'), '<div>encoded</div>');
+			fs.writeFileSync(path.join(root, '..docs/index.html'), '<div>dots</div>');
+
+			const detected = resolveDocsWorkspace(root);
+			expect(detected).toMatchObject({ relative: 'site', urlBase: '/site/' });
+			expect(detected.entry).toBe(fs.realpathSync(path.join(root, 'site/index.html')));
+			const explicitRoot = resolveDocsWorkspace(root, '.');
+			expect(explicitRoot).toMatchObject({ relative: '', urlBase: '/' });
+			expect(explicitRoot.entry).toBe(fs.realpathSync(path.join(root, 'index.html')));
+			expect(resolveDocsWorkspace(root, './docs//nested/')).toMatchObject({
+				relative: 'docs/nested',
+				urlBase: '/docs/nested/'
+			});
+			expect(resolveDocsWorkspace(root, 'docs #v1')).toMatchObject({
+				relative: 'docs #v1',
+				urlBase: '/docs%20%23v1/'
+			});
+			expect(resolveDocsWorkspace(root, '..docs')).toMatchObject({
+				relative: '..docs',
+				urlBase: '/..docs/'
+			});
+			expect(() => resolveDocsWorkspace(root, 'docs/../site'))
+				.toThrow('must not contain parent segments');
+
+			fs.rmSync(path.join(root, 'site/index.html'));
+			expect(resolveDocsWorkspace(root).entry).toBe(fs.realpathSync(path.join(root, 'index.html')));
+			expect(() => resolveDocsWorkspace(root, 'site'))
+				.toThrow('Cannot find docs workspace entry');
+			expect(() => resolveDocsWorkspace(root, '../outside'))
+				.toThrow('must not contain parent segments');
+			fs.symlinkSync(outside, path.join(root, 'linked-docs'), 'dir');
+			expect(() => resolveDocsWorkspace(root, 'linked-docs'))
+				.toThrow('symlink escapes the project');
+		} finally {
+			fs.rmSync(root, { recursive: true, force: true });
+			fs.rmSync(outside, { recursive: true, force: true });
+		}
+	});
+
+	it('rejects an index symlink before Vite changes the output filename', () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-workspace-entry-'));
+		try {
+			fs.writeFileSync(path.join(root, 'template.html'), '<div>template</div>');
+			fs.symlinkSync('template.html', path.join(root, 'index.html'));
+			expect(() => resolveDocsWorkspace(root, '.'))
+				.toThrow('Docs entry must not be a symbolic link');
+		} finally {
+			fs.rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it('lists both default entry candidates when no workspace can be detected', () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-workspace-empty-'));
+		try {
+			const realRoot = fs.realpathSync(root);
+			expect(() => resolveDocsWorkspace(root)).toThrow(
+				`Checked: ${path.join(realRoot, 'site/index.html')} ${path.join(realRoot, 'index.html')}`
+			);
+		} finally {
+			fs.rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it('uses the same root workspace for development, preview and build configs', () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-root-config-'));
+		fs.writeFileSync(path.join(root, 'index.html'), '<div />');
+		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
+		try {
+			const development = Dever.createDeverConfig({ workspace: '.' } as any);
+			expect(development.root).toBe(fs.realpathSync(root));
+			const preview = Dever.createDeverConfig({ workspace: '.', preview: true } as any);
+			expect(preview.root).toBe(fs.realpathSync(root));
+			const build = Dever.createDeverConfig({
+				workspace: '.',
+				build: true,
+				outDir: 'dist'
+			} as any);
+			expect(build.root).toBe(fs.realpathSync(root));
+			expect(build.build?.rollupOptions?.input).toBe(fs.realpathSync(path.join(root, 'index.html')));
+		} finally {
+			restoreCwd.mockRestore();
+			fs.rmSync(root, { recursive: true, force: true });
+		}
+	});
+
 	it('maps package readmes to local dev resources and remote preview resources', () => {
 		const html = fs.readFileSync(path.resolve('site/index.html'), 'utf8');
 		const configScript = html.match(/<script>([\s\S]*?)<\/script>/u)?.[1];
@@ -156,8 +253,11 @@ describe('dever configuration', () => {
 		const workspace = path.join(root, 'site');
 		const outDir = path.join(workspace, 'output/dist');
 		fs.mkdirSync(path.join(workspace, 'zh-CN'), { recursive: true });
+		fs.mkdirSync(path.join(workspace, 'zh-CN/.assets'), { recursive: true });
 		fs.mkdirSync(outDir, { recursive: true });
+		fs.writeFileSync(path.join(workspace, 'index.html'), '<div>docs</div>');
 		fs.writeFileSync(path.join(workspace, 'zh-CN/index.md'), '# Docs');
+		fs.writeFileSync(path.join(workspace, 'zh-CN/.assets/theme.css'), ':root {}');
 		fs.writeFileSync(path.join(workspace, 'output/source.txt'), 'skip output tree');
 		fs.writeFileSync(path.join(outDir, 'index.html'), '<div>built</div>');
 		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
@@ -172,6 +272,8 @@ describe('dever configuration', () => {
 			));
 			copyPlugin.writeBundle();
 			expect(fs.readFileSync(path.join(outDir, 'zh-CN/index.md'), 'utf8')).toBe('# Docs');
+			expect(fs.readFileSync(path.join(outDir, 'zh-CN/.assets/theme.css'), 'utf8'))
+				.toBe(':root {}');
 			expect(fs.readFileSync(path.join(outDir, 'output/source.txt'), 'utf8'))
 				.toBe('skip output tree');
 			expect(fs.existsSync(path.join(outDir, 'output/dist'))).toBe(false);
@@ -197,6 +299,62 @@ describe('dever configuration', () => {
 		} finally {
 			restoreCwd.mockRestore();
 			fs.rmSync(root, { recursive: true, force: true });
+		}
+	});
+
+	it('copies root workspace resources without build and dependency directories', () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-root-build-copy-'));
+		const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-root-build-outside-'));
+		const outDir = path.join(root, 'dist');
+		for (const directory of [
+			'zh-CN',
+			'node_modules/pkg',
+			'coverage',
+			'out',
+			'.cache',
+			'.well-known'
+		]) {
+			fs.mkdirSync(path.join(root, directory), { recursive: true });
+		}
+		fs.mkdirSync(outDir, { recursive: true });
+		fs.writeFileSync(path.join(root, 'index.html'), '<div>root docs</div>');
+		fs.writeFileSync(path.join(root, 'zh-CN/index.md'), '# Root Docs');
+		fs.writeFileSync(path.join(root, 'node_modules/pkg/index.js'), 'ignored');
+		fs.writeFileSync(path.join(root, 'coverage/index.json'), '{}');
+		fs.writeFileSync(path.join(root, 'out/index.html'), 'ignored');
+		fs.writeFileSync(path.join(root, '.cache/value'), 'ignored');
+		fs.writeFileSync(path.join(root, '.well-known/value'), 'ignored');
+		fs.writeFileSync(path.join(root, '.nojekyll'), '');
+		fs.writeFileSync(path.join(outDir, 'index.html'), '<div>built</div>');
+		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
+		try {
+			const config = createDocsPlugins({
+				workspace: '.',
+				outDir: 'dist',
+				build: true
+			}) as any;
+			const copyPlugin = config.plugins.find((plugin: any) => (
+				plugin.name === 'docs-static-resources'
+			));
+			copyPlugin.writeBundle();
+			expect(fs.readFileSync(path.join(outDir, 'zh-CN/index.md'), 'utf8'))
+				.toBe('# Root Docs');
+			expect(fs.existsSync(path.join(outDir, 'node_modules'))).toBe(false);
+			expect(fs.existsSync(path.join(outDir, 'coverage'))).toBe(false);
+			expect(fs.existsSync(path.join(outDir, 'out'))).toBe(false);
+			expect(fs.existsSync(path.join(outDir, '.cache'))).toBe(false);
+			expect(fs.existsSync(path.join(outDir, '.well-known'))).toBe(false);
+			expect(fs.existsSync(path.join(outDir, '.nojekyll'))).toBe(true);
+			expect(fs.existsSync(path.join(outDir, 'dist'))).toBe(false);
+			fs.writeFileSync(path.join(outside, 'secret.md'), '# Outside');
+			fs.symlinkSync(path.join(outside, 'secret.md'), path.join(root, 'escaped.md'));
+			expect(() => copyPlugin.writeBundle()).toThrow(
+				'Static resource symlink escapes the workspace'
+			);
+		} finally {
+			restoreCwd.mockRestore();
+			fs.rmSync(root, { recursive: true, force: true });
+			fs.rmSync(outside, { recursive: true, force: true });
 		}
 	});
 
@@ -278,17 +436,29 @@ describe('dever configuration', () => {
 	});
 
 	it('injects the development runtime before application scripts', () => {
-		const plugin = createRuntimePlugin({ workspace: 'docs' });
+		const plugin = createRuntimePlugin({ workspace: 'site' });
 		const transform = plugin.transformIndexHtml as any;
 		const tags = transform.handler();
 		expect(tags[0]).toMatchObject({ tag: 'script', injectTo: 'head-prepend' });
 		expect(tags[0].children).toContain('window.__DOCS_RUNTIME__');
-		expect(tags[0].children).toContain('"workspace":"/docs/"');
+		expect(tags[0].children).toContain('"workspace":"/site/"');
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-root-runtime-'));
+		fs.writeFileSync(path.join(root, 'index.html'), '<div />');
+		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
+		try {
+			const rootTags = (createRuntimePlugin({ workspace: '.' }).transformIndexHtml as any)
+				.handler();
+			expect(rootTags[0].children).toContain('"workspace":"/"');
+		} finally {
+			restoreCwd.mockRestore();
+			fs.rmSync(root, { recursive: true, force: true });
+		}
 		expect(tags).toHaveLength(1);
 		expect(createRuntimePlugin({ build: true }).transformIndexHtml).toBeUndefined();
 		expect(createRuntimePlugin({ preview: true }).transformIndexHtml).toBeUndefined();
 
 		const previewWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-plugin-preview-'));
+		fs.writeFileSync(path.join(previewWorkspace, 'index.html'), '<div />');
 		fs.writeFileSync(path.join(previewWorkspace, 'index.vue'), '<template><div /></template>');
 		const previewPlugins = createDocsPlugins({ workspace: 'site', preview: true }) as any;
 		const workspacePlugin = previewPlugins.plugins.find((item: any) => (
@@ -479,6 +649,99 @@ describe('dever configuration', () => {
 			headers: { accept: 'text/plain' }
 		}, createResponse(), viteNext);
 		expect(viteNext).toHaveBeenCalledOnce();
+	});
+
+	it('serves root workspace resources, history and SSE with canonical paths', async () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-root-dev-'));
+		fs.mkdirSync(path.join(root, 'zh-CN'), { recursive: true });
+		fs.mkdirSync(path.join(root, 'packages/client'), { recursive: true });
+		fs.writeFileSync(path.join(root, 'index.html'), '<div id="root-docs"></div>');
+		fs.writeFileSync(path.join(root, 'README.md'), '# Root');
+		fs.writeFileSync(path.join(root, 'zh-CN/index.md'), '# 首页');
+		fs.writeFileSync(path.join(root, 'packages/client/README.md'), '# Client');
+		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
+		try {
+			const middlewareEntries: Array<[string | Function, Function?]> = [];
+			const watcherHandlers = new Map<string, (filename: string) => void>();
+			const server = {
+				config: { root },
+				middlewares: {
+					use: vi.fn((pathOrHandler: string | Function, handler?: Function) => {
+						middlewareEntries.push([pathOrHandler, handler]);
+					})
+				},
+				watcher: {
+					add: vi.fn(),
+					on: vi.fn((event: string, handler: (filename: string) => void) => {
+						watcherHandlers.set(event, handler);
+					})
+				},
+				httpServer: { once: vi.fn() },
+				transformIndexHtml: vi.fn(async (_url: string, html: string) => html)
+			};
+			const config = createDocsPlugins({ workspace: '.' }) as any;
+			const workspacePlugin = config.plugins.find((plugin: any) => (
+				plugin.name === 'docs-workspace-resources'
+			));
+			workspacePlugin.configureServer(server);
+			const rawMiddleware = middlewareEntries
+				.find(([route]) => typeof route === 'function')![0] as Function;
+			const createResponse = () => ({
+				statusCode: 200,
+				setHeader: vi.fn(),
+				end: vi.fn(),
+				write: vi.fn()
+			});
+			const markdown = createResponse();
+			rawMiddleware({
+				url: '/zh-CN/index.md',
+				headers: { accept: 'text/plain' }
+			}, markdown, vi.fn());
+			expect(markdown.end).toHaveBeenCalledWith(expect.any(Buffer));
+			expect(markdown.setHeader).toHaveBeenCalledWith(
+				'Content-Type',
+				'text/markdown; charset=utf-8'
+			);
+			const blocked = createResponse();
+			rawMiddleware({
+				url: '/__docs/private.md',
+				headers: { accept: 'text/plain' }
+			}, blocked, vi.fn());
+			expect(blocked.statusCode).toBe(404);
+
+			const eventsMiddleware = middlewareEntries
+				.find(([route]) => route === '/__docs/events')![1]!;
+			const response = createResponse();
+			eventsMiddleware({ on: vi.fn() }, response);
+			watcherHandlers.get('change')!(path.join(root, 'zh-CN/index.md'));
+			expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
+				'"lang":"zh-CN","source":"./index.md"'
+			));
+			watcherHandlers.get('change')!(path.join(root, 'packages/client/README.md'));
+			expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
+				'"lang":"","source":"packages/client/README.md"'
+			));
+			watcherHandlers.get('change')!(path.join(root, 'index.html'));
+			expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining('"type":"reload"'));
+
+			let historyMiddleware: Function | undefined;
+			const historyPlugin = config.plugins.find((plugin: any) => (
+				plugin.name === 'docs-history-fallback'
+			));
+			historyPlugin.configureServer({
+				...server,
+				middlewares: { use: vi.fn((handler: Function) => { historyMiddleware = handler; }) }
+			});
+			const historyResponse = createResponse();
+			await historyMiddleware!({
+				url: '/zh-CN/guide',
+				headers: { accept: 'text/html' }
+			}, historyResponse, vi.fn());
+			expect(historyResponse.end).toHaveBeenCalledWith('<div id="root-docs"></div>');
+		} finally {
+			restoreCwd.mockRestore();
+			fs.rmSync(root, { recursive: true, force: true });
+		}
 	});
 
 	it('streams workspace changes over SSE and releases disconnected clients', () => {

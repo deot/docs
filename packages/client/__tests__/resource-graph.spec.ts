@@ -58,6 +58,17 @@ describe('resource graph helpers', () => {
 		)).toBe('https://cdn.example.com/button.css');
 	});
 
+	it('maps root workspace dependencies back to logical sources', () => {
+		const config = createConfig({
+			runtime: { mode: 'development', workspace: '/' }
+		});
+		expect(toLogicalResourceSource(
+			config,
+			'zh-CN',
+			`${location.origin}/zh-CN/components/button.css?raw`
+		)).toBe('./components/button.css?raw');
+	});
+
 	it('classifies and resolves supported relative dependency URLs', () => {
 		expect(getResourceType('./demo.vue')).toBe('sfc');
 		expect(getResourceType('./logic.ts?raw')).toBe('module');

@@ -13,6 +13,17 @@ const docsBaseCache = new WeakMap<DocsConfig, string>();
 const deploymentBaseCache = new WeakMap<DocsConfig, string>();
 
 /**
+ * 将 Runtime workspace 规范为绝对目录前缀。根目录必须保持单个 `/`，
+ * 否则 `//{lang}` 会被浏览器解释为以语言名为主机的协议相对 URL。
+ * @param value Runtime 注入的 workspace。
+ * @returns 以单个斜杠开头和结尾的目录前缀。
+ */
+export const normalizeWorkspaceBase = (value = '/site/') => {
+	const pathname = trimSlashes(value);
+	return pathname ? `/${pathname}/` : '/';
+};
+
+/**
  * 在 Vue Router 修改浏览器地址前推导部署目录。
  * @param config 用于识别语言路径段的文档配置。
  * @returns 稳定的部署目录绝对地址。
@@ -132,7 +143,7 @@ export const resolveResource = async (
 	const pathname = normalizeLogicalPath(source);
 	const language = normalizeLanguage(lang);
 	if (runtime.mode === 'development') {
-		const workspace = `/${trimSlashes(runtime.workspace || '/site/')}/`;
+		const workspace = normalizeWorkspaceBase(runtime.workspace);
 		return `${workspace}${language}/${pathname}`;
 	}
 	return new URL(`${language}/${pathname}`, getDocsBase(config)).href;

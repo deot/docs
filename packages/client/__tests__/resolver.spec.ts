@@ -33,6 +33,28 @@ describe('resource resolver', () => {
 		})).toBe('/site/zh-CN/installation.md');
 	});
 
+	it('keeps root development workspace URLs origin-relative', async () => {
+		const rootConfig = createConfig({
+			runtime: { mode: 'development', workspace: '/' }
+		});
+		expect(await resolveResource(rootConfig, {
+			lang: 'zh-CN',
+			type: 'markdown',
+			source: './index.md'
+		})).toBe('/zh-CN/index.md');
+	});
+
+	it('preserves an encoded development workspace prefix', async () => {
+		const encodedConfig = createConfig({
+			runtime: { mode: 'development', workspace: '/docs%20%23v1/' }
+		});
+		expect(await resolveResource(encodedConfig, {
+			lang: 'zh-CN',
+			type: 'markdown',
+			source: './index.md'
+		})).toBe('/docs%20%23v1/zh-CN/index.md');
+	});
+
 	it('resolves production resources against base and relative imports against importer', async () => {
 		const config = createConfig({
 			base: 'https://docs.example.com/assets/',

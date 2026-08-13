@@ -5,6 +5,8 @@ import * as path from 'node:path';
 import { createHash } from 'node:crypto';
 import { defineConfig } from 'vite';
 import type { Plugin, ViteDevServer } from 'vite';
+import { resolveDocsWorkspace } from '../workspace';
+import type { ResolvedDocsWorkspace } from '../workspace';
 
 interface DocsPluginOptions {
 	workspace?: string;
@@ -95,14 +97,20 @@ export const isNotModified = (
 	return Boolean(modifiedSince && Date.parse(modifiedSince) >= Date.parse(lastModified));
 };
 
-export const createRuntimePlugin = (options: DocsPluginOptions): Plugin => ({
+export const createRuntimePlugin = (
+	options: DocsPluginOptions,
+	resolvedWorkspace?: ResolvedDocsWorkspace
+): Plugin => ({
 	name: 'docs-runtime',
 	transformIndexHtml: options.build || options.preview
 		? undefined
 		: {
 				order: 'pre',
 				handler() {
-					const workspace = `/${(options.workspace || 'site').replace(/^\/+|\/+$/g, '')}/`;
+					const workspace = (resolvedWorkspace || resolveDocsWorkspace(
+						process.cwd(),
+						options.workspace
+					)).urlBase;
 					const localClientEntry = path.resolve(
 						process.cwd(),
 						'packages/client/src/index.ts'
@@ -135,21 +143,42 @@ export const createRuntimePlugin = (options: DocsPluginOptions): Plugin => ({
 });
 
 // 在 Vite 转换模块请求之前返回源码形式的 SFC 依赖。
-const configureWorkspaceServer = (options: DocsPluginOptions) => (server: ViteDevServer) => {
+const configureWorkspaceServer = (
+	options: DocsPluginOptions,
+	resolvedWorkspace?: ResolvedDocsWorkspace
+) => (server: ViteDevServer) => {
 	const root = server.config.root;
-	const workspaceName = (options.workspace || 'site').replace(/^\/+|\/+$/g, '');
-	const workspace = options.preview ? root : path.resolve(root, workspaceName);
+	const resolved = resolvedWorkspace || resolveDocsWorkspace(
+		options.preview ? root : process.cwd(),
+		options.preview ? '.' : options.workspace
+	);
+	const workspace = resolved.root;
 	const realWorkspace = fs.existsSync(workspace) ? fs.realpathSync(workspace) : workspace;
-	const packages = path.resolve(root, 'packages');
-	const realPackages = fs.existsSync(packages) ? fs.realpathSync(packages) : packages;
-	const rootReadme = path.resolve(root, 'README.md');
-	const urlPrefix = options.preview ? '/' : `/${workspaceName}/`;
+	const packagesCandidate = path.resolve(resolved.projectRoot, 'packages');
+	const realPackagesCandidate = fs.existsSync(packagesCandidate)
+		? fs.realpathSync(packagesCandidate)
+		: packagesCandidate;
+	// 仓库级 README 映射也必须留在项目边界内，不能借 packages 符号链接读外部文件。
+	const packages = isInside(resolved.projectRoot, realPackagesCandidate)
+		? packagesCandidate
+		: path.resolve(resolved.projectRoot, '__docs_inaccessible_packages__');
+	const realPackages = packages === packagesCandidate
+		? realPackagesCandidate
+		: packages;
+	const rootReadme = path.resolve(resolved.projectRoot, 'README.md');
+	const urlPrefix = options.preview ? '/' : resolved.urlBase;
 
 	server.middlewares.use((req, res, next) => {
 		let decoded: string | null;
 		let resourceRoot = workspace;
 		let realResourceRoot = realWorkspace;
 		try {
+			const rawPathname = getRawPathname(req.url || '/');
+			if (rawPathname.startsWith('/__docs/') && rawPathname !== '/__docs/events') {
+				res.statusCode = 404;
+				res.end('Not Found');
+				return;
+			}
 			decoded = decodeWorkspacePath(req.url || '/', urlPrefix);
 			if (decoded === null && !options.preview && getRawPathname(req.url || '/') === '/README.md') {
 				decoded = 'README.md';
@@ -231,27 +260,39 @@ const configureWorkspaceServer = (options: DocsPluginOptions) => (server: ViteDe
 		res.end(content);
 	});
 
-	if (!options.preview) configureEvents(server, workspace, packages, rootReadme);
+	if (!options.preview) configureEvents(
+		server,
+		workspace,
+		resolved.entry,
+		packages,
+		rootReadme
+	);
 };
 
-const createWorkspacePlugin = (options: DocsPluginOptions): Plugin => ({
+const createWorkspacePlugin = (
+	options: DocsPluginOptions,
+	resolvedWorkspace?: ResolvedDocsWorkspace
+): Plugin => ({
 	name: 'docs-workspace-resources',
 	configureServer: options.build
 		? undefined
-		: configureWorkspaceServer(options)
+		: configureWorkspaceServer(options, resolvedWorkspace)
 });
 
 // 广播 workspace 的逻辑 identity；重连由 EventSource 自行处理。
 const configureEvents = (
 	server: ViteDevServer,
 	workspace: string,
+	entry: string,
 	packages: string,
 	rootReadme: string
 ) => {
 	const clients = new Set<import('node:http').ServerResponse>();
+	const realEntry = fs.realpathSync(entry);
 	// packages 不一定进入 Vite 模块图，必须显式加入 watcher 才能广播 README 更新。
-	server.watcher.add(packages);
-	server.watcher.add(rootReadme);
+	server.watcher.add(workspace);
+	if (!isInside(workspace, packages)) server.watcher.add(packages);
+	if (!isInside(workspace, rootReadme)) server.watcher.add(rootReadme);
 	server.middlewares.use('/__docs/events', (req, res) => {
 		res.statusCode = 200;
 		res.setHeader('Content-Type', 'text/event-stream');
@@ -263,7 +304,17 @@ const configureEvents = (
 	});
 
 	const send = (type: 'add' | 'change' | 'unlink', filename: string) => {
-		const absolute = path.resolve(filename);
+		const candidate = path.resolve(filename);
+		const absolute = fs.existsSync(candidate)
+			? fs.realpathSync(candidate)
+			: fs.existsSync(path.dirname(candidate))
+				? path.join(fs.realpathSync(path.dirname(candidate)), path.basename(candidate))
+				: candidate;
+		if (absolute === entry || absolute === realEntry) {
+			const payload = JSON.stringify({ type: 'reload', timestamp: Date.now() });
+			clients.forEach(client => client.write(`data: ${payload}\n\n`));
+			return;
+		}
 		if (absolute === rootReadme) {
 			const payload = JSON.stringify({
 				type,
@@ -280,7 +331,7 @@ const configureEvents = (
 		const inPackages = isInside(packages, absolute);
 		if (!inWorkspace && !inPackages) return;
 		const relative = path.relative(
-			inWorkspace ? workspace : packages,
+			inPackages ? packages : workspace,
 			absolute
 		).split(path.sep).join('/');
 		if (inPackages) {
@@ -293,11 +344,6 @@ const configureEvents = (
 				resourceType: 'markdown',
 				timestamp: Date.now()
 			});
-			clients.forEach(client => client.write(`data: ${payload}\n\n`));
-			return;
-		}
-		if (relative === 'index.html') {
-			const payload = JSON.stringify({ type: 'reload', timestamp: Date.now() });
 			clients.forEach(client => client.write(`data: ${payload}\n\n`));
 			return;
 		}
@@ -321,7 +367,10 @@ const configureEvents = (
 	});
 };
 
-const createHistoryPlugin = (options: DocsPluginOptions): Plugin => ({
+const createHistoryPlugin = (
+	options: DocsPluginOptions,
+	resolvedWorkspace?: ResolvedDocsWorkspace
+): Plugin => ({
 	name: 'docs-history-fallback',
 	configureServer(server) {
 		const root = server.config.root;
@@ -345,9 +394,11 @@ const createHistoryPlugin = (options: DocsPluginOptions): Plugin => ({
 			// .md/.vue 仍返回真实 404，同时路由 slug 可以安全包含点号。
 			const accept = String(req.headers?.accept || 'text/html');
 			if (!accept.includes('text/html')) return next();
-			const indexFile = options.preview
-				? path.resolve(root, 'index.html')
-				: path.resolve(root, options.workspace || 'site', 'index.html');
+			const indexFile = resolvedWorkspace?.entry
+				|| resolveDocsWorkspace(
+					options.preview ? root : process.cwd(),
+					options.preview ? '.' : options.workspace
+				).entry;
 			if (!fs.existsSync(indexFile)) {
 				res.statusCode = 404;
 				res.end('Not Found');
@@ -362,44 +413,79 @@ const createHistoryPlugin = (options: DocsPluginOptions): Plugin => ({
 	}
 });
 
-const createStaticCopyPlugin = (options: DocsPluginOptions): Plugin => ({
+const ROOT_WORKSPACE_IGNORES = new Set([
+	'build',
+	'coverage',
+	'dist',
+	'node_modules',
+	'out',
+	'temp',
+	'tmp'
+]);
+
+const createStaticCopyPlugin = (
+	options: DocsPluginOptions,
+	resolvedWorkspace?: ResolvedDocsWorkspace
+): Plugin => ({
 	name: 'docs-static-resources',
 	writeBundle() {
 		if (!options.build) return;
-		const workspace = path.resolve(process.cwd(), options.workspace || 'site');
+		const resolved = resolvedWorkspace || resolveDocsWorkspace(process.cwd(), options.workspace);
+		const workspace = resolved.root;
 		const outDir = path.resolve(process.cwd(), options.outDir || 'dist');
 		const realOutDir = fs.realpathSync(outDir);
+		const realWorkspace = fs.realpathSync(workspace);
+		const activeDirectories = new Set<string>();
 		const isBuildOutputSource = (source: string) => {
 			const realSource = fs.existsSync(source) ? fs.realpathSync(source) : path.resolve(source);
 			return isInside(realOutDir, realSource);
 		};
 		const copyResource = (source: string, target: string) => {
 			if (isBuildOutputSource(source)) return;
-			const stat = fs.lstatSync(source);
+			const name = path.basename(source);
+			const realSource = fs.realpathSync(source);
+			if (!isInside(realWorkspace, realSource)) {
+				throw new RangeError(`Static resource symlink escapes the workspace: ${source}`);
+			}
+			const stat = fs.statSync(realSource);
+			if (
+				!resolved.relative
+				&& stat.isDirectory()
+				&& (name.startsWith('.') || ROOT_WORKSPACE_IGNORES.has(name))
+			) return;
 			if (!stat.isDirectory()) {
-				fs.cpSync(source, target, { force: true });
+				fs.mkdirSync(path.dirname(target), { recursive: true });
+				fs.copyFileSync(realSource, target);
 				return;
 			}
+			if (activeDirectories.has(realSource)) return;
+			activeDirectories.add(realSource);
 			fs.mkdirSync(target, { recursive: true });
 			// 当 outDir 位于 workspace 内时，node:fs 会在 filter 执行前拒绝
 			// parent -> child 的 cp，因此这里自行递归复制目录。
-			fs.readdirSync(source).forEach((name) => {
-				copyResource(path.join(source, name), path.join(target, name));
+			fs.readdirSync(realSource).forEach((childName) => {
+				copyResource(path.join(realSource, childName), path.join(target, childName));
 			});
+			activeDirectories.delete(realSource);
 		};
 		fs.readdirSync(workspace, { withFileTypes: true }).forEach((entry) => {
-			if (entry.name === 'index.html' || entry.name.startsWith('.')) return;
-			copyResource(path.join(workspace, entry.name), path.join(outDir, entry.name));
+			const entryName = entry.name;
+			if (entryName === 'index.html') return;
+			if (resolved.relative && entryName.startsWith('.')) return;
+			copyResource(path.join(workspace, entryName), path.join(outDir, entryName));
 		});
 	}
 });
 
-export default (options: DocsPluginOptions = {}) => defineConfig({
+export default (
+	options: DocsPluginOptions = {},
+	resolvedWorkspace?: ResolvedDocsWorkspace
+) => defineConfig({
 	plugins: [
-		createRuntimePlugin(options),
-		createWorkspacePlugin(options),
-		createHistoryPlugin(options),
-		createStaticCopyPlugin(options),
+		createRuntimePlugin(options, resolvedWorkspace),
+		createWorkspacePlugin(options, resolvedWorkspace),
+		createHistoryPlugin(options, resolvedWorkspace),
+		createStaticCopyPlugin(options, resolvedWorkspace),
 		vue(),
 		vueJsx()
 	]

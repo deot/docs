@@ -7,6 +7,10 @@ import type { InlineConfig } from 'vite';
 import { build as createBuild, createServer, mergeConfig } from 'vite';
 import createPlugins from './plugins';
 import { startPreviewServer } from './preview';
+import { resolveDocsWorkspace } from './workspace';
+
+export { resolveDocsWorkspace } from './workspace';
+export type { ResolvedDocsWorkspace } from './workspace';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -65,11 +69,11 @@ export const getDeverMode = (options: DeverOptions): DeverMode => {
 // 创建统一 Vite 配置，同时隔离开发、一次性构建与静态预览模式。
 export const createDeverConfig = (options: DeverOptions): InlineConfig => {
 	const cwd = process.cwd();
-	const workspace = String(options.workspace || 'site');
+	const workspace = resolveDocsWorkspace(cwd, options.workspace);
 	const mode = getDeverMode(options);
 	const build = mode === 'build';
 	const preview = mode === 'preview';
-	const workspaceRoot = path.resolve(cwd, workspace);
+	const workspaceRoot = workspace.root;
 	const outDir = path.resolve(cwd, String(options.outDir || 'dist'));
 	if (build) assertSafeBuildOutDir(workspaceRoot, outDir);
 	const localAliases = ['locale', 'markdown', 'playground', 'theme'].reduce<Record<string, string>>((result, name) => {
@@ -96,8 +100,8 @@ export const createDeverConfig = (options: DeverOptions): InlineConfig => {
 			};
 	const config: InlineConfig = {
 		root: build || preview
-			? workspaceRoot
-			: cwd,
+			? workspace.root
+			: workspace.projectRoot,
 		resolve: { alias: localAliases },
 		server,
 		optimizeDeps: { entries: [] },
@@ -105,7 +109,7 @@ export const createDeverConfig = (options: DeverOptions): InlineConfig => {
 			? {
 					outDir,
 					emptyOutDir: true,
-					rollupOptions: { input: path.resolve(workspaceRoot, 'index.html') }
+					rollupOptions: { input: workspace.entry }
 				}
 			: undefined
 	};
@@ -116,18 +120,17 @@ export const createDeverConfig = (options: DeverOptions): InlineConfig => {
 			const candidate = path.resolve(cwd, `${filename}${extension}`);
 			if (fs.existsSync(candidate)) {
 				config.configFile = candidate;
-				return mergeConfig(createPlugins(options), config);
+				return mergeConfig(createPlugins(options, workspace), config);
 			}
 		}
 	}
 	config.configFile = path.resolve(dirname, '../shared.config.ts');
-	return mergeConfig(createPlugins(options), config);
+	return mergeConfig(createPlugins(options, workspace), config);
 };
 
 // 执行选定模式；仅开发与预览模式会持续保持服务运行。
 export const run = (input: DeverOptions) => Utils.autoCatch(async () => {
 	const options: DeverOptions = {
-		workspace: 'site',
 		outDir: 'dist',
 		dryRun: false,
 		build: false,

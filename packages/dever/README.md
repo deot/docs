@@ -36,7 +36,7 @@ development 和 preview 会保持服务运行；build 在 Vite 构建结束后�
 
 | 选项 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `workspace` | `string` | `site` | 文档 workspace。 |
+| `workspace` | `string` | 自动探测 | 项目内的文档 workspace；显式 `.` 表示项目根。 |
 | `outDir` | `string` | `dist` | build 输出目录。 |
 | `build` | `boolean` | `false` | 执行一次 production 构建。 |
 | `preview` | `boolean` | `false` | 启动 production 模式预览。 |
@@ -59,18 +59,26 @@ development 和 preview 会保持服务运行；build 在 Vite 构建结束后�
 
 返回 `development`、`build` 或 `preview`。同时传入 `build: true` 和 `preview: true` 会抛出 `TypeError`。
 
+### `resolveDocsWorkspace(cwd?, workspace?)`
+
+返回 dev、preview、build 共用的规范 workspace，包括真实根目录、相对路径、
+URL 前缀和入口文件。未显式指定时优先查找 `site/index.html`，再查找项目根
+`index.html`；显式路径缺少入口时不会回退。
+
 ### 类型
 
-包同时导出 `DeverOptions` 和 `DeverMode`。
+包同时导出 `DeverOptions`、`DeverMode` 和 `ResolvedDocsWorkspace`。
 
 ## 配置与安全边界
 
 - 配置文件查找顺序为 `z.doc.config`、`doc.config`、`vite.config`，支持 `.js` 和 `.ts`。
+- workspace 可以是项目根或任意项目内子目录；项目外路径、`..` 路径段、入口符号链接及逃逸项目的符号链接会被拒绝。
 - development 的默认 Vite root 是当前工作目录；build 的 root 是 workspace。
 - `.vue`、`.js`、`.ts`、`.css` 仅在请求声明 `Accept: text/plain` 时返回原始内容，普通模块请求继续由 Vite 转换。
 - 在源码仓库执行 development 时，`/packages/{name}/README.md` 作为受限的 Markdown 资源开放并参与 SSE 更新；不会开放子包中的其他源码文件。
 - 原始源码中间件会校验真实路径，拒绝目录穿越和逃逸 workspace 的符号链接。
 - preview 不启动 Vite、watcher、HMR 或 SSE，不注入开发 runtime，且 `/__docs/*` 返回 404。
+- 根 workspace 构建会跳过隐藏目录、`node_modules`、`coverage`、常见构建缓存目录和当前 outDir。
 - 在本仓库预览时会复用统一 DDC 构建并映射本地 client 产物；其他项目保留 HTML 中声明的发布包 URL。
 
 ## 仓库内验证

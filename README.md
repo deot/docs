@@ -136,11 +136,22 @@ site/
 pnpm exec doc dev
 ```
 
-默认 workspace 为 `site`。也可以显式指定：
+未传 workspace 时优先使用 `site/index.html`，不存在时回退到项目根
+`index.html`。也可以显式指定任意项目内子目录：
 
 ```bash
 pnpm exec doc dev --workspace site
 ```
+
+若 `index.html` 和文档资源直接位于项目根，则使用：
+
+```bash
+pnpm exec doc dev --workspace .
+```
+
+显式 workspace 必须包含自己的 `index.html`，不会回退到其他目录；项目外路径和
+逃逸项目的符号链接会被拒绝。为保证 build 始终生成 `index.html`，入口文件本身
+不能是符号链接。
 
 ## 运行模式
 
