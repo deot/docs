@@ -12,6 +12,7 @@ import {
 	toLogicalResourceSource
 } from '../../utils/resource-graph';
 import { getDocsConfig } from '../../utils/runtime';
+import { resolveInlineSidebar } from '../../utils/sidebar';
 import { createRouterMatcher } from 'vue-router';
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 import type {
@@ -302,6 +303,11 @@ class ResourcePlanner {
 		options: ResolveHomeEntryOptions
 	) {
 		const values: string[] = [];
+		for (const route of Object.values(config.routes)) {
+			if (!route || typeof route !== 'object') continue;
+			const items = resolveInlineSidebar(route.sidebar, lang, config);
+			if (items) this.getSidebarValuesDepthFirst(items, values);
+		}
 		for (const source of this.getConfiguredSidebarSources(config)) {
 			if (options.signal?.aborted) break;
 			try {
@@ -437,6 +443,19 @@ class ResourcePlanner {
 						: routeConfig[name];
 					collector.add(lang, source);
 				});
+				const inlineSidebar = resolveInlineSidebar(routeConfig.sidebar, lang, config);
+				if (inlineSidebar) {
+					for (const value of this.getSidebarValuesDepthFirst(inlineSidebar)) {
+						const match = this.resolveRouteMatch(config, lang, value);
+						await this.addRouteContent(
+							config,
+							collector,
+							lang,
+							match?.pathname || value,
+							match
+						);
+					}
+				}
 				if (
 					(!pathname.includes(':') && !pathname.includes('*'))
 					|| typeof routeConfig.value === 'string'
@@ -645,6 +664,16 @@ class ResourcePlanner {
 				await add(record.identity.lang, pathname);
 			}
 		}
+		for (const lang of this.getLanguages(config)) {
+			for (const route of Object.values(config.routes)) {
+				if (!route || typeof route !== 'object') continue;
+				const items = resolveInlineSidebar(route.sidebar, lang, config);
+				if (!items) continue;
+				for (const pathname of this.getSidebarValuesDepthFirst(items)) {
+					await add(lang, pathname);
+				}
+			}
+		}
 
 		return [...resources.values()];
 	}
@@ -779,7 +808,13 @@ class ResourcePlanner {
 		const sidebarKeys = new Set(initial
 			.filter(identity => identity.type === 'sidebar')
 			.map(resourceIdentityKey));
-		if (strict && this.needsSidebarDiscovery(config) && !sidebarKeys.size) {
+		const hasInlineSidebar = this.getLanguages(config).some(lang => (
+			Object.values(config.routes).some(route => (
+				route && typeof route === 'object'
+				&& Boolean(resolveInlineSidebar(route.sidebar, lang, config))
+			))
+		));
+		if (strict && this.needsSidebarDiscovery(config) && !sidebarKeys.size && !hasInlineSidebar) {
 			throw new Error(
 				'Cannot build a complete prefetch plan: dynamic routes require a sidebar resource'
 			);

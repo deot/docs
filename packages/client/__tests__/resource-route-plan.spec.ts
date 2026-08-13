@@ -96,6 +96,43 @@ describe('ResourcePlan route resources', () => {
 		expect(Gateway.load).toHaveBeenCalledTimes(1);
 	});
 
+	it('uses direct sidebar data for home, search and prefetch plans', async () => {
+		const config: DocsConfig = {
+			namespace: 'inline-sidebar-tests',
+			locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
+			routes: {
+				'/components/:name': {
+					content: 'default',
+					sidebar: {
+						'zh-CN': [{ label: '按钮', value: '/components/button' }],
+						'en-US': [{ label: 'Input', value: '/components/input' }]
+					}
+				}
+			},
+			resolve: { markdown: ({ value }) => `./${value}.md` }
+		};
+		const loadSpy = vi.spyOn(Gateway, 'load');
+
+		await expect(ResourcePlan.resolveHomeEntry(config, 'en-US')).resolves
+			.toBe('/en-US/components/input');
+		expect(loadSpy).not.toHaveBeenCalled();
+
+		const resources = await ResourcePlan.collectRouteResources(config, []);
+		expect(resources.map(item => [item.identity.source, item.path])).toEqual([
+			['./button.md', '/zh-CN/components/button'],
+			['./input.md', '/en-US/components/input']
+		]);
+
+		const prefetch = vi.fn(async identities => identities.map(() => ({
+			status: 'fulfilled',
+			value: {}
+		})));
+		vi.spyOn(Gateway, 'list').mockResolvedValue([]);
+		const plan = await ResourcePlan.build({ config, strict: true, prefetchResources: prefetch });
+		expect([...plan.collector.identities.values()].map(identity => identity.source))
+			.toEqual(['./button.md', './input.md']);
+	});
+
 	it('supports arbitrary multi-parameter routes and explicit sidebar languages', async () => {
 		const config: DocsConfig = {
 			namespace: 'multi-param-home-tests',

@@ -82,7 +82,33 @@ const { app, router, disconnect } = bootstrap(window.$docs);
 - `.json`：解析为数据，当前主要用于递归 sidebar；
 - `.vue`：通过独立 Playground iframe 渲染远程 SFC。
 
-sidebar JSON 使用递归的 `{ label, value?, children? }` 结构。
+Sidebar 使用递归的 `{ label, value?, children? }` 结构。原有 JSON/Gateway
+加载方式保持不变，也可以直接传入 JavaScript 数组：
+
+```js
+const routes = {
+	'/components/:name': {
+		sidebar: [
+			{ label: '开始使用', value: '/components/installation' },
+			{
+				label: '组件',
+				children: [
+					{ label: 'Button', value: '/components/button' }
+				]
+			}
+		]
+	}
+};
+```
+
+多语言站点可以传入以 lang 为键的数据映射；当前语言缺失时回退到站点默认语言：
+
+```js
+const sidebar = {
+	'zh-CN': [{ label: '简介', value: '/guide' }],
+	'en-US': [{ label: 'Introduction', value: '/guide' }]
+};
+```
 
 ### 默认首页
 

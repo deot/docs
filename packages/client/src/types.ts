@@ -57,10 +57,15 @@ export interface DocsLinkContext {
 
 export type DocsSlot = 'default' | string | null;
 
+/** Sidebar 可继续使用资源地址，也可以直接声明当前语言或多语言的数据。 */
+export type DocsSidebar = DocsSlot
+	| SidebarItem[]
+	| Record<string, SidebarItem[]>;
+
 export interface DocsRoute {
 	value?: string | ((to: RouteLocationNormalized) => string);
 	content?: DocsSlot;
-	sidebar?: DocsSlot;
+	sidebar?: DocsSidebar;
 	header?: DocsSlot;
 	footer?: DocsSlot;
 	extra?: DocsSlot;

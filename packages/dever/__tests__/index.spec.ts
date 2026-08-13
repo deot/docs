@@ -85,12 +85,8 @@ describe('dever configuration', () => {
 			lang: 'en-US',
 			source: 'packages/index/README.md'
 		})).toBeUndefined();
-		const sidebar = config.resolve.resource({
-			source: './sidebar.json',
-			type: 'sidebar',
-			runtime: { mode: 'production' }
-		});
-		expect(JSON.parse(decodeURIComponent(sidebar.split(',')[1])))
+		const sidebar = config.routes['/packages/guide'].sidebar['en-US'];
+		expect(sidebar)
 			.toEqual([
 				{ label: 'Introduction', value: '/packages/guide' },
 				{
@@ -103,13 +99,7 @@ describe('dever configuration', () => {
 			]);
 		expect(config.routes['/']).toBeUndefined();
 		expect(config.routes['/packages/guide']).toMatchObject({ value: 'guide' });
-		const zhSidebar = config.resolve.resource({
-			source: './sidebar.json',
-			type: 'sidebar',
-			lang: 'zh-CN',
-			runtime: { mode: 'production' }
-		});
-		expect(JSON.parse(decodeURIComponent(zhSidebar.split(',')[1]))[0])
+		expect(config.routes['/packages/guide'].sidebar['zh-CN'][0])
 			.toEqual({ label: '简介', value: '/packages/guide' });
 	});
 

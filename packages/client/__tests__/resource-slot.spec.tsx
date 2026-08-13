@@ -26,7 +26,7 @@ const {
 				sidebar: './sidebar.json',
 				header: 'default',
 				footer: 'default'
-			} as Record<string, string | null>
+			} as Record<string, any>
 		}
 	},
 	routerPush: vi.fn(async () => undefined),
@@ -135,6 +135,34 @@ describe('ResourceSlot', () => {
 		expect(wrapper.html()).toContain('docs-sidebar');
 		expect(wrapper.text()).toContain('Install');
 		expect(load).toHaveBeenCalledOnce();
+	});
+
+	it('renders direct and localized sidebar data without using Gateway', async () => {
+		route.meta.docsRoute.sidebar = [{
+			label: 'Inline',
+			children: [{ label: 'Button', value: '/components/button' }]
+		}];
+		const direct = mount(ResourceSlot, {
+			props: { name: 'sidebar' },
+			global: { stubs: { RouterLink: RouterLinkStub } }
+		});
+		await flushPromises();
+		expect(direct.text()).toContain('Inline');
+		expect(direct.text()).toContain('Button');
+		expect(load).not.toHaveBeenCalled();
+		direct.unmount();
+
+		route.meta.docsRoute.sidebar = {
+			'zh-CN': [{ label: '简介', value: '/guide' }],
+			'en-US': [{ label: 'Introduction', value: '/guide' }]
+		};
+		const localized = mount(ResourceSlot, {
+			props: { name: 'sidebar' },
+			global: { stubs: { RouterLink: RouterLinkStub } }
+		});
+		await flushPromises();
+		expect(localized.text()).toContain('简介');
+		expect(load).not.toHaveBeenCalled();
 	});
 
 	it('keeps a fixed sidebar mounted while only the content route changes', async () => {

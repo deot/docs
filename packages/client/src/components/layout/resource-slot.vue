@@ -34,6 +34,7 @@ import { isExternalLink, isPlainNavigationClick } from '../../utils/link';
 import { createResourceIdentity, resolveResource } from '../../utils/resolver';
 import { getRouteValue } from '../../utils/route';
 import { getDocsConfig } from '../../utils/runtime';
+import { resolveInlineSidebar } from '../../utils/sidebar';
 import type { DocsResourceType, DocsRoute, SidebarItem } from '../../types';
 
 const props = defineProps<{ name: 'header' | 'sidebar' | 'content' | 'footer' | 'extra' }>();
@@ -295,6 +296,14 @@ const load = async () => {
 		}
 		if (isBuiltin) {
 			builtin.value = props.name;
+			markStableSlot();
+			return;
+		}
+		const inlineSidebar = props.name === 'sidebar'
+			? resolveInlineSidebar(slot, lang.value, docs)
+			: null;
+		if (inlineSidebar) {
+			sidebarItems.value = inlineSidebar;
 			markStableSlot();
 			return;
 		}

@@ -40,10 +40,9 @@
 			lang,
 			readmes
 		]));
-		const sidebarSource = './sidebar.json';
-		const sidebarUrls = Object.fromEntries(Object.keys(locales).map(lang => [
+		const sidebars = Object.fromEntries(Object.keys(locales).map(lang => [
 			lang,
-			`data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify([
+			[
 				{
 					label: lang === 'zh-CN' ? '简介' : 'Introduction',
 					value: '/packages/guide'
@@ -55,7 +54,7 @@
 						value: `/packages/${item.value}`
 					}))
 				}
-			]))}`
+			]
 		]));
 		const pathSegments = location.pathname.split('/');
 		const localeIndex = pathSegments.findIndex(segment => Boolean(locales[segment]));
@@ -73,7 +72,7 @@
 				...Object.keys(readmes).map(value => [`/packages/${value}`, {
 					value,
 					content: 'default',
-					sidebar: sidebarSource,
+					sidebar: sidebars,
 					header: 'default',
 					footer: 'default',
 					extra: null
@@ -86,9 +85,6 @@
 					localeReadmes[lang] || localeReadmes['en-US']
 				)[value],
 				resource: ({ source, type, lang, runtime }) => {
-					if (type === 'sidebar' && source === sidebarSource) {
-						return sidebarUrls[lang] || sidebarUrls['en-US'];
-					}
 					if (source === 'README.md') {
 						return runtime.mode === 'development'
 							? '/README.md'
