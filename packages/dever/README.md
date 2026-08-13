@@ -79,7 +79,7 @@ URL 前缀和入口文件。未显式指定时优先查找 `site/index.html`，�
 - 原始源码中间件会校验真实路径，拒绝目录穿越和逃逸 workspace 的符号链接。
 - preview 不启动 Vite、watcher、HMR 或 SSE，不注入开发 runtime，且 `/__docs/*` 返回 404。
 - 根 workspace 构建会跳过隐藏目录、`node_modules`、`coverage`、常见构建缓存目录和当前 outDir。
-- 在本仓库预览时会复用统一 DDC 构建并映射本地 client 产物；其他项目保留 HTML 中声明的发布包 URL。
+- 在本仓库预览时会复用统一 DDC 构建，并按标准 `@deot/docs-client[@version]/dist/index.*` 路径映射本地 Client，不限制 unpkg、jsDelivr 等 CDN 域名；其他项目保留 HTML 中声明的发布包 URL。
 
 ## 仓库内验证
 

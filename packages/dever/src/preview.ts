@@ -12,7 +12,13 @@ export interface PreviewRequestHandlerOptions {
 }
 
 const CLIENT_PREFIX = '/@deot/docs-client/';
-const CLIENT_CDN_PATTERN = /(?:https?:)?\/\/unpkg\.com\/@deot\/docs-client(?:@[^/]+)?\/dist\//gu;
+const CLIENT_ASSET_PATTERN = new RegExp([
+	String.raw`(?:https?:)?//[^/"'\x60\s<>]+`,
+	String.raw`(?:/[^/"'\x60\s<>?#]+)*/@deot/docs-client`,
+	String.raw`(?:@[^/"'\x60\s<>?#]+)?/dist/`,
+	String.raw`(index\.js|index\.style\.css)`,
+	String.raw`((?:[?#][^"'\x60\s<>]*)?)(?=["'\x60\s<>]|$)`
+].join(''), 'gu');
 
 const contentTypes: Record<string, string> = {
 	'.css': 'text/css; charset=utf-8',
@@ -126,7 +132,10 @@ const ensureLocalClientDist = async (cwd: string) => {
 
 const rewriteLocalClient = (html: Buffer, clientDist?: string) => (
 	clientDist
-		? Buffer.from(html.toString('utf8').replace(CLIENT_CDN_PATTERN, CLIENT_PREFIX))
+		? Buffer.from(html.toString('utf8').replace(
+				CLIENT_ASSET_PATTERN,
+				(_url, filename: string, suffix: string) => `${CLIENT_PREFIX}${filename}${suffix}`
+			))
 		: html
 );
 
@@ -251,7 +260,8 @@ export const createPreviewRequestHandler = (options: PreviewRequestHandlerOption
  * 启动生产模式预览，但不生成站点输出目录。
  *
  * docs 仓库源码在需要时构建并提供本地 client；消费项目不存在对应的软件包
- * 工作区，因此继续使用 HTML 中声明的 unpkg 发布地址。
+ * 工作区，因此继续使用 HTML 中声明的远程发布地址。本地替换只识别标准的
+ * `@deot/docs-client[/@version]/dist/index.*` 产物路径，不绑定具体 CDN 域名。
  * @param options CLI/dever 选项。
  * @returns 已开始监听的 HTTP 服务器。
  */

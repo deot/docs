@@ -365,8 +365,15 @@ describe('dever configuration', () => {
 		fs.mkdirSync(path.join(workspace, 'zh-CN'), { recursive: true });
 		fs.mkdirSync(path.join(clientDist, 'chunks'), { recursive: true });
 		fs.writeFileSync(path.join(workspace, 'index.html'), [
-			'<!DOCTYPE html><link href="https://unpkg.com/@deot/docs-client@1.0.0/dist/index.style.css">',
-			'<script type="module" src="//unpkg.com/@deot/docs-client/dist/index.js"></script>'
+			'<!DOCTYPE html>',
+			'<link href="https://unpkg.com/@deot/docs-client@1.0.0/dist/index.style.css?theme=docs#style">',
+			'<script type="module" src="//unpkg.com/@deot/docs-client/dist/index.js"></script>',
+			'<script>const client = "http://cdn.example.com/vendor/npm/@deot/docs-client@next/dist/index.js?module#entry";</script>',
+			'<script>const style = "https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css";</script>',
+			'<script>const sourceMap = "https://cdn.example.com/@deot/docs-client/dist/index.js.map";</script>',
+			'<script>const bareText = "@deot/docs-client/dist/index.js";</script>',
+			'<script>const module = "https://esm.sh/@deot/docs-client";</script>',
+			'<script>const other = "https://cdn.example.com/@deot/docs-client-extra/dist/index.js";</script>'
 		].join(''));
 		fs.writeFileSync(path.join(workspace, 'zh-CN/index.md'), '# Preview');
 		fs.writeFileSync(path.join(clientDist, 'index.js'), 'import "./chunks/lazy.js";');
@@ -391,7 +398,17 @@ describe('dever configuration', () => {
 			const html = await page.text();
 			expect(page.status).toBe(200);
 			expect(html).toContain('/@deot/docs-client/index.js');
+			expect(html).toContain('/@deot/docs-client/index.style.css?theme=docs#style');
+			expect(html).toContain('/@deot/docs-client/index.js?module#entry');
 			expect(html).toContain('/@deot/docs-client/index.style.css');
+			expect(html).toContain('https://cdn.example.com/@deot/docs-client/dist/index.js.map');
+			expect(html).toContain('@deot/docs-client/dist/index.js');
+			expect(html).toContain('https://esm.sh/@deot/docs-client');
+			expect(html).toContain('https://cdn.example.com/@deot/docs-client-extra/dist/index.js');
+			expect(html).not.toContain('https://unpkg.com/@deot/docs-client@1.0.0/dist/index.style.css');
+			expect(html).not.toContain('//unpkg.com/@deot/docs-client/dist/index.js');
+			expect(html).not.toContain('http://cdn.example.com/vendor/npm/@deot/docs-client@next/dist/index.js');
+			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css');
 			expect(html).not.toContain('/@vite/client');
 			expect(html).not.toContain('__DOCS_RUNTIME__');
 			expect(await (await fetch(`${base}/@deot/docs-client/index.js`)).text())
@@ -406,6 +423,34 @@ describe('dever configuration', () => {
 				headers: { Accept: 'text/plain' }
 			})).status).toBe(404);
 			expect(fs.existsSync(path.join(root, 'dist'))).toBe(false);
+
+			const remoteServer = http.createServer(createPreviewRequestHandler({ workspace }));
+			await new Promise<void>((resolve, reject) => {
+				remoteServer.once('error', reject);
+				remoteServer.listen(0, '127.0.0.1', resolve);
+			});
+			try {
+				const remoteAddress = remoteServer.address();
+				if (!remoteAddress || typeof remoteAddress === 'string') {
+					throw new Error('Missing remote preview address');
+				}
+				const remoteHtml = await (await fetch(
+					`http://127.0.0.1:${remoteAddress.port}/zh-CN/index`,
+					{ headers: { Accept: 'text/html' } }
+				)).text();
+				expect(remoteHtml).toContain(
+					'https://unpkg.com/@deot/docs-client@1.0.0/dist/index.style.css?theme=docs#style'
+				);
+				expect(remoteHtml).toContain('//unpkg.com/@deot/docs-client/dist/index.js');
+				expect(remoteHtml).not.toContain('/@deot/docs-client/index.js');
+			} finally {
+				await new Promise<void>((resolve, reject) => {
+					remoteServer.close((reason) => {
+						if (reason) reject(reason);
+						else resolve();
+					});
+				});
+			}
 		} finally {
 			await new Promise<void>((resolve, reject) => {
 				server.close((reason) => {
