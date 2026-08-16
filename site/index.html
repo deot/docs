@@ -22,6 +22,7 @@
 			{ label: '@deot/docs-locale', value: 'locale' },
 			{ label: '@deot/docs-markdown', value: 'markdown' },
 			{ label: '@deot/docs-playground', value: 'playground' },
+			{ label: '@deot/docs-renderer', value: 'renderer' },
 			{ label: '@deot/docs-theme', value: 'theme' }
 		];
 		const packageReadmes = Object.fromEntries(packages.map(item => [
@@ -56,6 +57,190 @@
 				}
 			]
 		]));
+		const createHomeDocument = (lang) => {
+			const t = (zh, en) => (lang === 'zh-CN' ? zh : en);
+			const accent = '#873bf4';
+			const accentSecondary = '#2d8cf0';
+			const accents = [accent, accentSecondary, '#14b8a6'];
+			const title = t('你好 @deot/docs', 'Hello @deot/docs');
+			const action = {
+				label: t('开始使用', 'Quick Start'),
+				to: `/${lang}/packages/guide`,
+				variant: 'solid',
+				size: 'large',
+				color: accent,
+				textColor: '#ffffff'
+			};
+			const stack = {
+				marginTop: 0,
+				marginBottom: 88,
+				paddingTop: 0,
+				paddingBottom: 0,
+				maxWidth: 1200
+			};
+			const block = (id, type, props, appearance = stack) => ({
+				id,
+				module: { type, version: 1, props },
+				appearance
+			});
+			const cards = (items) => items.map((item, index) => ({
+				...item,
+				icon: item.icon || String(index + 1).padStart(2, '0'),
+				accent: item.accent || accents[index]
+			}));
+
+			return {
+				schemaVersion: 2,
+				meta: { id: `docs-home-${lang}`, title },
+				layout: {
+					mode: 'sortable',
+					maxWidth: 1920,
+					minHeight: 600,
+					background: '#ffffff'
+				},
+				blocks: [
+					block('home-hero', 'hero', {
+						eyebrow: '@deot/docs',
+						title,
+						description: t(
+							'面向生产部署的文档工具链，支持实时资源与可扩展页面渲染。',
+							'A production-first documentation toolchain with live resources and extensible rendering.'
+						),
+						align: 'left',
+						accent,
+						accentSecondary,
+						background: '',
+						showVisual: true,
+						minHeight: 520,
+						highlights: [
+							{ value: t('静态', 'Static'), label: t('直接部署', 'Direct deploy') },
+							{ value: t('实时', 'Live'), label: t('资源热更新', 'Hot resources') },
+							{ value: 'i18n', label: t('多语言内置', 'Built-in locales') }
+						],
+						actions: [action]
+					}, { ...stack, marginBottom: 72, fullWidth: true, maxWidth: 1200 }),
+
+					block('home-features', 'features', {
+						eyebrow: t('能力', 'Capabilities'),
+						title: t('从写作到发布，一次齐备', 'Everything from writing to shipping'),
+						description: t(
+							'部署、热更新与资源网关开箱即用，再按需扩展页面模块。',
+							'Deploy, live-update and gate resources out of the box, then extend the page with modules.'
+						),
+						columns: 3,
+						gap: 24,
+						items: cards([
+							{
+								title: t('直接部署', 'Production-first'),
+								description: t(
+									'无需专用文档服务，即可直接部署静态 workspace。',
+									'Deploy a static workspace directly without a dedicated documentation server.'
+								),
+								badge: t('交付', 'Ship'),
+								icon: 'upload'
+							},
+							{
+								title: t('实时更新', 'Live Update'),
+								description: t(
+									'Markdown 与页面资源更新时，无需刷新整个应用。',
+									'Update loaded Markdown and page resources without refreshing the whole application.'
+								),
+								badge: t('同步', 'Live'),
+								icon: 'again'
+							},
+							{
+								title: t('资源网关', 'Resource Gateway'),
+								description: t(
+									'统一管理缓存、离线回退、预加载与后台校验。',
+									'Unify caching, offline fallback, prefetching and background validation.'
+								),
+								badge: t('网关', 'Gateway'),
+								icon: 'link'
+							}
+						])
+					}),
+
+					block('home-steps', 'steps', {
+						eyebrow: t('上手', 'Start'),
+						title: t('三步开始一份文档', 'Three steps to a live page'),
+						description: t(
+							'从写作、预览到静态发布，始终使用同一套页面模块。',
+							'Write, preview and ship with the same page modules.'
+						),
+						columns: 3,
+						items: cards([
+							{
+								title: t('编写', 'Write'),
+								description: t(
+									'用 Markdown 或可视化模块组织页面内容。',
+									'Compose pages with Markdown or visual modules.'
+								)
+							},
+							{
+								title: t('预览', 'Preview'),
+								description: t(
+									'开发时热更新资源，不必刷新整个站点。',
+									'Hot-update resources in development without a full reload.'
+								)
+							},
+							{
+								title: t('发布', 'Ship'),
+								description: t(
+									'构建为静态 workspace，直接部署到任意 CDN。',
+									'Build a static workspace and deploy it to any CDN.'
+								)
+							}
+						])
+					}),
+
+					block('home-faq', 'faq', {
+						eyebrow: t('问答', 'FAQ'),
+						title: t('常见问题', 'Questions we hear first'),
+						description: t(
+							'上线前最常被问到的几件事。',
+							'The few things teams ask before going live.'
+						),
+						items: [
+							{
+								question: t('需要单独的文档服务吗？', 'Do I need a dedicated documentation server?'),
+								answer: t(
+									'不需要。构建结果是静态站点，可以放到任意静态托管。',
+									'No. The build output is a static site you can host anywhere.'
+								)
+							},
+							{
+								question: t('更新文档必须重新部署吗？', 'Do updates require a full redeploy?'),
+								answer: t(
+									'开发模式支持资源热更新；生产环境按你的发布流程替换静态文件即可。',
+									'Development supports live resource updates; production replaces static files with your usual release flow.'
+								)
+							},
+							{
+								question: t('可以自定义首页吗？', 'Can I customize the home page?'),
+								answer: t(
+									'可以。首页是一份可装修的页面文档，也可以换成站点自己的 page.json。',
+									'Yes. Home is an editable page document, or you can point it at your own page.json.'
+								)
+							}
+						]
+					}),
+
+					block('home-cta', 'cta', {
+						eyebrow: t('下一步', 'Next'),
+						title: t('开始搭建你的文档站点', 'Start your documentation site'),
+						description: t(
+							'用同一套模块写出首页、指南和组件说明。',
+							'Use the same modules for the home page, guides and component docs.'
+						),
+						align: 'center',
+						accent,
+						accentSecondary,
+						background: '',
+						actions: [action]
+					}, { ...stack, marginBottom: 0, fullWidth: true, maxWidth: 1200 })
+				]
+			};
+		};
 		const pathSegments = location.pathname.split('/');
 		const localeIndex = pathSegments.findIndex(segment => Boolean(locales[segment]));
 		const basePath = localeIndex >= 0
@@ -68,6 +253,12 @@
 			namespace: '@deot/docs-site',
 			theme: { default: 'system' },
 			locales,
+			home: {
+				locales: {
+					'zh-CN': createHomeDocument('zh-CN'),
+					'en-US': createHomeDocument('en-US')
+				}
+			},
 			routes: Object.fromEntries([
 				...Object.keys(readmes).map(value => [`/packages/${value}`, {
 					value,
@@ -95,7 +286,8 @@
 							? `/${source}`
 							: new URL(source, repository).href;
 					}
-					return source;
+					// 未接管的 Page、JSON、SFC 等继续使用 Client 的统一默认寻址。
+					return undefined;
 				},
 				link: ({ href, lang, source }) => {
 					const logicalOrigin = 'https://docs.local';

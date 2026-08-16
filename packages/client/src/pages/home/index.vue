@@ -1,93 +1,140 @@
 <template>
 	<section class="docs-home">
-		<RouterLink v-if="entry" class="docs-home__entry" :to="entry">
-			<h1 class="docs-home__title">
-				{{ t('client.home.greeting') }}
-				<span class="docs-home__separator">-</span>
-				{{ t('client.home.quickStart') }}
-			</h1>
-		</RouterLink>
-		<h1 v-else class="docs-home__title">
-			{{ t('client.home.greeting') }}
-			<span class="docs-home__separator">-</span>
-			{{ t('client.home.quickStart') }}
-		</h1>
+		<div v-if="error" class="docs-home__error">{{ error }}</div>
+		<Renderer v-if="document" :document="document" :modules="rendererModules" :context="rendererContext" />
+		<div v-else-if="loading" class="docs-home__loading">{{ t('client.common.loading') }}</div>
 	</section>
 </template>
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue';
-import { RouterLink, useRoute } from 'vue-router';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useLocale } from '@deot/docs-locale';
-import { ResourcePlan } from '../../modules/resource-plan';
-import { getDefaultLanguage } from '../../utils/resolver';
+import { Renderer, validateRendererDocument } from '@deot/docs-renderer';
+import type { RendererContext, RendererDocument } from '@deot/docs-renderer';
+import { Gateway, Theme } from '../../modules';
+import {
+	createResourceIdentity,
+	getDefaultLanguage,
+	resolveResource
+} from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
+import { useRendererModules } from '../../components/renderer';
 
 const route = useRoute();
+const router = useRouter();
 const config = getDocsConfig();
-const { t } = useLocale();
-const entry = ref('');
+const { locale, t } = useLocale();
+const rendererModules = useRendererModules();
+const document = ref<RendererDocument>();
+const loading = ref(true);
+const error = ref('');
 let controller: AbortController | undefined;
+let unsubscribe: (() => void) | undefined;
+let generation = 0;
 
-const loadEntry = async () => {
+const lang = computed(() => String(route.params.lang || getDefaultLanguage(config)));
+const rendererContext = computed<RendererContext>(() => ({
+	lang: lang.value,
+	locale: locale.value,
+	theme: Theme.current.value,
+	route,
+	services: {
+		resolveAsset: (source, importer) => resolveResource(config, {
+			source,
+			type: 'module',
+			lang: lang.value,
+			importer
+		}),
+		resolveLink: target => router.resolve(target).href,
+		navigate: async (target) => {
+			await router.push(target);
+		}
+	}
+}));
+
+const parseDocument = (value: unknown) => {
+	const result = validateRendererDocument(value);
+	if (!result.valid || !result.document) {
+		throw new TypeError(result.issues.map(item => item.message).join('; '));
+	}
+	return result.document;
+};
+
+const load = async () => {
+	const current = ++generation;
 	controller?.abort();
+	unsubscribe?.();
+	unsubscribe = undefined;
 	const activeController = new AbortController();
 	controller = activeController;
-	entry.value = '';
+	error.value = '';
+	loading.value = true;
+	document.value = undefined;
 	try {
-		const lang = String(route.params.lang || getDefaultLanguage(config));
-		const target = await ResourcePlan.resolveHomeEntry(config, lang, {
+		const configured = config.home?.locales?.[lang.value]
+			|| config.home?.locales?.['en-US'];
+		if (!configured) return;
+		if (typeof configured !== 'string') {
+			document.value = parseDocument(configured);
+			return;
+		}
+		const identity = createResourceIdentity(config, lang.value, 'page', configured);
+		const url = await resolveResource(config, {
+			source: configured,
+			type: 'page',
+			lang: lang.value
+		});
+		if (current !== generation || activeController.signal.aborted) return;
+		unsubscribe = Gateway.subscribe(identity, (record) => {
+			try {
+				document.value = parseDocument(JSON.parse(record.content));
+				error.value = '';
+			} catch (reason) {
+				error.value = reason instanceof Error ? reason.message : String(reason);
+			}
+		});
+		const record = await Gateway.load(identity, {
+			url,
+			priority: 100,
 			signal: activeController.signal
 		});
-		if (!activeController.signal.aborted) entry.value = target || '';
-	} catch {
-		// 默认首页没有可达文档时保持静态标题，不展示后台资源错误。
+		if (current === generation) document.value = parseDocument(JSON.parse(record.content));
+	} catch (reason) {
+		if (current === generation && !activeController.signal.aborted) {
+			error.value = reason instanceof Error ? reason.message : String(reason);
+		}
+	} finally {
+		if (current === generation && !activeController.signal.aborted) loading.value = false;
 	}
 };
 
-watch(() => route.params.lang, loadEntry, { immediate: true });
-onBeforeUnmount(() => controller?.abort());
+watch(lang, load, { immediate: true });
+onBeforeUnmount(() => {
+	generation += 1;
+	controller?.abort();
+	unsubscribe?.();
+});
 </script>
 <style lang="scss">
 @use '../../styles/bem' as *;
 
 @include block(docs-home) {
-	display: grid;
+	width: 100%;
 	min-height: 600px;
-	place-items: center;
 
-	@include element(entry) {
-		display: block;
-		padding: 24px;
-		border-radius: 12px;
-		transition: color 0.2s ease, background-color 0.2s ease;
-
-		&:hover,
-		&:focus-visible {
-			color: varfix(primary-color);
-			background: varfix(primary-color-light);
-			outline: none;
-		}
+	@include element(error) {
+		padding: 12px 16px;
+		margin-bottom: 16px;
+		color: var(--vc-color-error);
+		background: varfix(error-background);
+		border-radius: 8px;
 	}
 
-	@include element(title) {
-		margin: 0;
-		font-size: 30px;
-		font-weight: 600;
-		line-height: 1.4;
-		color: varfix(foreground-color);
-		text-align: center;
-	}
-
-	@include element(separator) {
-		margin: 0 6px;
-	}
-}
-
-@media screen and (width <= 768px) {
-	@include block(docs-home) {
-		@include element(title) {
-			font-size: 24px;
-		}
+	@include element(loading) {
+		display: grid;
+		min-height: 600px;
+		color: varfix(foreground-color-mute);
+		place-items: center;
 	}
 }
 </style>

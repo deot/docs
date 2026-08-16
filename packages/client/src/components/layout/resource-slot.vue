@@ -10,6 +10,10 @@
 		<DefaultFooter v-else-if="builtin === 'footer'" />
 		<DefaultSidebar v-else-if="sidebarItems" :items="sidebarItems" />
 		<RemoteSfc v-else-if="resourceType === 'sfc' && source" :source="source" :lang="lang" />
+		<div v-else-if="pageDocument" class="docs-resource-slot__page">
+			<div v-if="error" class="docs-resource-slot__error">{{ error }}</div>
+			<Renderer :document="pageDocument" :modules="rendererModules" :context="rendererContext" />
+		</div>
 		<div v-else-if="error" class="docs-resource-slot__error">{{ error }}</div>
 		<div v-else-if="loading" class="docs-resource-slot__loading">{{ t('client.common.loading') }}</div>
 		<Markdown
@@ -24,24 +28,28 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Markdown } from '@deot/docs-markdown';
+import { Renderer, validateRendererDocument } from '@deot/docs-renderer';
+import type { RendererContext, RendererDocument } from '@deot/docs-renderer';
 import { useLocale } from '@deot/docs-locale';
 import DefaultFooter from './default-footer.vue';
 import DefaultHeader from './default-header.vue';
 import DefaultSidebar from './default-sidebar.vue';
 import RemoteSfc from '../remote-sfc';
-import { Gateway } from '../../modules';
+import { Gateway, Theme } from '../../modules';
 import { isExternalLink, isPlainNavigationClick } from '../../utils/link';
 import { createResourceIdentity, resolveResource } from '../../utils/resolver';
 import { getRouteValue } from '../../utils/route';
 import { getDocsConfig } from '../../utils/runtime';
 import { resolveInlineSidebar } from '../../utils/sidebar';
-import type { DocsResourceType, DocsRoute, SidebarItem } from '../../types';
+import type { DocsResourceType, DocsRoute, DocsSidebar, SidebarItem } from '../../types';
+import { useRendererModules } from '../renderer';
 
 const props = defineProps<{ name: 'header' | 'sidebar' | 'content' | 'footer' | 'extra' }>();
 const route = useRoute();
 const router = useRouter();
 const docs = getDocsConfig();
-const { t } = useLocale();
+const { locale, t } = useLocale();
+const rendererModules = useRendererModules();
 const content = ref('');
 const error = ref('');
 const loading = ref(false);
@@ -51,6 +59,7 @@ const builtin = ref('');
 const sidebarItems = ref<SidebarItem[] | null>(null);
 const root = ref<HTMLElement>();
 const transitionMinHeight = ref('');
+const pageDocument = ref<RendererDocument>();
 let unsubscribe: (() => void) | undefined;
 let controller: AbortController | undefined;
 let generation = 0;
@@ -59,6 +68,25 @@ let pendingStableSlotKey = '';
 const normalizedLinks = new WeakMap<HTMLAnchorElement, number>();
 
 const lang = computed(() => String(route.params.lang || Object.keys(docs.locales)[0] || 'zh-CN'));
+const rendererContext = computed<RendererContext>(() => ({
+	lang: lang.value,
+	locale: locale.value,
+	theme: Theme.current.value,
+	route,
+	source: source.value,
+	services: {
+		resolveAsset: (value, importer) => resolveResource(docs, {
+			source: value,
+			type: 'module',
+			lang: lang.value,
+			importer
+		}),
+		resolveLink: target => router.resolve(target).href,
+		navigate: async (target) => {
+			await router.push(target);
+		}
+	}
+}));
 const routeConfig = computed(() => route.meta.docsRoute as DocsRoute | undefined);
 const clear = () => {
 	unsubscribe?.();
@@ -183,7 +211,20 @@ const scrollToMarkdownHash = async (hash: string, current = generation) => {
 };
 
 const applyContent = (value: string, current = generation) => {
-	if (props.name === 'sidebar' && resourceType.value === 'sidebar') {
+	if (props.name === 'content' && resourceType.value === 'page') {
+		try {
+			const parsed: unknown = JSON.parse(value);
+			const result = validateRendererDocument(parsed);
+			if (!result.valid || !result.document) {
+				throw new TypeError(result.issues.map(item => item.message).join('; '));
+			}
+			pageDocument.value = result.document;
+			error.value = '';
+		} catch (reason) {
+			// 热更新内容损坏时保留上一份可渲染页面，只显示非阻断错误。
+			error.value = reason instanceof Error ? reason.message : t('client.common.resourceRequestFailed');
+		}
+	} else if (props.name === 'sidebar' && resourceType.value === 'sidebar') {
 		try {
 			const parsed = JSON.parse(value);
 			if (!Array.isArray(parsed)) throw new TypeError(t('client.common.invalidSidebar'));
@@ -208,6 +249,7 @@ const applyContent = (value: string, current = generation) => {
 };
 
 const classify = (value: string): DocsResourceType => {
+	if (/\.page\.json(?:$|[?#])/i.test(value)) return 'page';
 	if (/\.json(?:$|[?#])/i.test(value)) return 'sidebar';
 	if (/\.vue(?:$|[?#])/i.test(value)) return 'sfc';
 	if (/\.css(?:$|[?#])/i.test(value)) return 'style';
@@ -276,6 +318,7 @@ const load = async () => {
 	loading.value = false;
 	source.value = '';
 	resourceType.value = '';
+	pageDocument.value = undefined;
 	builtin.value = '';
 	sidebarItems.value = null;
 	if (!config) {
@@ -300,10 +343,20 @@ const load = async () => {
 			return;
 		}
 		const inlineSidebar = props.name === 'sidebar'
-			? resolveInlineSidebar(slot, lang.value, docs)
+			? resolveInlineSidebar(slot as DocsSidebar, lang.value, docs)
 			: null;
 		if (inlineSidebar) {
 			sidebarItems.value = inlineSidebar;
+			markStableSlot();
+			return;
+		}
+		if (props.name === 'content' && slot && typeof slot === 'object' && 'schemaVersion' in slot) {
+			const result = validateRendererDocument(slot);
+			if (!result.valid || !result.document) {
+				throw new TypeError(result.issues.map(item => item.message).join('; '));
+			}
+			resourceType.value = 'page';
+			pageDocument.value = result.document;
 			markStableSlot();
 			return;
 		}

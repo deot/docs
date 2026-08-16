@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 
 import { flushPromises, mount } from '@vue/test-utils';
-import DatabasePage from '../src/pages/db/index.vue';
+import DatabasePage from '../src/pages/database/index.vue';
 import type { ResourceContentRecord } from '../src/modules';
 import type { ResourceIdentity } from '../src/types';
 import { ResourcePlan } from '../src/modules/resource-plan';
-import { getList as getDatabaseList } from '../src/pages/db/api';
+import { getList as getDatabaseList } from '../src/pages/database/api';
 
 const {
 	list,

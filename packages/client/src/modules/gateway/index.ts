@@ -27,6 +27,7 @@ import type {
 	ResourceRequest,
 	ResourceStatus
 } from './types';
+import { ResourceRequestError } from './types';
 
 interface PendingRequest {
 	promise: Promise<ResourceContentRecord>;
@@ -205,10 +206,10 @@ export class ResourceGateway {
 			const key = resourceIdentityKey(normalized.identity);
 			const token = this.getMutationToken(key);
 			records.set(key, normalized);
-			// /db 会频繁查询，仅迁移或修复时才需要回写记录。
+			// 诊断页会频繁查询，仅迁移或修复时才需要回写记录。
 			if (!recordsEqual(record, normalized)) {
 				await this.enqueueCacheWrite(key, async () => {
-					// 当前持久化已由更新的请求或破坏性操作接管，禁止过期的 /db
+					// 当前持久化已由更新的请求或破坏性操作接管，禁止过期的诊断页
 					// 迁移结果覆盖该记录。
 					if (deletionBarrier !== this.deletionBarrier
 						|| !this.isMutationTokenCurrent(key, token)
@@ -753,7 +754,7 @@ export class ResourceGateway {
 			}, attemptId, false, token);
 		}
 		if (response.status < 200 || response.status >= 300) {
-			throw new Error(`HTTP ${response.status}`);
+			throw new ResourceRequestError(response.status);
 		}
 
 		const hash = hashContent(response.body);

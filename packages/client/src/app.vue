@@ -1,9 +1,16 @@
 <template>
-	<div class="docs-app" :class="{ 'docs-app--database': route.meta?.docsDatabase }">
+	<div class="docs-app" :class="{ 'docs-app--database': route.meta?.docsDatabase, 'docs-app--editor': isEditorShell }">
 		<div class="docs-app__header">
 			<ResourceSlot name="header" />
 		</div>
-		<div class="docs-layout" :class="{ 'docs-layout--database': route.meta?.docsDatabase }">
+		<div
+			class="docs-layout"
+			:class="{
+				'docs-layout--database': route.meta?.docsDatabase,
+				'docs-layout--editor': isEditorShell,
+				'docs-layout--home': route.meta?.docsHome
+			}"
+		>
 			<aside class="docs-layout__sidebar">
 				<Scroller
 					class="docs-layout__sidebar-scroller"
@@ -36,14 +43,19 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { Scroller } from '@deot/vc';
 import type { ScrollerExposed } from '@deot/vc';
 import { RouterView, useRoute } from 'vue-router';
 import { ResourceSlot } from './components/layout';
+import { isRendererEditorDemo } from './pages/renderer-editor-demos/catalog';
 
 const route = useRoute();
 const mainScroller = ref<ScrollerExposed>();
+const isEditorShell = computed(() => (
+	Boolean(route.meta?.docsEditor)
+	|| (Boolean(route.meta?.docsEditorDemos) && isRendererEditorDemo(route.query.name))
+));
 
 // Vue Router 的 scrollBehavior 只能控制 window；正文位于 VcScroller 内，
 // 因此路由内容变化时需要单独重置该滚动容器。
@@ -116,6 +128,13 @@ a {
 		}
 	}
 
+	@include modifier(editor) {
+		grid-template-areas: "body";
+		grid-template-rows: minmax(0, 1fr);
+
+		@include element(header) { display: none; }
+	}
+
 	@include element(header) {
 		grid-area: header;
 	}
@@ -173,6 +192,39 @@ a {
 		}
 	}
 
+	@include modifier(editor) {
+		grid-template-areas: "main";
+		grid-template-columns: minmax(0, 1fr);
+
+		&::after { display: none; }
+
+		@include element(sidebar) { display: none; }
+
+		@include element(footer) { display: none; }
+
+		@include element(main-scroller) { overflow: hidden; }
+
+		@include element(content) {
+			grid-template-areas: "main";
+			grid-template-rows: minmax(0, 1fr);
+			height: 100%;
+			min-height: 0;
+		}
+
+		@include element(main) {
+			height: 100%;
+			min-height: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+	}
+
+	@include modifier(home) {
+		@include element(main) {
+			padding: 0;
+		}
+	}
+
 	@include element(sidebar) {
 		grid-area: sidebar;
 		width: 100%;
@@ -212,6 +264,10 @@ a {
 		padding: 30px 40px 80px;
 		align-content: start;
 
+		&:has(.docs-home) {
+			padding: 0;
+		}
+
 		> .docs-resource-slot[data-slot="content"][data-resource-type="markdown"] {
 			min-height: 600px;
 		}
@@ -238,6 +294,16 @@ a {
 		@include element(main) {
 			padding-right: 24px;
 			padding-left: 24px;
+
+			&:has(.docs-home) {
+				padding: 0;
+			}
+		}
+
+		@include modifier(home) {
+			@include element(main) {
+				padding: 0;
+			}
 		}
 
 		&:not(:has(.docs-sidebar)) {

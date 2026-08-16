@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 import { ResourceSlot } from '../components/layout';
-import DatabasePage from '../pages/db/index.vue';
+import DatabasePage from '../pages/database/index.vue';
+import EditorDemosPage from '../pages/renderer-editor-demos/index.vue';
+import EditorPage from '../pages/renderer-editor/index.vue';
 import HomePage from '../pages/home/index.vue';
 import {
 	getDefaultLanguage,
@@ -134,29 +136,54 @@ const createRouteRecord = (
 export const createDocsRouter = (config: DocsConfig) => {
 	const defaultLanguage = getDefaultLanguage(config);
 	const hasConfiguredRoot = Object.prototype.hasOwnProperty.call(config.routes, '/');
-	const hasConfiguredDatabaseRoute = Object.keys(config.routes).some(path => (
-		(path.startsWith('/') ? path : `/${path}`) === '/db'
+	const hasConfiguredEditorRoute = Object.keys(config.routes).some(path => (
+		(path.startsWith('/') ? path : `/${path}`) === '/renderer-editor'
 	));
+	const hasConfiguredDemosRoute = Object.keys(config.routes).some(path => (
+		(path.startsWith('/') ? path : `/${path}`) === '/renderer-editor-demos'
+	));
+	const isDevelopment = config.runtime?.mode === 'development';
 	const routes: RouteRecordRaw[] = [
 		{
-			path: '/:lang/__docs/db',
+			path: '/:lang/__docs/database',
 			component: DatabasePage,
 			meta: { docsDatabase: true, docsLocalized: true }
+		},
+		{
+			path: '/:lang/__docs/renderer-editor',
+			component: EditorPage,
+			meta: { docsEditor: true, docsLocalized: true }
 		}
 	];
-	if (!hasConfiguredDatabaseRoute) routes.push(
+	if (isDevelopment) routes.push({
+		path: '/:lang/__docs/renderer-editor-demos',
+		component: EditorDemosPage,
+		meta: { docsEditorDemos: true, docsLocalized: true }
+	});
+	if (!hasConfiguredEditorRoute) routes.push(
 		{
-			path: '/db',
+			path: '/renderer-editor',
+			redirect: to => ({ path: `/${defaultLanguage}/renderer-editor`, query: to.query, hash: to.hash })
+		},
+		{
+			path: '/:lang/renderer-editor',
+			component: EditorPage,
+			meta: { docsEditor: true, docsLocalized: true }
+		}
+	);
+	if (isDevelopment && !hasConfiguredDemosRoute) routes.push(
+		{
+			path: '/renderer-editor-demos',
 			redirect: to => ({
-				path: `/${defaultLanguage}/db`,
+				path: `/${defaultLanguage}/renderer-editor-demos`,
 				query: to.query,
 				hash: to.hash
 			})
 		},
 		{
-			path: '/:lang/db',
-			component: DatabasePage,
-			meta: { docsDatabase: true, docsLocalized: true }
+			path: '/:lang/renderer-editor-demos',
+			component: EditorDemosPage,
+			meta: { docsEditorDemos: true, docsLocalized: true }
 		}
 	);
 	routes.push({

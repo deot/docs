@@ -1,6 +1,6 @@
 # @deot/docs-client
 
-`@deot/docs-client` 是浏览器端文档应用壳，提供多语言路由、五个布局插槽、Markdown 与远程 SFC 渲染，以及带 IndexedDB 缓存和更新订阅的 `ResourceGateway`。
+`@deot/docs-client` 是浏览器端文档应用壳，提供多语言路由、五个布局插槽、Markdown、远程 SFC 与模块化页面渲染，以及带 IndexedDB 缓存和更新订阅的 `ResourceGateway`。
 
 ## 安装
 
@@ -63,13 +63,15 @@ const { app, router, disconnect } = bootstrap(window.$docs);
 
 | 字段 | 说明 |
 | --- | --- |
-| `locales` | 语言代码到 `{ label, client?, markdown?, playground? }` 的映射；第一项是默认文档语言。 |
+| `locales` | 语言代码到 `{ label, client?, markdown?, playground?, renderer? }` 的映射；第一项是默认文档语言。 |
 | `routes` | 去掉语言前缀后的路由配置。字符串和函数表示重定向。 |
 | `base` | production 资源的基准 URL。 |
 | `namespace` | IndexedDB 缓存隔离标识；未设置时使用规范化后的 `base`。 |
 | `modules` | 远程 SFC 中裸模块名到 URL 的映射。 |
 | `prefetch` | 空闲预加载开关或 `{ batchSize, idleTimeout }` 配置，默认开启。 |
 | `theme` | 主题开关或 `{ default: 'system' \| 'light' \| 'dark' }`，默认跟随系统。 |
+| `home` | 可选的 `{ locales }` 首页配置；语言值是 Renderer 文档或 `.page.json` 地址。未配置时首页为空。 |
+| `renderers` | 业务自定义 Renderer 模块注册项；type 必须使用非 `docs:` 的命名空间。 |
 | `resolve.markdown` | 根据 `lang`、`value` 和当前路由生成 Markdown 逻辑地址。 |
 | `resolve.resource` | 将任意逻辑资源转换为最终 URL。 |
 | `resolve.link` | 将 Markdown 原始链接同步转换为外链或包含语言的站内 Router 地址。 |
@@ -81,6 +83,7 @@ const { app, router, disconnect } = bootstrap(window.$docs);
 - `.md`：渲染 Markdown；
 - `.json`：解析为数据，当前主要用于递归 sidebar；
 - `.vue`：通过独立 Playground iframe 渲染远程 SFC。
+- `.page.json`：使用 `@deot/docs-renderer` 渲染版本化模块页面，并订阅 Gateway 内容更新。
 
 Sidebar 使用递归的 `{ label, value?, children? }` 结构。原有 JSON/Gateway
 加载方式保持不变，也可以直接传入 JavaScript 数组：
@@ -110,22 +113,78 @@ const sidebar = {
 };
 ```
 
-### 默认首页
+### 首页
 
-未配置 `routes['/']` 时，Client 使用内置首页；中文显示“你好 @deot/docs - 开始使用”，English 显示“Hello @deot/docs - Quick Start”。首页保留默认 Header/Footer、不展示 Sidebar，内容最小高度为 600px。
+未配置 `routes['/']` 时，Client 渲染 `$docs.home`。首页文档必须由站点自己提供，Client 不内置示例页：
 
-首页入口完全由业务 routes 和 Sidebar 决定：
+```js
+window.$docs = {
+	home: {
+		locales: {
+			'zh-CN': './pages/home.page.json',
+			'en-US': {
+				schemaVersion: 2,
+				meta: { id: 'home-en', title: 'Home' },
+				layout: {
+					mode: 'sortable',
+					maxWidth: 1920,
+					minHeight: 600,
+					background: '#fff'
+				},
+				blocks: []
+			}
+		}
+	}
+};
+```
+
+未配置 `home` 时首页画布为空，仍保留默认 Header/Footer、不展示 Sidebar。`routes['/']` 可以完全覆盖该首页路由。
+
+首页入口链接由站点文档自己声明。业务 routes 和 Sidebar 只决定内容页怎么走：
 
 1. 按 routes 的声明顺序选择路由模式；
 2. 静态内容路由可以直接作为入口；
 3. 动态路由按 Sidebar 深度优先顺序寻找第一个完整匹配的 value；
 4. 当前模式无法实例化时继续下一模式。
 
-`/packages/:name`、`/components/:name`、`/api/:version/:name` 等只是业务配置，Client 不固定前缀、参数名或参数数量。配置对象、字符串或函数形式的 `routes['/']` 可以完全覆盖内置首页。
+`/packages/:name`、`/components/:name`、`/api/:version/:name` 等只是业务配置，Client 不固定前缀、参数名或参数数量。
+
+路由的 `content` 也可直接传入 Renderer 文档。开发模式下可从 Header 进入
+`/:lang/__docs/renderer-editor`，编辑 Markdown、远程 SFC、内置模块和业务通过
+`renderers` 声明的模块。保存会 `PUT /__docs/page`，body 为 `{ lang, source, document }`，
+只写入工作区内带语言前缀的 V2 `.page.json`。production 不开放该接口，仍可使用导入、
+导出和预览。Combo 草稿写入 IndexedDB 库 `deot-docs-renderer`，与 Gateway 的
+`deot-docs` 分库。
+
+对照组合仅在 development 注入 `/:lang/renderer-editor-demos`。目录页列出全部演示，`?name=landing` 进入对应 Combo。若站点占用了 `/renderer-editor-demos`，改从 `/:lang/__docs/renderer-editor-demos` 访问。production 不注册这些路由。工厂函数也可直接赋给 `$docs.home` 或路由 `content`：
+
+| 查询 | 内容 |
+|---|---|
+| （无 `name`） | 演示目录；第九格进入空白 `/renderer-editor` |
+| `?name=sortable` | 空白流式画布 |
+| `?name=landing` | Hero → Features → Steps → FAQ → CTA |
+| `?name=shared` | Title / Text / List / Image / Actions / Space |
+| `?name=promo` | 广告位四种样式（模块 type 仍是 `ads`） |
+| `?name=docs` | `docs:markdown` + `docs:sfc` |
+| `?name=combo` | 落地模块 + Markdown + 广告位 |
+| `?name=draggable` | 自由画布 |
+| `?name=selection` | 预置 selection 组合框 |
+
+演示文档可由 `createRendererEditorDemoDocument(name, lang)` 生成（`@deot/docs-client` 导出），也可直接指向保存后的 `.page.json`：
+
+```ts
+window.$docs = {
+	home: {
+		locales: {
+			'zh-CN': './home.page.json'
+		}
+	}
+};
+```
 
 ### Locale 与 lang
 
-`lang` 始终来自当前路由，用于文档资源寻址、搜索与缓存隔离；`locale` 只负责界面文案。Client 会在路由切换时同步 `<html lang>`。内置 `zh-CN` 和 `en-US`，自定义语言或缺少字段会逐字段回退到 `en-US`。翻译 key 必须属于 `client.*`、`markdown.*` 或 `playground.*`。
+`lang` 始终来自当前路由，用于文档资源寻址、搜索与缓存隔离；`locale` 只负责界面文案。Client 会在路由切换时同步 `<html lang>`。内置 `zh-CN` 和 `en-US`，自定义语言或缺少字段会逐字段回退到 `en-US`。翻译 key 必须属于 `client.*`、`markdown.*`、`playground.*` 或 `renderer.*`。
 
 ### Theme
 
@@ -146,7 +205,7 @@ window.$docs = {
 
 ### 空闲预加载
 
-首屏路由就绪后，Client 默认在浏览器空闲阶段预加载已配置资源。它会先准备 sidebar、SFC 及递归依赖，再按 sidebar 的深度优先顺序加载 Markdown；当前路由请求始终使用更高优先级。每批默认提交 2 个资源，单次等待空闲最长 1500ms：
+首屏路由就绪后，Client 默认在浏览器空闲阶段预加载已配置资源。它会先准备 sidebar、SFC 及递归依赖，再按 sidebar 的深度优先顺序加载 Markdown 与页面文档；页面文档还会带上其引用的 Markdown / SFC。当前路由请求始终使用更高优先级。每批默认提交 2 个资源，单次等待空闲最长 1500ms：
 
 ```js
 window.$docs = {
@@ -158,7 +217,7 @@ window.$docs = {
 };
 ```
 
-设置 `prefetch: false` 可关闭自动预加载，不影响诊断页的手动 Prefetch。诊断页默认位于 `/:lang/db`，`/db` 会跳转到默认语言；若站点声明了 `/db` 内容路由，诊断页改从 `/:lang/__docs/db` 访问。离线失败会保留历史内容和 error 状态；浏览器恢复联网后，只补充本会话失败、未完成和新发现的资源。
+设置 `prefetch: false` 可关闭自动预加载，不影响诊断页的手动 Prefetch。诊断页位于 `/:lang/__docs/database`。离线失败会保留历史内容和 error 状态；浏览器恢复联网后，只补充本会话失败、未完成和新发现的资源。
 
 ## Runtime 与资源寻址
 
@@ -211,12 +270,18 @@ const identity = createResourceIdentity(
 	'markdown',
 	'./guide.md'
 );
+const page = createResourceIdentity(
+	window.$docs,
+	'zh-CN',
+	'page',
+	'./pages/home.page.json'
+);
 
 const record = await Gateway.load(identity);
 const unsubscribe = Gateway.subscribe(identity, () => undefined);
 ```
 
-`Gateway` 是共享的 `ResourceGateway` 实例；`Network` 是基于 `@deot/http` 的原始文本传输实例。
+`Gateway` 是共享的 `ResourceGateway` 实例；`Network` 是基于 `@deot/http` 的原始文本传输实例。资源 `type` 为 `markdown`、`sidebar`、`page`、`sfc`、`module` 或 `style`。
 
 | Gateway 方法 | 说明 |
 | --- | --- |
@@ -237,7 +302,7 @@ const unsubscribe = Gateway.subscribe(identity, () => undefined);
 
 ## Header 搜索
 
-内置 Header 会搜索当前 namespace、当前语言下已进入 Gateway 缓存的 Markdown。空查询展示最近访问结果；选择文档或小节后会记录历史，并支持收藏和删除。搜索不会主动请求资源，后台空闲预加载完成后会静默扩充结果。
+内置 Header 会搜索当前 namespace、当前语言下已进入 Gateway 缓存的 Markdown 与页面文档。空查询展示最近访问结果；选择文档或小节后会记录历史，并支持收藏和删除。搜索不会主动请求资源，后台空闲预加载完成后会静默扩充结果。
 
 搜索历史独立保存在 `deot-docs-search` 数据库中，最多保留 20 条，Gateway 的 Clear 和 Prune 不会删除这些导航历史。
 
@@ -245,7 +310,8 @@ const unsubscribe = Gateway.subscribe(identity, () => undefined);
 
 - Runtime：`initializeDocsRuntime`、`getDocsConfig`、`getDocsRuntime`。
 - Resolver：`getDocsBase`、`getDocsDeploymentBase`、`getDefaultLanguage`、`getDocsNamespace`、`resolveResource`、`createResourceIdentity`、`resourceIdentityKey`。
-- 类型：`DocsConfig`、`DocsPrefetchOptions`、`DocsRoute`、`DocsRuntime`、`DocsLinkContext`、`ResourceIdentity`、`ResourceRecord`、`ResourceContentRecord`、`ResourceLoadOptions`、`ResourcePrefetchOptions` 等。
+- 演示文档：`createRendererEditorDemoDocument`、`RENDERER_EDITOR_DEMOS`、`listRendererEditorDemos`、`isRendererEditorDemo`、`rendererEditorDemoPath`。
+- 类型：`DocsConfig`、`DocsPrefetchOptions`、`DocsRoute`、`DocsRuntime`、`DocsLinkContext`、`DocsResourceType`、`ResourceIdentity`、`ResourceRecord`、`ResourceContentRecord`、`ResourceLoadOptions`、`ResourcePrefetchOptions` 等。
 
 ## 仓库内验证
 

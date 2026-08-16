@@ -46,6 +46,15 @@
 					</template>
 				</Dropdown>
 			</nav>
+			<button
+				type="button"
+				class="docs-header__action docs-header__editor"
+				:title="t('client.header.editor')"
+				:aria-label="t('client.header.editor')"
+				@click="handleEditor"
+			>
+				<ClientIcon name="editor" />
+			</button>
 			<RouterLink
 				class="docs-header__action docs-header__database"
 				:to="databasePath"
@@ -66,6 +75,9 @@ import DocsSearch from '../search';
 import ThemeToggler from '../theme-toggler';
 import ClientIcon from '../icon';
 import { getDocsConfig } from '../../utils/runtime';
+import { getRouteValue } from '../../utils/route';
+import { stashInlineRendererDocument } from '../../pages/renderer-editor/inline';
+import type { DocsRoute, DocsContent } from '../../types';
 
 const route = useRoute();
 const router = useRouter();
@@ -73,7 +85,7 @@ const config = getDocsConfig();
 const { t } = useLocale();
 const localeMenuVisible = ref(false);
 const lang = computed(() => String(route.params.lang));
-const databasePath = computed(() => `/${lang.value}/db`);
+const databasePath = computed(() => `/${lang.value}/__docs/database`);
 const localeOptions = computed(() => Object.entries(config.locales).map(([value, item]) => ({
 	label: item.label,
 	value
@@ -91,6 +103,53 @@ const handleLocale = (locale: string | number) => {
 	localeMenuVisible.value = false;
 	const target = String(locale);
 	if (target !== lang.value) void router.push(localePath(target));
+};
+const isInlineRendererDocument = (value: DocsContent | undefined) => (
+	Boolean(value && typeof value === 'object' && 'schemaVersion' in value)
+);
+const handleEditor = async () => {
+	const routeConfig = route.meta.docsRoute as DocsRoute | undefined;
+	let source: DocsContent | undefined = routeConfig?.content;
+	let type = route.meta.docsHome ? 'home' : '';
+	if (route.meta.docsHome) {
+		const configured = config.home?.locales?.[lang.value]
+			|| config.home?.locales?.['en-US'];
+		if (typeof configured === 'string') {
+			source = configured;
+			type = 'page';
+		}
+	}
+	if (!route.meta.docsHome && isInlineRendererDocument(source)) {
+		stashInlineRendererDocument(route.fullPath, source);
+		await router.push({
+			path: `/${lang.value}/__docs/renderer-editor`,
+			query: {
+				from: route.fullPath,
+				type: 'inline'
+			}
+		});
+		return;
+	}
+	if (source === 'default' && routeConfig) {
+		source = await config.resolve?.markdown?.({
+			lang: lang.value,
+			value: getRouteValue(route, routeConfig),
+			route
+		}) || `./${getRouteValue(route, routeConfig)}.md`;
+	}
+	if (typeof source === 'string') {
+		type = /\.page\.json(?:$|[?#])/i.test(source)
+			? 'page'
+			: /\.vue(?:$|[?#])/i.test(source) ? 'sfc' : 'markdown';
+	}
+	await router.push({
+		path: `/${lang.value}/__docs/renderer-editor`,
+		query: {
+			from: route.fullPath,
+			type,
+			...(typeof source === 'string' ? { source } : {})
+		}
+	});
 };
 </script>
 <style lang="scss">
@@ -160,6 +219,13 @@ const handleLocale = (locale: string | number) => {
 		.docs-client-icon {
 			width: 24px;
 			height: 24px;
+		}
+	}
+
+	@include element(editor) {
+		.docs-client-icon {
+			width: 22px;
+			height: 22px;
 		}
 	}
 

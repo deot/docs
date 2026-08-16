@@ -2,8 +2,26 @@
 
 import { ResourcePlan } from '../src/modules/resource-plan';
 import { Gateway } from '../src/modules/gateway';
+import { defineRendererModule } from '@deot/docs-renderer';
+import { defineComponent } from 'vue';
 import type { DocsConfig } from '../src/types';
 import type { ResourceRecord } from '../src/modules/gateway';
+
+const component = defineComponent(() => () => null);
+const pageLayout = { mode: 'sortable' as const, maxWidth: 1180, minHeight: 600, background: '#fff' };
+const appearance = { marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 };
+const resourceModule = (
+	type: string,
+	collectResources: (props: Record<string, unknown>) => Array<{ type: string; source: string }>
+) => defineRendererModule({
+	identity: { type, version: 1, label: type, category: 'Test' },
+	widget: { visible: true },
+	data: { create: () => ({}) },
+	viewer: component,
+	editor: component,
+	frames: { sortable: {} },
+	integrations: { collectResources }
+});
 
 describe('ResourcePlan route resources', () => {
 	afterEach(() => vi.restoreAllMocks());
@@ -178,7 +196,7 @@ describe('ResourcePlan route resources', () => {
 			locales: { 'zh-CN': { label: '简体中文' } },
 			routes: {
 				'/external': 'https://example.com/docs',
-				'db': { content: 'default' },
+				'/__docs/database': { content: 'default' },
 				'/components/:name': { content: 'default', sidebar: './sidebar.json' }
 			}
 		};
@@ -190,5 +208,245 @@ describe('ResourcePlan route resources', () => {
 		} as any);
 
 		await expect(ResourcePlan.resolveHomeEntry(config, 'zh-CN')).resolves.toBeNull();
+	});
+
+	it('discovers renderer-declared page dependencies for prefetch and prune plans', async () => {
+		const config: DocsConfig = {
+			namespace: 'page-plan-tests',
+			locales: { 'zh-CN': { label: '简体中文' } },
+			routes: { '/landing': { content: './landing.page.json' } },
+			renderers: [resourceModule('test:resource', props => [{ type: 'markdown', source: String(props.source) }])]
+		};
+		const page = {
+			identity: {
+				namespace: 'page-plan-tests',
+				lang: 'zh-CN',
+				type: 'page' as const,
+				source: './landing.page.json'
+			},
+			url: 'https://docs.example.com/landing.page.json',
+			content: JSON.stringify({
+				schemaVersion: 2,
+				meta: { id: 'landing' },
+				layout: pageLayout,
+				blocks: [{
+					id: 'content',
+					module: {
+						type: 'test:resource',
+						version: 1,
+						props: { source: './landing.md' }
+					},
+					appearance
+				}]
+			})
+		} as ResourceRecord;
+		vi.spyOn(Gateway, 'list').mockResolvedValue([page]);
+		const prefetch = vi.fn(async identities => identities.map(() => ({
+			status: 'fulfilled' as const,
+			value: page as any
+		})));
+		const plan = await ResourcePlan.build({ config, prefetchResources: prefetch });
+		expect([...plan.collector.identities.values()].map(item => item.source)).toEqual([
+			'./landing.page.json',
+			'./landing.md'
+		]);
+	});
+
+	it('refuses strict plans when a page dependency graph cannot be proven complete', async () => {
+		const config: DocsConfig = {
+			namespace: 'strict-page-tests',
+			locales: { 'en-US': { label: 'English' } },
+			routes: { '/landing': { content: './landing.page.json' } },
+			renderers: [resourceModule('company:unsupported', () => [{ type: 'binary', source: './asset.bin' }])]
+		};
+		const identity = {
+			namespace: 'strict-page-tests',
+			lang: 'en-US',
+			type: 'page' as const,
+			source: './landing.page.json'
+		};
+		const prefetch = vi.fn(async identities => identities.map(() => ({
+			status: 'fulfilled' as const,
+			value: {} as any
+		})));
+		vi.spyOn(Gateway, 'list').mockResolvedValue([]);
+		await expect(ResourcePlan.build({ config, strict: false, prefetchResources: prefetch }))
+			.resolves.toBeDefined();
+		await expect(ResourcePlan.build({ config, strict: true, prefetchResources: prefetch }))
+			.rejects.toThrow('Cannot inspect page resource');
+
+		const page = {
+			identity,
+			url: 'https://docs.example.com/landing.page.json',
+			content: JSON.stringify({
+				schemaVersion: 2,
+				meta: { id: 'landing' },
+				layout: pageLayout,
+				blocks: [{
+					id: 'unknown',
+					module: { type: 'company:missing', version: 1, props: {} },
+					appearance
+				}]
+			})
+		} as ResourceRecord;
+		vi.mocked(Gateway.list).mockResolvedValue([page]);
+		const unknownContent = page.content;
+		page.content = '{ invalid';
+		await expect(ResourcePlan.build({ config, strict: false, prefetchResources: prefetch }))
+			.resolves.toBeDefined();
+		page.content = unknownContent;
+		await expect(ResourcePlan.build({ config, strict: false, prefetchResources: prefetch }))
+			.resolves.toEqual(expect.objectContaining({ collector: expect.any(Object) }));
+		await expect(ResourcePlan.build({ config, strict: true, prefetchResources: prefetch }))
+			.rejects.toThrow('unknown renderer module');
+
+		page.content = JSON.stringify({
+			schemaVersion: 2,
+			meta: { id: 'landing' },
+			layout: pageLayout,
+			blocks: [{
+				id: 'unsupported',
+				module: { type: 'company:unsupported', version: 1, props: {} },
+				appearance
+			}]
+		});
+		await expect(ResourcePlan.build({ config, strict: true, prefetchResources: prefetch }))
+			.rejects.toThrow('Unsupported renderer resource type');
+	});
+
+	it('recursively expands page resources declared by Renderer modules', async () => {
+		const config: DocsConfig = {
+			namespace: 'nested-page-tests',
+			locales: { 'en-US': { label: 'English' } },
+			routes: { '/landing': { content: './landing.page.json' } },
+			renderers: [resourceModule('company:nested-page', props => props.source
+				? [{ type: 'page', source: String(props.source) }]
+				: [])]
+		};
+		const createPage = (source: string, nested = '') => ({
+			identity: { namespace: 'nested-page-tests', lang: 'en-US', type: 'page' as const, source },
+			url: `https://docs.example.com/${source}`,
+			content: JSON.stringify({
+				schemaVersion: 2,
+				meta: { id: source },
+				layout: pageLayout,
+				blocks: [{
+					id: source,
+					module: {
+						type: 'company:nested-page',
+						version: 1,
+						props: nested ? { source: nested } : {}
+					},
+					appearance
+				}]
+			})
+		} as ResourceRecord);
+		vi.spyOn(Gateway, 'list').mockResolvedValue([
+			createPage('./landing.page.json', './child.page.json'),
+			createPage('./child.page.json')
+		]);
+		const prefetch = vi.fn(async identities => identities.map(() => ({
+			status: 'fulfilled' as const,
+			value: {} as any
+		})));
+		const plan = await ResourcePlan.build({ config, strict: true, prefetchResources: prefetch });
+		expect([...plan.collector.identities.values()].map(item => item.source))
+			.toEqual(['./landing.page.json', './child.page.json']);
+		expect(prefetch).toHaveBeenCalledWith([
+			expect.objectContaining({ source: './child.page.json', type: 'page' })
+		]);
+	});
+
+	it('reports rejected discovered and deferred Markdown resources in strict mode', async () => {
+		const deferredConfig: DocsConfig = {
+			namespace: 'deferred-rejection',
+			locales: { 'en-US': { label: 'English' } },
+			routes: { '/guide': { value: 'guide', content: 'default' } },
+			resolve: { markdown: ({ value }) => `./${value}.md` }
+		};
+		vi.spyOn(Gateway, 'list').mockResolvedValue([]);
+		const rejectAll = vi.fn(async identities => identities.map(() => ({
+			status: 'rejected' as const,
+			reason: new Error('offline')
+		})));
+		await expect(ResourcePlan.build({
+			config: deferredConfig,
+			strict: true,
+			graphFirst: true,
+			prefetchResources: rejectAll
+		})).rejects.toThrow('route resource unavailable');
+
+		const discoveredConfig: DocsConfig = {
+			namespace: 'discovered-rejection',
+			locales: { 'en-US': { label: 'English' } },
+			routes: { '/components/:name': { content: 'default', sidebar: './sidebar.json' } }
+		};
+		vi.mocked(Gateway.list).mockResolvedValue([{
+			identity: {
+				namespace: 'discovered-rejection',
+				lang: 'en-US',
+				type: 'sidebar',
+				source: './sidebar.json'
+			},
+			content: JSON.stringify([{ label: 'Button', value: '/components/button' }])
+		} as ResourceRecord]);
+		const prefetch = vi.fn(async identities => identities.map(identity => identity.type === 'sidebar'
+			? { status: 'fulfilled' as const, value: {} as any }
+			: { status: 'rejected' as const, reason: new Error('offline') }));
+		await expect(ResourcePlan.build({
+			config: discoveredConfig,
+			strict: true,
+			prefetchResources: prefetch
+		})).rejects.toThrow('route resource unavailable');
+	});
+
+	it('skips malformed optional module dependency graphs outside strict mode', async () => {
+		const config: DocsConfig = {
+			namespace: 'optional-graph',
+			locales: { 'en-US': { label: 'English' } },
+			routes: { '/runtime': { content: './runtime.js' } }
+		};
+		const record = {
+			identity: {
+				namespace: 'optional-graph',
+				lang: 'en-US',
+				type: 'module' as const,
+				source: './runtime.js'
+			},
+			url: 'https://docs.example.com/runtime.js',
+			content: 'import {'
+		} as ResourceRecord;
+		vi.spyOn(Gateway, 'list').mockResolvedValue([record]);
+		const prefetch = vi.fn(async identities => identities.map(() => ({
+			status: 'fulfilled' as const,
+			value: {} as any
+		})));
+		await expect(ResourcePlan.build({ config, prefetchResources: prefetch })).resolves.toBeDefined();
+
+		record.url = 'not a url';
+		record.content = `import './dependency.js'`;
+		await expect(ResourcePlan.build({ config, prefetchResources: prefetch })).resolves.toBeDefined();
+	});
+
+	it('collects a built-in home page resource when routes do not own /', async () => {
+		const config: DocsConfig = {
+			namespace: 'builtin-home-page-tests',
+			locales: { 'zh-CN': { label: '简体中文' } },
+			routes: {},
+			home: { locales: { 'zh-CN': './pages/home.page.json' } }
+		};
+		const resources = await ResourcePlan.collectRouteResources(config, []);
+		expect(resources.map(item => [item.identity.source, item.path, item.identity.type])).toEqual([
+			['./pages/home.page.json', '/zh-CN', 'page']
+		]);
+		const prefetch = vi.fn(async identities => identities.map(() => ({
+			status: 'fulfilled' as const,
+			value: {} as any
+		})));
+		vi.spyOn(Gateway, 'list').mockResolvedValue([]);
+		const plan = await ResourcePlan.build({ config, prefetchResources: prefetch });
+		expect([...plan.collector.identities.values()].map(item => item.source)).toEqual([
+			'./pages/home.page.json'
+		]);
 	});
 });

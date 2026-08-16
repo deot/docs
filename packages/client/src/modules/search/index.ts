@@ -1,11 +1,14 @@
 import { parseMarkdownSearchSections } from '@deot/docs-markdown';
 import { buildTranslator, resolveLocale } from '@deot/docs-locale';
+import { prepareRendererDocument } from '@deot/docs-renderer';
 import { Gateway } from '../gateway';
 import { ResourcePlan } from '../resource-plan';
 import { IndexedDBSearchHistory, createSearchHistoryId } from './history';
 import { getDocsNamespace, resourceIdentityKey } from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
 import type { SearchHistoryRecord, SearchPreparedDocument, SearchResult } from './types';
+import { getRendererRuntime } from '../../components/renderer';
+import type { DocsConfig } from '../../types';
 
 export type { SearchHistoryRecord, SearchResult } from './types';
 
@@ -36,6 +39,48 @@ const createExcerpt = (value: string, tokens: string[]) => {
 	return `${start ? '…' : ''}${value.slice(start, end).trim()}${end < value.length ? '…' : ''}`;
 };
 
+const parseRendererSearch = async (config: DocsConfig, content: string, lang: string) => {
+	const value: unknown = JSON.parse(content);
+	const candidate = value && typeof value === 'object'
+		? value as { layout?: { mode?: unknown } }
+		: {};
+	const frameMode = candidate.layout?.mode === 'draggable' ? 'draggable' : 'sortable';
+	const catalog = getRendererRuntime(config).catalog;
+	const result = await prepareRendererDocument(value, catalog, {
+		scene: 'renderer',
+		frameMode,
+		readonly: true,
+		lang,
+		locale: resolveLocale(lang, config.locales)
+	});
+	if (!result.document) {
+		throw new TypeError(result.issues.map(item => item.message).join('; '));
+	}
+	const sections: Array<{ title: string; anchor: string; text: string }> = [];
+	const text: string[] = [];
+	const invalidNodes = new Set(result.issues
+		.filter(issue => issue.severity === 'error' && issue.nodeId)
+		.map(issue => issue.nodeId));
+	for (const node of result.document.blocks) {
+		if (invalidNodes.has(node.id)) continue;
+		const definition = await catalog.get(node.module.type);
+		const fragments = definition?.integrations?.collectSearchText?.(node.module.props) || [];
+		for (const fragment of fragments) {
+			if (fragment.text) text.push(fragment.text);
+			if (fragment.title) sections.push({
+				title: fragment.title,
+				anchor: fragment.anchor || '',
+				text: fragment.text
+			});
+		}
+	}
+	return {
+		title: result.document.meta.title || '',
+		text: text.join(' '),
+		sections
+	};
+};
+
 class SearchManager {
 	private history = new IndexedDBSearchHistory();
 
@@ -61,7 +106,7 @@ class SearchManager {
 		for (const record of records) {
 			if (record.identity.namespace !== namespace
 				|| record.identity.lang !== lang
-				|| record.identity.type !== 'markdown'
+				|| !['markdown', 'page'].includes(record.identity.type)
 				|| typeof record.content !== 'string') continue;
 			const key = resourceIdentityKey(record.identity);
 			const path = routeMap.get(key);
@@ -71,9 +116,16 @@ class SearchManager {
 				documents.push({ ...cached, path });
 				continue;
 			}
-			const parsed = parseMarkdownSearchSections(record.content);
+			let parsed;
+			try {
+				parsed = record.identity.type === 'page'
+					? await parseRendererSearch(config, record.content, lang)
+					: parseMarkdownSearchSections(record.content);
+			} catch {
+				continue;
+			}
 			const fallbackTitle = record.identity.source
-				.split('/').at(-1)?.replace(/\.(?:md|markdown)$/iu, '')
+				.split('/').at(-1)?.replace(/\.(?:page\.json|md|markdown)$/iu, '')
 				|| t('client.search.untitled');
 			const document: SearchPreparedDocument = {
 				key,
@@ -87,6 +139,7 @@ class SearchManager {
 				sections: parsed.sections
 					.filter((section, index) => !(
 						index === 0
+						&& 'level' in section
 						&& section.level === 1
 						&& section.title === parsed.title
 					))
@@ -98,6 +151,33 @@ class SearchManager {
 			};
 			this.parsed.set(key, document);
 			documents.push(document);
+		}
+
+		if (!Object.prototype.hasOwnProperty.call(config.routes, '/')) {
+			const home = config.home?.locales?.[lang] || config.home?.locales?.['en-US'];
+			if (home && typeof home !== 'string') {
+				const key = `${namespace}|${lang}|inline-home`;
+				try {
+					const parsed = await parseRendererSearch(config, JSON.stringify(home), lang);
+					documents.push({
+						key,
+						hash: 'inline-home',
+						namespace,
+						lang,
+						path: `/${lang}`,
+						source: 'home',
+						title: parsed.title || t('client.search.untitled'),
+						text: parsed.text,
+						sections: parsed.sections.map(section => ({
+							title: section.title,
+							anchor: section.anchor,
+							text: section.text
+						}))
+					});
+				} catch {
+					// 内联首页损坏时不阻断其他文档检索。
+				}
+			}
 		}
 
 		this.documents.set(`${namespace}|${lang}`, documents);

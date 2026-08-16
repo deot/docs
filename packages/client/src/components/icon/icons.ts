@@ -28,6 +28,14 @@ export const CLIENT_ICON_DEFINITIONS = {
 			'M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6'
 		].join('')
 	},
+	editor: {
+		filled: false,
+		path: [
+			'M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7',
+			'M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84',
+			'a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z'
+		].join('')
+	},
 	back: {
 		filled: false,
 		path: 'M19 12H5m6-6-6 6 6 6'

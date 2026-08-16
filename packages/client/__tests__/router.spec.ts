@@ -35,14 +35,14 @@ describe('docs router', () => {
 		await router.push('/components/button');
 		expect(router.currentRoute.value.path).toBe('/zh-CN/components/button');
 
-		await router.push('/db?tab=cache#records');
-		expect(router.currentRoute.value.fullPath).toBe('/zh-CN/db?tab=cache#records');
+		await router.push('/zh-CN/__docs/database?tab=cache#records');
+		expect(router.currentRoute.value.fullPath).toBe('/zh-CN/__docs/database?tab=cache#records');
 		expect(router.currentRoute.value.meta.docsDatabase).toBe(true);
-		await router.push('/en-US/db');
+		await router.push('/en-US/__docs/database');
 		expect(router.currentRoute.value.params.lang).toBe('en-US');
 		expect(router.currentRoute.value.meta.docsDatabase).toBe(true);
-		await router.push('/fr-FR/db');
-		expect(router.currentRoute.value.path).toBe('/zh-CN/db');
+		await router.push('/fr-FR/__docs/database');
+		expect(router.currentRoute.value.path).toBe('/zh-CN/__docs/database');
 	});
 
 	it('derives content values from explicit config, params and path', async () => {
@@ -77,7 +77,7 @@ describe('docs router', () => {
 		} as any, {})).toBe('static');
 	});
 
-	it('keeps an explicitly configured /db document route available', async () => {
+	it('keeps the database page on the internal __docs route', async () => {
 		const dbRoute = { content: null };
 		const router = createDocsRouter({
 			...config,
@@ -87,9 +87,53 @@ describe('docs router', () => {
 		expect(router.currentRoute.value.meta.docsRoute).toBe(dbRoute);
 		expect(router.currentRoute.value.meta.docsDatabase).toBeUndefined();
 
-		await router.push('/en-US/__docs/db');
+		await router.push('/en-US/__docs/database');
 		expect(router.currentRoute.value.meta.docsDatabase).toBe(true);
 		expect(router.currentRoute.value.params.lang).toBe('en-US');
+	});
+
+	it('keeps renderer demos on a query-driven catalog route', async () => {
+		const router = createDocsRouter({
+			locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
+			routes: { '/renderer-editor': { content: './owned.md' } },
+			runtime: { mode: 'development' }
+		});
+		await router.push('/zh-CN/__docs/renderer-editor');
+		expect(router.currentRoute.value.meta.docsEditor).toBe(true);
+		await router.push('/renderer-editor-demos?name=combo');
+		expect(router.currentRoute.value.fullPath).toBe('/zh-CN/renderer-editor-demos?name=combo');
+		await router.push('/zh-CN/renderer-editor-demos?name=landing');
+		expect(router.currentRoute.value.meta.docsEditorDemos).toBe(true);
+		expect(router.currentRoute.value.query.name).toBe('landing');
+		await router.push('/en-US/__docs/renderer-editor-demos?name=selection');
+		expect(router.currentRoute.value.fullPath).toBe('/en-US/__docs/renderer-editor-demos?name=selection');
+	});
+
+	it('keeps an explicitly configured /renderer-editor-demos document route available', async () => {
+		const demosRoute = { content: null };
+		const router = createDocsRouter({
+			locales: { 'zh-CN': { label: '简体中文' } },
+			routes: { '/renderer-editor-demos': demosRoute },
+			runtime: { mode: 'development' }
+		});
+		await router.push('/zh-CN/renderer-editor-demos');
+		expect(router.currentRoute.value.meta.docsRoute).toBe(demosRoute);
+		await router.push('/zh-CN/__docs/renderer-editor-demos?name=promo');
+		expect(router.currentRoute.value.meta.docsEditorDemos).toBe(true);
+		expect(router.currentRoute.value.query.name).toBe('promo');
+	});
+
+	it('does not inject renderer demos outside development', async () => {
+		const router = createDocsRouter({
+			locales: { 'zh-CN': { label: '简体中文' } },
+			routes: {}
+		});
+		await router.push('/zh-CN/renderer-editor-demos?name=landing');
+		expect(router.currentRoute.value.meta.docsEditorDemos).toBeUndefined();
+		expect(router.currentRoute.value.path).toBe('/zh-CN');
+		await router.push('/zh-CN/__docs/renderer-editor-demos?name=promo');
+		expect(router.currentRoute.value.meta.docsEditorDemos).toBeUndefined();
+		expect(router.currentRoute.value.path).toBe('/zh-CN');
 	});
 
 	it('normalizes route keys and invalid languages without a configured root', async () => {

@@ -2,11 +2,15 @@ import type { RouteLocationNormalized } from 'vue-router';
 import type { Ref } from 'vue';
 import type { DocsLocaleEntry } from '@deot/docs-locale';
 import type { DocsTheme, DocsThemeOptions } from '@deot/docs-theme';
+import type {
+	RendererDocument,
+	RendererModuleSource
+} from '@deot/docs-renderer';
 
 export type { DocsLocaleEntry, Language } from '@deot/docs-locale';
 export type { DocsTheme, DocsThemeOptions, DocsThemePreference } from '@deot/docs-theme';
 
-export type DocsResourceType = 'markdown' | 'sidebar' | 'sfc' | 'module' | 'style';
+export type DocsResourceType = 'markdown' | 'sidebar' | 'page' | 'sfc' | 'module' | 'style';
 
 export interface DocsRuntime {
 	mode: 'development' | 'production';
@@ -56,6 +60,12 @@ export interface DocsLinkContext {
 }
 
 export type DocsSlot = 'default' | string | null;
+export type DocsContent = DocsSlot | RendererDocument;
+
+export interface DocsHomeOptions {
+	/** 当前语言缺失时回退到 en-US；未配置时首页为空。 */
+	locales: Record<string, RendererDocument | string>;
+}
 
 /** Sidebar 可继续使用资源地址，也可以直接声明当前语言或多语言的数据。 */
 export type DocsSidebar = DocsSlot
@@ -64,7 +74,7 @@ export type DocsSidebar = DocsSlot
 
 export interface DocsRoute {
 	value?: string | ((to: RouteLocationNormalized) => string);
-	content?: DocsSlot;
+	content?: DocsContent;
 	sidebar?: DocsSidebar;
 	header?: DocsSlot;
 	footer?: DocsSlot;
@@ -83,9 +93,13 @@ export interface DocsConfig {
 	modules?: Record<string, string>;
 	prefetch?: boolean | DocsPrefetchOptions;
 	theme?: boolean | DocsThemeOptions;
+	home?: DocsHomeOptions;
+	renderers?: RendererModuleSource[];
 	resolve?: {
 		markdown?: (context: DocsMarkdownContext) => string | Promise<string>;
-		resource?: (context: DocsResourceContext) => string | Promise<string>;
+		resource?: (
+			context: DocsResourceContext
+		) => string | null | undefined | Promise<string | null | undefined>;
 		link?: (context: DocsLinkContext) => string | null | undefined;
 	};
 	runtime?: Readonly<DocsRuntime>;

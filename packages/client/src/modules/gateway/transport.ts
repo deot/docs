@@ -1,4 +1,5 @@
 import { Network } from '../network';
+import { ResourceRequestError } from './types';
 import type { ResourceRequest, TextResponse } from './types';
 
 interface SharedTransport {
@@ -159,6 +160,10 @@ const createTransport = (
 				lastModified: getHeader(error.headers, 'last-modified')
 			};
 			const message = getHTTPErrorMessage(error);
+			const responseStatus = Number(error?.status);
+			if (Number.isInteger(responseStatus) && responseStatus >= 100 && responseStatus <= 599) {
+				throw new ResourceRequestError(responseStatus, message);
+			}
 			// 保留有意义的原生/网络错误，同时规范化 HTTP 结构的 Error 实例；
 			// 部分 adapter 否则会把 body 显示成 [object Object]。
 			if (

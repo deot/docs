@@ -109,6 +109,66 @@ describe('Search', () => {
 		expect(await Search.query('zh-CN', 'old')).toHaveLength(0);
 	});
 
+	it('indexes searchable renderer page fragments without guessing props', async () => {
+		const record = createRecord('./home.page.json', JSON.stringify({
+			schemaVersion: 2,
+			meta: { id: 'home', title: 'Product Home' },
+			layout: { mode: 'sortable', maxWidth: 1180, minHeight: 600, background: '#fff' },
+			blocks: [{
+				id: 'hero',
+				module: {
+					type: 'hero',
+					version: 1,
+					props: { title: 'Fast setup', description: 'Compose reusable pages' }
+				},
+				appearance: { marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }
+			}]
+		}), { type: 'page' });
+		list.mockResolvedValue([record]);
+		collectRouteResources.mockResolvedValue([
+			{ identity: record.identity, path: '/zh-CN' }
+		]);
+
+		const results = await Search.query('zh-CN', 'reusable');
+		expect(results).toEqual(expect.arrayContaining([
+			expect.objectContaining({ title: 'Product Home', path: '/zh-CN' })
+		]));
+	});
+
+	it('indexes valid draggable nodes while skipping invalid page nodes', async () => {
+		const record = createRecord('./free.page.json', JSON.stringify({
+			schemaVersion: 2,
+			meta: { id: 'free', title: 'Free Page' },
+			layout: { mode: 'draggable', width: 800, height: 600, background: '#fff' },
+			blocks: [{
+				id: 'invalid',
+				module: {
+					type: 'text', version: 1,
+					props: { text: 'Hidden invalid text', fontSize: 1 }
+				},
+				placement: { x: 0, y: 0, width: 200, height: 60, rotate: 0, zIndex: 1 }
+			}, {
+				id: 'valid',
+				module: {
+					type: 'text', version: 1,
+					props: { text: 'Visible free content', fontSize: 16 }
+				},
+				placement: { x: 0, y: 80, width: 200, height: 60, rotate: 0, zIndex: 2 }
+			}]
+		}), { type: 'page' });
+		const malformed = createRecord('./broken.page.json', '{}', { type: 'page' });
+		list.mockResolvedValue([record, malformed]);
+		collectRouteResources.mockResolvedValue([
+			{ identity: record.identity, path: '/zh-CN/free' },
+			{ identity: malformed.identity, path: '/zh-CN/broken' }
+		]);
+
+		expect(await Search.query('zh-CN', 'visible free')).toEqual(expect.arrayContaining([
+			expect.objectContaining({ title: 'Free Page', path: '/zh-CN/free' })
+		]));
+		expect(await Search.query('zh-CN', 'hidden invalid')).toEqual([]);
+	});
+
 	it('limits flattened search results to fifty entries', async () => {
 		const sections = Array.from({ length: 60 }, (_, index) => (
 			`## Match ${index}\n\nShared searchable content ${index}`

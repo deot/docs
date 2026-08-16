@@ -21,6 +21,7 @@ vi.mock('@deot/helper-cache', () => ({
 
 import { ResourceGateway } from '../src/modules/gateway';
 import type { ResourceCache, ResourceRecord } from '../src/modules/gateway';
+import { ResourceRequestError } from '../src/modules/gateway/types';
 import { RequestScheduler } from '../src/modules/gateway/scheduler';
 import { resourceIdentityKey } from '../src/utils/resolver';
 import type { ResourceIdentity } from '../src/types';
@@ -795,8 +796,9 @@ describe('ResourceGateway', () => {
 			body: { statusText: 'Not Found' }
 		}));
 		const gateway = new ResourceGateway({ cache: new MemoryCache() });
-		await expect(gateway.load(identity('./missing.md'), { url: '/missing.md' }))
-			.rejects.toThrow('404 Not Found');
+		const missing = gateway.load(identity('./missing.md'), { url: '/missing.md' });
+		await expect(missing).rejects.toBeInstanceOf(ResourceRequestError);
+		await expect(missing).rejects.toMatchObject({ status: 404, message: '404 Not Found' });
 
 		http.mockReturnValueOnce(responseError({
 			status: '503', statusText: 'HTTP_STATUS_ERROR'

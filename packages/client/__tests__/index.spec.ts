@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { createApp } from 'vue';
+import { createApp, defineComponent } from 'vue';
+import { defineRendererModule } from '@deot/docs-renderer';
 import type { DocsConfig } from '../src/types';
 
 const { use, provide, mount, disconnectEvents, router, startIdlePrefetch, stopPrefetch } = vi.hoisted(() => ({
@@ -44,7 +45,7 @@ describe('client entry', () => {
 		expect(use).toHaveBeenCalledWith(router);
 		expect(mount).toHaveBeenCalledWith('#app');
 		expect(document.documentElement.lang).toBe('zh-CN');
-		expect(provide.mock.calls[0][1].value.name).toBe('zh-CN');
+		expect(provide.mock.calls.find(call => call[1]?.value?.name === 'zh-CN')).toBeDefined();
 		expect(client.bootstrap).toBeTypeOf('function');
 		expect(client.Network).toBeDefined();
 		expect(client.Gateway).toBeInstanceOf(client.ResourceGateway);
@@ -58,7 +59,32 @@ describe('client entry', () => {
 		expect(startIdlePrefetch).toHaveBeenCalledWith(explicit);
 		expect(document.documentElement.lang).toBe('en-US');
 		instance.disconnect();
+		instance.disconnect();
 		expect(disconnectEvents).toHaveBeenCalled();
 		expect(stopPrefetch).toHaveBeenCalled();
+	});
+
+	it('provides business renderer modules without a global registry', async () => {
+		const client = await import('../src');
+		const component = defineComponent(() => () => null);
+		const explicit: DocsConfig = {
+			locales: { 'en-US': { label: 'English' } },
+			routes: {},
+			renderers: [defineRendererModule({
+				identity: { type: 'company:banner', version: 1, label: 'Banner', category: 'Company' },
+				widget: { visible: true },
+				data: { create: () => ({}) },
+				viewer: component,
+				editor: component,
+				frames: { sortable: {} }
+			})]
+		};
+		const instance = client.bootstrap(explicit);
+		const rendererProvision = provide.mock.calls.find(call => (
+			Array.isArray(call[1]) && call[1].some((item: { identity?: { type?: string } }) => item.identity?.type === 'company:banner')
+		));
+		expect(rendererProvision).toBeDefined();
+		await Promise.resolve();
+		instance.disconnect();
 	});
 });

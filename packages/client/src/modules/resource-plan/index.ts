@@ -14,6 +14,8 @@ import {
 import { getDocsConfig } from '../../utils/runtime';
 import { resolveInlineSidebar } from '../../utils/sidebar';
 import { createRouterMatcher } from 'vue-router';
+import { resolveLocale } from '@deot/docs-locale';
+import { prepareRendererDocument } from '@deot/docs-renderer';
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 import type {
 	DocsConfig,
@@ -27,6 +29,7 @@ import type {
 	ResourceContentRecord,
 	ResourceRecord
 } from '../gateway/types';
+import { getRendererRuntime } from '../../components/renderer';
 
 const SLOT_NAMES = ['content', 'sidebar', 'header', 'footer', 'extra'] as const;
 
@@ -52,7 +55,11 @@ interface RouteMatch extends RouteContentMatch {
 
 interface ResourceCollector {
 	identities: Map<string, ResourceIdentity>;
-	add: (lang: string, source: unknown) => ResourceIdentity | null;
+	add: (
+		lang: string,
+		source: unknown,
+		type?: DocsResourceType
+	) => ResourceIdentity | null;
 }
 
 export interface BuildPrefetchPlanOptions {
@@ -93,6 +100,7 @@ class ResourcePlanner {
 	}
 
 	private classify(source: string): DocsResourceType {
+		if (/\.page\.json(?:$|[?#])/i.test(source)) return 'page';
 		if (/\.json(?:$|[?#])/i.test(source)) return 'sidebar';
 		if (/\.vue(?:$|[?#])/i.test(source)) return 'sfc';
 		if (/\.css(?:$|[?#])/i.test(source)) return 'style';
@@ -348,7 +356,7 @@ class ResourcePlanner {
 		let sidebarValues: string[] | null = null;
 		for (const [pattern, route] of Object.entries(config.routes)) {
 			const normalizedPattern = pattern.startsWith('/') ? pattern : `/${pattern}`;
-			if (!route || pattern === '/' || pattern === '*' || normalizedPattern === '/db') continue;
+			if (!route || pattern === '/' || pattern === '*' || normalizedPattern === '/__docs/database') continue;
 			if (typeof route === 'object' && route.content === null) continue;
 			if (typeof route === 'string' && (
 				/^[a-z][a-z\d+.-]*:/i.test(route) || route.startsWith('//')
@@ -371,9 +379,9 @@ class ResourcePlanner {
 
 	private createCollector(config: DocsConfig): ResourceCollector {
 		const identities = new Map<string, ResourceIdentity>();
-		const add = (lang: string, source: unknown) => {
+		const add = (lang: string, source: unknown, type?: DocsResourceType) => {
 			if (typeof source !== 'string' || !source || source === 'default') return null;
-			const identity = createResourceIdentity(config, lang, this.classify(source), source);
+			const identity = createResourceIdentity(config, lang, type || this.classify(source), source);
 			const key = resourceIdentityKey(identity);
 			if (identities.has(key)) return null;
 			identities.set(key, identity);
@@ -395,6 +403,7 @@ class ResourcePlanner {
 			: routeMatch.config.content;
 		if (slot === null) return null;
 		if (slot !== 'default') {
+			if (typeof slot !== 'string') return null;
 			return createResourceIdentity(config, lang, this.classify(slot), slot);
 		}
 		const params = Object.values(routeMatch.params).flatMap(value => value).filter(Boolean);
@@ -466,6 +475,15 @@ class ResourcePlanner {
 					});
 				}
 			}
+		}
+		this.collectBuiltInHomePages(config, collector);
+	}
+
+	private collectBuiltInHomePages(config: DocsConfig, collector: ResourceCollector) {
+		if (Object.prototype.hasOwnProperty.call(config.routes, '/')) return;
+		for (const lang of this.getLanguages(config)) {
+			const home = config.home?.locales?.[lang] || config.home?.locales?.['en-US'];
+			if (typeof home === 'string') collector.add(lang, home, 'page');
 		}
 	}
 
@@ -543,6 +561,31 @@ class ResourcePlanner {
 			visited.add(key);
 			ordered.push(identity);
 
+			if (identity.type === 'page') {
+				const record = recordsByKey.get(key);
+				if (!record || typeof record.content !== 'string') return;
+				const references = await this.getRendererReferences(
+					config,
+					record.content,
+					false,
+					identity.lang
+				);
+				for (const reference of references) {
+					const candidate = createResourceIdentity(
+						config,
+						identity.lang,
+						reference.type,
+						reference.source
+					);
+					const dependency = collector.add(
+						identity.lang,
+						reference.source,
+						reference.type
+					) || collector.identities.get(resourceIdentityKey(candidate));
+					if (dependency) await visit(dependency);
+				}
+				return;
+			}
 			if (!['sfc', 'module', 'style'].includes(identity.type)) return;
 			const record = recordsByKey.get(key);
 			if (!record || typeof record.content !== 'string') return;
@@ -601,11 +644,11 @@ class ResourcePlanner {
 	}
 
 	/**
-	 * 建立可搜索 Markdown identity 与规范站内路由的对应关系。静态路由先于
+	 * 建立可搜索内容 identity 与规范站内路由的对应关系。静态路由先于
 	 * sidebar 动态路由写入，因此同一内容存在别名时会稳定使用配置中的主路径。
 	 * @param config 当前文档配置。
 	 * @param records Gateway 已知资源，用于读取 sidebar 的动态路由值。
-	 * @returns 按语言和配置顺序去重后的 Markdown 路由资源。
+	 * @returns 按语言和配置顺序去重后的 Markdown/Page 路由资源。
 	 */
 	async collectRouteResources(
 		config: DocsConfig,
@@ -621,7 +664,7 @@ class ResourcePlanner {
 				match.pathname,
 				match
 			);
-			if (!identity || identity.type !== 'markdown') return;
+			if (!identity || !['markdown', 'page'].includes(identity.type)) return;
 			const key = resourceIdentityKey(identity);
 			if (!resources.has(key)) resources.set(key, {
 				identity,
@@ -636,6 +679,17 @@ class ResourcePlanner {
 			.map(resourceIdentityKey));
 
 		for (const lang of this.getLanguages(config)) {
+			if (!Object.prototype.hasOwnProperty.call(config.routes, '/')) {
+				const home = config.home?.locales?.[lang] || config.home?.locales?.['en-US'];
+				if (typeof home === 'string') {
+					const identity = createResourceIdentity(config, lang, 'page', home);
+					const key = resourceIdentityKey(identity);
+					if (!resources.has(key)) resources.set(key, {
+						identity,
+						path: `/${lang}`
+					});
+				}
+			}
 			await add(lang, '/');
 			for (const [pathname, routeConfig] of Object.entries(config.routes)) {
 				if (!routeConfig || pathname === '*') continue;
@@ -705,6 +759,143 @@ class ResourcePlanner {
 	private async prefetchResources(identities: ResourceIdentity[]) {
 		if (!identities.length) return [];
 		return Gateway.prefetch(identities);
+	}
+
+	/**
+	 * 读取页面文档中各模块声明的资源依赖。Renderer Catalog 是模块资源的
+	 * 唯一事实来源，ResourcePlan 不根据 props 字段名猜测 Markdown 或 SFC。
+	 * @param config 当前文档站点配置。
+	 * @param content Page JSON 原始内容。
+	 * @param strict 无法完整解释资源图时是否中止。
+	 * @param lang 当前文档语言。
+	 * @returns 页面内按节点顺序声明的资源依赖。
+	 */
+	private async getRendererReferences(
+		config: DocsConfig,
+		content: string,
+		strict: boolean,
+		lang: string
+	) {
+		let value: unknown;
+		try {
+			value = JSON.parse(content);
+		} catch (reason) {
+			if (strict) throw reason;
+			return [];
+		}
+		const candidate = value && typeof value === 'object'
+			? value as { layout?: { mode?: unknown } }
+			: {};
+		const frameMode = candidate.layout?.mode === 'draggable' ? 'draggable' : 'sortable';
+		const catalog = getRendererRuntime(config).catalog;
+		const result = await prepareRendererDocument(value, catalog, {
+			scene: 'renderer',
+			frameMode,
+			readonly: true,
+			lang,
+			locale: resolveLocale(lang, config.locales)
+		});
+		if (!result.document) {
+			if (strict) {
+				throw new Error(`Cannot inspect page resource: ${result.issues.map(item => item.message).join('; ')}`);
+			}
+			return [];
+		}
+		if (!result.valid && strict) {
+			const unknown = result.issues.find(issue => issue.code === 'module.unknown');
+			if (unknown) throw new Error(`Cannot inspect unknown renderer module: ${unknown.message}`);
+			throw new Error(`Cannot inspect page resource: ${result.issues.map(item => item.message).join('; ')}`);
+		}
+		const references: Array<{ type: DocsResourceType; source: string }> = [];
+		const invalidNodes = new Set(result.issues
+			.filter(issue => issue.severity === 'error' && issue.nodeId)
+			.map(issue => issue.nodeId));
+		for (const node of result.document.blocks) {
+			if (invalidNodes.has(node.id)) continue;
+			let definition;
+			try {
+				definition = await catalog.get(node.module.type);
+			} catch (reason) {
+				if (strict) throw reason;
+				continue;
+			}
+			if (!definition) {
+				if (strict) throw new Error(`Cannot inspect unknown renderer module: ${node.module.type}`);
+				continue;
+			}
+			for (const reference of definition.integrations?.collectResources?.(node.module.props) || []) {
+				if (typeof reference.source !== 'string' || !reference.source) continue;
+				const type = reference.type as DocsResourceType;
+				if (!['markdown', 'sidebar', 'sfc', 'module', 'style', 'page'].includes(type)) {
+					if (strict) throw new Error(`Unsupported renderer resource type: ${reference.type}`);
+					continue;
+				}
+				references.push({ type, source: reference.source });
+			}
+		}
+		return references;
+	}
+
+	/**
+	 * Page JSON 与 sidebar 一样会继续暴露资源图。每轮先读取已经下载的页面，
+	 * 再加载新发现的非 Markdown 描述资源；Markdown 叶子统一留到最后一批。
+	 * @param root0 页面资源收集选项。
+	 * @param root0.config 当前文档站点配置。
+	 * @param root0.collector 当前资源计划收集器。
+	 * @param root0.strict 无法证明依赖完整时是否中止。
+	 * @param root0.loadResources 计划调用方提供的批量加载实现。
+	 * @returns 页面依赖预加载的逐项结果。
+	 */
+	private async collectRendererResources({
+		config,
+		collector,
+		strict,
+		loadResources
+	}: {
+		config: DocsConfig;
+		collector: ResourceCollector;
+		strict: boolean;
+		loadResources: PrefetchResources;
+	}) {
+		const results: ResourceResult[] = [];
+		const processed = new Set<string>();
+		while (true) {
+			const records = new Map((await Gateway.list()).map(record => [
+				resourceIdentityKey(record.identity),
+				record
+			]));
+			const pages = [...collector.identities.values()].filter(identity => (
+				identity.type === 'page' && !processed.has(resourceIdentityKey(identity))
+			));
+			if (!pages.length) break;
+			const discovered: ResourceIdentity[] = [];
+			for (const identity of pages) {
+				const key = resourceIdentityKey(identity);
+				processed.add(key);
+				const record = records.get(key);
+				if (!record || typeof record.content !== 'string') {
+					if (strict) throw new Error(`Cannot inspect page resource: ${identity.source}`);
+					continue;
+				}
+				for (const reference of await this.getRendererReferences(
+					config,
+					record.content,
+					strict,
+					identity.lang
+				)) {
+					const added = collector.add(identity.lang, reference.source, reference.type);
+					if (added && added.type !== 'markdown') discovered.push(added);
+				}
+			}
+			if (!discovered.length) continue;
+			const batch = await loadResources(discovered);
+			results.push(...batch);
+			const rejected = this.getRejectedIdentity(discovered, batch);
+			if (strict && rejected) {
+				throw new Error(`Cannot build a complete prefetch plan: page dependency unavailable (${rejected.source})`);
+			}
+		}
+		return results;
 	}
 
 	/*
@@ -858,6 +1049,12 @@ class ResourcePlanner {
 				`Cannot build a complete prefetch plan: route resource unavailable (${rejectedDiscovered.source})`
 			);
 		}
+		const rendererResults = await this.collectRendererResources({
+			config,
+			collector,
+			strict,
+			loadResources
+		});
 		const dependencySeeds = [...collector.identities.values()].filter(identity => (
 			identity.type === 'sfc' || identity.type === 'module' || identity.type === 'style'
 		));
@@ -869,9 +1066,15 @@ class ResourcePlanner {
 			loadResources
 		});
 		// 自动空闲预加载先准备描述资源图的 sidebar/SFC/import，再下载 Markdown 叶子。
-		// /db 手动预加载仍保持原有批次顺序，避免改变现有交互和统计语义。
-		const deferredMarkdown = downloadMarkdown && graphFirst
-			? [...collector.identities.values()].filter(identity => identity.type === 'markdown')
+		// 诊断页手动预加载仍保持原有批次顺序，避免改变现有交互和统计语义。
+		const downloadedKeys = new Set([
+			...initialDownloads,
+			...discoveredDownloads
+		].map(resourceIdentityKey));
+		const deferredMarkdown = downloadMarkdown
+			? [...collector.identities.values()].filter(identity => (
+					identity.type === 'markdown' && !downloadedKeys.has(resourceIdentityKey(identity))
+				))
 			: [];
 		const deferredResults = await loadResources(deferredMarkdown);
 		const rejectedDeferred = this.getRejectedIdentity(deferredMarkdown, deferredResults);
@@ -880,7 +1083,7 @@ class ResourcePlanner {
 				`Cannot build a complete prefetch plan: route resource unavailable (${rejectedDeferred.source})`
 			);
 		}
-		// 将公开计划规范为 /db 使用的同一深度优先顺序；实际下载仍可保留批处理，
+		// 将公开计划规范为诊断页使用的同一深度优先顺序；实际下载仍可保留批处理，
 		// 避免牺牲网络并发能力。
 		const ordered = await this.collectResourcesDepthFirst(
 			config,
@@ -895,6 +1098,7 @@ class ResourcePlanner {
 			results: [
 				...initialResults,
 				...discoveredResults,
+				...rendererResults,
 				...dependencyResults,
 				...deferredResults
 			]

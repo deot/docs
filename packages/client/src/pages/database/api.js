@@ -26,7 +26,7 @@ export const getList = async () => {
 	});
 };
 
-// 手动重试沿用持久化 URL，确保 /db 显示地址与实际请求一致，不重新解析。
+// 手动重试沿用持久化 URL，确保诊断页显示地址与实际请求一致，不重新解析。
 export const reload = async (record) => {
 	return Gateway.revalidate(record.identity, {
 		url: record.url,

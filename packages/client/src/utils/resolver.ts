@@ -116,6 +116,34 @@ const normalizeLanguage = (lang: string) => {
 	return value;
 };
 
+/**
+ * 以逻辑 importer 为基准解析 Renderer/SFC 内部依赖，同时保证结果仍位于
+ * 当前语言目录内。这里使用虚拟 origin 只借用 URL 的 POSIX 路径语义。
+ * @param source 子资源逻辑地址。
+ * @param importer 父资源逻辑地址。
+ * @param lang 当前业务语言。
+ * @returns 解析后的语言目录相对 URL。
+ */
+const resolveLogicalImport = (source: string, importer: string, lang: string) => {
+	if (source.includes('\0') || source.includes('\\')) {
+		throw new TypeError(`Invalid resource source: ${source}`);
+	}
+	const language = normalizeLanguage(lang);
+	const importerPath = normalizeLogicalPath(importer);
+	const root = new URL(`https://docs.local/${language}/`);
+	const resolved = new URL(source, new URL(importerPath, root));
+	const prefix = `/${language}/`;
+	if (!resolved.pathname.startsWith(prefix)) {
+		throw new TypeError(`Resource source escapes its language directory: ${source}`);
+	}
+	return {
+		language,
+		pathname: resolved.pathname.slice(prefix.length),
+		search: resolved.search,
+		hash: resolved.hash
+	};
+};
+
 export const getDefaultLanguage = (config: DocsConfig) => Object.keys(config.locales)[0] || 'zh-CN';
 
 export const getDocsNamespace = (config: DocsConfig) => {
@@ -134,11 +162,27 @@ export const resolveResource = async (
 		base: config.base,
 		runtime
 	};
-	if (config.resolve?.resource) return config.resolve.resource(fullContext);
+	if (config.resolve?.resource) {
+		const custom = await config.resolve.resource(fullContext);
+		// 自定义 Resolver 只需接管认识的资源；空结果继续使用统一默认寻址。
+		if (custom) return custom;
+	}
 
 	const { source, lang, importer } = context;
 	if (isAbsoluteUrl(source) || source.startsWith('/')) return source;
-	if (importer) return new URL(source, importer).href;
+	if (importer && (isAbsoluteUrl(importer) || importer.startsWith('/'))) {
+		if (isAbsoluteUrl(importer)) return new URL(source, importer).href;
+		const resolved = new URL(source, new URL(importer, getDocsDeploymentBase(config)));
+		return `${resolved.pathname}${resolved.search}${resolved.hash}`;
+	}
+	if (importer) {
+		const resolved = resolveLogicalImport(source, importer, lang);
+		const suffix = `${resolved.pathname}${resolved.search}${resolved.hash}`;
+		if (runtime.mode === 'development') {
+			return `${normalizeWorkspaceBase(runtime.workspace)}${resolved.language}/${suffix}`;
+		}
+		return new URL(`${resolved.language}/${suffix}`, getDocsBase(config)).href;
+	}
 
 	const pathname = normalizeLogicalPath(source);
 	const language = normalizeLanguage(lang);

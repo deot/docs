@@ -2,6 +2,7 @@
 
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, reactive } from 'vue';
+import { Renderer } from '@deot/docs-renderer';
 import ResourceSlot from '../src/components/layout/resource-slot.vue';
 import { isPlainNavigationClick } from '../src/utils/link';
 
@@ -58,6 +59,13 @@ vi.mock('../src/modules', () => ({
 			subscribe(identity, listener);
 			return unsubscribe;
 		}
+	},
+	Theme: {
+		current: { value: 'dark' },
+		enabled: { value: true },
+		ready: { value: true },
+		set: vi.fn(),
+		toggle: vi.fn()
 	}
 }));
 vi.mock('@deot/docs-markdown', async () => ({
@@ -459,6 +467,35 @@ describe('ResourceSlot', () => {
 		wrapper.unmount();
 		rect.mockRestore();
 		scroller.remove();
+	});
+
+	it('renders inline and Gateway page documents while retaining valid hot content', async () => {
+		const page = {
+			schemaVersion: 2 as const,
+			meta: { id: 'page' },
+			layout: { mode: 'sortable' as const, maxWidth: 1180, minHeight: 600, background: '#fff' },
+			blocks: [{
+				id: 'title',
+				module: { type: 'title', version: 1, props: { text: 'Page title' } },
+				appearance: { marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }
+			}]
+		};
+		route.meta.docsRoute.content = page;
+		const inline = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(inline.text()).toContain('Page title'));
+		expect(inline.findComponent(Renderer).props('context')).toMatchObject({ theme: 'dark' });
+		expect(load).not.toHaveBeenCalled();
+		inline.unmount();
+
+		route.meta.docsRoute.content = './home.page.json';
+		load.mockResolvedValueOnce({ content: JSON.stringify(page) });
+		const resource = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(resource.text()).toContain('Page title'));
+		expect(resource.attributes('data-resource-type')).toBe('page');
+		subscription.listener?.({ content: '{invalid' });
+		await flushPromises();
+		expect(resource.text()).toContain('Page title');
+		expect(resource.find('.docs-resource-slot__error').exists()).toBe(true);
 	});
 
 	it('renders remote SFC and classifies module and style slots', async () => {

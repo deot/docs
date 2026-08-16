@@ -73,6 +73,32 @@ describe('resource resolver', () => {
 		})).toBe('https://docs.example.com/assets/en-US/button/button.css');
 	});
 
+	it('resolves dependencies from logical page importers in both runtimes', async () => {
+		const development = createConfig({ runtime: { mode: 'development', workspace: '/site/' } });
+		expect(await resolveResource(development, {
+			source: '../shared/intro.md',
+			importer: './pages/home.page.json',
+			type: 'markdown',
+			lang: 'en-US'
+		})).toBe('/site/en-US/shared/intro.md');
+		const production = createConfig({
+			base: 'https://docs.example.com/site/',
+			runtime: { mode: 'production' }
+		});
+		expect(await resolveResource(production, {
+			source: './guide.md?tab=api#start',
+			importer: './pages/home.page.json',
+			type: 'markdown',
+			lang: 'zh-CN'
+		})).toBe('https://docs.example.com/site/zh-CN/pages/guide.md?tab=api#start');
+		await expect(resolveResource(development, {
+			source: '../../outside.md',
+			importer: './home.page.json',
+			type: 'markdown',
+			lang: 'en-US'
+		})).rejects.toThrow('escapes its language directory');
+	});
+
 	it('uses an explicit namespace for logical resource identity', () => {
 		const config = createConfig({ namespace: 'site-a' });
 		expect(getDocsNamespace(config)).toBe('site-a');
@@ -91,6 +117,13 @@ describe('resource resolver', () => {
 			source: './custom.md', type: 'markdown', lang: 'zh-CN'
 		})).toBe('custom:./custom.md');
 		expect(resource).toHaveBeenCalledOnce();
+		const fallback = createConfig({
+			runtime: { mode: 'development', workspace: '/docs/' },
+			resolve: { resource: () => undefined }
+		});
+		expect(await resolveResource(fallback, {
+			source: './pages/new.page.json', type: 'page', lang: 'en-US'
+		})).toBe('/docs/en-US/pages/new.page.json');
 
 		const production = createConfig({ runtime: { mode: 'production' } });
 		expect(await resolveResource(production, {

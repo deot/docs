@@ -3,6 +3,7 @@ import { provideLocale, resolveLocale } from '@deot/docs-locale';
 import '../../../node_modules/@deot/style/dist/index.normalize-only.css';
 import '../../../node_modules/@deot/vc-components/dist/index.style.css';
 import App from './app.vue';
+import { provideRendererModules } from './components/renderer';
 import { connectResourceEvents } from './events';
 import { IdlePrefetch } from './modules/idle-prefetch';
 import { ThemeRuntime } from './modules/theme';
@@ -25,6 +26,14 @@ export type {
 	ResourceStatusHistory,
 	ResourceVersion
 } from './modules';
+export {
+	RENDERER_EDITOR_DEMOS,
+	createRendererEditorDemoDocument,
+	isRendererEditorDemo,
+	listRendererEditorDemos,
+	rendererEditorDemoPath
+} from './pages/renderer-editor-demos/catalog';
+export type { RendererEditorDemo } from './pages/renderer-editor-demos/catalog';
 
 export const bootstrap = (config?: DocsConfig) => {
 	config ||= window.$docs || { locales: {}, routes: {} };
@@ -33,6 +42,7 @@ export const bootstrap = (config?: DocsConfig) => {
 	const router = createDocsRouter(config);
 	const app = createApp(App);
 	app.use(router);
+	provideRendererModules(app, config);
 	const locale = computed(() => resolveLocale(
 		String(router.currentRoute.value.params.lang || getDefaultLanguage(config)),
 		config.locales

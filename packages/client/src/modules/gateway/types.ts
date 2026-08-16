@@ -2,6 +2,14 @@ import type { ResourceIdentity } from '../../types';
 
 export type ResourceStatus = 'waiting' | 'pending' | 'success' | 'error';
 
+/** HTTP 响应已到达但状态不可用，保留状态码供业务区分 404 与传输故障。 */
+export class ResourceRequestError extends Error {
+	constructor(public readonly status: number, message = `HTTP ${status}`) {
+		super(message);
+		this.name = 'ResourceRequestError';
+	}
+}
+
 export interface ResourceVersion {
 	content: string;
 	hash: string;
