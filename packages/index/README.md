@@ -1,6 +1,6 @@
 # @deot/docs
 
-`@deot/docs` 是 `@deot/docs` 工具链的聚合包。公共入口导出 `Dever`、`Locale` 与 `Theme` 命名空间，分别用于文档服务、界面国际化和主题协议。
+`@deot/docs` 是 `@deot/docs` 工具链的聚合包。公共入口导出 `Dever`、`Locale`、`Renderer` 与 `Theme` 命名空间，分别用于文档服务、界面国际化、页面渲染/装修和主题协议。
 
 ## 安装
 
@@ -31,6 +31,14 @@ await Dever.run({
 
 `dev` 会启动常驻的 Vite 开发服务；`preview` 使用无 watcher 的静态 HTTP 服务；`build` 完成一次构建后退出。
 
+浏览器侧也可以从同一入口拿到 Renderer：
+
+```ts
+import { Renderer } from '@deot/docs';
+
+const { Combo, Renderer: PageRenderer, BuiltinModules } = Renderer;
+```
+
 ## 公共 API
 
 | 导出 | 说明 |
@@ -42,9 +50,10 @@ await Dever.run({
 | `Dever.DeverOptions` | `@deot/docs-dever` 提供的运行选项类型。 |
 | `Dever.DeverMode` | 三种运行模式的联合类型。 |
 | `Locale` | `@deot/docs-locale` 的语言包、Translator 与 Vue Provider API。 |
+| `Renderer` | `@deot/docs-renderer` 的 `Combo`、`Renderer`、内置模块与协议工具。 |
 | `Theme` | `@deot/docs-theme` 的主题类型、主题值和校验函数。 |
 
-更完整的选项和运行规则请查看 [`@deot/docs-dever`](../dever/README.md)。命令行用法请查看 [`@deot/docs-cli`](../cli/README.md)。
+更完整的选项和运行规则请查看 [`@deot/docs-dever`](../dever/README.md)。页面协议请查看 [`@deot/docs-renderer`](../renderer/README.md)。命令行用法请查看 [`@deot/docs-cli`](../cli/README.md)。
 
 ## 仓库内验证
 

@@ -1,9 +1,13 @@
-import { Dever, Locale } from '../src';
+// @vitest-environment jsdom
 
-// @vitest-environment node
+import { Dever, Locale, Renderer, Theme } from '../src';
+
 describe('index.ts', () => {
-	it('exports the dever API', () => {
+	it('exports server and browser package namespaces', () => {
 		expect(Dever.run).toBeTypeOf('function');
 		expect(Locale.resolveLocale('zh-CN').name).toBe('zh-CN');
+		expect(Renderer.Combo).toBeDefined();
+		expect(Renderer.Renderer).toBeDefined();
+		expect(Theme.DOCS_THEMES).toEqual(['light', 'dark']);
 	});
 });
