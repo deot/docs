@@ -23,6 +23,9 @@ describe('docs locale', () => {
 		expect(t('client.missing')).toBe('client.missing');
 		expect(t('client.search')).toBe('client.search');
 		expect(t('client.search.placeholder.extra')).toBe('client.search.placeholder.extra');
+		expect(t('renderer.common.save')).toBe('Save');
+		expect(t('client.demos.title')).toBe('Renderer demos');
+		expect(t('editor.common.save' as any)).toBe('editor.common.save');
 		expect(t('invalid.path' as any)).toBe('invalid.path');
 	});
 

@@ -4,6 +4,7 @@ export interface ClientLocaleMessages {
 	common: Record<string, string>;
 	header: Record<string, string>;
 	home: Record<string, string>;
+	demos: Record<string, string>;
 	search: Record<string, string>;
 	database: Record<string, string>;
 	paging: Record<string, string>;
@@ -21,10 +22,20 @@ export interface PlaygroundLocaleMessages {
 	validation: Record<string, string>;
 }
 
+export interface RendererLocaleMessages {
+	common: Record<string, string>;
+	modules: Record<string, string>;
+	inspector: Record<string, string>;
+	editor: Record<string, string>;
+	canvas: Record<string, string>;
+	json: Record<string, string>;
+}
+
 export interface DocsLocaleMessages {
 	client: ClientLocaleMessages;
 	markdown: MarkdownLocaleMessages;
 	playground: PlaygroundLocaleMessages;
+	renderer: RendererLocaleMessages;
 }
 
 export interface Language extends DocsLocaleMessages {
@@ -43,7 +54,7 @@ export type DocsLocaleEntry = {
 	label: string;
 } & DeepPartial<DocsLocaleMessages>;
 
-export type LocaleNamespace = 'client' | 'markdown' | 'playground';
+export type LocaleNamespace = 'client' | 'markdown' | 'playground' | 'renderer';
 export type LocaleKey = `${LocaleNamespace}.${string}`;
 export type TranslatorOption = Record<string, string | number>;
 export type Translator = (path: LocaleKey, options?: TranslatorOption) => string;

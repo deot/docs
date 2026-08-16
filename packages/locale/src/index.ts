@@ -16,7 +16,7 @@ import type {
 export * from './types';
 export { enUS, zhCN };
 
-const NAMESPACES = new Set(['client', 'markdown', 'playground']);
+const NAMESPACES = new Set(['client', 'markdown', 'playground', 'renderer']);
 
 const cloneMerge = (base: unknown, override: unknown): unknown => {
 	if (!base || typeof base !== 'object' || Array.isArray(base)) return override ?? base;
