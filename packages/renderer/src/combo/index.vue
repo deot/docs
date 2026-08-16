@@ -1,0 +1,528 @@
+<template>
+	<div
+		class="docs-renderer-combo"
+		:data-doc-theme="contextValue.theme"
+		:data-vc-theme="contextValue.theme"
+		@keydown="handleKeydown"
+	>
+		<header class="docs-renderer-combo__toolbar">
+			<div class="docs-renderer-combo__heading">
+				<Button type="text" @click="emit('back')">← {{ t('renderer.common.back') }}</Button>
+				<strong>{{ store.document.meta.title || t('renderer.common.untitledPage') }}</strong>
+			</div>
+			<div class="docs-renderer-combo__actions">
+				<Button :disabled="!store.canUndo" @click="store.undo()">{{ t('renderer.common.undo') }}</Button>
+				<Button :disabled="!store.canRedo" @click="store.redo()">{{ t('renderer.common.redo') }}</Button>
+				<Button v-if="draftKey" @click="clearDraft">{{ t('renderer.common.clearDraft') }}</Button>
+				<Button type="primary" @click="handleImport">{{ t('renderer.common.import') }}</Button>
+				<Button type="primary" @click="handleExport">{{ t('renderer.common.export') }}</Button>
+				<Button type="primary" @click="preview">{{ t('renderer.common.preview') }}</Button>
+				<Button type="primary" @click="save">{{ t('renderer.common.save') }}</Button>
+			</div>
+		</header>
+		<div class="docs-renderer-combo__body">
+			<Widget
+				:catalog="catalog"
+				:mode="mode"
+				:context="moduleContext"
+				:document="store.document"
+				@create="handleCreate"
+			/>
+			<main
+				class="docs-renderer-combo__stage"
+				:class="{ 'is-draggable': mode === 'draggable' }"
+				@pointerdown="handleStagePointerDown"
+			>
+				<div
+					v-if="mode === 'sortable'"
+					class="docs-renderer-combo__stage-bar"
+					role="button"
+					tabindex="0"
+					:title="t('renderer.json.title')"
+					@pointerdown.stop
+					@click="handleJson"
+					@keydown.enter.prevent="handleJson"
+					@keydown.space.prevent="handleJson"
+				>
+					<span>{{ t('renderer.common.page') }}</span>
+					<span>{{ t('renderer.common.blocks', { count: store.document.blocks.length }) }}</span>
+				</div>
+				<SortableFrame
+					v-if="mode === 'sortable'"
+					:store="store"
+					:catalog="catalog"
+					:context="moduleContext"
+					@create="handleCreate"
+				/>
+				<DraggableFrame
+					v-else
+					:store="store"
+					:catalog="catalog"
+					:context="moduleContext"
+					@create="handleCreate"
+				/>
+			</main>
+			<PropertyEditor
+				:store="store"
+				:catalog="catalog"
+				:context="moduleContext"
+				:mode="mode"
+			/>
+		</div>
+		<input ref="fileInput" class="docs-renderer-combo__file" type="file" accept="application/json,.json" @change="handleFile">
+	</div>
+</template>
+<script setup lang="ts">
+import {
+	computed,
+	markRaw,
+	nextTick,
+	onBeforeUnmount,
+	onMounted,
+	ref,
+	watch
+} from 'vue';
+import { Button, Message, Portal } from '@deot/vc';
+import { provideLocale, useLocale } from '@deot/docs-locale';
+import {
+	RENDERER_PAGE_TYPE,
+	RENDERER_SELECTION_TYPE,
+	RENDERER_SORTABLE_CONTENT_WIDTH,
+	type RendererContext,
+	type RendererDocument,
+	type RendererDraggableNode,
+	type RendererIssue,
+	type RendererModuleContext,
+	type RendererModuleSource,
+	type RendererNode,
+	type RendererSortableNode,
+	type RendererValidationResult
+} from '../types';
+import { cloneRendererValue, validateRendererDocument } from '../validate';
+import { createRendererId } from '../utils/id';
+import { createRendererModuleCatalog } from '../catalog';
+import {
+	createEmptyRendererDocument,
+	prepareRendererDocument,
+	resolveSortableInsertionIndex
+} from '../document';
+import { RendererStore } from '../store';
+import { BuiltinModules } from '../modules';
+import Widget from '../widget/index.vue';
+import SortableFrame from '../frame/sortable/index.vue';
+import DraggableFrame from '../frame/draggable/index.vue';
+import { containRotatedPlacement } from '../frame/draggable/geometry';
+import { deactivateRendererSelection } from '../frame/shared/blur-selection';
+import PropertyEditor from '../editor/index.vue';
+import JsonPopup from '../editor/json/popup';
+import PreviewPopup from '../assist/preview/popup.vue';
+import { RendererDraftCache } from './draft';
+
+interface CreatePayload {
+	type: string;
+	presetKey?: string;
+	index?: number;
+	point?: { x: number; y: number };
+}
+
+const props = withDefaults(defineProps<{
+	modelValue?: RendererDocument | null;
+	modules?: readonly RendererModuleSource[];
+	context?: RendererContext;
+	historyLimit?: number;
+	draftKey?: string;
+}>(), {
+	modelValue: null,
+	modules: undefined,
+	context: () => ({}),
+	historyLimit: 100
+});
+const emit = defineEmits<{
+	'update:modelValue': [document: RendererDocument];
+	'change': [document: RendererDocument];
+	'save': [document: RendererDocument];
+	'back': [];
+	'error': [issues: RendererIssue[]];
+}>();
+const localeContext = useLocale(computed(() => props.context?.locale));
+const { t } = localeContext;
+// Combo 的 context.locale 必须覆盖宿主 Locale，并继续传递给内置及业务 Editor。
+provideLocale(localeContext.locale);
+
+const initial = props.modelValue
+	? validateRendererDocument(props.modelValue)
+	: { valid: true, issues: [], document: undefined };
+const store = markRaw(new RendererStore(
+	initial.document || createEmptyRendererDocument(),
+	{ historyLimit: props.historyLimit }
+));
+const sources = computed<readonly RendererModuleSource[]>(() => props.modules === undefined
+	? BuiltinModules
+	: props.modules);
+const catalog = computed(() => createRendererModuleCatalog(sources.value));
+const mode = computed(() => store.document.layout.mode);
+const contextValue = computed(() => props.context || {});
+const moduleContext = computed<RendererModuleContext>(() => ({
+	...contextValue.value,
+	scene: 'combo',
+	frameMode: mode.value,
+	readonly: false
+}));
+const fileInput = ref<HTMLInputElement>();
+const portalName = createRendererId();
+const jsonPortal = new Portal(JsonPopup, {
+	name: `docs-renderer-json-${portalName}`,
+	leaveDelay: 0,
+	multiple: false
+});
+const previewPortal = new Portal(PreviewPopup, {
+	name: `docs-renderer-preview-${portalName}`,
+	leaveDelay: 0,
+	multiple: false
+});
+const activePortals = new Set<{ destroy: () => void }>();
+const draftCache = new RendererDraftCache();
+let draftTimer: ReturnType<typeof setTimeout> | undefined;
+let draftReady = !props.draftKey;
+let suppressDraftWrite = false;
+let sourceDocument = cloneRendererValue(
+	initial.document || createEmptyRendererDocument()
+) as RendererDocument;
+
+const signatureOf = (value: unknown) => {
+	try {
+		return JSON.stringify(value);
+	} catch {
+		return null;
+	}
+};
+let externalSignature = signatureOf(props.modelValue);
+watch(() => props.modelValue, (value) => {
+	const nextSignature = signatureOf(value);
+	if (nextSignature === null) {
+		emit('error', [{
+			path: '$',
+			code: 'document.json',
+			message: '页面文档必须是 JSON-safe 数据',
+			severity: 'error'
+		}]);
+		return;
+	}
+	if (!value || nextSignature === JSON.stringify(store.document)) {
+		externalSignature = nextSignature;
+		return;
+	}
+	const result = validateRendererDocument(value);
+	if (!result.document) {
+		emit('error', result.issues);
+		return;
+	}
+	externalSignature = nextSignature;
+	store.resetExternal(result.document);
+	sourceDocument = cloneRendererValue(result.document) as RendererDocument;
+}, { deep: true });
+watch(() => store.document, (value) => {
+	const signature = JSON.stringify(value);
+	if (signature === externalSignature) return;
+	const document = cloneRendererValue(value) as RendererDocument;
+	externalSignature = signature;
+	emit('update:modelValue', document);
+	emit('change', document);
+	if (props.draftKey && draftReady && !suppressDraftWrite) {
+		if (draftTimer) clearTimeout(draftTimer);
+		draftTimer = setTimeout(() => {
+			draftCache.set({
+				key: props.draftKey!,
+				document: cloneRendererValue(store.document) as RendererDocument,
+				updatedAt: Date.now()
+			}).catch(() => {
+				// 草稿是辅助能力，浏览器禁止 IndexedDB 时不影响当前编辑。
+			});
+		}, 500);
+	}
+}, { deep: true });
+
+const handleStagePointerDown = (event: PointerEvent) => {
+	deactivateRendererSelection(store, event);
+};
+
+const handleCreate = async (payload: CreatePayload) => {
+	try {
+		const definition = await catalog.value.get(payload.type);
+		const capability = definition?.frames[mode.value];
+		if (!definition || !capability || payload.type === RENDERER_PAGE_TYPE || payload.type === RENDERER_SELECTION_TYPE) return;
+		const count = store.document.blocks.filter(node => node.module.type === payload.type).length;
+		if (capability.maxInstances && count >= capability.maxInstances) {
+			Message.warning(t('renderer.modules.maxInstances', { count: capability.maxInstances, type: payload.type }));
+			return;
+		}
+		const index = Math.min(
+			Math.max(0, payload.index ?? store.document.blocks.length),
+			store.document.blocks.length
+		);
+		const createContext = {
+			frameMode: mode.value,
+			presetKey: payload.presetKey,
+			index,
+			document: store.document,
+			context: contextValue.value
+		};
+		const widget = capability.widget || definition.widget;
+		const preset = widget.presets?.find(value => value.key === payload.presetKey);
+		if (payload.presetKey && !preset) {
+			throw new Error(`Unknown renderer preset: ${payload.type}/${payload.presetKey}`);
+		}
+		const propsValue = definition.data.create(createContext);
+		const frameDraft = capability.create?.(createContext);
+		const presetDraft = preset?.create?.(createContext);
+		const draft = {
+			props: { ...frameDraft?.props, ...presetDraft?.props },
+			appearance: { ...frameDraft?.appearance, ...presetDraft?.appearance },
+			placement: { ...frameDraft?.placement, ...presetDraft?.placement }
+		};
+		const module = {
+			type: definition.identity.type,
+			version: definition.identity.version,
+			props: { ...propsValue, ...draft?.props }
+		};
+		let node: RendererNode;
+		let target = index;
+		if (mode.value === 'sortable') {
+			target = await resolveSortableInsertionIndex(
+				store.document.blocks as readonly RendererSortableNode[],
+				catalog.value,
+				payload.type,
+				index
+			);
+			const fill = Boolean(definition.frames.sortable?.fullWidth);
+			node = {
+				id: createRendererId(),
+				module,
+				appearance: {
+					marginTop: 0,
+					marginBottom: 0,
+					paddingTop: 0,
+					paddingBottom: 0,
+					paddingLeft: 0,
+					paddingRight: 0,
+					fullWidth: fill,
+					...(fill
+						? {}
+						: { maxWidth: definition.frames.sortable?.maxWidth || RENDERER_SORTABLE_CONTENT_WIDTH }),
+					...draft?.appearance
+				}
+			} satisfies RendererSortableNode;
+		} else {
+			const draggable = definition.frames.draggable!;
+			let placement = { ...draggable.initialPlacement(), ...draft?.placement };
+			if (typeof draft.placement?.zIndex !== 'number') {
+				placement.zIndex = Math.max(
+					0,
+					...store.document.blocks.map(node => node.placement?.zIndex || 0)
+				) + 1;
+			}
+			if (payload.point) {
+				placement.x = payload.point.x - placement.width / 2;
+				placement.y = payload.point.y - placement.height / 2;
+			}
+			if (draggable.containment !== 'none' && store.document.layout.mode === 'draggable') {
+				placement = containRotatedPlacement(
+					placement,
+					store.document.layout.width,
+					store.document.layout.height
+				);
+			}
+			node = { id: createRendererId(), module, placement } satisfies RendererDraggableNode;
+		}
+		store.insertNode(target, node);
+	} catch (reason) {
+		Message.error(reason instanceof Error ? reason.message : String(reason));
+	}
+};
+
+const validate = async (): Promise<RendererValidationResult> => prepareRendererDocument(
+	store.document,
+	catalog.value,
+	moduleContext.value
+);
+const save = async () => {
+	const result = await validate();
+	if (!result.valid || !result.document) {
+		emit('error', result.issues);
+		const first = result.issues.find(issue => issue.severity === 'error');
+		if (first?.nodeId) store.select(first.nodeId);
+		Message.error(first?.message || t('renderer.common.validationFailed'));
+		return result;
+	}
+	emit('save', cloneRendererValue(result.document));
+	sourceDocument = cloneRendererValue(result.document) as RendererDocument;
+	if (props.draftKey) {
+		cancelDraftWrite();
+		await draftCache.remove(props.draftKey).catch(() => {
+			// 保存已成功；草稿清不掉时下次编辑仍可手动清除。
+		});
+	}
+	return result;
+};
+const preview = async () => {
+	const leaf = previewPortal.popup({
+		document: cloneRendererValue(store.document),
+		modules: sources.value,
+		context: contextValue.value
+	});
+	activePortals.add(leaf);
+	try {
+		await leaf;
+	} catch {
+		// 用户关闭预览不属于编辑错误。
+	} finally {
+		activePortals.delete(leaf);
+	}
+};
+const handleJson = async () => {
+	const leaf = jsonPortal.popup({
+		document: cloneRendererValue(store.document),
+		modules: sources.value,
+		context: moduleContext.value
+	});
+	activePortals.add(leaf);
+	try {
+		const value = await leaf as RendererDocument;
+		if (value) store.replaceDocument(value);
+	} catch {
+		// 用户取消 JSON 草稿时不修改当前文档。
+	} finally {
+		activePortals.delete(leaf);
+	}
+};
+const importDocument = async (value: unknown): Promise<RendererValidationResult> => {
+	const result = await prepareRendererDocument(value, catalog.value, moduleContext.value);
+	if (!result.valid || !result.document) {
+		emit('error', result.issues);
+		return result;
+	}
+	store.replaceDocument(result.document);
+	return result;
+};
+const exportDocument = () => JSON.stringify(store.document, null, '\t');
+const select = (id: string | null) => store.select(id);
+const handleImport = () => fileInput.value?.click();
+const handleFile = async (event: Event) => {
+	const input = event.target as HTMLInputElement;
+	const file = input.files?.[0];
+	input.value = '';
+	if (!file) return;
+	try {
+		const result = await importDocument(JSON.parse(await file.text()));
+		if (!result.valid || !result.document) {
+			throw new Error(result.issues.map(issue => issue.message).join('\n'));
+		}
+	} catch (reason) {
+		Message.error(reason instanceof Error ? reason.message : String(reason));
+	}
+};
+const handleExport = () => {
+	const blob = new Blob([exportDocument()], { type: 'application/json' });
+	const anchor = document.createElement('a');
+	anchor.href = URL.createObjectURL(blob);
+	anchor.download = `${store.document.meta.title || 'document'}.json`;
+	anchor.click();
+	URL.revokeObjectURL(anchor.href);
+};
+const handleKeydown = async (event: KeyboardEvent) => {
+	const target = event.target as HTMLElement;
+	if (target.matches('input,textarea,select,[contenteditable="true"]')) return;
+	if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
+		event.preventDefault();
+		if (event.shiftKey) store.redo();
+		else store.undo();
+	} else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'c') {
+		event.preventDefault();
+		store.copySelection();
+	} else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'v') {
+		event.preventDefault();
+		store.pasteClipboard();
+	} else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'x') {
+		const node = store.selectedId ? store.getNode(store.selectedId) : undefined;
+		if (!node || node.module.type === RENDERER_PAGE_TYPE || node.module.type === RENDERER_SELECTION_TYPE) return;
+		event.preventDefault();
+		store.copySelection();
+		store.removeNode(node.id);
+	} else if ((event.key === 'Delete' || event.key === 'Backspace') && store.selectedId) {
+		const removable: string[] = [];
+		for (const id of store.selectedIds) {
+			const node = store.getNode(id);
+			if (!node) continue;
+			try {
+				const definition = await catalog.value.get(node.module.type);
+				if (definition?.frames[mode.value]?.deletable !== false) removable.push(id);
+			} catch {
+				// 模块定义不可用时保留节点，避免键盘操作误删未知数据。
+			}
+		}
+		store.removeNodes(removable);
+	}
+};
+const getDocument = () => cloneRendererValue(store.document) as RendererDocument;
+const cancelDraftWrite = () => {
+	if (!draftTimer) return;
+	clearTimeout(draftTimer);
+	draftTimer = undefined;
+};
+const clearDraft = async () => {
+	if (!props.draftKey) return;
+	cancelDraftWrite();
+	const restore = cloneRendererValue(sourceDocument) as RendererDocument;
+	suppressDraftWrite = true;
+	try {
+		await draftCache.remove(props.draftKey);
+		store.resetExternal(restore);
+		externalSignature = signatureOf(restore);
+		emit('update:modelValue', restore);
+		emit('change', restore);
+		await nextTick();
+		Message.success(t('renderer.common.draftCleared'));
+	} catch {
+		Message.error(t('renderer.common.draftClearFailed'));
+	} finally {
+		suppressDraftWrite = false;
+	}
+};
+onMounted(async () => {
+	if (!initial.valid) emit('error', initial.issues);
+	if (!props.draftKey) return;
+	const loaded = props.modelValue
+		? validateRendererDocument(props.modelValue).document
+		: initial.document;
+	if (loaded) sourceDocument = cloneRendererValue(loaded) as RendererDocument;
+	try {
+		const draft = await draftCache.get(props.draftKey);
+		const documentUpdatedAt = Number(props.modelValue?.meta.updatedAt || 0);
+		if (draft && draft.updatedAt > documentUpdatedAt) {
+			const result = await prepareRendererDocument(draft.document, catalog.value, moduleContext.value);
+			if (result.valid && result.document) store.resetExternal(result.document);
+		}
+	} catch {
+		Message.error(t('renderer.common.draftRestoreFailed'));
+	} finally {
+		draftReady = true;
+	}
+});
+onBeforeUnmount(() => {
+	cancelDraftWrite();
+	activePortals.forEach(leaf => leaf.destroy());
+	activePortals.clear();
+});
+defineExpose({
+	validate,
+	save,
+	preview,
+	undo: store.undo.bind(store),
+	redo: store.redo.bind(store),
+	getDocument,
+	importDocument,
+	exportDocument,
+	select,
+	clearDraft
+});
+</script>

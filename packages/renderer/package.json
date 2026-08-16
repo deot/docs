@@ -1,0 +1,33 @@
+{
+  "name": "@deot/docs-renderer",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "style": "dist/index.style.css",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.scss",
+    "**/*.css"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@deot/docs-locale": "*",
+    "@deot/docs-theme": "*",
+    "@deot/helper-resize": "^1.1.3"
+  },
+  "peerDependencies": {
+    "@deot/vc": "^1.0.72",
+    "vue": "^3.5.39"
+  },
+  "devDependencies": {
+    "@deot/vc": "^1.0.72",
+    "fake-indexeddb": "^6.2.5",
+    "vue": "^3.5.39"
+  }
+}

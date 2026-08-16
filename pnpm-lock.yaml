@@ -39,6 +39,9 @@ importers:
       '@deot/docs-playground':
         specifier: '*'
         version: link:../playground
+      '@deot/docs-renderer':
+        specifier: '*'
+        version: link:../renderer
       '@deot/docs-theme':
         specifier: '*'
         version: link:../theme
@@ -52,8 +55,8 @@ importers:
         specifier: ^1.1.10
         version: 1.1.10
       '@deot/vc':
-        specifier: ^1.0.71
-        version: 1.0.71(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))
+        specifier: ^1.0.72
+        version: 1.0.72(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))
       es-module-lexer:
         specifier: ^2.3.1
         version: 2.3.1
@@ -127,6 +130,9 @@ importers:
       '@deot/docs-playground':
         specifier: '*'
         version: link:../playground
+      '@deot/docs-renderer':
+        specifier: '*'
+        version: link:../renderer
       '@deot/docs-theme':
         specifier: '*'
         version: link:../theme
@@ -174,8 +180,8 @@ importers:
         specifier: ^1.1.4
         version: 1.1.4
       '@deot/vc':
-        specifier: ^1.0.71
-        version: 1.0.71(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))
+        specifier: ^1.0.72
+        version: 1.0.72(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))
       echarts:
         specifier: ^6.1.0
         version: 6.1.0
@@ -220,14 +226,36 @@ importers:
         specifier: ^1.1.4
         version: 1.1.4
       '@deot/vc':
-        specifier: ^1.0.71
-        version: 1.0.71(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))
+        specifier: ^1.0.72
+        version: 1.0.72(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))
       echarts:
         specifier: ^6.1.0
         version: 6.1.0
       photoswipe:
         specifier: ^5.4.4
         version: 5.4.4
+      vue:
+        specifier: ^3.5.39
+        version: 3.5.40(typescript@6.0.3)
+
+  packages/renderer:
+    dependencies:
+      '@deot/docs-locale':
+        specifier: '*'
+        version: link:../locale
+      '@deot/docs-theme':
+        specifier: '*'
+        version: link:../theme
+      '@deot/helper-resize':
+        specifier: ^1.1.3
+        version: 1.1.3
+    devDependencies:
+      '@deot/vc':
+        specifier: ^1.0.72
+        version: 1.0.72(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))
+      fake-indexeddb:
+        specifier: ^6.2.5
+        version: 6.2.5
       vue:
         specifier: ^3.5.39
         version: 3.5.40(typescript@6.0.3)
@@ -658,8 +686,8 @@ packages:
   '@deot/style@1.1.4':
     resolution: {integrity: sha512-wBlUKR9ltdWAmAcvMlAp9mE028mcxnDvg9i+GDQpCuCyKaNjLS+TWzIi48vko1Ob/5kpAHzG2pRiQ1KCakHDlw==}
 
-  '@deot/vc-components@1.0.71':
-    resolution: {integrity: sha512-ecjKx2DbkzhgsB9aQ1EtbYCgSVvosFs2UXgTFSx8MuOWR0Jr9DuRg5jipawnnHtkjT5JiqyGJzh8dAUKVhKFfQ==}
+  '@deot/vc-components@1.0.72':
+    resolution: {integrity: sha512-JHK6T+6zhv4GHPs7w9Rhwc4VmXovq668biyILXuYrfw0K0a9R7+bL7jYTqkeyjHnPp5m4zAstkIoSCDDaD3t7w==}
     peerDependencies:
       '@deot/helper': '*'
       '@zumer/snapdom': '*'
@@ -684,19 +712,19 @@ packages:
       vue:
         optional: true
 
-  '@deot/vc-hooks@1.0.71':
-    resolution: {integrity: sha512-hqTJFz9+uNPCHTx+LZIXam8bXo8tg3xjavnJIE+UkqcXJam1EGhsSmFZbGHATjc0leYnoFVQw9cT1vJYlP10vg==}
+  '@deot/vc-hooks@1.0.72':
+    resolution: {integrity: sha512-8xfpnH5mOeKdncfF7d2n2mlKPpQiNpsTTViudppwuxOtQ+W7zPHvni7Kf+ZdDghvlTuGSb65x7D/qMVGbv4O1w==}
     peerDependencies:
       vue: '*'
     peerDependenciesMeta:
       vue:
         optional: true
 
-  '@deot/vc-shared@1.0.71':
-    resolution: {integrity: sha512-Es/RxPYuuTvgQqpmCICuYuPZlMaeNuRpjDXm7c6X+cL5gJ4icYbVkzhJPLrFHp2p5GB43y48+RoUvNha2kXKRw==}
+  '@deot/vc-shared@1.0.72':
+    resolution: {integrity: sha512-ELGRuZ6o9WXNqbo1MrqEjGp6Azk1z1R6P7YboXkpDFrY88TI028UMydah3s7uSAOjVXGneQq8/VCpZ6L4v0CfA==}
 
-  '@deot/vc@1.0.71':
-    resolution: {integrity: sha512-rzKm3/R9JSlN2QstUaX9wAKqOkMczNyUXVu/9WAxtwEypb0PLtw9Z11EGs+kemlSAKHBqHwDGdX4jfvPjQf1yg==}
+  '@deot/vc@1.0.72':
+    resolution: {integrity: sha512-LQdM5csnbUJXzHYbB3RYD2QRC0bpN1DAjgEmDWSY4acRqAE7wb/BO5iDL62hFaRIHmux3HV6OGUL4e0XVsJASQ==}
     peerDependencies:
       vue: '*'
     peerDependenciesMeta:
@@ -5458,7 +5486,7 @@ snapshots:
 
   '@deot/style@1.1.4': {}
 
-  '@deot/vc-components@1.0.71(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))':
+  '@deot/vc-components@1.0.72(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))':
     optionalDependencies:
       '@deot/helper': 1.1.17
       echarts: 6.1.0
@@ -5466,17 +5494,17 @@ snapshots:
       photoswipe: 5.4.4
       vue: 3.5.40(typescript@6.0.3)
 
-  '@deot/vc-hooks@1.0.71(vue@3.5.40(typescript@6.0.3))':
+  '@deot/vc-hooks@1.0.72(vue@3.5.40(typescript@6.0.3))':
     optionalDependencies:
       vue: 3.5.40(typescript@6.0.3)
 
-  '@deot/vc-shared@1.0.71': {}
+  '@deot/vc-shared@1.0.72': {}
 
-  '@deot/vc@1.0.71(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))':
+  '@deot/vc@1.0.72(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))':
     dependencies:
-      '@deot/vc-components': 1.0.71(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))
-      '@deot/vc-hooks': 1.0.71(vue@3.5.40(typescript@6.0.3))
-      '@deot/vc-shared': 1.0.71
+      '@deot/vc-components': 1.0.72(@deot/helper@1.1.17)(echarts@6.1.0)(lodash-es@4.17.21)(photoswipe@5.4.4)(vue@3.5.40(typescript@6.0.3))
+      '@deot/vc-hooks': 1.0.72(vue@3.5.40(typescript@6.0.3))
+      '@deot/vc-shared': 1.0.72
     optionalDependencies:
       vue: 3.5.40(typescript@6.0.3)
     transitivePeerDependencies:
