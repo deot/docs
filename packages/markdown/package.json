@@ -22,13 +22,13 @@
     "markdown-it-container": "^4.0.0"
   },
   "peerDependencies": {
-    "@deot/vc": "^1.0.71",
+    "@deot/vc": "^1.0.72",
     "vue": "^3.5.39"
   },
   "devDependencies": {
     "@deot/helper": "^1.1.17",
     "@deot/style": "^1.1.4",
-    "@deot/vc": "^1.0.71",
+    "@deot/vc": "^1.0.72",
     "echarts": "^6.1.0",
     "photoswipe": "^5.4.4",
     "vue": "^3.5.39"

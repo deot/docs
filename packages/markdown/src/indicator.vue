@@ -144,7 +144,9 @@ const activeIndex = ref(0);
 const hoverIndex = ref<number>();
 const previewTop = ref(0);
 const dragging = ref(false);
+const stickyInset = ref('0px');
 let observer: MutationObserver | undefined;
+let hostResizeObserver: ResizeObserver | undefined;
 let scrollHost: ScrollHost | undefined;
 let usesParentScroller = false;
 let captureTarget: HTMLElement | undefined;
@@ -158,7 +160,8 @@ const toCssLength = (value: number | string | undefined, fallback: string) => (
 
 const rootStyle = computed<CSSProperties>(() => ({
 	'--docs-markdown-indicator-height': toCssLength(props.options.height, 'min(72vh, 600px)'),
-	'--docs-markdown-indicator-top': toCssLength(props.options.top, '16px')
+	'--docs-markdown-indicator-inset': stickyInset.value,
+	'--docs-markdown-indicator-top': toCssLength(props.options.top, '0px')
 }));
 
 const hoveredMarker = computed(() => typeof hoverIndex.value === 'number'
@@ -340,10 +343,64 @@ const scheduleRefresh = () => {
 	if (!refreshFrame) refreshFrame = requestAnimationFrame(refreshMarkers);
 };
 
+/**
+ * 读取当前滚动容器的可视高度。
+ * sticky 的百分比 top 会相对整篇文档计算，不能用来做容器垂直居中。
+ * @returns 滚动容器 clientHeight，窗口滚动时回退到 innerHeight。
+ */
+const getScrollHostClientHeight = () => {
+	if (usesParentScroller) {
+		return parentScroller?.wrapper?.clientHeight
+			|| parentScroller?.clientHeight
+			|| window.innerHeight;
+	}
+	if (scrollHost instanceof HTMLElement) return scrollHost.clientHeight;
+	return window.innerHeight;
+};
+
+/**
+ * 读取指示器可视高度：数字配置优先，否则测量已挂载节点或回退默认值。
+ * @returns 指示器高度，单位 px。
+ */
+const resolveIndicatorHeight = () => {
+	const height = props.options.height;
+	if (typeof height === 'number' && Number.isFinite(height) && height > 0) return height;
+	const measured = viewport.value?.getBoundingClientRect().height || 0;
+	if (measured > 0) return measured;
+	return Math.min(window.innerHeight * 0.72, 600);
+};
+
+/** 把指示器钉在滚动容器可视区域的垂直中心。 */
+const updateStickyInset = () => {
+	const hostHeight = getScrollHostClientHeight();
+	const indicatorHeight = resolveIndicatorHeight();
+	stickyInset.value = hostHeight > 0
+		? `${Math.max(0, (hostHeight - indicatorHeight) / 2)}px`
+		: '0px';
+};
+
+/** 跟随滚动容器和指示器自身的尺寸变化，保持垂直居中。 */
+const observeHostSize = () => {
+	hostResizeObserver?.disconnect();
+	hostResizeObserver = undefined;
+	if (typeof ResizeObserver !== 'undefined') {
+		hostResizeObserver = new ResizeObserver(updateStickyInset);
+		const host = usesParentScroller
+			? parentScroller?.wrapper
+			: (scrollHost instanceof HTMLElement ? scrollHost : undefined);
+		if (host) hostResizeObserver.observe(host);
+		if (viewport.value) hostResizeObserver.observe(viewport.value);
+	}
+	updateStickyInset();
+};
+
 /** 解除旧文档的观察和滚动监听。 */
 const cleanupTarget = () => {
 	observer?.disconnect();
 	observer = undefined;
+	hostResizeObserver?.disconnect();
+	hostResizeObserver = undefined;
+	window.removeEventListener('resize', updateStickyInset);
 	if (usesParentScroller) parentScroller?.off?.(handleScroll);
 	else if (scrollHost) scrollHost.removeEventListener('scroll', handleScroll);
 	usesParentScroller = false;
@@ -370,6 +427,7 @@ const setupTarget = async () => {
 		scrollHost = getScrollHost();
 		scrollHost.addEventListener('scroll', handleScroll, { passive: true });
 	}
+	window.addEventListener('resize', updateStickyInset, { passive: true });
 	observer = new MutationObserver(scheduleRefresh);
 	observer.observe(props.target, {
 		childList: true,
@@ -377,6 +435,7 @@ const setupTarget = async () => {
 		subtree: true
 	});
 	refreshMarkers();
+	observeHostSize();
 };
 
 /**
@@ -520,6 +579,10 @@ const getMarkerStyle = (index: number) => {
 };
 
 watch([() => props.target, localeName], setupTarget, { immediate: true });
+watch([() => props.options.height, viewport], () => {
+	if (viewport.value && hostResizeObserver) hostResizeObserver.observe(viewport.value);
+	updateStickyInset();
+});
 
 onBeforeUnmount(() => {
 	targetGeneration++;
@@ -534,7 +597,7 @@ onBeforeUnmount(() => {
 
 @include block(docs-markdown-indicator) {
 	position: sticky;
-	top: var(--docs-markdown-indicator-top);
+	top: calc(var(--docs-markdown-indicator-inset, 0px) + var(--docs-markdown-indicator-top, 0px));
 	z-index: 4;
 	height: 0;
 	pointer-events: none;

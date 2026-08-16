@@ -6,11 +6,28 @@ import { zhCN } from '@deot/docs-locale';
 import { Markdown as MarkdownRenderer } from '../src/markdown';
 import { Markdown, parseMarkdownSearchSections } from '../src';
 
-const { codePreviewUnmounted, getScrollerMock, playgroundUnmounted } = vi.hoisted(() => ({
-	codePreviewUnmounted: vi.fn(),
-	getScrollerMock: vi.fn(),
-	playgroundUnmounted: vi.fn()
-}));
+const { codePreviewUnmounted, getScrollerMock, MockResizeObserver, playgroundUnmounted, resizeObservers } = vi.hoisted(() => {
+	const observers: Array<{ callback: () => void }> = [];
+	class ResizeObserverMock {
+		callback: () => void;
+		constructor(callback: () => void) {
+			this.callback = callback;
+			observers.push(this);
+		}
+
+		disconnect() {}
+		observe() {}
+		unobserve() {}
+	}
+	vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+	return {
+		codePreviewUnmounted: vi.fn(),
+		getScrollerMock: vi.fn(),
+		MockResizeObserver: ResizeObserverMock,
+		playgroundUnmounted: vi.fn(),
+		resizeObservers: observers
+	};
+});
 
 const runtimeWithConfig = (config: string, body: string) => [
 	':::playground',
@@ -193,6 +210,8 @@ describe('markdown', () => {
 		codePreviewUnmounted.mockReset();
 		getScrollerMock.mockClear();
 		playgroundUnmounted.mockReset();
+		resizeObservers.length = 0;
+		vi.stubGlobal('ResizeObserver', MockResizeObserver);
 	});
 
 	afterEach(() => {
@@ -362,6 +381,53 @@ describe('markdown', () => {
 		expect(wrapper.find('.docs-markdown-indicator').exists()).toBe(false);
 	});
 
+	it('centers the document indicator in the scroll host', async () => {
+		const host = document.createElement('div');
+		host.style.overflow = 'auto';
+		document.body.appendChild(host);
+		Object.defineProperty(host, 'clientHeight', { configurable: true, value: 800 });
+		const previousScroller = getScrollerMock.getMockImplementation();
+		getScrollerMock.mockImplementation(() => host);
+		try {
+			const wrapper = mount(Markdown, {
+				props: {
+					indicator: { height: 200 },
+					modelValue: '# First\n\nParagraph\n\n## Second\n\nLast paragraph'
+				},
+				attachTo: host
+			});
+			await vi.waitFor(() => {
+				expect(wrapper.find('.docs-markdown-indicator').exists()).toBe(true);
+			});
+			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
+				.toContain('--docs-markdown-indicator-inset: 300px');
+
+			await wrapper.setProps({ indicator: { height: 400 } });
+			await flushPromises();
+			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
+				.toContain('--docs-markdown-indicator-inset: 200px');
+
+			Object.defineProperty(host, 'clientHeight', { configurable: true, value: 900 });
+			resizeObservers.forEach(observer => observer.callback());
+			await flushPromises();
+			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
+				.toContain('--docs-markdown-indicator-inset: 250px');
+
+			Object.defineProperty(host, 'clientHeight', { configurable: true, value: 0 });
+			resizeObservers.forEach(observer => observer.callback());
+			await flushPromises();
+			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
+				.toContain('--docs-markdown-indicator-inset: 0px');
+
+			await wrapper.setProps({ locale: zhCN });
+			await flushPromises();
+			wrapper.unmount();
+		} finally {
+			host.remove();
+			if (previousScroller) getScrollerMock.mockImplementation(previousScroller);
+		}
+	});
+
 	it('uses the explicit locale for indicator UI', async () => {
 		const wrapper = mount(Markdown, {
 			props: {
@@ -382,13 +448,17 @@ describe('markdown', () => {
 		const on = vi.fn();
 		const off = vi.fn();
 		const setScrollTop = vi.fn();
+		const scrollerWrapper = document.createElement('div');
+		Object.defineProperty(scrollerWrapper, 'clientHeight', { value: 720 });
 		const Host = defineComponent({
 			setup() {
 				provide('vc-scroller', {
+					clientHeight: 720,
 					off,
 					on,
 					scrollTop: 0,
-					setScrollTop
+					setScrollTop,
+					wrapper: scrollerWrapper
 				});
 				return () => <Markdown modelValue="# First\n\nParagraph" />;
 			}

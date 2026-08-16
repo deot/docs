@@ -11,7 +11,7 @@ export interface MarkdownIndicatorOptions {
 	/** 指示器所在侧，默认位于正文右侧。 */
 	position?: 'left' | 'right';
 
-	/** 指示器相对滚动容器顶部的距离，数字按 px 处理。 */
+	/** 指示器相对滚动容器垂直中心的偏移，数字按 px 处理，默认居中。 */
 	top?: number | string;
 }
 

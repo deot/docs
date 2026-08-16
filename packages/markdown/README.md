@@ -39,7 +39,6 @@ const source = ref('# Hello @deot/docs');
 		position: 'right',
 		preview: true,
 		draggable: true,
-		top: 16,
 		height: 'min(72vh, 600px)'
 	}"
 />
@@ -52,7 +51,7 @@ const source = ref('# Hello @deot/docs');
 | `preview` | `boolean` | `true` | 是否展示悬停摘要。 |
 | `draggable` | `boolean` | `true` | 是否允许拖动快速浏览。 |
 | `position` | `'left' \| 'right'` | `'right'` | 指示器所在侧。 |
-| `top` | `number \| string` | `16` | 指示器相对滚动容器顶部的距离。 |
+| `top` | `number \| string` | `0` | 相对滚动容器垂直中心的偏移，默认上下居中。 |
 | `height` | `number \| string` | `min(72vh, 600px)` | 指示器的可视高度。 |
 
 ## Markdown 扩展
