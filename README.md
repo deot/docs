@@ -1,26 +1,28 @@
 # @deot/docs
 
-`@deot/docs` 是一套面向 Vue 3 的文档站点工具链。它以 `window.$docs` 作为页面协议，将 Markdown、递归 Sidebar、远程 Vue SFC、主题、Locale、搜索和离线缓存组合成可直接部署的文档应用。
+`@deot/docs` 是一套面向 Vue 3 的文档站点工具链。它以 `window.$docs` 作为页面协议，将 Markdown、V2 页面文档（`.page.json`）、递归 Sidebar、远程 Vue SFC、主题、Locale、搜索和离线缓存组合成可直接部署的文档应用。
 
 ## 特性
 
 - **Production-first**：页面默认加载已发布的 Client，可以直接部署；仅 `doc dev` 注入本地开发 Runtime。
-- **统一资源网关**：Markdown、JSON、SFC、JS、TS 和 CSS 经过同一套寻址、缓存、更新与订阅流程。
+- **统一资源网关**：Markdown、JSON、`.page.json`、SFC、JS、TS 和 CSS 经过同一套寻址、缓存、更新与订阅流程。
 - **增量开发体验**：开发模式监听已加载资源，通过 SSE 触发目标插槽更新，无需刷新整个页面。
 - **多语言路由**：`lang` 隔离路由、资源和缓存，Locale 独立负责界面翻译；内置 `zh-CN` 与 `en-US`。
 - **Markdown 与远程 SFC**：支持标题锚点、文档指示器、代码高亮、提示容器和按需加载的 Playground。
 - **缓存与预加载**：使用 IndexedDB 保存资源版本，支持离线回退、空闲预加载、批量更新和缓存诊断。
 - **Light / Dark Theme**：Docs 与 `@deot/vc` 共享主题状态，支持系统偏好、持久化和切换动画。
-- **内置文档搜索**：搜索当前语言下已缓存的 Markdown，支持小节定位、历史记录和收藏。
+- **内置文档搜索**：搜索当前语言下已缓存的 Markdown 与页面文档，支持小节定位、历史记录和收藏。
+- **模块化页面**：Renderer 使用版本化 JSON 协议组合 Hero、特性和业务模块，Combo 提供上下排序与自由布局装修工作台。
 
 ## 包结构
 
 | 包 | 说明 |
 | --- | --- |
-| [`@deot/docs`](packages/index/README.md) | 聚合入口，导出 Dever、Locale 和 Theme。 |
+| [`@deot/docs`](packages/index/README.md) | 聚合入口，导出 Dever、Locale、Renderer 和 Theme。 |
 | [`@deot/docs-cli`](packages/cli/README.md) | 提供 `doc dev`、`doc build` 和 `doc preview` 命令。 |
 | [`@deot/docs-dever`](packages/dever/README.md) | Development、build 和 preview 的运行层。 |
 | [`@deot/docs-client`](packages/client/README.md) | Vue 应用壳、Router、布局、搜索和 ResourceGateway。 |
+| [`@deot/docs-renderer`](packages/renderer/README.md) | 版本化页面协议、只读 Renderer 和装修 Combo。 |
 | [`@deot/docs-markdown`](packages/markdown/README.md) | Markdown 渲染、指示器、代码高亮与 Playground 容器。 |
 | [`@deot/docs-playground`](packages/playground/README.md) | 远程 SFC 编译、编辑器和 iframe 预览。 |
 | [`@deot/docs-locale`](packages/locale/README.md) | 分包命名空间 Locale、翻译函数和 Vue Provider。 |
@@ -41,7 +43,9 @@ site/
 ├── index.html
 ├── en-US/
 │   ├── index.md
-│   └── sidebar.json
+│   ├── sidebar.json
+│   └── pages/                 # 可选：Renderer 页面文档
+│       └── home.page.json
 └── zh-CN/
     ├── index.md
     └── sidebar.json
@@ -159,13 +163,15 @@ pnpm exec doc dev --workspace .
 | --- | --- |
 | `doc dev` | 启动 Vite，注入 `window.__DOCS_RUNTIME__`，开启本地资源响应、watcher 和 SSE 更新。 |
 | `doc preview` | 直接以 production Runtime 预览 workspace，不启用 Vite、watcher、HMR 或 SSE。 |
-| `doc build` | 以 workspace 的 `index.html` 为入口生成静态站点，复制独立内容资源后退出。 |
+| `doc build` | 以 workspace 的 `index.html` 为入口生成静态站点，复制独立内容资源（含 `.page.json`）后退出。 |
 
 `window.__DOCS_RUNTIME__` 是开发服务与 Client 之间的内部环境信号；应用配置应始终写在 `window.$docs` 中。直接部署和 production build 不需要声明 Runtime。
 
-## 默认首页
+## 首页
 
-未配置 `routes['/']` 时，Client 会显示内置的多语言开始页。点击开始页后，Client 先按 routes 的声明顺序选择业务路由，再从 Sidebar 中按深度优先顺序取得该路由的第一个具体 value。
+未配置 `routes['/']` 时，Client 渲染 `$docs.home` 中的页面文档。这份文档要写在站点的 `index.html` 里（内联 JSON 或 `.page.json` 地址），Client 不提供内置示例页。未配置时首页画布为空。页面协议、内置模块和 Combo 见 [`@deot/docs-renderer`](packages/renderer/README.md)；开发模式下保存会调用 `PUT /__docs/page`，由 [`@deot/docs-dever`](packages/dever/README.md) 写入语言目录下的 `.page.json`。
+
+`routes['/']` 可以完全覆盖该首页路由。内容页入口仍由业务 routes 和 Sidebar 决定：Client 先按 routes 声明顺序选择路由模式，再从 Sidebar 中按深度优先顺序取得该路由的第一个具体 value。
 
 路由前缀、参数名称和参数数量均由业务决定：
 
@@ -177,19 +183,21 @@ const routes = {
 };
 ```
 
-例如 `/components/:name` 对应的第一个 Sidebar value 是 `/components/button`，开始页就会进入当前语言的组件页面。配置对象、字符串或函数形式的 `routes['/']` 可以完全覆盖内置首页。
+例如 `/components/:name` 对应的第一个 Sidebar value 是 `/components/button`，即可作为当前语言的内容入口。
 
 ## `$docs` 核心配置
 
 | 字段 | 说明 |
 | --- | --- |
-| `locales` | 文档语言及 Header 展示名称；第一项是默认语言。 |
+| `locales` | 文档语言及 Header 展示名称；第一项是默认语言。界面文案可覆盖 `client` / `markdown` / `playground` / `renderer` 命名空间。 |
 | `routes` | 去掉语言前缀后的路由和五插槽配置。 |
 | `base` | Production 资源基准 URL。 |
 | `namespace` | IndexedDB 缓存隔离标识。 |
 | `modules` | 远程 SFC 裸模块名到 URL 的映射。 |
 | `theme` | 主题开关或默认主题配置。 |
 | `prefetch` | 空闲预加载开关或批次配置。 |
+| `home` | 可选的多语言首页页面文档或 `.page.json` 地址；未配置时首页为空。 |
+| `renderers` | 业务自定义 Renderer 模块注册项。 |
 | `resolve.markdown` | 根据 `lang`、路由值和当前路由产生 Markdown 逻辑地址。 |
 | `resolve.resource` | 将任意逻辑资源转换为最终请求 URL。 |
 | `resolve.link` | 将 Markdown 链接转换为外链或本地化 Router 地址。 |
@@ -217,7 +225,7 @@ npm run lint
 npm run lint:style
 ```
 
-仓库中的 [`site/index.html`](site/index.html) 直接读取各子包 README，展示了按 Runtime 在本地文件与远程 Raw URL 之间切换的完整 resolver 配置。
+仓库中的 [`site/index.html`](site/index.html) 直接读取各子包 README，展示了按 Runtime 在本地文件与远程 Raw URL 之间切换的完整 resolver 配置，并用内联 Renderer 文档作为首页。
 
 ## 许可证
 

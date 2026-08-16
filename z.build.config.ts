@@ -27,6 +27,10 @@ if (isClientBrowserEntry) {
 		// 自引用。这里在最终选项钩子中覆盖它，确保入口和延迟加载分块无需
 		// Node 全局变量即可执行。
 		options(input) {
+			// 共享构建配置会把 ES 包依赖标记为 external；Client 的发布入口需要在
+			// 无 import map 的页面直接运行，因此在最终输入阶段清空该规则，把
+			// Renderer 等浏览器依赖一并打入入口或相对分块。
+			input.external = () => false;
 			input.transform = {
 				...input.transform,
 				define: {
@@ -66,7 +70,7 @@ if (isClientBrowserEntry) {
 		minify: true,
 		rolldownOptions: {
 			...config.build?.rolldownOptions,
-			external: [],
+			external: () => false,
 			output: {
 				...config.build?.rolldownOptions?.output,
 				// 某些编译工具在折叠 NODE_ENV 后仍会保留可选的 Node `process` 探测。

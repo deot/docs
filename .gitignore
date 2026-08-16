@@ -20,7 +20,7 @@ node_modules
 .history/
 
 # IDE - VSCode
-.vscode/*
+.vscode/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
@@ -29,7 +29,7 @@ node_modules
 # misc
 .sass-cache
 connect.lock
-coverage/*
+coverage/
 libpeerconnection.log
 npm-debug.log
 testem.log
