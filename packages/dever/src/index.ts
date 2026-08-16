@@ -76,7 +76,7 @@ export const createDeverConfig = (options: DeverOptions): InlineConfig => {
 	const workspaceRoot = workspace.root;
 	const outDir = path.resolve(cwd, String(options.outDir || 'dist'));
 	if (build) assertSafeBuildOutDir(workspaceRoot, outDir);
-	const localAliases = ['locale', 'markdown', 'playground', 'theme'].reduce<Record<string, string>>((result, name) => {
+	const localAliases = ['locale', 'renderer', 'markdown', 'playground', 'theme'].reduce<Record<string, string>>((result, name) => {
 		const source = path.resolve(cwd, `packages/${name}/src/index.ts`);
 		if (fs.existsSync(source)) {
 			if (name === 'theme') {

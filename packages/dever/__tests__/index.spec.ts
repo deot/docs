@@ -9,13 +9,38 @@ import {
 	default as createDocsPlugins,
 	getResourceType,
 	isInside,
-	isNotModified
+	isNotModified,
+	resolvePageSaveTarget
 } from '../src/plugins';
 import { createPreviewRequestHandler } from '../src/preview';
 import { resolveDocsWorkspace } from '../src/workspace';
 
 // @vitest-environment node
 describe('dever configuration', () => {
+	it('resolves page editor saves inside the selected workspace only', () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-page-save-'));
+		const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-page-save-outside-'));
+		try {
+			fs.mkdirSync(path.join(root, 'zh-CN'), { recursive: true });
+			expect(resolvePageSaveTarget(root, 'zh-CN', './pages/home.page.json')).toBe(
+				path.join(root, 'zh-CN/pages/home.page.json')
+			);
+			expect(() => resolvePageSaveTarget(root, 'zh-CN', '../secret.page.json')).toThrow();
+			expect(() => resolvePageSaveTarget(root, '../outside', './home.page.json')).toThrow();
+			if (process.platform !== 'win32') {
+				fs.symlinkSync(outside, path.join(root, 'zh-CN/linked'));
+				expect(() => resolvePageSaveTarget(
+					root,
+					'zh-CN',
+					'./linked/secret.page.json'
+				)).toThrow();
+			}
+		} finally {
+			fs.rmSync(root, { recursive: true, force: true });
+			fs.rmSync(outside, { recursive: true, force: true });
+		}
+	});
+
 	it('resolves default, root and explicit project workspaces safely', () => {
 		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-workspace-'));
 		const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-workspace-outside-'));
@@ -167,6 +192,15 @@ describe('dever configuration', () => {
 			lang: 'en-US',
 			source: 'packages/index/README.md'
 		})).toBe('/en-US/packages/dever?tab=api#rules');
+		expect(config.home.locales['zh-CN'].blocks.map((item: { module: { type: string } }) => item.module.type))
+			.toEqual(['hero', 'features', 'steps', 'faq', 'cta']);
+		expect(config.home.locales['zh-CN'].blocks[0].appearance).toEqual(expect.objectContaining({
+			fullWidth: true,
+			maxWidth: 1200
+		}));
+		expect(config.home.locales['zh-CN'].blocks[0].module.props.title).toBe('你好 @deot/docs');
+		expect(config.home.locales['en-US'].blocks[0].module.props.actions[0].to)
+			.toBe('/en-US/packages/guide');
 		expect(config.resolve.link({
 			href: '../cli/README.md',
 			lang: 'zh-CN',

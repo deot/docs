@@ -24,6 +24,7 @@ const gatewayResourceExtensions = new Set([
 ]);
 
 export const getResourceType = (filename: string) => {
+	if (/\.page\.json$/i.test(filename)) return 'page';
 	switch (path.extname(filename).toLowerCase()) {
 		case '.md': return 'markdown';
 		case '.json': return 'sidebar';
@@ -45,6 +46,118 @@ const getRequestHeader = (value: string | string[] | undefined) => (
 );
 
 const getRawPathname = (url: string) => url.split(/[?#]/u, 1)[0] || '/';
+
+const readJsonBody = async (req: import('node:http').IncomingMessage, limit = 2 * 1024 * 1024) => {
+	const chunks: Buffer[] = [];
+	let size = 0;
+	for await (const chunk of req) {
+		const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+		size += buffer.length;
+		if (size > limit) throw new RangeError('Payload Too Large');
+		chunks.push(buffer);
+	}
+	return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown;
+};
+
+const resolveExistingRealPath = (filename: string) => {
+	const tail: string[] = [];
+	let cursor = filename;
+	while (!fs.existsSync(cursor)) {
+		const parent = path.dirname(cursor);
+		if (parent === cursor) break;
+		tail.unshift(path.basename(cursor));
+		cursor = parent;
+	}
+	return path.resolve(fs.realpathSync(cursor), ...tail);
+};
+
+/**
+ * 将编辑器逻辑地址转换为 workspace 内的 Page JSON 文件。该入口只接受带语言
+ * 的相对资源地址，避免保存能力演变成任意文件写入接口。
+ * @param workspace 文档资源根目录。
+ * @param lang 页面使用的业务语言。
+ * @param source `.page.json` 逻辑资源地址。
+ * @returns 通过现有符号链接边界检查的文件绝对路径。
+ */
+export const resolvePageSaveTarget = (workspace: string, lang: string, source: string) => {
+	if (!/^[a-z\d_-]+$/iu.test(lang)) throw new RangeError('Invalid language');
+	if (
+		!source
+		|| source.includes('\\')
+		|| source.includes('\0')
+		|| source.includes('?')
+		|| source.includes('#')
+		|| path.posix.isAbsolute(source)
+	) throw new RangeError('Invalid page source');
+	const relative = source.replace(/^\.\//u, '');
+	if (!/\.page\.json$/iu.test(relative) || relative.split('/').includes('..')) {
+		throw new RangeError('Invalid page source');
+	}
+	const target = path.resolve(workspace, lang, relative);
+	const realWorkspace = fs.realpathSync(workspace);
+	if (!isInside(workspace, target) || !isInside(realWorkspace, resolveExistingRealPath(target))) {
+		throw new RangeError('Forbidden');
+	}
+	return target;
+};
+
+const configurePageWriter = (server: ViteDevServer, workspace: string) => {
+	server.middlewares.use('/__docs/page', async (req, res) => {
+		if (req.method !== 'PUT') {
+			res.statusCode = 405;
+			res.setHeader('Allow', 'PUT');
+			res.end('Method Not Allowed');
+			return;
+		}
+		if (!String(req.headers['content-type'] || '').startsWith('application/json')) {
+			res.statusCode = 415;
+			res.end('Unsupported Media Type');
+			return;
+		}
+		try {
+			const body = await readJsonBody(req);
+			if (!body || typeof body !== 'object') throw new TypeError('Invalid page payload');
+			const { lang, source, document } = body as Record<string, unknown>;
+			if (typeof lang !== 'string' || typeof source !== 'string') {
+				throw new TypeError('Invalid page payload');
+			}
+			if (!document || typeof document !== 'object' || Array.isArray(document)) {
+				throw new TypeError('Invalid page document');
+			}
+			const page = document as Record<string, unknown>;
+			const meta = page.meta as Record<string, unknown> | undefined;
+			const layout = page.layout as Record<string, unknown> | undefined;
+			if (
+				page.schemaVersion !== 2
+				|| !meta
+				|| typeof meta.id !== 'string'
+				|| !meta.id
+				|| !layout
+				|| !['sortable', 'draggable'].includes(String(layout.mode))
+				|| !Array.isArray(page.blocks)
+			) throw new TypeError('Invalid page document');
+			const target = resolvePageSaveTarget(workspace, lang, source);
+			const content = `${JSON.stringify(document, null, 2)}\n`;
+			fs.mkdirSync(path.dirname(target), { recursive: true });
+			const temporary = `${target}.${process.pid}.${Date.now()}.tmp`;
+			try {
+				fs.writeFileSync(temporary, content, { flag: 'wx' });
+				fs.renameSync(temporary, target);
+			} finally {
+				if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+			}
+			const etag = createEtag(Buffer.from(content));
+			res.statusCode = 200;
+			res.setHeader('Content-Type', 'application/json; charset=utf-8');
+			res.end(JSON.stringify({ source, etag }));
+		} catch (reason) {
+			res.statusCode = reason instanceof RangeError
+				? reason.message === 'Payload Too Large' ? 413 : 403
+				: 400;
+			res.end(reason instanceof Error ? reason.message : 'Invalid page payload');
+		}
+	});
+};
 
 /*
  * 在 WHATWG URL 规范化之前校验请求目标。`new URL()` 会折叠编码的点路径段；
@@ -167,6 +280,7 @@ const configureWorkspaceServer = (
 		: packages;
 	const rootReadme = path.resolve(resolved.projectRoot, 'README.md');
 	const urlPrefix = options.preview ? '/' : resolved.urlBase;
+	if (!options.preview) configurePageWriter(server, workspace);
 
 	server.middlewares.use((req, res, next) => {
 		let decoded: string | null;
