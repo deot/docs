@@ -34,7 +34,7 @@ pnpm exec doc dev --workspace .
 
 ### `doc dev`
 
-启动 Vite 开发服务。该模式会向 HTML 注入 `window.__DOCS_RUNTIME__`，提供本地资源寻址、`/__docs/events` SSE 和已加载资源的更新通知。
+启动 Vite 开发服务。该模式会向 HTML 注入 `window.__DOCS_RUNTIME__`，提供本地资源寻址、`/__docs/events` SSE、已加载资源的更新通知，以及 `PUT /__docs/page` 页面保存入口。保存规则见 [`@deot/docs-dever`](../dever/README.md)。
 
 ```bash
 pnpm exec doc dev --workspace site
@@ -42,7 +42,7 @@ pnpm exec doc dev --workspace site
 
 ### `doc build`
 
-以 workspace 的 `index.html` 为入口执行一次 production 构建，并将 workspace 内的静态资源复制到输出目录。构建完成后进程退出，不启用 watcher 或 SSE。
+以 workspace 的 `index.html` 为入口执行一次 production 构建，并将 workspace 内的静态资源（含 `.page.json`）复制到输出目录。构建完成后进程退出，不启用 watcher 或 SSE。
 
 ```bash
 pnpm exec doc build --workspace site --out-dir dist
