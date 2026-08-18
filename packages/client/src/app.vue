@@ -68,7 +68,7 @@ watch(
 );
 </script>
 <style lang="scss">
-@use '@deot/docs-theme/variables';
+@use '../node_modules/@deot/docs-theme/src/variables';
 @use './styles/bem' as *;
 
 html,

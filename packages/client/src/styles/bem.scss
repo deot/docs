@@ -1,3 +1,3 @@
 @forward '@deot/style/src/mixins/bem';
-@forward '@deot/docs-theme/functions';
-@forward '@deot/docs-theme/mixins';
+@forward '../../node_modules/@deot/docs-theme/src/functions';
+@forward '../../node_modules/@deot/docs-theme/src/mixins';

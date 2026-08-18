@@ -1,4 +1,4 @@
-@use '@deot/docs-theme/functions' as *;
+@use '../../node_modules/@deot/docs-theme/src/functions' as *;
 
 @mixin docs-renderer-tag {
 	display: inline-flex;

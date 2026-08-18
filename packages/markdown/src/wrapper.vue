@@ -47,7 +47,7 @@ const markdownBinding = computed(() => ({ source: source.value, locale: locale.v
 </script>
 <style lang="scss">
 @use '@deot/style/src/mixins/bem' as *;
-@use '@deot/docs-theme/variables';
+@use '../node_modules/@deot/docs-theme/src/variables';
 
 *,
 *::before,

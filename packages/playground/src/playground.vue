@@ -259,7 +259,7 @@ watch(normalizedViewportOptions, (options) => {
 </script>
 <style lang="scss">
 @use './style' as *;
-@use '@deot/docs-theme/variables';
+@use '../node_modules/@deot/docs-theme/src/variables';
 
 @include block(docs-playground) {
 	display: flex;
