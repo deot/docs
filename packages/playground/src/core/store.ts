@@ -46,7 +46,8 @@ const BUILTIN_IMPORT_ASSETS: Record<string, string> = {
 	'normalize-wheel': 'normalize-wheel-es/dist/index.mjs',
 	'photoswipe': 'photoswipe/dist/photoswipe.esm.js',
 	'photoswipe/lightbox': 'photoswipe/dist/photoswipe-lightbox.esm.js',
-	'lodash-es': 'lodash-es/lodash.js'
+	// 使用 esm 模块（lodash-es/lodash.js会加载600+子文件，加载时间过长。 +esm是jsdelivr提供的内部编译）
+	'lodash-es': 'lodash-es/+esm'
 };
 
 export const normalizeCdnURL = (cdnURL = DEFAULT_CDN_URL) => {
