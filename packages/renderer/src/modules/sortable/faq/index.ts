@@ -2,13 +2,14 @@ import { defineRendererModule } from '../../../catalog';
 import {
 	localeText,
 	moduleIssue,
+	normalizeSectionHeader,
 	SECTION_ALIGNMENTS,
 	toArrayValue,
-	toEnumValue,
 	toRecord,
 	toStringValue,
 	validateEnum
 } from '../../shared/utils';
+import type { RendererSectionHeader } from '../../shared/utils';
 import { sectionDraggableFrame, sectionSortableFrame } from '../../shared/canvas-frame';
 import Editor from './editor.vue';
 import Viewer from './viewer.vue';
@@ -32,11 +33,7 @@ const normalizeItem = (item: unknown): RendererFaqItem => {
 	};
 };
 
-export const FaqModule = defineRendererModule<{
-	eyebrow: string;
-	title: string;
-	description: string;
-	align: typeof SECTION_ALIGNMENTS[number];
+export const FaqModule = defineRendererModule<RendererSectionHeader & {
 	accent: string;
 	items: RendererFaqItem[];
 }>({
@@ -59,10 +56,7 @@ export const FaqModule = defineRendererModule<{
 		normalize: (value) => {
 			const record = toRecord(value);
 			return {
-				eyebrow: toStringValue(record.eyebrow),
-				title: toStringValue(record.title),
-				description: toStringValue(record.description),
-				align: toEnumValue(record.align, SECTION_ALIGNMENTS, 'center'),
+				...normalizeSectionHeader(record, 'center'),
 				accent: toStringValue(record.accent),
 				items: toArrayValue(record.items, normalizeItem)
 			};
@@ -85,11 +79,12 @@ export const FaqModule = defineRendererModule<{
 	},
 	integrations: {
 		collectSearchText: (props) => {
+			const record = toRecord(props);
 			const section = {
-				title: String(props.title || ''),
-				text: [props.eyebrow, props.description].filter(Boolean).join(' ')
+				title: String(record.title || ''),
+				text: [record.eyebrow, record.description].filter(Boolean).join(' ')
 			};
-			const items = (Array.isArray(props.items) ? props.items : []).map((item) => {
+			const items = (Array.isArray(record.items) ? record.items : []).map((item) => {
 				const current = toRecord(item);
 				return {
 					title: String(current.question || ''),

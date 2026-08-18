@@ -19,6 +19,7 @@ import type {
 	RendererDraggableDocument,
 	RendererSortableDocument
 } from '../src';
+import { invalid } from './fixtures';
 import { resolveSortableInsertionIndex } from '../src/document';
 
 const Viewer = defineComponent(() => () => h('div', 'viewer'));
@@ -88,7 +89,7 @@ describe('renderer protocol', () => {
 
 	it('converts documents between frames and drops unsupported modules', async () => {
 		const catalog = createRendererModuleCatalog(BuiltinModules);
-		const sortable = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const sortable = createEmptyRendererDocument('sortable');
 		sortable.blocks.push({
 			id: 'text',
 			module: { type: 'text', version: 1, props: { text: 'Keep' } },
@@ -111,7 +112,7 @@ describe('renderer protocol', () => {
 		expect(draggable.blocks.map(item => item.id)).toEqual(['text']);
 		expect(draggable.blocks[0].placement.y).toBe(40);
 		expect(draggable.blocks[0].placement.borderRadius).toBe(12);
-		const landing = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const landing = createEmptyRendererDocument('sortable');
 		landing.blocks.push({
 			id: 'hero',
 			module: { type: 'hero', version: 1, props: { title: 'Keep' } },
@@ -136,7 +137,7 @@ describe('renderer protocol', () => {
 		}));
 		const unchanged = await convertRendererDocumentFrame(sortable, sortable.layout, catalog);
 		expect(unchanged.layout).toEqual(sortable.layout);
-		const missing = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const missing = createEmptyRendererDocument('sortable');
 		missing.blocks.push({
 			id: 'gone',
 			module: { type: 'missing', version: 1, props: {} },
@@ -154,7 +155,7 @@ describe('renderer protocol', () => {
 				throw new Error('unavailable');
 			}
 		}]);
-		const broken = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const broken = createEmptyRendererDocument('sortable');
 		broken.blocks.push({
 			id: 'boom',
 			module: { type: 'boom', version: 1, props: {} },
@@ -177,7 +178,7 @@ describe('renderer protocol', () => {
 		sortable.blocks[0].appearance.borderRadius = 8;
 		sortable.blocks[0].appearance.borderRadiusTopLeft = 4;
 		expect(validateRendererDocument(sortable).valid).toBe(true);
-		const draggable = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
+		const draggable = createEmptyRendererDocument('draggable');
 		if (draggable.layout.mode !== 'draggable') throw new Error('unexpected mode');
 		draggable.blocks.push({
 			id: 'free',
@@ -190,13 +191,15 @@ describe('renderer protocol', () => {
 	});
 
 	it('rejects children, cross-frame fields and unsafe JSON', () => {
-		const invalid = page([{
-			...node('bad'),
-			children: [],
-			placement: { x: 0, y: 0, width: 10, height: 10, rotate: 0, zIndex: 0 },
-			module: { type: 'test:text', version: 1, props: { value: Number.NaN } }
-		} as never]);
-		const result = validateRendererDocument(invalid);
+		const result = validateRendererDocument({
+			...page(),
+			blocks: [{
+				...node('bad'),
+				children: [],
+				placement: { x: 0, y: 0, width: 10, height: 10, rotate: 0, zIndex: 0 },
+				module: { type: 'test:text', version: 1, props: { value: Number.NaN } }
+			}]
+		});
 		expect(result.valid).toBe(false);
 		expect(result.issues.map(item => item.code)).toEqual(expect.arrayContaining([
 			'node.children.unsupported',
@@ -324,7 +327,7 @@ describe('renderer protocol', () => {
 				}
 			}
 		});
-		const document = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
+		const document = createEmptyRendererDocument('draggable');
 		document.blocks.push({
 			id: 'free',
 			module: { type: 'test:free', version: 1, props: { text: 'free' } },
@@ -360,7 +363,7 @@ describe('renderer protocol', () => {
 			...module(),
 			data: {
 				...module().data,
-				normalize: () => ({ execute: () => undefined }) as never
+				normalize: () => invalid<{ text: string }>({ execute: () => undefined })
 			}
 		});
 		const result = await prepareRendererDocument(
@@ -415,29 +418,31 @@ describe('renderer protocol', () => {
 		expect(validateRendererDocument({ ...page(), blocks: null }).issues)
 			.toContainEqual(expect.objectContaining({ code: 'document.blocks' }));
 
-		const invalidSortable = page([
-			null as never,
-			{ id: '', module: null, appearance: null } as never,
-			{
-				id: 'invalid',
-				module: { type: '', version: 0, props: [] },
-				appearance: null
-			} as never,
-			{
-				id: 'invalid',
-				module: { type: 'test:text', version: 1, props: {} },
-				appearance: {
-					marginTop: -1,
-					marginBottom: Number.NaN,
-					paddingTop: 0,
-					paddingBottom: 0,
-					paddingLeft: -2,
-					fullWidth: 'yes',
-					borderRadius: -3
+		const sortableResult = validateRendererDocument({
+			...page(),
+			blocks: [
+				null,
+				{ id: '', module: null, appearance: null },
+				{
+					id: 'invalid',
+					module: { type: '', version: 0, props: [] },
+					appearance: null
+				},
+				{
+					id: 'invalid',
+					module: { type: 'test:text', version: 1, props: {} },
+					appearance: {
+						marginTop: -1,
+						marginBottom: Number.NaN,
+						paddingTop: 0,
+						paddingBottom: 0,
+						paddingLeft: -2,
+						fullWidth: 'yes',
+						borderRadius: -3
+					}
 				}
-			} as never
-		]);
-		const sortableResult = validateRendererDocument(invalidSortable);
+			]
+		});
 		expect(sortableResult.issues.map(issue => issue.code)).toEqual(expect.arrayContaining([
 			'node.type',
 			'node.id',
@@ -452,15 +457,17 @@ describe('renderer protocol', () => {
 			'number.finite'
 		]));
 
-		const invalidDraggable = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
+		const invalidDraggable = createEmptyRendererDocument('draggable');
 		Object.assign(invalidDraggable.layout, { width: 0, height: -1, background: 1 });
-		invalidDraggable.blocks.push({
-			id: 'free',
-			module: { type: 'test:free', version: 1, props: {} },
-			placement: null,
-			appearance: {}
-		} as never);
-		const draggableResult = validateRendererDocument(invalidDraggable);
+		const draggableResult = validateRendererDocument({
+			...invalidDraggable,
+			blocks: [{
+				id: 'free',
+				module: { type: 'test:free', version: 1, props: {} },
+				placement: null,
+				appearance: {}
+			}]
+		});
 		expect(draggableResult.issues.map(issue => issue.code)).toEqual(expect.arrayContaining([
 			'number.positive',
 			'layout.background',
@@ -468,14 +475,16 @@ describe('renderer protocol', () => {
 			'appearance.unsupported'
 		]));
 
-		const locked = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
-		locked.blocks.push({
-			id: 'locked',
-			module: { type: 'text', version: 1, props: {} },
-			placement: { x: 0, y: 0, width: 10, height: 10, rotate: 0, zIndex: 1 },
-			locked: 'yes'
-		} as never);
-		expect(validateRendererDocument(locked).issues)
+		const locked = createEmptyRendererDocument('draggable');
+		expect(validateRendererDocument({
+			...locked,
+			blocks: [{
+				id: 'locked',
+				module: { type: 'text', version: 1, props: {} },
+				placement: { x: 0, y: 0, width: 10, height: 10, rotate: 0, zIndex: 1 },
+				locked: 'yes'
+			}]
+		}).issues)
 			.toContainEqual(expect.objectContaining({ code: 'node.locked' }));
 
 		const oversized = page(Array.from({ length: 501 }, (_, index) => node(`node-${index}`)));

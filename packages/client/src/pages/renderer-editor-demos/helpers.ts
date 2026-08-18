@@ -164,7 +164,7 @@ export const sortableDocument = (
 	blocks: RendererSortableNode[],
 	layout: Partial<Omit<RendererSortableDocument['layout'], 'mode'>> = {}
 ): RendererSortableDocument => {
-	const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+	const document = createEmptyRendererDocument('sortable');
 	document.meta.title = title;
 	document.layout = {
 		...document.layout,
@@ -180,7 +180,7 @@ export const draggableDocument = (
 	blocks: RendererDraggableNode[],
 	layout: Partial<Omit<RendererDraggableDocument['layout'], 'mode'>> = {}
 ): RendererDraggableDocument => {
-	const document = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
+	const document = createEmptyRendererDocument('draggable');
 	document.meta.title = title;
 	document.layout = {
 		...document.layout,

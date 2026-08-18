@@ -98,6 +98,7 @@ import type {
 } from '../../types';
 import type { RendererStore } from '../../store';
 import { RENDERER_WIDGET_MIME } from '../../widget/constants';
+import type { RendererCreateTarget } from '../../widget/constants';
 import RendererNode from '../../assist/renderer/node.vue';
 import ZoomBar from '../shared/zoom-bar.vue';
 import { captureZoomAnchor, restoreZoomAnchor } from '../shared/zoom-anchor';
@@ -117,7 +118,7 @@ const props = defineProps<{
 	context: RendererModuleContext;
 }>();
 const emit = defineEmits<{
-	create: [payload: { type: string; presetKey?: string; index: number }];
+	create: [payload: RendererCreateTarget & { index: number }];
 }>();
 const { t } = useLocale(computed(() => props.context.locale));
 const root = ref<HTMLElement>();
@@ -403,7 +404,7 @@ const handleWidgetDrop = (event: DragEvent) => {
 	widgetDropIndex.value = -1;
 	if (!source) return;
 	try {
-		const payload = JSON.parse(source) as { type: string; presetKey?: string };
+		const payload = JSON.parse(source) as RendererCreateTarget;
 		emit('create', { ...payload, index });
 	} catch {
 		// 非 Renderer 拖拽数据交给浏览器处理。

@@ -1,5 +1,8 @@
 export interface HistoryEntry {
 	label: string;
+	/**
+	 * 连续输入合并键。600ms 内相同 mergeKey 只保留最后一次 redo。
+	 */
 	mergeKey?: string;
 	createdAt: number;
 	undo: () => void;

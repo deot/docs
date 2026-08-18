@@ -99,7 +99,10 @@ export const buildLocaleContext = (locale: MaybeRef<Language>): LocaleContext =>
 
 export const localeContextKey: InjectionKey<Ref<Language | undefined>> = Symbol('docsLocaleContextKey');
 
-export const provideLocale = (locale: MaybeRef<Language | undefined>, app?: App) => {
+export const provideLocale = (
+	locale: MaybeRef<Language | undefined>,
+	app?: Pick<App, 'provide'>
+) => {
 	const localeRef = (isRef(locale) ? locale : ref(locale)) as Ref<Language | undefined>;
 	if (app) app.provide(localeContextKey, localeRef);
 	else provide(localeContextKey, localeRef);

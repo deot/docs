@@ -11,6 +11,9 @@ export const MIN_RUNTIME_HEIGHT = 24;
 type SandboxContainer = HTMLElement | null | Readonly<ShallowRef<HTMLElement | null>>;
 
 export interface SandboxExposed {
+	/**
+	 * `@vue/repl` sandbox 根节点，用来测量运行时高度。
+	 */
 	container?: SandboxContainer;
 }
 

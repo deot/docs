@@ -1,21 +1,19 @@
-interface ZoomPoint {
-	x: number;
-	y: number;
-}
+import { clamp } from '../../utils/number';
+import type { Point } from '../draggable/geometry';
 
 interface ZoomAnchorSnapshot {
-	/** 选中节点存在时保存节点自身，否则保存画布上的逻辑位置。 */
+	/**
+	 * 选中节点存在时保存节点自身，否则保存画布上的逻辑位置。
+	 */
 	target: HTMLElement;
-	ratio?: ZoomPoint;
-	screen: ZoomPoint;
+	ratio?: Point;
+	screen: Point;
 }
 
-const centerOf = (rect: DOMRect): ZoomPoint => ({
+const centerOf = (rect: DOMRect) => ({
 	x: rect.left + rect.width / 2,
 	y: rect.top + rect.height / 2
 });
-
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /**
  * 记录缩放前的视觉锚点。选中节点优先保持自身中心；没有选中节点时，

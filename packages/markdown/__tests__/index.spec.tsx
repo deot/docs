@@ -6,6 +6,13 @@ import { zhCN } from '@deot/docs-locale';
 import { Markdown as MarkdownRenderer } from '../src/markdown';
 import { Markdown, parseMarkdownSearchSections } from '../src';
 
+const htmlElementOf = (
+	value: { readonly element: EventTarget | Node | null }
+): HTMLElement => {
+	if (!(value.element instanceof HTMLElement)) throw new TypeError('expected HTMLElement');
+	return value.element;
+};
+
 const { codePreviewUnmounted, getScrollerMock, MockResizeObserver, playgroundUnmounted, resizeObservers } = vi.hoisted(() => {
 	const observers: Array<{ callback: () => void }> = [];
 	class ResizeObserverMock {
@@ -519,11 +526,11 @@ describe('markdown', () => {
 				toJSON: () => ({})
 			});
 		});
-		const indicatorRoot = wrapper.get('.docs-markdown-indicator').element as HTMLElement;
-		const viewport = wrapper.get('.docs-markdown-indicator__viewport').element as HTMLElement;
-		const indicatorWrapper = wrapper.get(
+		const indicatorRoot = htmlElementOf(wrapper.get('.docs-markdown-indicator'));
+		const viewport = htmlElementOf(wrapper.get('.docs-markdown-indicator__viewport'));
+		const indicatorWrapper = htmlElementOf(wrapper.get(
 			'.docs-markdown-indicator__scroller .vc-scroller__wrapper'
-		).element as HTMLElement;
+		));
 		vi.spyOn(indicatorRoot, 'getBoundingClientRect').mockReturnValue({
 			left: 40,
 			top: 100,
@@ -558,7 +565,7 @@ describe('markdown', () => {
 			toJSON: () => ({})
 		});
 		const markerElements = wrapper.findAll('.docs-markdown-indicator__marker')
-			.map(marker => marker.element as HTMLElement);
+			.map(marker => htmlElementOf(marker));
 		[100, 108, 116, 124].forEach((top, index) => {
 			vi.spyOn(markerElements[index], 'getBoundingClientRect').mockReturnValue({
 				left: 40,

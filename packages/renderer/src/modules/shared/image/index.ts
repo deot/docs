@@ -56,6 +56,9 @@ export const ImageModule = defineRendererModule<{
 		draggable: sectionDraggableFrame(320, 240, { minWidth: 32, minHeight: 32 })
 	},
 	integrations: {
-		collectResources: props => collectImageResources([props.src, props.dark])
+		collectResources: (props) => {
+			const record = toRecord(props);
+			return collectImageResources([record.src, record.dark]);
+		}
 	}
 });

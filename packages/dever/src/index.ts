@@ -1,29 +1,19 @@
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Options } from '@deot/dev-shared';
 import { Shell, Utils } from '@deot/dev-shared';
 import fs from 'fs-extra';
 import type { InlineConfig } from 'vite';
 import { build as createBuild, createServer, mergeConfig } from 'vite';
 import createPlugins from './plugins';
 import { startPreviewServer } from './preview';
-import { resolveDocsWorkspace } from './workspace';
+import type { DeverMode, DeverOptions } from './types';
+import { isInside, resolveDocsWorkspace } from './workspace';
 
-export { resolveDocsWorkspace } from './workspace';
+export type { DeverMode, DeverOptions } from './types';
 export type { ResolvedDocsWorkspace } from './workspace';
+export { resolveDocsWorkspace } from './workspace';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export type DeverMode = 'development' | 'build' | 'preview';
-export type DeverOptions = Options & {
-	build?: boolean;
-	preview?: boolean;
-	workspace?: string;
-	outDir?: string;
-	host?: string;
-	port?: number;
-	dryRun?: boolean;
-};
 
 const resolveRealPath = (filename: string) => {
 	const missing: string[] = [];
@@ -38,11 +28,6 @@ const resolveRealPath = (filename: string) => {
 	return path.resolve(realParent, ...missing);
 };
 
-const containsPath = (parent: string, target: string) => {
-	const relative = path.relative(parent, target);
-	return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
-};
-
 /**
  * 拒绝可能在清空输出目录时删除 workspace 本身的构建配置。通过解析最近的
  * 已存在祖先目录，也能阻止“已有符号链接 + 尚未创建输出目录”的同类风险。
@@ -52,7 +37,7 @@ const containsPath = (parent: string, target: string) => {
 export const assertSafeBuildOutDir = (workspace: string, outDir: string) => {
 	const realWorkspace = resolveRealPath(workspace);
 	const realOutDir = resolveRealPath(outDir);
-	if (containsPath(realOutDir, realWorkspace)) {
+	if (isInside(realOutDir, realWorkspace)) {
 		throw new RangeError(`Build outDir must not contain the workspace: ${outDir}`);
 	}
 };
@@ -130,7 +115,7 @@ export const createDeverConfig = (options: DeverOptions): InlineConfig => {
 
 // 执行选定模式；仅开发与预览模式会持续保持服务运行。
 export const run = (input: DeverOptions) => Utils.autoCatch(async () => {
-	const options: DeverOptions = {
+	const options = {
 		outDir: 'dist',
 		dryRun: false,
 		build: false,

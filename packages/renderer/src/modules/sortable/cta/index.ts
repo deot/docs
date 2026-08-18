@@ -1,27 +1,22 @@
 import { defineRendererModule } from '../../../catalog';
 import {
+	SECTION_ALIGNMENTS,
 	localeText,
 	moduleIssue,
 	normalizeActionValues,
-	toEnumValue,
+	normalizeSectionHeader,
 	toRecord,
 	toStringValue,
 	validateActionValues,
 	validateEnum
 } from '../../shared/utils';
-import type { RendererActionValue } from '../../shared/utils';
+import type { RendererActionValue, RendererSectionHeader } from '../../shared/utils';
 import { sectionDraggableFrame, sectionSortableFrame } from '../../shared/canvas-frame';
 import Editor from './editor.vue';
 import Viewer from './viewer.vue';
 
-const ALIGNMENTS = ['left', 'center'] as const;
-
-export const CtaModule = defineRendererModule<{
-	eyebrow: string;
-	title: string;
-	description: string;
+export const CtaModule = defineRendererModule<RendererSectionHeader & {
 	actions: RendererActionValue[];
-	align: typeof ALIGNMENTS[number];
 	accent: string;
 	accentSecondary: string;
 	background: string;
@@ -47,11 +42,8 @@ export const CtaModule = defineRendererModule<{
 		normalize: (value) => {
 			const record = toRecord(value);
 			return {
-				eyebrow: toStringValue(record.eyebrow),
-				title: toStringValue(record.title),
-				description: toStringValue(record.description),
+				...normalizeSectionHeader(record, 'center'),
 				actions: normalizeActionValues(record.actions),
-				align: toEnumValue(record.align, ALIGNMENTS, 'center'),
 				accent: toStringValue(record.accent),
 				accentSecondary: toStringValue(record.accentSecondary),
 				background: toStringValue(record.background)
@@ -61,7 +53,7 @@ export const CtaModule = defineRendererModule<{
 			...(value.title.trim()
 				? []
 				: [moduleIssue('$.title', 'title.required', '行动条标题不能为空')]),
-			...validateEnum(value.align, '$.align', ALIGNMENTS),
+			...validateEnum(value.align, '$.align', SECTION_ALIGNMENTS),
 			...validateActionValues(value.actions, '$.actions')
 		]
 	},
@@ -72,9 +64,12 @@ export const CtaModule = defineRendererModule<{
 		draggable: sectionDraggableFrame(720, 220)
 	},
 	integrations: {
-		collectSearchText: props => [{
-			title: String(props.title || ''),
-			text: [props.eyebrow, props.description].filter(Boolean).join(' ')
-		}]
+		collectSearchText: (props) => {
+			const record = toRecord(props);
+			return [{
+				title: String(record.title || ''),
+				text: [record.eyebrow, record.description].filter(Boolean).join(' ')
+			}];
+		}
 	}
 });

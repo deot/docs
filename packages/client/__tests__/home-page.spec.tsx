@@ -7,6 +7,8 @@ import { Renderer } from '@deot/docs-renderer';
 import HomePage from '../src/pages/home/index.vue';
 import { Gateway } from '../src/modules';
 import type { RendererDocument } from '@deot/docs-renderer';
+import { createContentRecord, invalid } from './fixtures/docs';
+import type { ResourceContentRecord } from '../src/modules/gateway';
 
 const route = reactive({ params: { lang: 'zh-CN' } });
 const routerPush = vi.fn();
@@ -14,7 +16,7 @@ const appearance = { marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom
 const layout = { mode: 'sortable' as const, maxWidth: 1180, minHeight: 600, background: '#fff' };
 
 vi.mock('vue-router', async original => ({
-	...await original<any>(),
+	...await original<typeof import('vue-router')>(),
 	useRoute: () => route,
 	useRouter: () => ({
 		resolve: (target: string) => ({ href: target }),
@@ -77,7 +79,9 @@ describe('built-in home page', () => {
 
 		window.$docs.home = { locales: { 'zh-CN': './home.page.json' } };
 		vi.spyOn(Gateway, 'subscribe').mockReturnValue(vi.fn());
-		vi.spyOn(Gateway, 'load').mockResolvedValue({ content: JSON.stringify(page) } as never);
+		vi.spyOn(Gateway, 'load').mockResolvedValue(createContentRecord({
+			content: JSON.stringify(page)
+		}));
 		const cached = mount(HomePage);
 		await vi.waitFor(() => expect(cached.text()).toContain('Custom home'));
 		expect(Gateway.load).toHaveBeenCalledWith(expect.objectContaining({ type: 'page' }), expect.objectContaining({
@@ -92,24 +96,26 @@ describe('built-in home page', () => {
 			listener = callback;
 			return vi.fn();
 		});
-		vi.spyOn(Gateway, 'load').mockResolvedValue({
+		vi.spyOn(Gateway, 'load').mockResolvedValue(createContentRecord({
 			content: JSON.stringify({
 				schemaVersion: 2,
 				meta: { id: 'home' },
 				layout,
 				blocks: [{ id: 'title', module: { type: 'title', version: 1, props: { text: 'Initial' } }, appearance }]
 			})
-		} as never);
+		}));
 		const wrapper = mount(HomePage);
 		await vi.waitFor(() => expect(wrapper.text()).toContain('Initial'));
-		listener?.({ content: JSON.stringify({
-			schemaVersion: 2,
-			meta: { id: 'home' },
-			layout,
-			blocks: [{ id: 'title', module: { type: 'title', version: 1, props: { text: 'Updated' } }, appearance }]
-		}) } as never);
+		listener?.(createContentRecord({
+			content: JSON.stringify({
+				schemaVersion: 2,
+				meta: { id: 'home' },
+				layout,
+				blocks: [{ id: 'title', module: { type: 'title', version: 1, props: { text: 'Updated' } }, appearance }]
+			})
+		}));
 		await vi.waitFor(() => expect(wrapper.text()).toContain('Updated'));
-		listener?.({ content: '{invalid' } as never);
+		listener?.(invalid<ResourceContentRecord>({ content: '{invalid' }));
 		await flushPromises();
 		expect(wrapper.text()).toContain('Updated');
 		expect(wrapper.find('.docs-home__error').exists()).toBe(true);

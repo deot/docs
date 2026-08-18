@@ -5,15 +5,11 @@ import * as path from 'node:path';
 import { createHash } from 'node:crypto';
 import { defineConfig } from 'vite';
 import type { Plugin, ViteDevServer } from 'vite';
-import { resolveDocsWorkspace } from '../workspace';
+import { isInside, resolveDocsWorkspace } from '../workspace';
 import type { ResolvedDocsWorkspace } from '../workspace';
+import type { DocsPluginOptions } from '../types';
 
-interface DocsPluginOptions {
-	workspace?: string;
-	outDir?: string;
-	build?: boolean;
-	preview?: boolean;
-}
+export { isInside };
 
 const innerPathRegex = /^\/(@|__)/;
 const directResourceExtensions = new Set(['.md', '.json']);
@@ -23,6 +19,11 @@ const gatewayResourceExtensions = new Set([
 	...sourceResourceExtensions
 ]);
 
+/**
+ * 按扩展名判断文档资源类型。与 client `classifyResourceSource` 对齐。
+ * @param filename 工作区内的资源路径。
+ * @returns 资源类型。
+ */
 export const getResourceType = (filename: string) => {
 	if (/\.page\.json$/i.test(filename)) return 'page';
 	switch (path.extname(filename).toLowerCase()) {
@@ -32,11 +33,6 @@ export const getResourceType = (filename: string) => {
 		case '.css': return 'style';
 		default: return 'module';
 	}
-};
-
-export const isInside = (parent: string, target: string) => {
-	const relative = path.relative(parent, target);
-	return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 };
 
 const createEtag = (content: Buffer) => `W/"${createHash('sha1').update(content).digest('hex')}"`;
@@ -228,6 +224,7 @@ export const createRuntimePlugin = (
 						process.cwd(),
 						'packages/client/src/index.ts'
 					);
+					// 形状对齐 client DocsRuntime；workspace 是 urlBase。
 					const runtime = JSON.stringify({
 						mode: 'development',
 						workspace,
@@ -417,6 +414,7 @@ const configureEvents = (
 		req.on('close', () => clients.delete(res));
 	});
 
+	// payload 形状对齐 client events.ts 的 DocsResourceEvent。
 	const send = (type: 'add' | 'change' | 'unlink', filename: string) => {
 		const candidate = path.resolve(filename);
 		const absolute = fs.existsSync(candidate)

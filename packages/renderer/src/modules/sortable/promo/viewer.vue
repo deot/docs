@@ -43,9 +43,9 @@
 import { computed, ref, watch } from 'vue';
 import type { CSSProperties } from 'vue';
 import type { RendererModuleViewerProps } from '../../../types';
-import { toEnumValue, toLength, toRecord } from '../../shared/utils';
+import { isUnsafeHref, toEnumValue, toLength, toRecord } from '../../shared/utils';
 import { resolveImageSource } from '../../shared/image-source';
-import { ADS_LAYOUTS, ADS_STYLES, isUnsafeHref } from './constants';
+import { ADS_LAYOUTS, ADS_STYLES } from './constants';
 
 const props = defineProps<RendererModuleViewerProps>();
 const resolved = ref<string[]>([]);

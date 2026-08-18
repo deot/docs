@@ -23,7 +23,13 @@ import {
 	type MarqueeRect
 } from '../modules/shared/selection/group';
 import { createDocumentCommands, type DocumentCommandHost } from './commands';
-import { cloneDocument, findNode, findNodeIndex } from './document';
+import {
+	cloneDocument,
+	findNode,
+	findNodeIndex,
+	isDraggableNode,
+	type WritableRendererDocument
+} from './document';
 import { HistoryStack } from './history';
 import { SelectionSession } from './selection';
 import { ViewportSession } from './viewport';
@@ -38,7 +44,7 @@ interface ClipboardPayload {
  * 会话状态与可序列化文档分离；历史、选择、视口分文件实现，但仍是一个实例。
  */
 export class RendererStore {
-	private state: { document: RendererDocument };
+	private state: { document: WritableRendererDocument };
 	private history: HistoryStack;
 	private selection: SelectionSession;
 	private viewportSession: ViewportSession;
@@ -57,7 +63,7 @@ export class RendererStore {
 			get document() {
 				return self.state.document;
 			},
-			set document(value: RendererDocument) {
+			set document(value: WritableRendererDocument) {
 				self.state.document = value;
 			},
 			history: this.history,
@@ -67,6 +73,7 @@ export class RendererStore {
 	}
 
 	get document() {
+		// 内部 blocks 是节点联合；对外仍按协议暴露判别联合。
 		return readonly(this.state.document) as Readonly<RendererDocument>;
 	}
 
@@ -205,7 +212,7 @@ export class RendererStore {
 
 	applyMarquee(rect: MarqueeRect) {
 		if (this.state.document.layout.mode !== 'draggable') return;
-		const blocks = this.state.document.blocks as RendererDraggableNode[];
+		const blocks = this.state.document.blocks.filter(isDraggableNode);
 		const action = resolveMarqueeAction(blocks, rect);
 		if (action.type === 'clear') {
 			this.select(null);
@@ -226,14 +233,14 @@ export class RendererStore {
 
 	copySelection() {
 		const node = this.selectedId ? this.getNode(this.selectedId) : undefined;
-		if (!node || node.module.type === RENDERER_PAGE_TYPE || !('placement' in node) || !node.placement) {
+		if (!node || node.module.type === RENDERER_PAGE_TYPE || !isDraggableNode(node)) {
 			return;
 		}
 		const members = selectionMemberIds(node)
-			.map(id => this.getNode(id) as RendererDraggableNode | undefined)
-			.filter((value): value is RendererDraggableNode => Boolean(value?.placement));
+			.map(id => this.getNode(id))
+			.filter((value): value is RendererDraggableNode => Boolean(value && isDraggableNode(value)));
 		this.clipboardSession = {
-			primary: cloneRendererValue(node) as RendererDraggableNode,
+			primary: cloneRendererValue(node),
 			members: cloneRendererValue(members)
 		};
 	}
@@ -284,7 +291,7 @@ export class RendererStore {
 
 	createSelectionFromIds(memberIds: readonly string[]) {
 		if (this.state.document.layout.mode !== 'draggable') return;
-		const blocks = this.state.document.blocks as RendererDraggableNode[];
+		const blocks = this.state.document.blocks.filter(isDraggableNode);
 		const members = memberIds
 			.map(id => blocks.find(node => node.id === id))
 			.filter((node): node is RendererDraggableNode => Boolean(node));

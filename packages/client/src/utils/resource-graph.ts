@@ -1,5 +1,5 @@
 import { init, parse } from 'es-module-lexer';
-import { getDocsBase, normalizeWorkspaceBase } from './resolver';
+import { getDocsBase, normalizeWorkspaceBase, trimSlashes } from './resolver';
 import type { DocsConfig, DocsResourceType } from '../types';
 
 const SUPPORTED_DEPENDENCY_RE = /\.(?:vue|[jt]s|css)(?:$|[?#])/i;
@@ -66,9 +66,9 @@ export const toLogicalResourceSource = (
 	let root: URL;
 	if (config.runtime?.mode === 'development') {
 		const workspace = normalizeWorkspaceBase(config.runtime.workspace);
-		root = new URL(`${workspace}${lang.replace(/^\/+|\/+$/g, '')}/`, fallbackBase);
+		root = new URL(`${workspace}${trimSlashes(lang)}/`, fallbackBase);
 	} else {
-		root = new URL(`${lang.replace(/^\/+|\/+$/g, '')}/`, getDocsBase(config));
+		root = new URL(`${trimSlashes(lang)}/`, getDocsBase(config));
 	}
 	if (resolved.origin !== root.origin || !resolved.pathname.startsWith(root.pathname)) {
 		return resolved.href;

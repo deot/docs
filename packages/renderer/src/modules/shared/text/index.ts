@@ -1,5 +1,6 @@
 import { defineRendererModule } from '../../../catalog';
 import {
+	TEXT_ALIGNMENTS,
 	localeText,
 	toEnumValue,
 	toLength,
@@ -12,8 +13,6 @@ import { sectionDraggableFrame, sectionSortableFrame } from '../canvas-frame';
 import Editor from './editor.vue';
 import Viewer from './viewer.vue';
 
-const ALIGNMENTS = ['left', 'center', 'right'] as const;
-
 export const TextModule = defineRendererModule<{
 	text: string;
 	fontSize: number;
@@ -22,7 +21,7 @@ export const TextModule = defineRendererModule<{
 	letterSpacing: number;
 	color: string;
 	background: string;
-	align: typeof ALIGNMENTS[number];
+	align: typeof TEXT_ALIGNMENTS[number];
 }>({
 	identity: {
 		type: 'text',
@@ -46,7 +45,7 @@ export const TextModule = defineRendererModule<{
 				letterSpacing: toLength(record.letterSpacing, 0),
 				color: toStringValue(record.color),
 				background: toStringValue(record.background),
-				align: toEnumValue(record.align, ALIGNMENTS, 'left')
+				align: toEnumValue(record.align, TEXT_ALIGNMENTS, 'left')
 			};
 		},
 		validate: value => [
@@ -54,7 +53,7 @@ export const TextModule = defineRendererModule<{
 			...validateNumberRange(value.fontWeight, '$.fontWeight', { min: 100, max: 900 }),
 			...validateNumberRange(value.lineHeight, '$.lineHeight', { min: 0.5, max: 3 }),
 			...validateNumberRange(value.letterSpacing, '$.letterSpacing', { min: -10, max: 30 }),
-			...validateEnum(value.align, '$.align', ALIGNMENTS)
+			...validateEnum(value.align, '$.align', TEXT_ALIGNMENTS)
 		]
 	},
 	viewer: Viewer,
@@ -64,6 +63,9 @@ export const TextModule = defineRendererModule<{
 		draggable: sectionDraggableFrame(280, 80, { minWidth: 60, minHeight: 24 })
 	},
 	integrations: {
-		collectSearchText: props => [{ text: String(props.text || '') }]
+		collectSearchText: (props) => {
+			const record = toRecord(props);
+			return [{ text: String(record.text || '') }];
+		}
 	}
 });

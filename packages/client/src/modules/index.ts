@@ -9,6 +9,7 @@ export type {
 	ResourcePollOptions,
 	ResourcePrefetchOptions,
 	ResourceRecord,
+	ResourceRecordInput,
 	ResourceStatus,
 	ResourceStatusHistory,
 	ResourceVersion

@@ -9,6 +9,9 @@ import { RENDERER_PAGE_TYPE, RENDERER_SELECTION_TYPE } from '../../../types';
 export { RENDERER_SELECTION_TYPE };
 
 export interface RendererSelectionProps {
+	/**
+	 * 组合框包含的节点 id，不含组合框自身。
+	 */
 	members: string[];
 }
 

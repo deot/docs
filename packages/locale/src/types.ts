@@ -39,7 +39,9 @@ export interface DocsLocaleMessages {
 }
 
 export interface Language extends DocsLocaleMessages {
-	/** 最终生效的规范化 UI 语言代码。 */
+	/**
+	 * 最终生效的规范化 UI 语言代码。
+	 */
 	name: string;
 }
 
@@ -50,7 +52,9 @@ export type DeepPartial<T> = {
 };
 
 export type DocsLocaleEntry = {
-	/** Header 展示名称，不进入翻译字典。 */
+	/**
+	 * Header 展示名称，不进入翻译字典。
+	 */
 	label: string;
 } & DeepPartial<DocsLocaleMessages>;
 
@@ -60,7 +64,13 @@ export type TranslatorOption = Record<string, string | number>;
 export type Translator = (path: LocaleKey, options?: TranslatorOption) => string;
 
 export interface LocaleContext {
+	/**
+	 * 当前语言包，含 `name` 与各命名空间文案。
+	 */
 	locale: Ref<Language>;
+	/**
+	 * 当前 UI 语言代码，等于 `locale.value.name`。
+	 */
 	lang: ComputedRef<string>;
 	t: Translator;
 }

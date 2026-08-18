@@ -11,6 +11,7 @@ import {
 import * as RulerPaint from '../src/frame/draggable/ruler-paint';
 import Ruler from '../src/frame/draggable/ruler.vue';
 import GridLines from '../src/frame/draggable/grid-lines.vue';
+import { invalid } from './fixtures';
 
 const mockCanvas = () => {
 	const texts: string[] = [];
@@ -32,8 +33,8 @@ const mockCanvas = () => {
 		get height() { return height; },
 		set height(value: number) { height = value; },
 		getContext: (id: string) => id === '2d' ? ctx : null
-	} as unknown as HTMLCanvasElement;
-	return { canvas, ctx, texts };
+	};
+	return { canvas: invalid<HTMLCanvasElement>(canvas), ctx, texts };
 };
 
 describe('draggable ruler and grid', () => {
@@ -56,7 +57,7 @@ describe('draggable ruler and grid', () => {
 	it('paints both axes and ignores missing canvases', () => {
 		paintRulerX(null, { length: 800, size: 20, placeholder: 20, interval: 100, scale: 1 });
 		paintRulerY(null, { length: 800, size: 20, placeholder: 20, interval: 100, scale: 1 });
-		const missing = { getContext: () => null } as unknown as HTMLCanvasElement;
+		const missing = invalid<HTMLCanvasElement>({ getContext: () => null });
 		paintRulerX(missing, { length: 800, size: 20, placeholder: 20, interval: 100, scale: 1 });
 		paintRulerY(missing, { length: 800, size: 20, placeholder: 20, interval: 100, scale: 1 });
 

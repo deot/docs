@@ -4,17 +4,21 @@ import type {
 	DocsResourceType,
 	ResourceIdentity
 } from '../types';
+import { isExternalLink } from './link';
 
-const trimSlashes = (value: string) => value.replace(/^\/+|\/+$/g, '');
-const isAbsoluteUrl = (value: string) => (
-	/^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith('//')
-);
+/**
+ * 去掉路径两端的斜杠，便于拼接目录前缀。
+ * @param value 原始路径。
+ * @returns 不含首尾斜杠的路径。
+ */
+export const trimSlashes = (value: string) => value.replace(/^\/+|\/+$/g, '');
 const docsBaseCache = new WeakMap<DocsConfig, string>();
 const deploymentBaseCache = new WeakMap<DocsConfig, string>();
 
 /**
  * 将 Runtime workspace 规范为绝对目录前缀。根目录必须保持单个 `/`，
  * 否则 `//{lang}` 会被浏览器解释为以语言名为主机的协议相对 URL。
+ * `value` 来自 dever 注入的 `ResolvedDocsWorkspace.urlBase`。
  * @param value Runtime 注入的 workspace。
  * @returns 以单个斜杠开头和结尾的目录前缀。
  */
@@ -169,9 +173,9 @@ export const resolveResource = async (
 	}
 
 	const { source, lang, importer } = context;
-	if (isAbsoluteUrl(source) || source.startsWith('/')) return source;
-	if (importer && (isAbsoluteUrl(importer) || importer.startsWith('/'))) {
-		if (isAbsoluteUrl(importer)) return new URL(source, importer).href;
+	if (isExternalLink(source) || source.startsWith('/')) return source;
+	if (importer && (isExternalLink(importer) || importer.startsWith('/'))) {
+		if (isExternalLink(importer)) return new URL(source, importer).href;
 		const resolved = new URL(source, new URL(importer, getDocsDeploymentBase(config)));
 		return `${resolved.pathname}${resolved.search}${resolved.hash}`;
 	}
@@ -191,6 +195,21 @@ export const resolveResource = async (
 		return `${workspace}${language}/${pathname}`;
 	}
 	return new URL(`${language}/${pathname}`, getDocsBase(config)).href;
+};
+
+/**
+ * 按扩展名判断文档资源类型。与 dever `getResourceType` 对齐，额外识别 `?#` 后缀。
+ * @param source 逻辑资源地址。
+ * @returns 资源类型；无法识别时视为 markdown。
+ * @see packages/dever/src/plugins/index.ts
+ */
+export const classifyResourceSource = (source: string): DocsResourceType => {
+	if (/\.page\.json(?:$|[?#])/i.test(source)) return 'page';
+	if (/\.json(?:$|[?#])/i.test(source)) return 'sidebar';
+	if (/\.vue(?:$|[?#])/i.test(source)) return 'sfc';
+	if (/\.css(?:$|[?#])/i.test(source)) return 'style';
+	if (/\.[jt]s(?:$|[?#])/i.test(source)) return 'module';
+	return 'markdown';
 };
 
 export const createResourceIdentity = (

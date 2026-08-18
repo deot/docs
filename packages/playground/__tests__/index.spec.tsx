@@ -5,12 +5,29 @@ import { mount } from '@vue/test-utils';
 import { useStore } from '@vue/repl';
 import { zhCN } from '@deot/docs-locale';
 import Playground from '../src/playground.vue';
+import type { PlaygroundStoreStub } from './fixtures';
 
-const { popup, store, setFiles } = vi.hoisted(() => ({
-	popup: vi.fn(),
-	setFiles: vi.fn(),
-	store: {} as any
-}));
+const { popup, store, setFiles } = vi.hoisted(() => {
+	const nextStore: PlaygroundStoreStub = {
+		options: {
+			files: { value: {} },
+			mainFile: { value: '' },
+			activeFilename: { value: '' },
+			template: { value: {} },
+			builtinImportMap: { value: { imports: {} } }
+		},
+		files: {},
+		mainFile: '',
+		activeFilename: '',
+		errors: [],
+		init: vi.fn(),
+		setActive: vi.fn(),
+		addFile: vi.fn(),
+		renameFile: vi.fn(),
+		setFiles: vi.fn()
+	};
+	return { popup: vi.fn(), setFiles: vi.fn(), store: nextStore };
+});
 
 vi.mock('../src/editor', () => ({ Editor: { popup } }));
 vi.mock('@deot/vc', () => ({
@@ -86,7 +103,7 @@ vi.mock('@vue/repl', () => ({
 		store.errors = [];
 		store.init = vi.fn();
 		store.setActive = vi.fn((filename: string) => (store.activeFilename = filename));
-		store.addFile = vi.fn((file: any) => {
+		store.addFile = vi.fn((file: { filename: string; code: string }) => {
 			store.files[file.filename] = file;
 			store.activeFilename = file.filename;
 		});
@@ -325,7 +342,7 @@ describe('Playground', () => {
 		const normalized = mount(Playground, {
 			props: {
 				modelValue: '<template>normalized</template>',
-				viewportOptions: [0, 'mobile', 375, 375] as any
+				viewportOptions: [0, 'mobile', 375, 375]
 			}
 		});
 		expect(normalized.find('.docs-playground__viewport-menu').exists()).toBe(false);
@@ -526,7 +543,7 @@ describe('Playground', () => {
 		const wrapper = mount(Playground, {
 			props: {
 				files: { 'App.vue': '<template>app</template>' },
-				views: ['invalid', 'files', 'files'] as any
+				views: ['invalid', 'files', 'files']
 			}
 		});
 		expect(wrapper.find('.docs-playground-files').isVisible()).toBe(true);

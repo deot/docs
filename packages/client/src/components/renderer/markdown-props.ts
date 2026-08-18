@@ -2,18 +2,28 @@ import type { MarkdownIndicatorConfig, MarkdownIndicatorOptions } from '@deot/do
 import type { RendererIssue } from '@deot/docs-renderer';
 
 export interface DocsMarkdownOptions {
-	/** 文档指示器。`false` 关闭；`true` 或对象开启，对象可配位置、预览等。 */
+	/**
+	 * 文档指示器。`false` 关闭；`true` 或对象开启，对象可配位置、预览等。
+	 */
 	indicator?: MarkdownIndicatorConfig;
-	/** 预留给后续 Markdown 渲染选项。 */
+	/**
+	 * 预留给后续 Markdown 渲染选项。
+	 */
 	[key: string]: unknown;
 }
 
 export interface DocsMarkdownProps {
-	/** 站点相对路径或 http(s) 地址。无内联 `content` 时拉取后按 Markdown 解析。 */
+	/**
+	 * 站点相对路径或 http(s) 地址。无内联 `content` 时拉取后按 Markdown 解析。
+	 */
 	source: string;
-	/** 内联 Markdown 文本。只要是字符串就优先于 `source`。 */
+	/**
+	 * 内联 Markdown 文本。只要是字符串就优先于 `source`。
+	 */
 	content?: string;
-	/** 渲染配置。未知字段原样保留，便于后续扩展。 */
+	/**
+	 * 渲染配置。未知字段原样保留，便于后续扩展。
+	 */
 	options?: DocsMarkdownOptions;
 }
 

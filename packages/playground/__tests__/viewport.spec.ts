@@ -22,7 +22,7 @@ describe('playground viewport', () => {
 		expect(normalizeViewportOptions()).toEqual(DEFAULT_VIEWPORT_OPTIONS);
 		expect(normalizeViewportOptions([
 			'auto', 0, 375, 375, [375, 667], [375, 667], 'mobile'
-		] as any)).toEqual(['auto', 375, [375, 667]]);
+		])).toEqual(['auto', 375, [375, 667]]);
 		expect(normalizeViewportOptions([])).toEqual([]);
 	});
 

@@ -865,10 +865,10 @@ describe('built-in renderer modules', () => {
 		]));
 		expect(ads.integrations?.collectResources?.({
 			items: [{ src: './ad.png', href: 'https://example.com', title: 'Ad' }]
-		} as never)).toEqual([{ type: 'module', source: './ad.png' }]);
+		})).toEqual([{ type: 'module', source: './ad.png' }]);
 		expect(ads.integrations?.collectResources?.({
 			items: [{ src: 'data:image/png;base64,iVBORw0KGgo=', title: 'Inline' }]
-		} as never)).toEqual([]);
+		})).toEqual([]);
 		expect(collectImageResources(['light.png', 'https://cdn.example.com/x.png', 'data:image/png;base64,aaa']))
 			.toEqual([{ type: 'module', source: 'light.png' }]);
 
@@ -883,26 +883,26 @@ describe('built-in renderer modules', () => {
 		expect(actions.frames.draggable?.initialPlacement()).toEqual(expect.objectContaining({ width: 260 }));
 		const image = definitions.get('image');
 		expect(image?.frames.draggable?.initialPlacement()).toEqual(expect.objectContaining({ width: 320 }));
-		expect(image?.integrations?.collectResources?.({ src: 'light.png', dark: 'dark.png' } as never))
+		expect(image?.integrations?.collectResources?.({ src: 'light.png', dark: 'dark.png' }))
 			.toEqual([{ type: 'module', source: 'light.png' }, { type: 'module', source: 'dark.png' }]);
 		expect(image?.integrations?.collectResources?.({
 			src: 'data:image/png;base64,iVBORw0KGgo=',
 			dark: 'https://cdn.example.com/x.png'
-		} as never)).toEqual([]);
+		})).toEqual([]);
 		expect(features.data.validate?.(features.data.normalize?.({
 			columns: 2,
 			gap: 10,
 			items: [{ title: '', description: '' }]
 		})!)).toContainEqual(expect.objectContaining({ code: 'title.required' }));
-		expect(features.integrations?.collectSearchText?.({ items: [null, { title: 'One', description: 'Desc' }] } as never))
+		expect(features.integrations?.collectSearchText?.({ items: [null, { title: 'One', description: 'Desc' }] }))
 			.toEqual([{ title: '', text: '' }, { title: 'One', text: 'Desc' }]);
 
 		expect(resolveLocaleText('Plain', moduleContext)).toBe('Plain');
 		expect(resolveLocaleText({ 'zh-CN': '中文', 'en-US': 'English' }, {
 			...moduleContext,
-			locale: { name: 'zh-CN' } as never
+			locale: { name: 'zh-CN' }
 		})).toBe('中文');
-		expect(resolveLocaleText({ 'en-US': 'English' }, { ...moduleContext, locale: { name: 'fr-FR' } as never }))
+		expect(resolveLocaleText({ 'en-US': 'English' }, { ...moduleContext, locale: { name: 'fr-FR' } }))
 			.toBe('English');
 		expect(resolveLocaleText({ 'fr-FR': 'Français' }, moduleContext)).toBe('Français');
 		expect(resolveLocaleText({}, moduleContext)).toBe('');

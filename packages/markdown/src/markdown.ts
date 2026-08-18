@@ -3,6 +3,8 @@ import anchor from 'markdown-it-anchor';
 import mdContainer from 'markdown-it-container';
 import markdownIt from 'markdown-it';
 import JSON5 from 'json5';
+import type { PlaygroundFiles, PlaygroundView, PlaygroundViewport } from '@deot/docs-playground';
+import type { MarkdownPlaygroundConfig } from './types';
 
 const HTML_MD_SIGN = 'md';
 const PLAYGROUND = 'playground';
@@ -48,25 +50,28 @@ const htmlCommentRE = /<!--([\s\S]*?)-->/g;
 const runtimeConfigRE = /<config\s+lang\s*=\s*["']json5["']\s*>([\s\S]*?)<\/config>/i;
 const renderPlaygroundError = (message: string) =>
 	`<div class="docs-playground-error">PLAYGROUND: ${md.utils.escapeHtml(message)}</div>\n`;
-const runtimeViews = ['runtime', 'files'];
-const isRuntimeViewport = (viewport: unknown) => {
+const PLAYGROUND_VIEWS = ['runtime', 'files'] as const satisfies readonly PlaygroundView[];
+const isPlaygroundView = (value: unknown): value is PlaygroundView => (
+	typeof value === 'string' && (PLAYGROUND_VIEWS as readonly string[]).includes(value)
+);
+const isRuntimeViewport = (viewport: unknown): viewport is PlaygroundViewport => {
 	if (viewport === 'auto') return true;
 	if (typeof viewport === 'number') return Number.isFinite(viewport) && viewport > 0;
 	return Array.isArray(viewport)
 		&& viewport.length === 2
 		&& viewport.every(value => typeof value === 'number' && Number.isFinite(value) && value > 0);
 };
-const getRuntimeViewportKey = (viewport: unknown) => Array.isArray(viewport)
+const getRuntimeViewportKey = (viewport: PlaygroundViewport) => Array.isArray(viewport)
 	? `${viewport[0]}x${viewport[1]}`
 	: String(viewport);
-const validateRuntimeViews = (propsData: Record<string, unknown>) => {
+const validateRuntimeViews = (propsData: MarkdownPlaygroundConfig) => {
 	if ('view' in propsData) return '不支持 view 参数，请使用 views';
 	if (!('views' in propsData)) return '';
 	const views = propsData.views;
 	if (!Array.isArray(views) || !views.length) {
 		return 'views 必须是非空数组';
 	}
-	const invalidView = views.find(view => !runtimeViews.includes(view));
+	const invalidView = views.find(view => !isPlaygroundView(view));
 	if (invalidView !== undefined) return `views 不支持 ${String(invalidView)}`;
 	const duplicateView = views.find((view, viewIndex) =>
 		views.indexOf(view) !== viewIndex
@@ -74,7 +79,7 @@ const validateRuntimeViews = (propsData: Record<string, unknown>) => {
 	if (duplicateView !== undefined) return `views 不能重复声明 ${String(duplicateView)}`;
 	return '';
 };
-const validateRuntimeViewport = (propsData: Record<string, unknown>) => {
+const validateRuntimeViewport = (propsData: MarkdownPlaygroundConfig) => {
 	if ('viewport' in propsData && !isRuntimeViewport(propsData.viewport)) {
 		return 'viewport 必须是 auto、正数宽度或 [宽,高]';
 	}
@@ -85,14 +90,14 @@ const validateRuntimeViewport = (propsData: Record<string, unknown>) => {
 	if (invalidIndex >= 0) {
 		return `viewportOptions[${invalidIndex}] 必须是 auto、正数宽度或 [宽,高]`;
 	}
-	const keys = options.map(getRuntimeViewportKey);
+	const keys = options.filter(isRuntimeViewport).map(getRuntimeViewportKey);
 	const duplicateIndex = keys.findIndex((key, index) => keys.indexOf(key) !== index);
 	if (duplicateIndex >= 0) {
 		return `viewportOptions 不能重复声明 ${keys[duplicateIndex]}`;
 	}
 	return '';
 };
-const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>) => {
+const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>): MarkdownPlaygroundConfig => {
 	for (const token of tokens) {
 		const sources: string[] = [];
 		if (token.type === 'html_block' && token.content) sources.push(token.content);
@@ -106,7 +111,7 @@ const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>) =>
 					try {
 						const parsed = JSON5.parse(configMatch[1]);
 						if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-							return parsed as Record<string, unknown>;
+							return parsed as MarkdownPlaygroundConfig;
 						}
 					} catch { /* 配置格式异常时保持为空 */ }
 				}
@@ -116,7 +121,7 @@ const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>) =>
 	}
 	return {};
 };
-const renderPlaygroundAttrs = (propsData: Record<string, unknown>) => `data-props="${md.utils.escapeHtml(JSON.stringify(propsData))}"`;
+const renderPlaygroundAttrs = (propsData: MarkdownPlaygroundConfig) => `data-props="${md.utils.escapeHtml(JSON.stringify(propsData))}"`;
 
 md.core.ruler.after('block', 'runtime-files', (state) => {
 	for (let index = 0; index < state.tokens.length; index++) {
@@ -174,7 +179,7 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 				} else if (!filenames.includes(entry)) {
 					placeholder.content = renderPlaygroundError(`入口文件 ${entry} 不存在`);
 				} else {
-					const files = Object.fromEntries(fileEntries);
+					const files: PlaygroundFiles = Object.fromEntries(fileEntries);
 					placeholder.content = [
 						'<div data-playground',
 						`data-files="${md.utils.escapeHtml(JSON.stringify(files))}"`,
@@ -204,13 +209,22 @@ export const Markdown = md;
 
 export interface MarkdownSearchSection {
 	title: string;
+	/**
+	 * 标题锚点，不含 `#`。
+	 */
 	anchor: string;
+	/**
+	 * Markdown 标题级别，1～6。
+	 */
 	level: number;
 	text: string;
 }
 
 export interface MarkdownSearchDocument {
 	title: string;
+	/**
+	 * 去掉标题后的全文可搜索文本。
+	 */
 	text: string;
 	sections: MarkdownSearchSection[];
 }

@@ -1,7 +1,7 @@
+import type { Language } from '@deot/docs-locale';
 import type {
 	RendererIssue,
-	RendererLocaleText,
-	RendererModuleContext
+	RendererLocaleText
 } from '../../types';
 
 export const localeText = (english: string, chinese: string): RendererLocaleText => ({
@@ -11,7 +11,7 @@ export const localeText = (english: string, chinese: string): RendererLocaleText
 
 export const resolveLocaleText = (
 	value: RendererLocaleText,
-	context?: Pick<RendererModuleContext, 'locale'>
+	context?: { locale?: Pick<Language, 'name'> }
 ) => {
 	if (typeof value === 'string') return value;
 	const name = context?.locale?.name || 'en-US';
@@ -45,12 +45,52 @@ export const toArrayValue = <T>(
 );
 
 export const SECTION_ALIGNMENTS = ['left', 'center'] as const;
+export const TEXT_ALIGNMENTS = ['left', 'center', 'right'] as const;
+
+const UNSAFE_HREF = /^(?:data|javascript|vbscript):/iu;
+
+/**
+ * 判断链接是否使用了可执行脚本的协议。
+ * @param value 用户填写的链接。
+ * @returns 协议是否不安全。
+ */
+export const isUnsafeHref = (value: string) => UNSAFE_HREF.test(value.trim());
 
 export const toEnumValue = <T extends string>(
 	value: unknown,
 	values: readonly T[],
 	fallback: T
 ): T => values.includes(value as T) ? value as T : fallback;
+
+/** hero / cta / features / steps / faq 共用的区块标题组。 */
+export interface RendererSectionHeader {
+	/**
+	 * 标题上方的短标签，可空。
+	 */
+	eyebrow: string;
+	title: string;
+	description: string;
+	/**
+	 * 标题组水平对齐。区块内正文对齐走各自 props。
+	 */
+	align: typeof SECTION_ALIGNMENTS[number];
+}
+
+/**
+ * 规范化区块标题组。
+ * @param record 已转成对象的原始 props。
+ * @param fallbackAlign 对齐方式缺省值，首屏默认左对齐、其余居中。
+ * @returns 补齐后的标题组。
+ */
+export const normalizeSectionHeader = (
+	record: Record<string, unknown>,
+	fallbackAlign: RendererSectionHeader['align']
+): RendererSectionHeader => ({
+	eyebrow: toStringValue(record.eyebrow),
+	title: toStringValue(record.title),
+	description: toStringValue(record.description),
+	align: toEnumValue(record.align, SECTION_ALIGNMENTS, fallbackAlign)
+});
 
 export const moduleIssue = (
 	path: string,
@@ -88,10 +128,19 @@ export const validateEnum = <T extends string>(
 
 export interface RendererActionValue {
 	label: string;
+	/**
+	 * 跳转目标。站内路径或 http(s) 地址，不是 Vue Router name。
+	 */
 	to: string;
 	variant: RendererActionVariant;
 	size: RendererActionSize;
+	/**
+	 * 按钮填充色，CSS 颜色；空字符串用主题默认。
+	 */
 	color: string;
+	/**
+	 * 按钮文字色；空字符串用主题默认。
+	 */
 	textColor: string;
 	target?: '_blank';
 }
@@ -140,7 +189,7 @@ export const validateActionValues = (
 		...(item.to.trim()
 			? []
 			: [moduleIssue(`${itemPath}.to`, 'action.target.required', '操作目标不能为空')]),
-		...(/^(?:data|javascript|vbscript):/iu.test(item.to.trim())
+		...(isUnsafeHref(item.to)
 			? [moduleIssue(`${itemPath}.to`, 'action.target.unsafe', '操作目标协议不安全')]
 			: []),
 		...validateEnum(item.variant, `${itemPath}.variant`, ACTION_VARIANTS),

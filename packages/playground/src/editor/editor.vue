@@ -96,12 +96,12 @@ import { EditorView, basicSetup } from 'codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { vue } from '@codemirror/lang-vue';
 import { highlightActiveLine } from '@codemirror/view';
+import { NEW_SFC_CODE } from '../constants';
 import type { PlaygroundFiles } from '../types';
 import type { EditorFilesChange, EditorFilesChangeAction } from './types';
 import { Drag } from './drag';
 
 const SUPPORTED_FILE_RE = /\.(vue|js|ts|jsx|tsx|css|json|html)$/i;
-const newSFCCode = `<script setup lang="ts"><\/script>\n\n<template>\n  <div>\n    <slot />\n  <\/div>\n<\/template>\n`;
 
 const props = withDefaults(defineProps<{
 	value?: string;
@@ -226,7 +226,7 @@ const focusFilename = () => nextTick(() => {
 
 const handleCreate = () => {
 	const filename = nextFilename();
-	editorFiles.value = { ...editorFiles.value, [filename]: newSFCCode };
+	editorFiles.value = { ...editorFiles.value, [filename]: NEW_SFC_CODE };
 	activeFilename.value = filename;
 	notifyFilesChange({ type: 'create', filename });
 	props.onActiveChange(filename);

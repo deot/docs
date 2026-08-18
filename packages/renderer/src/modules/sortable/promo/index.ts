@@ -1,6 +1,7 @@
 import { defineRendererModule } from '../../../catalog';
 import { collectImageResources } from '../../shared/image-source';
 import {
+	isUnsafeHref,
 	localeText,
 	moduleIssue,
 	toArrayValue,
@@ -17,7 +18,6 @@ import Viewer from './viewer.vue';
 import {
 	ADS_LAYOUTS,
 	ADS_STYLES,
-	isUnsafeHref,
 	type RendererAdsItem,
 	type RendererAdsLayout,
 	type RendererAdsStyle
@@ -109,11 +109,13 @@ export const AdsModule = defineRendererModule<{
 	},
 	integrations: {
 		collectResources: (props) => {
-			const items = Array.isArray(props.items) ? props.items : [];
+			const record = toRecord(props);
+			const items = Array.isArray(record.items) ? record.items : [];
 			return collectImageResources(items.map(item => String(toRecord(item).src || '')));
 		},
 		collectSearchText: (props) => {
-			const items = Array.isArray(props.items) ? props.items : [];
+			const record = toRecord(props);
+			const items = Array.isArray(record.items) ? record.items : [];
 			return items.map((item) => {
 				const current = toRecord(item);
 				return {

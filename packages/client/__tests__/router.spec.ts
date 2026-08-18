@@ -4,6 +4,7 @@ vi.mock('../src/components/layout', () => ({ ResourceSlot: { name: 'ResourceSlot
 
 import { createDocsRouter, getRouteValue, localizePath } from '../src/router';
 import type { DocsConfig } from '../src/types';
+import { createRouteShape } from './fixtures/docs';
 
 const config: DocsConfig = {
 	locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
@@ -71,10 +72,7 @@ describe('docs router', () => {
 		expect(router.currentRoute.value.path).toBe('/en/target-en');
 		await router.push('/en/missing');
 		expect(router.currentRoute.value.path).toBe('/en');
-		expect(getRouteValue({
-			path: '/en/static',
-			params: { lang: 'en' }
-		} as any, {})).toBe('static');
+		expect(getRouteValue(createRouteShape('/en/static', { lang: 'en' }), {})).toBe('static');
 	});
 
 	it('keeps the database page on the internal __docs route', async () => {
@@ -158,7 +156,7 @@ describe('docs router', () => {
 		expect(router.currentRoute.value.fullPath).toBe('/en/target?tab=api#title');
 		await router.push('/guide');
 		expect(router.currentRoute.value.path).toBe('/en/target');
-		expect(getRouteValue({ path: '/', params: {} } as any, {})).toBe('index');
+		expect(getRouteValue(createRouteShape('/'), {})).toBe('index');
 
 		const noLocales = createDocsRouter({ locales: {}, routes: {} });
 		await noLocales.push('/');

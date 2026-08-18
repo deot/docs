@@ -194,8 +194,10 @@ export const convertRendererDocumentFrame = async (
 	for (const node of document.blocks) {
 		const definition = await convertibleDefinition(node, layout.mode, catalog);
 		if (!definition) continue;
+		const draggable = definition.frames.draggable;
+		if (!draggable) continue;
 		const placement = {
-			...definition.frames.draggable!.initialPlacement(),
+			...draggable.initialPlacement(),
 			...pickRendererCornerRadii(node.appearance),
 			y: nextTop,
 			zIndex: blocks.length + 1
@@ -337,55 +339,57 @@ export const prepareRendererDocument = async (
 		} else if (node.placement) {
 			const placement = node.placement;
 			placement.rotate = normalizeRotation(placement.rotate);
-			const draggable = definition.frames.draggable!;
-			const placementPath = `${path}.placement`;
-			const sizeRules = [
-				['width', 'minWidth', 'minimum'] as const,
-				['width', 'maxWidth', 'maximum'] as const,
-				['height', 'minHeight', 'minimum'] as const,
-				['height', 'maxHeight', 'maximum'] as const
-			];
-			sizeRules.forEach(([sizeKey, ruleKey, direction]) => {
-				const limit = draggable[ruleKey];
-				const size = placement[sizeKey];
-				const invalid = direction === 'minimum'
-					? typeof limit === 'number' && size < limit
-					: typeof limit === 'number' && size > limit;
-				if (invalid) issues.push({
-					path: `${placementPath}.${sizeKey}`,
-					code: `module.placement.${ruleKey}`,
-					message: `${sizeKey} 不符合模块 ${ruleKey} 约束`,
-					severity: 'error',
-					nodeId: node.id
-				});
-			});
-			if (
-				draggable.aspectRatio
-				&& Math.abs(placement.width / placement.height - draggable.aspectRatio) > 0.001
-			) {
-				issues.push({
-					path: placementPath,
-					code: 'module.placement.aspectRatio',
-					message: `模块宽高比必须为 ${draggable.aspectRatio}`,
-					severity: 'error',
-					nodeId: node.id
-				});
-			}
-			if (draggable.containment !== 'none' && document.layout.mode === 'draggable') {
-				const bounds = rotatedBounds(placement);
-				if (
-					bounds.left < -0.001
-					|| bounds.top < -0.001
-					|| bounds.right > document.layout.width + 0.001
-					|| bounds.bottom > document.layout.height + 0.001
-				) {
-					issues.push({
-						path: placementPath,
-						code: 'module.placement.containment',
-						message: '模块旋转后的边界不能超出画布',
+			const draggable = definition.frames.draggable;
+			if (draggable) {
+				const placementPath = `${path}.placement`;
+				const sizeRules = [
+					['width', 'minWidth', 'minimum'] as const,
+					['width', 'maxWidth', 'maximum'] as const,
+					['height', 'minHeight', 'minimum'] as const,
+					['height', 'maxHeight', 'maximum'] as const
+				];
+				sizeRules.forEach(([sizeKey, ruleKey, direction]) => {
+					const limit = draggable[ruleKey];
+					const size = placement[sizeKey];
+					const invalid = direction === 'minimum'
+						? typeof limit === 'number' && size < limit
+						: typeof limit === 'number' && size > limit;
+					if (invalid) issues.push({
+						path: `${placementPath}.${sizeKey}`,
+						code: `module.placement.${ruleKey}`,
+						message: `${sizeKey} 不符合模块 ${ruleKey} 约束`,
 						severity: 'error',
 						nodeId: node.id
 					});
+				});
+				if (
+					draggable.aspectRatio
+					&& Math.abs(placement.width / placement.height - draggable.aspectRatio) > 0.001
+				) {
+					issues.push({
+						path: placementPath,
+						code: 'module.placement.aspectRatio',
+						message: `模块宽高比必须为 ${draggable.aspectRatio}`,
+						severity: 'error',
+						nodeId: node.id
+					});
+				}
+				if (draggable.containment !== 'none' && document.layout.mode === 'draggable') {
+					const bounds = rotatedBounds(placement);
+					if (
+						bounds.left < -0.001
+						|| bounds.top < -0.001
+						|| bounds.right > document.layout.width + 0.001
+						|| bounds.bottom > document.layout.height + 0.001
+					) {
+						issues.push({
+							path: placementPath,
+							code: 'module.placement.containment',
+							message: '模块旋转后的边界不能超出画布',
+							severity: 'error',
+							nodeId: node.id
+						});
+					}
 				}
 			}
 		}
@@ -401,7 +405,8 @@ export const prepareRendererDocument = async (
 			});
 			continue;
 		}
-		if (node.module.version < definition.identity.version && !definition.data.migrate) {
+		const migrate = definition.data.migrate;
+		if (node.module.version < definition.identity.version && !migrate) {
 			issues.push({
 				path: `${path}.module.version`,
 				code: 'module.migration.missing',
@@ -412,8 +417,8 @@ export const prepareRendererDocument = async (
 			continue;
 		}
 		try {
-			if (node.module.version < definition.identity.version) {
-				props = definition.data.migrate!(props, node.module.version, context);
+			if (node.module.version < definition.identity.version && migrate) {
+				props = migrate(props, node.module.version, context);
 			}
 			const normalized = definition.data.normalize
 				? definition.data.normalize(props)

@@ -8,7 +8,6 @@ import {
 	createEmptyRendererDocument,
 	createRendererModuleCatalog,
 	createRendererPageNode,
-	type RendererDraggableDocument,
 	type RendererModuleContext
 } from '../src';
 import PropertyEditor from '../src/editor/index.vue';
@@ -452,7 +451,7 @@ describe('renderer editor surfaces', () => {
 		}));
 		expect(store.getNode('text')?.appearance?.maxWidth).toBeUndefined();
 
-		const draggable = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
+		const draggable = createEmptyRendererDocument('draggable');
 		draggable.blocks.push({
 			id: 'free',
 			module: { type: 'text', version: 1, props: { text: 'Free' } },
@@ -530,7 +529,7 @@ describe('renderer editor surfaces', () => {
 			meta: { extra: { array: string[] } };
 		};
 		expect(source.meta.extra.array).toEqual(['second', 'first']);
-		expect((document.meta as unknown as Record<string, unknown>).extra).toEqual({ array: ['first', 'second'] });
+		expect((document.meta as { extra?: { array: string[] } }).extra).toEqual({ array: ['first', 'second'] });
 	});
 
 	it('reports invalid source without mutating or closing', async () => {
@@ -712,7 +711,7 @@ describe('renderer editor surfaces', () => {
 	});
 
 	it('renders and closes the Preview portal for a draggable document', async () => {
-		const document = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
+		const document = createEmptyRendererDocument('draggable');
 		const wrapper = mount(PreviewPopup, {
 			props: { document, modules: BuiltinModules, context: { ...context, frameMode: 'draggable' } }
 		});

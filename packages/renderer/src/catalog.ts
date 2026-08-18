@@ -65,10 +65,10 @@ const validateDefinition = (definition: RendererModuleDefinition, expectedType?:
 		}
 	}
 	[definition.widget, definition.frames.sortable?.widget, definition.frames.draggable?.widget]
-		.filter(Boolean)
 		.forEach((widget) => {
+			if (!widget) return;
 			const keys = new Set<string>();
-			widget!.presets?.forEach((preset) => {
+			widget.presets?.forEach((preset) => {
 				if (!preset.key.trim() || keys.has(preset.key)) {
 					throw new TypeError(`Renderer module preset key is invalid or duplicated: ${type}/${preset.key}`);
 				}

@@ -39,6 +39,9 @@ export const ListModule = defineRendererModule<{ ordered: boolean; items: string
 		draggable: sectionDraggableFrame(360, 180)
 	},
 	integrations: {
-		collectSearchText: props => [{ text: Array.isArray(props.items) ? props.items.join(' ') : '' }]
+		collectSearchText: (props) => {
+			const record = toRecord(props);
+			return [{ text: Array.isArray(record.items) ? record.items.join(' ') : '' }];
+		}
 	}
 });

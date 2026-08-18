@@ -12,6 +12,7 @@ import {
 	useSandboxAutoHeight
 } from '../src/core/runtime/auto-height';
 import type { SandboxExposed } from '../src/core/runtime/auto-height';
+import { invalid } from './fixtures';
 
 class ResizeObserverMock {
 	static instances: ResizeObserverMock[] = [];
@@ -26,7 +27,7 @@ class ResizeObserverMock {
 	}
 
 	trigger() {
-		this.callback([], this as unknown as ResizeObserver);
+		this.callback([], invalid<ResizeObserver>(this));
 	}
 }
 

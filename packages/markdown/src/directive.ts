@@ -1,7 +1,9 @@
 import { createApp, h } from 'vue';
 import type { App, DirectiveBinding } from 'vue';
 import type { Language } from '@deot/docs-locale';
+import type { PlaygroundFiles } from '@deot/docs-playground';
 import { Markdown } from './markdown';
+import type { MarkdownPlaygroundConfig, MarkdownPlaygroundMountProps } from './types';
 
 const mountedApps = new WeakMap<HTMLElement, App[]>();
 const renderVersions = new WeakMap<HTMLElement, number>();
@@ -59,15 +61,15 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirecti
 
 	playgrounds.forEach((item) => {
 		const code = item.dataset.code;
-		let files;
-		let propsData = {};
+		let files: PlaygroundFiles | undefined;
+		let propsData: MarkdownPlaygroundConfig = {};
 		try {
-			propsData = JSON.parse(item.dataset.props || '{}');
+			propsData = JSON.parse(item.dataset.props || '{}') as MarkdownPlaygroundConfig;
 		} catch { /* 忽略无效的属性配置 */ }
 		try {
-			files = item.dataset.files ? JSON.parse(item.dataset.files) : undefined;
+			files = item.dataset.files ? JSON.parse(item.dataset.files) as PlaygroundFiles : undefined;
 		} catch { /* 忽略无效的文件配置 */ }
-		const runtimeProps = files
+		const runtimeProps: MarkdownPlaygroundMountProps = files
 			? { files, entry: item.dataset.entry }
 			: { modelValue: code };
 		const app = createApp(() => h(DocsPlayground.Playground, {

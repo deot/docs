@@ -214,6 +214,7 @@ import type {
 } from '../../types';
 import type { RendererStore } from '../../store';
 import { RENDERER_WIDGET_MIME, getWidgetDragSession } from '../../widget/constants';
+import type { RendererCreateTarget } from '../../widget/constants';
 import RendererNode from '../../assist/renderer/node.vue';
 import ZoomBar from '../shared/zoom-bar.vue';
 import { captureZoomAnchor, restoreZoomAnchor } from '../shared/zoom-anchor';
@@ -224,6 +225,7 @@ import {
 	resizeRotatedPlacement,
 	snapPlacementToGuides
 } from './geometry';
+import type { Point } from './geometry';
 import GridLines from './grid-lines.vue';
 import Ruler from './ruler.vue';
 import { RULER_SIZE } from './ruler-paint';
@@ -234,6 +236,7 @@ import {
 	isRendererSelectionModule,
 	selectionMemberIds
 } from '../../modules/shared/selection';
+import type { MarqueeRect } from '../../modules/shared/selection';
 import { rendererPageBackgroundCss } from '../../utils/page-background';
 import {
 	createRightMenuPortal,
@@ -247,7 +250,7 @@ const props = defineProps<{
 	context: RendererModuleContext;
 }>();
 const emit = defineEmits<{
-	create: [payload: { type: string; presetKey?: string; index: number; point: { x: number; y: number } }];
+	create: [payload: RendererCreateTarget & { index: number; point: Point }];
 }>();
 const { t } = useLocale(computed(() => props.context.locale));
 const root = ref<HTMLElement>();
@@ -366,10 +369,10 @@ const toCanvasPoint = (event: Pick<PointerEvent | DragEvent | MouseEvent, 'clien
 };
 
 type Interaction
-	= | { type: 'move'; pointerId: number; start: { x: number; y: number }; placements: Map<string, RendererPlacement> }
+	= | { type: 'move'; pointerId: number; start: Point; placements: Map<string, RendererPlacement> }
 		| { type: 'resize'; pointerId: number; handle: RendererResizeHandle; original: RendererPlacement }
-		| { type: 'rotate'; pointerId: number; original: RendererPlacement; center: { x: number; y: number }; startAngle: number }
-		| { type: 'marquee'; pointerId: number; start: { x: number; y: number } }
+		| { type: 'rotate'; pointerId: number; original: RendererPlacement; center: Point; startAngle: number }
+		| { type: 'marquee'; pointerId: number; start: Point }
 		| { type: 'guide'; pointerId: number; axis: 'x' | 'y'; index: number };
 const interaction = ref<Interaction>();
 const isRotating = computed(() => interaction.value?.type === 'rotate');
@@ -392,7 +395,7 @@ const rotateHudStyle = computed<CSSProperties>(() => {
 		height: `${placement.height}px`
 	};
 });
-const marquee = ref<{ left: number; top: number; right: number; bottom: number }>();
+const marquee = ref<MarqueeRect>();
 const guideX = ref<number[]>([]);
 const guideY = ref<number[]>([]);
 const rulerPreview = ref<{ axis: 'x' | 'y'; value: number }>();
@@ -711,7 +714,7 @@ const handleWidgetDrop = (event: DragEvent) => {
 	const source = event.dataTransfer?.getData(RENDERER_WIDGET_MIME);
 	if (!source) return;
 	try {
-		const payload = JSON.parse(source) as { type: string; presetKey?: string };
+		const payload = JSON.parse(source) as RendererCreateTarget;
 		emit('create', { ...payload, index: blocks.value.length, point: toCanvasPoint(event) });
 	} catch {
 		// 非 Renderer 拖拽数据交给浏览器处理。

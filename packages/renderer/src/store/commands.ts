@@ -1,6 +1,5 @@
 import type {
 	RendererDocument,
-	RendererDraggableNode,
 	RendererNode,
 	RendererPlacement,
 	RendererSortableAppearance
@@ -10,7 +9,9 @@ import type { HistoryStack } from './history';
 import {
 	cloneDocument,
 	findNode,
-	findNodeIndex
+	findNodeIndex,
+	isDraggableNode,
+	type WritableRendererDocument
 } from './document';
 import type { SelectionSession } from './selection';
 
@@ -19,9 +20,12 @@ const sameValue = (left: unknown, right: unknown) => (
 );
 
 export interface DocumentCommandHost {
-	get document(): RendererDocument;
-	set document(value: RendererDocument);
+	get document(): WritableRendererDocument;
+	set document(value: WritableRendererDocument);
 	history: HistoryStack;
+	/**
+	 * Combo 当前选区。命令在改文档后同步维护选中 id。
+	 */
 	selection: SelectionSession;
 }
 
@@ -32,13 +36,17 @@ export interface DocumentCommandHost {
 export const createDocumentCommands = (host: DocumentCommandHost) => {
 	const getNode = (id: string) => findNode(host.document, id);
 	const getNodeIndex = (id: string) => findNodeIndex(host.document, id);
+	const getDraggableNode = (id: string) => {
+		const node = getNode(id);
+		return node && isDraggableNode(node) ? node : undefined;
+	};
 
 	const insertNode = (index: number, node: RendererNode) => {
-		const value = cloneRendererValue(node) as RendererNode;
+		const value = cloneRendererValue(node);
 		const target = Math.min(Math.max(0, index), host.document.blocks.length);
 		host.history.execute({
 			label: 'insertNode',
-			redo: () => host.document.blocks.splice(target, 0, cloneRendererValue(value) as never),
+			redo: () => host.document.blocks.splice(target, 0, cloneRendererValue(value)),
 			undo: () => {
 				const current = getNodeIndex(value.id);
 				if (current >= 0) host.document.blocks.splice(current, 1);
@@ -65,7 +73,7 @@ export const createDocumentCommands = (host: DocumentCommandHost) => {
 				host.selection.ids = host.selection.ids.filter(id => !removed.has(id));
 			},
 			undo: () => targets.forEach(({ index, node }) => {
-				host.document.blocks.splice(index, 0, cloneRendererValue(node) as never);
+				host.document.blocks.splice(index, 0, cloneRendererValue(node));
 			})
 		});
 	};
@@ -76,7 +84,8 @@ export const createDocumentCommands = (host: DocumentCommandHost) => {
 		const next = Math.min(Math.max(0, target), host.document.blocks.length - 1);
 		if (current === next) return;
 		const [node] = host.document.blocks.splice(current, 1);
-		host.document.blocks.splice(next, 0, node as never);
+		if (!node) return;
+		host.document.blocks.splice(next, 0, node);
 	};
 
 	const moveNode = (id: string, index: number, options: { history?: boolean } = {}) => {
@@ -127,8 +136,8 @@ export const createDocumentCommands = (host: DocumentCommandHost) => {
 
 	const updateAppearance = (id: string, value: RendererSortableAppearance) => {
 		const node = getNode(id);
-		if (!node || !('appearance' in node) || sameValue(node.appearance, value)) return;
-		const before = cloneRendererValue(node.appearance!);
+		if (!node || !('appearance' in node) || node.appearance === undefined || sameValue(node.appearance, value)) return;
+		const before = cloneRendererValue(node.appearance);
 		const after = cloneRendererValue(value);
 		const apply = (next: RendererSortableAppearance) => {
 			const target = getNode(id);
@@ -147,8 +156,8 @@ export const createDocumentCommands = (host: DocumentCommandHost) => {
 		value: RendererPlacement,
 		options: { history?: boolean } = {}
 	) => {
-		const node = getNode(id) as RendererDraggableNode | undefined;
-		if (!node?.placement || sameValue(node.placement, value)) return;
+		const node = getDraggableNode(id);
+		if (!node || sameValue(node.placement, value)) return;
 		if (options.history === false) {
 			node.placement = cloneRendererValue(value);
 			return;
@@ -156,8 +165,8 @@ export const createDocumentCommands = (host: DocumentCommandHost) => {
 		const before = cloneRendererValue(node.placement);
 		const after = cloneRendererValue(value);
 		const apply = (next: RendererPlacement) => {
-			const target = getNode(id) as RendererDraggableNode | undefined;
-			if (target?.placement) target.placement = cloneRendererValue(next);
+			const target = getDraggableNode(id);
+			if (target) target.placement = cloneRendererValue(next);
 		};
 		host.history.execute({
 			label: 'updatePlacement',
@@ -172,8 +181,8 @@ export const createDocumentCommands = (host: DocumentCommandHost) => {
 		const changes = values.filter(value => !sameValue(value.before, value.after));
 		if (!changes.length) return;
 		const apply = (key: 'before' | 'after') => changes.forEach((value) => {
-			const node = getNode(value.id) as RendererDraggableNode | undefined;
-			if (node?.placement) node.placement = cloneRendererValue(value[key]);
+			const node = getDraggableNode(value.id);
+			if (node) node.placement = cloneRendererValue(value[key]);
 		});
 		apply('before');
 		host.history.execute({
@@ -186,13 +195,13 @@ export const createDocumentCommands = (host: DocumentCommandHost) => {
 	const updateLayout = (value: RendererDocument['layout'], options: { history?: boolean } = {}) => {
 		if (sameValue(host.document.layout, value)) return;
 		if (options.history === false) {
-			host.document.layout = cloneRendererValue(value) as never;
+			host.document.layout = cloneRendererValue(value);
 			return;
 		}
 		const before = cloneRendererValue(host.document.layout);
 		const after = cloneRendererValue(value);
 		const apply = (next: RendererDocument['layout']) => {
-			host.document.layout = cloneRendererValue(next) as never;
+			host.document.layout = cloneRendererValue(next);
 		};
 		host.history.execute({
 			label: 'updateLayout',
@@ -208,7 +217,7 @@ export const createDocumentCommands = (host: DocumentCommandHost) => {
 	) => {
 		if (sameValue(before, after)) return;
 		const apply = (next: RendererDocument['layout']) => {
-			host.document.layout = cloneRendererValue(next) as never;
+			host.document.layout = cloneRendererValue(next);
 		};
 		apply(after);
 		host.history.execute({
@@ -238,15 +247,15 @@ export const createDocumentCommands = (host: DocumentCommandHost) => {
 		next: readonly RendererNode[],
 		selectIds: readonly string[] = []
 	) => {
-		const before = cloneRendererValue(host.document.blocks) as RendererNode[];
-		const after = cloneRendererValue(next) as RendererNode[];
+		const before = cloneRendererValue(host.document.blocks);
+		const after = cloneRendererValue([...next]);
 		const selectionBefore = [...host.selection.ids];
 		const selectionAfter = [...selectIds];
 		const apply = (blocks: RendererNode[], ids: readonly string[]) => {
 			host.document.blocks.splice(
 				0,
 				host.document.blocks.length,
-				...cloneRendererValue(blocks) as never[]
+				...cloneRendererValue(blocks)
 			);
 			host.selection.set(ids, id => Boolean(getNode(id)));
 		};

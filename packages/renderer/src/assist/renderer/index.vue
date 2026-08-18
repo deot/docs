@@ -69,7 +69,9 @@ const moduleContext = computed<RendererModuleContext>(() => ({
 const nodeIssues = computed(() => {
 	const result = new Map<string, string>();
 	issues.value.filter(issue => issue.nodeId && issue.severity === 'error').forEach((issue) => {
-		if (!result.has(issue.nodeId!)) result.set(issue.nodeId!, issue.message);
+		const nodeId = issue.nodeId;
+		if (!nodeId || result.has(nodeId)) return;
+		result.set(nodeId, issue.message);
 	});
 	return result;
 });

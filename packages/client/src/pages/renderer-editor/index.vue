@@ -136,7 +136,7 @@ const saveDocument = async (value: RendererDocument) => {
 	};
 };
 const createEmptyDocument = (): RendererSortableDocument => {
-	const value = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+	const value = createEmptyRendererDocument('sortable');
 	value.meta.id = createRendererId();
 	value.meta.title = String(route.query.title || t('renderer.common.untitledPage'));
 	return value;

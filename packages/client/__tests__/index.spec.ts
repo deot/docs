@@ -2,7 +2,7 @@
 
 import { createApp, defineComponent } from 'vue';
 import { defineRendererModule } from '@deot/docs-renderer';
-import type { DocsConfig } from '../src/types';
+import { createDocsConfig, createDocsRuntime } from './fixtures/docs';
 
 const { use, provide, mount, disconnectEvents, router, startIdlePrefetch, stopPrefetch } = vi.hoisted(() => ({
 	use: vi.fn(),
@@ -18,7 +18,7 @@ const { use, provide, mount, disconnectEvents, router, startIdlePrefetch, stopPr
 	}
 }));
 vi.mock('vue', async original => ({
-	...await original<any>(),
+	...await original<typeof import('vue')>(),
 	createApp: vi.fn(() => ({ use, provide, mount }))
 }));
 vi.mock('../src/app.vue', () => ({ default: { name: 'DocsApp' } }));
@@ -36,8 +36,8 @@ vi.mock('../src/modules/idle-prefetch', () => ({
 describe('client entry', () => {
 	it('normalizes runtime and mounts the configured application', async () => {
 		document.body.innerHTML = '<div id="app"></div>';
-		window.$docs = { locales: { 'zh-CN': { label: '简体中文' } }, routes: {} };
-		window.__DOCS_RUNTIME__ = { mode: 'development', workspace: '/site/' };
+		window.$docs = createDocsConfig({ locales: { 'zh-CN': { label: '简体中文' } } });
+		window.__DOCS_RUNTIME__ = createDocsRuntime({ workspace: '/site/' });
 		const client = await import('../src');
 		await Promise.resolve();
 		expect(window.$docs.runtime).toEqual({ mode: 'development', workspace: '/site/' });
@@ -50,7 +50,7 @@ describe('client entry', () => {
 		expect(client.Network).toBeDefined();
 		expect(client.Gateway).toBeInstanceOf(client.ResourceGateway);
 
-		const explicit: DocsConfig = { locales: { en: { label: 'English' } }, routes: {} };
+		const explicit = createDocsConfig({ locales: { en: { label: 'English' } } });
 		router.currentRoute.value.params.lang = 'en';
 		const instance = client.bootstrap(explicit);
 		await Promise.resolve();
@@ -67,9 +67,8 @@ describe('client entry', () => {
 	it('provides business renderer modules without a global registry', async () => {
 		const client = await import('../src');
 		const component = defineComponent(() => () => null);
-		const explicit: DocsConfig = {
+		const explicit = createDocsConfig({
 			locales: { 'en-US': { label: 'English' } },
-			routes: {},
 			renderers: [defineRendererModule({
 				identity: { type: 'company:banner', version: 1, label: 'Banner', category: 'Company' },
 				widget: { visible: true },
@@ -78,7 +77,7 @@ describe('client entry', () => {
 				editor: component,
 				frames: { sortable: {} }
 			})]
-		};
+		});
 		const instance = client.bootstrap(explicit);
 		const rendererProvision = provide.mock.calls.find(call => (
 			Array.isArray(call[1]) && call[1].some((item: { identity?: { type?: string } }) => item.identity?.type === 'company:banner')

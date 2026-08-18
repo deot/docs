@@ -59,7 +59,7 @@ vi.mock('../src/modules', () => ({
 }));
 
 vi.mock('vue-router', async original => ({
-	...await original<any>(),
+	...await original<typeof import('vue-router')>(),
 	useRoute: () => route,
 	useRouter: () => ({ push })
 }));

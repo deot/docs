@@ -20,14 +20,19 @@ vi.mock('@deot/helper-cache', () => ({
 }));
 
 import { ResourceGateway } from '../src/modules/gateway';
-import type { ResourceCache, ResourceRecord } from '../src/modules/gateway';
+import type {
+	ResourceCache,
+	ResourceRecord,
+	ResourceRecordInput,
+	ResourceStatusHistory
+} from '../src/modules/gateway';
 import { ResourceRequestError } from '../src/modules/gateway/types';
 import { RequestScheduler } from '../src/modules/gateway/scheduler';
 import { resourceIdentityKey } from '../src/utils/resolver';
 import type { ResourceIdentity } from '../src/types';
 
 class MemoryCache implements ResourceCache {
-	data = new Map<string, ResourceRecord>();
+	data = new Map<string, ResourceRecordInput>();
 
 	async get(key: string) { return this.data.get(key) || null; }
 	async set(key: string, value: ResourceRecord) { this.data.set(key, value); }
@@ -35,6 +40,13 @@ class MemoryCache implements ResourceCache {
 	async list() { return [...this.data.values()]; }
 	async clear() { this.data.clear(); }
 }
+
+const statusHistoryOf = (record: ResourceRecordInput | undefined): ResourceStatusHistory[] => {
+	if (!record || !Array.isArray(record.statusHistory)) {
+		throw new TypeError('expected statusHistory');
+	}
+	return record.statusHistory as ResourceStatusHistory[];
+};
 
 const identity = (source: string, namespace = 'docs'): ResourceIdentity => ({
 	namespace,
@@ -500,7 +512,7 @@ describe('ResourceGateway', () => {
 			updatedAt: 1,
 			checkedAt: 1,
 			accessedAt: 1
-		} as unknown as ResourceRecord);
+		});
 		const gateway = new ResourceGateway({
 			cache,
 			request: vi.fn(async () => ({ status: 200, body: 'network' }))
@@ -842,9 +854,9 @@ describe('ResourceGateway', () => {
 		await vi.waitFor(() => {
 			const pending = [...cache.data.values()][0];
 			expect(pending).toMatchObject({ status: 'pending', requestStatus: 'pending' });
-			expect(pending.statusHistory).toHaveLength(1);
-			expect(pending.statusHistory[0]).toMatchObject({ status: 'pending' });
-			expect(pending.statusHistory[0].waitingAt).toBeUndefined();
+			expect(statusHistoryOf(pending)).toHaveLength(1);
+			expect(statusHistoryOf(pending)[0]).toMatchObject({ status: 'pending' });
+			expect(statusHistoryOf(pending)[0].waitingAt).toBeUndefined();
 		});
 		release();
 		const completed = await result;
@@ -882,8 +894,8 @@ describe('ResourceGateway', () => {
 			const queued = [...cache.data.values()]
 				.find(item => item.identity.source === './queued.md');
 			expect(queued).toMatchObject({ status: 'waiting', requestStatus: 'waiting' });
-			expect(queued?.statusHistory).toHaveLength(1);
-			expect(queued?.statusHistory[0]).toMatchObject({
+			expect(statusHistoryOf(queued)).toHaveLength(1);
+			expect(statusHistoryOf(queued)[0]).toMatchObject({
 				status: 'waiting',
 				waitingAt: expect.any(Number)
 			});
@@ -894,8 +906,8 @@ describe('ResourceGateway', () => {
 		await prefetched;
 		const completed = [...cache.data.values()]
 			.find(item => item.identity.source === './queued.md')!;
-		expect(completed.statusHistory).toHaveLength(1);
-		expect(completed.statusHistory[0]).toMatchObject({
+		expect(statusHistoryOf(completed)).toHaveLength(1);
+		expect(statusHistoryOf(completed)[0]).toMatchObject({
 			status: 'success',
 			waitingAt: expect.any(Number),
 			pendingAt: expect.any(Number),
@@ -1021,13 +1033,13 @@ describe('ResourceGateway', () => {
 				createdAt: index + 10,
 				reason: index ? 'offline' : undefined
 			}))
-		} as unknown as ResourceRecord);
+		});
 		cache.data.set('missing', {
 			identity: missing,
 			url: '/legacy-missing.md',
 			checkedAt: 0,
 			accessedAt: 0
-		} as unknown as ResourceRecord);
+		});
 		const gateway = new ResourceGateway({ cache });
 		const records = await gateway.list();
 		const repaired = records.find(item => item.identity.source === './legacy.md')!;
@@ -1062,7 +1074,7 @@ describe('ResourceGateway', () => {
 			updatedAt: 10,
 			checkedAt: 10,
 			accessedAt: 10
-		} as unknown as ResourceRecord);
+		});
 		const gateway = new ResourceGateway({ cache });
 		const restored = await gateway.load(target, { refresh: false });
 

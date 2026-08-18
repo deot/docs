@@ -78,7 +78,7 @@ const {
 });
 
 vi.mock('vue-router', async original => ({
-	...await original<any>(),
+	...await original<typeof import('vue-router')>(),
 	useRoute: () => ({ params: { lang: 'zh-CN' } }),
 	useRouter: () => ({ back: routerBack, push: routerPush })
 }));

@@ -2,7 +2,8 @@
 
 import { flushPromises, mount } from '@vue/test-utils';
 import Paging, { PagingFake } from '../src/components/paging';
-import type { PagingFilterModule, PagingKeywords } from '../src/components/paging';
+import type { PagingFilterModule, PagingKeywords, PagingLoadResult } from '../src/components/paging';
+import { invalid } from './fixtures/docs';
 
 vi.mock('@deot/vc', async () => {
 	const { createVcStubs } = await import('./fixtures/vc');
@@ -217,7 +218,7 @@ describe('paging', () => {
 
 	it('emits load errors for invalid or rejected results', async () => {
 		const wrapper = mount(Paging<Row>, {
-			props: { loadData: async () => ({ invalid: true }) as never }
+			props: { loadData: async () => invalid<PagingLoadResult<Row>>({ invalid: true }) }
 		});
 		await flushPromises();
 		expect(wrapper.emitted('load-error')?.[0]?.[0]).toBeInstanceOf(TypeError);

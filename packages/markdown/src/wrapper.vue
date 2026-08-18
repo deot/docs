@@ -14,7 +14,7 @@ import { provideLocale, useLocale } from '@deot/docs-locale';
 import type { Language } from '@deot/docs-locale';
 import { vMarkdown } from './directive';
 import MarkdownIndicator from './indicator.vue';
-import type { MarkdownIndicatorConfig, MarkdownIndicatorOptions } from './types';
+import type { MarkdownIndicatorConfig } from './types';
 
 // 后续再处理内容变更。
 defineEmits<{
@@ -34,7 +34,7 @@ const content = ref<HTMLElement>();
 const inheritedLocale = useLocale();
 const locale = computed(() => props.locale || inheritedLocale.locale.value);
 provideLocale(locale);
-const indicatorOptions = computed<MarkdownIndicatorOptions | undefined>(() => {
+const indicatorOptions = computed(() => {
 	if (props.indicator === false) return undefined;
 	return typeof props.indicator === 'object' ? props.indicator : {};
 });

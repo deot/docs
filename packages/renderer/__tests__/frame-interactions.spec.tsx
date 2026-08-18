@@ -21,6 +21,7 @@ import {
 	endWidgetDrag
 } from '../src/widget/constants';
 import { RENDERER_RIGHT_MENU } from '../src/frame/draggable/right-menu/constants';
+import { htmlElementOf } from './fixtures';
 
 const menuPopup = vi.hoisted(() => vi.fn((..._args: unknown[]): Promise<string> => (
 	Promise.reject(new Error('dismissed'))
@@ -90,7 +91,7 @@ const drag = (
 };
 
 const sortable = (): RendererSortableDocument => {
-	const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+	const document = createEmptyRendererDocument('sortable');
 	document.blocks.push(...['a', 'b', 'c'].map(id => ({
 		id,
 		module: { type: 'text', version: 1, props: { text: id.toUpperCase() } },
@@ -107,7 +108,7 @@ const sortable = (): RendererSortableDocument => {
 };
 
 const draggable = (): RendererDraggableDocument => {
-	const document = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
+	const document = createEmptyRendererDocument('draggable');
 	document.blocks.push({
 		id: 'a',
 		module: { type: 'text', version: 1, props: { text: 'A' } },
@@ -146,7 +147,7 @@ describe('renderer frame interactions', () => {
 		await flushPromises();
 		const items = wrapper.findAll('.docs-renderer-frame__item');
 		items.forEach((item, index) => setRect(item.element, rect(0, index * 100, 400, 100)));
-		const scroller = wrapper.get('.vc-scroller__wrapper').element as HTMLElement;
+		const scroller = htmlElementOf(wrapper.get('.vc-scroller__wrapper'));
 		setRect(scroller, rect(0, 0, 500, 300));
 		scroller.scrollTop = 30;
 
@@ -264,7 +265,7 @@ describe('renderer frame interactions', () => {
 	});
 
 	it('ignores non-widget drags and keeps empty-canvas placeholder until a widget enters', async () => {
-		const store = new RendererStore(createEmptyRendererDocument('sortable') as RendererSortableDocument);
+		const store = new RendererStore(createEmptyRendererDocument('sortable'));
 		const wrapper = mount(SortableFrame, {
 			props: {
 				store,
@@ -648,7 +649,7 @@ describe('renderer frame interactions', () => {
 		});
 		await flushPromises();
 		store.updateViewport({ scale: 2 });
-		const scroller = wrapper.get('.vc-scroller__wrapper').element as HTMLElement;
+		const scroller = htmlElementOf(wrapper.get('.vc-scroller__wrapper'));
 		Object.defineProperties(scroller, {
 			clientWidth: { configurable: true, value: 400 },
 			clientHeight: { configurable: true, value: 300 }

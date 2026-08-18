@@ -8,8 +8,17 @@ export interface RendererViewportState {
 	showRuler: boolean;
 	showGuides: boolean;
 	showThumbnail: boolean;
+	/**
+	 * 网格间距，画布像素。
+	 */
 	gridSize: number;
+	/**
+	 * 用户放置的垂直辅助线，画布 X 坐标。不是对齐吸附时的临时线。
+	 */
 	guideX: number[];
+	/**
+	 * 用户放置的水平辅助线，画布 Y 坐标。
+	 */
 	guideY: number[];
 }
 

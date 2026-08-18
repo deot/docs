@@ -40,8 +40,9 @@ const MarkdownModule = defineRendererModule<DocsMarkdownProps>({
 	},
 	integrations: {
 		collectResources: (props) => {
-			if (typeof props.content === 'string') return [];
-			const source = props.source.trim();
+			const record = props && typeof props === 'object' ? props as Record<string, unknown> : {};
+			if (typeof record.content === 'string') return [];
+			const source = typeof record.source === 'string' ? record.source.trim() : '';
 			return source ? [{ type: 'markdown', source }] : [];
 		}
 	}
@@ -77,9 +78,14 @@ const SfcModule = defineRendererModule<{ source: string }>({
 		}
 	},
 	integrations: {
-		collectResources: props => typeof props.source === 'string' && props.source
-			? [{ type: 'sfc', source: props.source }]
-			: []
+		collectResources: (props) => {
+			const source = props && typeof props === 'object' && 'source' in props
+				? props.source
+				: '';
+			return typeof source === 'string' && source
+				? [{ type: 'sfc', source }]
+				: [];
+		}
 	}
 });
 

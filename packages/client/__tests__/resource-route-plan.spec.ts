@@ -5,7 +5,7 @@ import { Gateway } from '../src/modules/gateway';
 import { defineRendererModule } from '@deot/docs-renderer';
 import { defineComponent } from 'vue';
 import type { DocsConfig } from '../src/types';
-import type { ResourceRecord } from '../src/modules/gateway';
+import { createContentRecord } from './fixtures/docs';
 
 const component = defineComponent(() => () => null);
 const pageLayout = { mode: 'sortable' as const, maxWidth: 1180, minHeight: 600, background: '#fff' };
@@ -51,7 +51,7 @@ describe('ResourcePlan route resources', () => {
 				label: 'Group',
 				children: [{ label: 'Dynamic', value: '/dynamic' }]
 			}])
-		} as ResourceRecord;
+		};
 
 		const resources = await ResourcePlan.collectRouteResources(config, [sidebar]);
 		expect(resources.map(item => [item.identity.source, item.path])).toEqual([
@@ -81,7 +81,7 @@ describe('ResourcePlan route resources', () => {
 				source: './sidebar.json'
 			},
 			content: JSON.stringify([{ label: 'Fallback', value: '/missing/deep' }])
-		} as ResourceRecord;
+		};
 
 		const resources = await ResourcePlan.collectRouteResources(config, [sidebar]);
 		expect(resources.map(item => [item.identity.source, item.path])).toContainEqual([
@@ -101,13 +101,13 @@ describe('ResourcePlan route resources', () => {
 			},
 			resolve: { resource: ({ source }) => `/site/${source.replace(/^\.\//, '')}` }
 		};
-		vi.spyOn(Gateway, 'load').mockResolvedValue({
+		vi.spyOn(Gateway, 'load').mockResolvedValue(createContentRecord({
 			content: JSON.stringify([
 				{ label: 'Button', value: '/components/button' },
 				{ label: 'Package', value: '/packages/client?tab=api#install' },
 				{ label: 'API', value: '/api/v1/users' }
 			])
-		} as any);
+		}));
 
 		await expect(ResourcePlan.resolveHomeEntry(config, 'zh-CN')).resolves
 			.toBe('/zh-CN/packages/client?tab=api#install');
@@ -160,7 +160,7 @@ describe('ResourcePlan route resources', () => {
 				'/api/:version/:name': { content: 'default', sidebar: 'default' }
 			}
 		};
-		vi.spyOn(Gateway, 'load').mockResolvedValue({
+		vi.spyOn(Gateway, 'load').mockResolvedValue(createContentRecord({
 			content: JSON.stringify([{
 				label: 'API',
 				children: [
@@ -168,7 +168,7 @@ describe('ResourcePlan route resources', () => {
 					{ label: 'Users', value: '/en-US/api/v2/users?view=all#top' }
 				]
 			}])
-		} as any);
+		}));
 
 		await expect(ResourcePlan.resolveHomeEntry(config, 'zh-CN')).resolves
 			.toBe('/en-US/api/v2/users?view=all#top');
@@ -200,12 +200,12 @@ describe('ResourcePlan route resources', () => {
 				'/components/:name': { content: 'default', sidebar: './sidebar.json' }
 			}
 		};
-		vi.spyOn(Gateway, 'load').mockResolvedValue({
+		vi.spyOn(Gateway, 'load').mockResolvedValue(createContentRecord({
 			content: JSON.stringify([
 				{ label: 'External', value: 'https://example.com/docs' },
 				{ label: 'Unknown', value: '/other/value' }
 			])
-		} as any);
+		}));
 
 		await expect(ResourcePlan.resolveHomeEntry(config, 'zh-CN')).resolves.toBeNull();
 	});
@@ -217,11 +217,11 @@ describe('ResourcePlan route resources', () => {
 			routes: { '/landing': { content: './landing.page.json' } },
 			renderers: [resourceModule('test:resource', props => [{ type: 'markdown', source: String(props.source) }])]
 		};
-		const page = {
+		const page = createContentRecord({
 			identity: {
 				namespace: 'page-plan-tests',
 				lang: 'zh-CN',
-				type: 'page' as const,
+				type: 'page',
 				source: './landing.page.json'
 			},
 			url: 'https://docs.example.com/landing.page.json',
@@ -239,11 +239,11 @@ describe('ResourcePlan route resources', () => {
 					appearance
 				}]
 			})
-		} as ResourceRecord;
+		});
 		vi.spyOn(Gateway, 'list').mockResolvedValue([page]);
 		const prefetch = vi.fn(async identities => identities.map(() => ({
 			status: 'fulfilled' as const,
-			value: page as any
+			value: page
 		})));
 		const plan = await ResourcePlan.build({ config, prefetchResources: prefetch });
 		expect([...plan.collector.identities.values()].map(item => item.source)).toEqual([
@@ -266,8 +266,7 @@ describe('ResourcePlan route resources', () => {
 			source: './landing.page.json'
 		};
 		const prefetch = vi.fn(async identities => identities.map(() => ({
-			status: 'fulfilled' as const,
-			value: {} as any
+			status: 'fulfilled' as const
 		})));
 		vi.spyOn(Gateway, 'list').mockResolvedValue([]);
 		await expect(ResourcePlan.build({ config, strict: false, prefetchResources: prefetch }))
@@ -275,7 +274,7 @@ describe('ResourcePlan route resources', () => {
 		await expect(ResourcePlan.build({ config, strict: true, prefetchResources: prefetch }))
 			.rejects.toThrow('Cannot inspect page resource');
 
-		const page = {
+		const page = createContentRecord({
 			identity,
 			url: 'https://docs.example.com/landing.page.json',
 			content: JSON.stringify({
@@ -288,7 +287,7 @@ describe('ResourcePlan route resources', () => {
 					appearance
 				}]
 			})
-		} as ResourceRecord;
+		});
 		vi.mocked(Gateway.list).mockResolvedValue([page]);
 		const unknownContent = page.content;
 		page.content = '{ invalid';
@@ -323,8 +322,8 @@ describe('ResourcePlan route resources', () => {
 				? [{ type: 'page', source: String(props.source) }]
 				: [])]
 		};
-		const createPage = (source: string, nested = '') => ({
-			identity: { namespace: 'nested-page-tests', lang: 'en-US', type: 'page' as const, source },
+		const createPage = (source: string, nested = '') => createContentRecord({
+			identity: { namespace: 'nested-page-tests', lang: 'en-US', type: 'page', source },
 			url: `https://docs.example.com/${source}`,
 			content: JSON.stringify({
 				schemaVersion: 2,
@@ -340,14 +339,13 @@ describe('ResourcePlan route resources', () => {
 					appearance
 				}]
 			})
-		} as ResourceRecord);
+		});
 		vi.spyOn(Gateway, 'list').mockResolvedValue([
 			createPage('./landing.page.json', './child.page.json'),
 			createPage('./child.page.json')
 		]);
 		const prefetch = vi.fn(async identities => identities.map(() => ({
-			status: 'fulfilled' as const,
-			value: {} as any
+			status: 'fulfilled' as const
 		})));
 		const plan = await ResourcePlan.build({ config, strict: true, prefetchResources: prefetch });
 		expect([...plan.collector.identities.values()].map(item => item.source))
@@ -381,7 +379,7 @@ describe('ResourcePlan route resources', () => {
 			locales: { 'en-US': { label: 'English' } },
 			routes: { '/components/:name': { content: 'default', sidebar: './sidebar.json' } }
 		};
-		vi.mocked(Gateway.list).mockResolvedValue([{
+		vi.mocked(Gateway.list).mockResolvedValue([createContentRecord({
 			identity: {
 				namespace: 'discovered-rejection',
 				lang: 'en-US',
@@ -389,9 +387,9 @@ describe('ResourcePlan route resources', () => {
 				source: './sidebar.json'
 			},
 			content: JSON.stringify([{ label: 'Button', value: '/components/button' }])
-		} as ResourceRecord]);
+		})]);
 		const prefetch = vi.fn(async identities => identities.map(identity => identity.type === 'sidebar'
-			? { status: 'fulfilled' as const, value: {} as any }
+			? { status: 'fulfilled' as const }
 			: { status: 'rejected' as const, reason: new Error('offline') }));
 		await expect(ResourcePlan.build({
 			config: discoveredConfig,
@@ -406,20 +404,19 @@ describe('ResourcePlan route resources', () => {
 			locales: { 'en-US': { label: 'English' } },
 			routes: { '/runtime': { content: './runtime.js' } }
 		};
-		const record = {
+		const record = createContentRecord({
 			identity: {
 				namespace: 'optional-graph',
 				lang: 'en-US',
-				type: 'module' as const,
+				type: 'module',
 				source: './runtime.js'
 			},
 			url: 'https://docs.example.com/runtime.js',
 			content: 'import {'
-		} as ResourceRecord;
+		});
 		vi.spyOn(Gateway, 'list').mockResolvedValue([record]);
 		const prefetch = vi.fn(async identities => identities.map(() => ({
-			status: 'fulfilled' as const,
-			value: {} as any
+			status: 'fulfilled' as const
 		})));
 		await expect(ResourcePlan.build({ config, prefetchResources: prefetch })).resolves.toBeDefined();
 
@@ -440,8 +437,7 @@ describe('ResourcePlan route resources', () => {
 			['./pages/home.page.json', '/zh-CN', 'page']
 		]);
 		const prefetch = vi.fn(async identities => identities.map(() => ({
-			status: 'fulfilled' as const,
-			value: {} as any
+			status: 'fulfilled' as const
 		})));
 		vi.spyOn(Gateway, 'list').mockResolvedValue([]);
 		const plan = await ResourcePlan.build({ config, prefetchResources: prefetch });

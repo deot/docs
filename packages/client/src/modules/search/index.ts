@@ -6,7 +6,7 @@ import { ResourcePlan } from '../resource-plan';
 import { IndexedDBSearchHistory, createSearchHistoryId } from './history';
 import { getDocsNamespace, resourceIdentityKey } from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
-import type { SearchHistoryRecord, SearchPreparedDocument, SearchResult } from './types';
+import type { SearchHistoryRecord, SearchPreparedDocument, SearchResult, SearchSection } from './types';
 import { getRendererRuntime } from '../../components/renderer';
 import type { DocsConfig } from '../../types';
 
@@ -56,7 +56,7 @@ const parseRendererSearch = async (config: DocsConfig, content: string, lang: st
 	if (!result.document) {
 		throw new TypeError(result.issues.map(item => item.message).join('; '));
 	}
-	const sections: Array<{ title: string; anchor: string; text: string }> = [];
+	const sections: SearchSection[] = [];
 	const text: string[] = [];
 	const invalidNodes = new Set(result.issues
 		.filter(issue => issue.severity === 'error' && issue.nodeId)

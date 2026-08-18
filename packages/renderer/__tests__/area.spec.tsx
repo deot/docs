@@ -8,6 +8,7 @@ import Paint from '../src/modules/sortable/area/paint.vue';
 import AreaEditor from '../src/modules/sortable/area/editor.vue';
 import { AreaModule } from '../src/modules/sortable/area';
 import { toRecord } from '../src/modules/shared/utils';
+import { htmlElementOf } from './fixtures';
 import {
 	AREA_ZONE_MAX,
 	applyAreaZoneDelta,
@@ -89,7 +90,7 @@ describe('sortable area module', () => {
 		});
 		expect(imported?.areas[0].to).toBe('javascript:alert(1)');
 		expect(area.data.validate?.(imported!)).toContainEqual(expect.objectContaining({ code: 'area.target.unsafe' }));
-		expect(area.integrations?.collectResources?.({ src: './map.png' } as never))
+		expect(area.integrations?.collectResources?.({ src: './map.png' }))
 			.toEqual([{ type: 'module', source: './map.png' }]);
 		expect(area.frames.sortable).toBeDefined();
 		expect(area.frames.draggable).toBeUndefined();
@@ -254,7 +255,7 @@ describe('sortable area module', () => {
 			global: { stubs: { Modal: ModalStub } }
 		});
 		await flushPromises();
-		const stage = paint.get('.docs-renderer-area-paint__stage').element as HTMLElement;
+		const stage = htmlElementOf(paint.get('.docs-renderer-area-paint__stage'));
 		Object.defineProperty(stage, 'getBoundingClientRect', {
 			configurable: true,
 			value: () => ({
@@ -271,7 +272,7 @@ describe('sortable area module', () => {
 		window.dispatchEvent(new PointerEvent('pointermove', { clientX: 60, clientY: 70 }));
 		window.dispatchEvent(new PointerEvent('pointerup'));
 		await paint.vm.$nextTick();
-		const zone = paint.get('.docs-renderer-area-paint__zone').element as HTMLElement;
+		const zone = htmlElementOf(paint.get('.docs-renderer-area-paint__zone'));
 		expect(zone.style.left).not.toBe('10%');
 		paint.get('.docs-renderer-area-paint__stage').element.dispatchEvent(new PointerEvent('pointerdown', {
 			button: 0,

@@ -6,7 +6,9 @@ export type DocsTheme = typeof DOCS_THEMES[number];
 export type DocsThemePreference = DocsTheme | 'system';
 
 export interface DocsThemeOptions {
-	/** 未保存用户设置时采用的主题，默认跟随系统。 */
+	/**
+	 * 未保存用户设置时采用的主题，默认跟随系统。
+	 */
 	default?: DocsThemePreference;
 }
 

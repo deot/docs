@@ -3,6 +3,7 @@ import type { Command } from 'commander';
 import { createRequire } from 'node:module';
 
 import * as Dever from '@deot/docs-dever';
+import type { DeverOptions } from '@deot/docs-dever';
 
 const require = createRequire(import.meta.url);
 
@@ -17,7 +18,7 @@ const defaultOptions: Option[] = [
 ];
 
 // 在绑定执行函数前，为每个命令追加相同的传输层选项。
-const addOptions = (ctx: Command, action: any) => {
+const addOptions = (ctx: Command, action: (options: DeverOptions) => Promise<void>) => {
 	defaultOptions.forEach(i => ctx.addOption(i));
 	ctx.action(action);
 };
@@ -47,10 +48,7 @@ addOptions(
 		.option('--out-dir <string>', 'Select Build OutDir')
 		.option('--package-name <string>', 'Select PackageName')
 		.description('production mode'),
-	(options: any) => {
-		options.build = true;
-		return Dever.run(options);
-	}
+	options => Dever.run({ ...options, build: true })
 );
 
 // doc preview 预览命令。
@@ -62,10 +60,7 @@ addOptions(
 		.option('--port <number>', 'Select Port', value => Number(value))
 		.option('--package-name <string>', 'Select PackageName')
 		.description('preview workspace in production mode'),
-	(options: any) => {
-		options.preview = true;
-		return Dever.run(options);
-	}
+	options => Dever.run({ ...options, preview: true })
 );
 
 const main = async () => {

@@ -5,6 +5,8 @@ import { defineComponent, reactive } from 'vue';
 import { Renderer } from '@deot/docs-renderer';
 import ResourceSlot from '../src/components/layout/resource-slot.vue';
 import { isPlainNavigationClick } from '../src/utils/link';
+import type { DocsRoute } from '../src/types';
+import { htmlElementOf } from './fixtures/docs';
 
 const {
 	route: routeState,
@@ -27,26 +29,31 @@ const {
 				sidebar: './sidebar.json',
 				header: 'default',
 				footer: 'default'
-			} as Record<string, any>
-		}
+			}
+		} as { docsRoute?: DocsRoute }
 	},
 	routerPush: vi.fn(async () => undefined),
 	routerResolve: vi.fn((target: string) => ({
 		href: `/docs${target}`,
 		fullPath: target
 	})),
-	load: vi.fn(async () => ({
-		content: '[{"label":"Install","value":"/installation"}]'
-	})),
+	load: vi.fn(async (...args: [unknown?, { signal?: AbortSignal }?]) => {
+		void args;
+		return { content: '[{"label":"Install","value":"/installation"}]' };
+	}),
 	subscribe: vi.fn(),
 	unsubscribe: vi.fn(),
 	subscription: { listener: undefined as undefined | ((record: { content: string }) => void) }
 }));
 const route = reactive(routeState);
+const docsRouteOf = () => {
+	if (!route.meta.docsRoute) throw new Error('expected docsRoute');
+	return route.meta.docsRoute;
+};
 enableAutoUnmount(afterEach);
 
 vi.mock('vue-router', async original => ({
-	...await original<any>(),
+	...await original<typeof import('vue-router')>(),
 	useRoute: () => route,
 	useRouter: () => ({ push: routerPush, resolve: routerResolve })
 }));
@@ -146,7 +153,7 @@ describe('ResourceSlot', () => {
 	});
 
 	it('renders direct and localized sidebar data without using Gateway', async () => {
-		route.meta.docsRoute.sidebar = [{
+		docsRouteOf().sidebar = [{
 			label: 'Inline',
 			children: [{ label: 'Button', value: '/components/button' }]
 		}];
@@ -160,7 +167,7 @@ describe('ResourceSlot', () => {
 		expect(load).not.toHaveBeenCalled();
 		direct.unmount();
 
-		route.meta.docsRoute.sidebar = {
+		docsRouteOf().sidebar = {
 			'zh-CN': [{ label: '简介', value: '/guide' }],
 			'en-US': [{ label: 'Introduction', value: '/guide' }]
 		};
@@ -199,7 +206,7 @@ describe('ResourceSlot', () => {
 	});
 
 	it('resolves the built-in sidebar from the default sidebar resource', async () => {
-		route.meta.docsRoute.sidebar = 'default';
+		docsRouteOf().sidebar = 'default';
 		const wrapper = mount(ResourceSlot, {
 			props: { name: 'sidebar' },
 			global: { stubs: { RouterLink: RouterLinkStub } }
@@ -237,9 +244,9 @@ describe('ResourceSlot', () => {
 		subscription.listener?.({ content: '# Updated' });
 		await wrapper.vm.$nextTick();
 		expect(wrapper.text()).toContain('# Updated');
-		const [, options] = load.mock.calls[0] as unknown as [unknown, { signal: AbortSignal }];
+		const options = load.mock.calls[0]?.[1];
 		wrapper.unmount();
-		expect(options.signal.aborted).toBe(true);
+		expect(options?.signal?.aborted).toBe(true);
 		expect(unsubscribe).toHaveBeenCalled();
 	});
 
@@ -369,11 +376,11 @@ describe('ResourceSlot', () => {
 		route.path = '/zh-CN/components/next';
 		await vi.waitFor(() => expect(wrapper.find('.docs-resource-slot__loading').exists())
 			.toBe(true));
-		expect((wrapper.element as HTMLElement).style.minHeight).toBe('920px');
+		expect(htmlElementOf(wrapper).style.minHeight).toBe('920px');
 
 		finishNext({ content: '# Next' });
 		await vi.waitFor(() => expect(wrapper.text()).toContain('# Next'));
-		await vi.waitFor(() => expect((wrapper.element as HTMLElement).style.minHeight).toBe(''));
+		await vi.waitFor(() => expect(htmlElementOf(wrapper).style.minHeight).toBe(''));
 	});
 
 	it('discards an async resolver result owned by an old route', async () => {
@@ -480,14 +487,14 @@ describe('ResourceSlot', () => {
 				appearance: { marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }
 			}]
 		};
-		route.meta.docsRoute.content = page;
+		docsRouteOf().content = page;
 		const inline = mount(ResourceSlot, { props: { name: 'content' } });
 		await vi.waitFor(() => expect(inline.text()).toContain('Page title'));
 		expect(inline.findComponent(Renderer).props('context')).toMatchObject({ theme: 'dark' });
 		expect(load).not.toHaveBeenCalled();
 		inline.unmount();
 
-		route.meta.docsRoute.content = './home.page.json';
+		docsRouteOf().content = './home.page.json';
 		load.mockResolvedValueOnce({ content: JSON.stringify(page) });
 		const resource = mount(ResourceSlot, { props: { name: 'content' } });
 		await vi.waitFor(() => expect(resource.text()).toContain('Page title'));
@@ -499,25 +506,25 @@ describe('ResourceSlot', () => {
 	});
 
 	it('renders remote SFC and classifies module and style slots', async () => {
-		route.meta.docsRoute.content = './demo.vue';
+		docsRouteOf().content = './demo.vue';
 		const remote = mount(ResourceSlot, { props: { name: 'content' } });
 		await vi.waitFor(() => expect(remote.find('.remote-sfc').exists()).toBe(true));
 		expect(remote.text()).toContain('./demo.vue:zh-CN');
 		expect(load).not.toHaveBeenCalled();
 
-		route.meta.docsRoute.extra = './theme.css?raw';
+		docsRouteOf().extra = './theme.css?raw';
 		const style = mount(ResourceSlot, { props: { name: 'extra' } });
 		await flushPromises();
 		expect(style.attributes('data-resource-type')).toBe('style');
 
-		route.meta.docsRoute.extra = './runtime.ts';
+		docsRouteOf().extra = './runtime.ts';
 		const module = mount(ResourceSlot, { props: { name: 'extra' } });
 		await flushPromises();
 		expect(module.attributes('data-resource-type')).toBe('module');
 	});
 
 	it('handles missing, null and invalid sidebar configurations', async () => {
-		delete (route.meta as any).docsRoute;
+		delete route.meta.docsRoute;
 		const missing = mount(ResourceSlot, { props: { name: 'content' } });
 		await flushPromises();
 		expect(missing.text()).toBe('');

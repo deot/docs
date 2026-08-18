@@ -2,6 +2,7 @@
 
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, reactive } from 'vue';
+import type { PropType } from 'vue';
 import { provideLocale, resolveLocale } from '@deot/docs-locale';
 import App from '../src/app.vue';
 import DefaultFooter from '../src/components/layout/default-footer.vue';
@@ -34,13 +35,13 @@ vi.mock('../src/components/layout', async () => ({
 }));
 
 vi.mock('vue-router', async original => ({
-	...await original<any>(),
+	...await original<typeof import('vue-router')>(),
 	useRoute: () => route,
 	useRouter: () => ({ push }),
 	RouterLink: (await import('vue')).defineComponent({
-		props: { to: { type: [String, Object], required: true } },
+		props: { to: { type: [String, Object] as PropType<string | { path?: string }>, required: true } },
 		setup: (props, { slots }) => () => (
-			<a href={typeof props.to === 'string' ? props.to : (props.to as any).path}>
+			<a href={typeof props.to === 'string' ? props.to : props.to.path}>
 				{slots.default?.()}
 			</a>
 		)

@@ -133,9 +133,9 @@ const createTransport = (
 		}
 		return cancelPromise;
 	};
-	const entry: SharedTransport = {
+	// promise 的清理逻辑需要回引 entry 自身，先构建其余字段，最后补上 promise。
+	const init: Omit<SharedTransport, 'promise'> = {
 		headersKey: normalizeHeadersKey(headers),
-		promise: undefined as unknown as Promise<TextResponse>,
 		consumers: new Set(),
 		settled: false,
 		cancelled: false,
@@ -175,19 +175,21 @@ const createTransport = (
 			throw new Error(message, { cause: error });
 		}
 	})();
-	entry.promise = (async () => {
-		try {
-			return await target;
-		} finally {
+	const entry: SharedTransport = Object.assign(init, {
+		promise: (async () => {
 			try {
-				await Network.removeShared(requestResource);
-			} catch {
-				// leaf 可能已在报错或取消后自行移除。
+				return await target;
+			} finally {
+				try {
+					await Network.removeShared(requestResource);
+				} catch {
+					// leaf 可能已在报错或取消后自行移除。
+				}
+				init.settled = true;
+				if (sharedTransports.get(key) === init) sharedTransports.delete(key);
 			}
-			entry.settled = true;
-			if (sharedTransports.get(key) === entry) sharedTransports.delete(key);
-		}
-	})();
+		})()
+	});
 	sharedTransports.set(key, entry);
 	return entry;
 };

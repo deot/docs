@@ -2,6 +2,7 @@
 
 import 'fake-indexeddb/auto';
 import { flushPromises, mount } from '@vue/test-utils';
+import type { VueWrapper } from '@vue/test-utils';
 import { defineComponent, h, reactive } from 'vue';
 import { Select } from '@deot/vc';
 import { useLocale, zhCN } from '@deot/docs-locale';
@@ -12,7 +13,7 @@ import {
 	createEmptyRendererDocument,
 	defineRendererModule
 } from '../src';
-import type { RendererDraggableDocument, RendererSortableDocument } from '../src';
+import type { RendererDocument, RendererSortableDocument } from '../src';
 import PageEditor from '../src/modules/shared/page/editor.vue';
 import TextEditor from '../src/modules/shared/text/editor.vue';
 import DraggableFrame from '../src/frame/draggable/index.vue';
@@ -20,10 +21,18 @@ import SortableFrame from '../src/frame/sortable/index.vue';
 import RendererNode from '../src/assist/renderer/node.vue';
 import { createRendererModuleCatalog } from '../src/catalog';
 import { RendererDraftCache } from '../src/combo/draft';
+import {
+	closestHTMLElement,
+	comboVm,
+	draggableDocumentOf,
+	htmlElementOf,
+	invalid as invalidValue,
+	sortableDocumentOf
+} from './fixtures';
 
 describe('Renderer and Combo', () => {
 	it('renders siblings and isolates an unknown module', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'title',
 			module: { type: 'title', version: 1, props: { text: 'Hello', level: 1 } },
@@ -54,19 +63,19 @@ describe('Renderer and Combo', () => {
 		await flushPromises();
 		expect(wrapper.text()).toContain('Hello');
 		expect(wrapper.text()).toContain('未知模块');
-		const style = (wrapper.find('[data-renderer-node-id="title"]').element as HTMLElement).style;
+		const style = htmlElementOf(wrapper.find('[data-renderer-node-id="title"]')).style;
 		expect(style.paddingLeft).toBe('12px');
 		expect(style.paddingRight).toBe('14px');
 		expect(style.borderRadius).toBe('8px');
 		expect(style.overflow).toBe('hidden');
 		expect(style.minHeight).toBe('');
-		const unknown = (wrapper.find('[data-renderer-node-id="unknown"]').element as HTMLElement).style;
+		const unknown = htmlElementOf(wrapper.find('[data-renderer-node-id="unknown"]')).style;
 		expect(unknown.borderRadius).toBe('4px 8px 12px 2px');
 		expect(unknown.overflow).toBe('hidden');
 	});
 
 	it('lets sortable modules fill the display container', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'hero',
 			module: {
@@ -134,22 +143,24 @@ describe('Renderer and Combo', () => {
 		expect(preview.get('[data-renderer-node-id="hero"]').classes()).toContain('is-full-width');
 		expect(preview.get('[data-renderer-node-id="cta"]').classes()).toContain('is-full-width');
 		expect(preview.get('[data-renderer-node-id="text"]').classes()).not.toContain('is-full-width');
-		expect((preview.get('[data-renderer-node-id="text"]').element as HTMLElement).style.maxWidth)
+		expect(htmlElementOf(preview.get('[data-renderer-node-id="text"]')).style.maxWidth)
 			.toBe('');
-		expect((preview.get('[data-renderer-node-id="text"]').element as HTMLElement)
+		expect(htmlElementOf(preview.get('[data-renderer-node-id="text"]'))
 			.style.getPropertyValue('--docs-renderer-content-width')).toBe('100%');
 		expect(preview.get('[data-renderer-node-id="banner"]').classes()).toContain('is-full-width');
-		expect((preview.get('[data-renderer-node-id="hero"]').element as HTMLElement)
+		expect(htmlElementOf(preview.get('[data-renderer-node-id="hero"]'))
 			.style.getPropertyValue('--docs-renderer-content-width')).toBe('100%');
-		expect((preview.get('[data-renderer-node-id="banner"]').element as HTMLElement)
+		expect(htmlElementOf(preview.get('[data-renderer-node-id="banner"]'))
 			.style.getPropertyValue('--docs-renderer-content-width')).toBe('1200px');
 		preview.unmount();
 
 		const combo = mount(Combo, { props: { modelValue: document } });
 		await flushPromises();
 		expect(combo.get('.docs-renderer-frame__canvas').attributes('style')).toContain('width: 1920px');
-		const comboItem = (id: string) => combo.get(`[data-renderer-node-id="${id}"]`)
-			.element.closest('.docs-renderer-frame__item') as HTMLElement | null;
+		const comboItem = (id: string) => closestHTMLElement(
+			combo.get(`[data-renderer-node-id="${id}"]`),
+			'.docs-renderer-frame__item'
+		);
 		expect(comboItem('hero')?.classList.contains('is-full-width')).toBe(true);
 		expect(comboItem('cta')?.classList.contains('is-full-width')).toBe(true);
 		expect(comboItem('cta')?.style.maxWidth).toBe('none');
@@ -166,7 +177,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('keeps a filled homepage hero at 1200 while the background spans the canvas', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'home-hero',
 			module: {
@@ -185,7 +196,7 @@ describe('Renderer and Combo', () => {
 		});
 		const preview = mount(Renderer, { props: { document, modules: BuiltinModules } });
 		await flushPromises();
-		const published = preview.get('[data-renderer-node-id="home-hero"]').element as HTMLElement;
+		const published = htmlElementOf(preview.get('[data-renderer-node-id="home-hero"]'));
 		expect(preview.get('[data-renderer-node-id="home-hero"]').classes()).toContain('is-full-width');
 		expect(published.style.maxWidth).toBe('');
 		expect(published.style.getPropertyValue('--docs-renderer-content-width')).toBe('1200px');
@@ -193,8 +204,10 @@ describe('Renderer and Combo', () => {
 
 		const combo = mount(Combo, { props: { modelValue: document } });
 		await flushPromises();
-		const item = combo.get('[data-renderer-node-id="home-hero"]')
-			.element.closest('.docs-renderer-frame__item') as HTMLElement | null;
+		const item = closestHTMLElement(
+			combo.get('[data-renderer-node-id="home-hero"]'),
+			'.docs-renderer-frame__item'
+		);
 		expect(item?.classList.contains('is-full-width')).toBe(true);
 		expect(item?.style.maxWidth).toBe('none');
 		expect(item?.style.getPropertyValue('--docs-renderer-content-width')).toBe('1200px');
@@ -210,7 +223,7 @@ describe('Renderer and Combo', () => {
 			editor: defineComponent(() => () => h('div')),
 			frames: { sortable: { maxWidth: 720 } }
 		});
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'boxed',
 			module: { type: 'boxed', version: 1, props: {} },
@@ -228,22 +241,26 @@ describe('Renderer and Combo', () => {
 		});
 		const preview = mount(Renderer, { props: { document, modules: [boxed] } });
 		await flushPromises();
-		expect((preview.get('[data-renderer-node-id="boxed"]').element as HTMLElement).style.maxWidth)
+		expect(htmlElementOf(preview.get('[data-renderer-node-id="boxed"]')).style.maxWidth)
 			.toBe('');
-		expect((preview.get('[data-renderer-node-id="boxed"]').element as HTMLElement)
+		expect(htmlElementOf(preview.get('[data-renderer-node-id="boxed"]'))
 			.style.getPropertyValue('--docs-renderer-content-width')).toBe('100%');
-		expect((preview.get('[data-renderer-node-id="assigned"]').element as HTMLElement).style.maxWidth)
+		expect(htmlElementOf(preview.get('[data-renderer-node-id="assigned"]')).style.maxWidth)
 			.toBe('720px');
 		preview.unmount();
 
 		const combo = mount(Combo, { props: { modelValue: document, modules: [boxed] } });
 		await flushPromises();
-		const item = combo.get('[data-renderer-node-id="boxed"]')
-			.element.closest('.docs-renderer-frame__item') as HTMLElement | null;
+		const item = closestHTMLElement(
+			combo.get('[data-renderer-node-id="boxed"]'),
+			'.docs-renderer-frame__item'
+		);
 		expect(item?.style.maxWidth).toBe('none');
 		expect(item?.classList.contains('is-full-width')).toBe(false);
-		const assigned = combo.get('[data-renderer-node-id="assigned"]')
-			.element.closest('.docs-renderer-frame__item') as HTMLElement | null;
+		const assigned = closestHTMLElement(
+			combo.get('[data-renderer-node-id="assigned"]'),
+			'.docs-renderer-frame__item'
+		);
 		expect(assigned?.style.maxWidth).toBe('720px');
 		combo.unmount();
 	});
@@ -256,7 +273,7 @@ describe('Renderer and Combo', () => {
 			paddingBottom: 0,
 			maxWidth: 800
 		};
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'features',
 			module: {
@@ -295,7 +312,7 @@ describe('Renderer and Combo', () => {
 		});
 		const preview = mount(Renderer, { props: { document, modules: BuiltinModules } });
 		await flushPromises();
-		const styleOf = (id: string) => (preview.get(`[data-renderer-node-id="${id}"]`).element as HTMLElement).style;
+		const styleOf = (id: string) => htmlElementOf(preview.get(`[data-renderer-node-id="${id}"]`)).style;
 		expect(styleOf('features').maxWidth).toBe('800px');
 		expect(styleOf('features').getPropertyValue('--docs-renderer-content-width')).toBe('800px');
 		expect(styleOf('steps').maxWidth).toBe('800px');
@@ -307,8 +324,10 @@ describe('Renderer and Combo', () => {
 
 		const combo = mount(Combo, { props: { modelValue: document } });
 		await flushPromises();
-		const comboItem = (id: string) => combo.get(`[data-renderer-node-id="${id}"]`)
-			.element.closest('.docs-renderer-frame__item') as HTMLElement | null;
+		const comboItem = (id: string) => closestHTMLElement(
+			combo.get(`[data-renderer-node-id="${id}"]`),
+			'.docs-renderer-frame__item'
+		);
 		expect(comboItem('features')?.style.maxWidth).toBe('800px');
 		expect(comboItem('features')?.style.getPropertyValue('--docs-renderer-content-width')).toBe('800px');
 		expect(comboItem('steps')?.style.maxWidth).toBe('800px');
@@ -319,7 +338,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('treats boxed max width 0 the same as an unset width', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'features',
 			module: {
@@ -357,8 +376,8 @@ describe('Renderer and Combo', () => {
 		});
 		const preview = mount(Renderer, { props: { document, modules: BuiltinModules } });
 		await flushPromises();
-		const features = preview.get('[data-renderer-node-id="features"]').element as HTMLElement;
-		const hero = preview.get('[data-renderer-node-id="hero"]').element as HTMLElement;
+		const features = htmlElementOf(preview.get('[data-renderer-node-id="features"]'));
+		const hero = htmlElementOf(preview.get('[data-renderer-node-id="hero"]'));
 		expect(features.style.maxWidth).toBe('');
 		expect(features.style.getPropertyValue('--docs-renderer-content-width')).toBe('100%');
 		expect(hero.style.maxWidth).toBe('');
@@ -374,7 +393,7 @@ describe('Renderer and Combo', () => {
 			paddingBottom: 0,
 			fullWidth: true
 		};
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'features',
 			module: {
@@ -410,7 +429,7 @@ describe('Renderer and Combo', () => {
 		});
 		const preview = mount(Renderer, { props: { document, modules: BuiltinModules } });
 		await flushPromises();
-		const styleOf = (id: string) => (preview.get(`[data-renderer-node-id="${id}"]`).element as HTMLElement).style;
+		const styleOf = (id: string) => htmlElementOf(preview.get(`[data-renderer-node-id="${id}"]`)).style;
 		expect(styleOf('features').getPropertyValue('--docs-renderer-content-width')).toBe('100%');
 		expect(styleOf('features-zero').getPropertyValue('--docs-renderer-content-width')).toBe('100%');
 		expect(styleOf('steps').getPropertyValue('--docs-renderer-content-width')).toBe('100%');
@@ -420,7 +439,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('keeps sortable appearance margins on combo items so they match the published page', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'features',
 			module: {
@@ -442,7 +461,7 @@ describe('Renderer and Combo', () => {
 		});
 		const preview = mount(Renderer, { props: { document, modules: BuiltinModules } });
 		await flushPromises();
-		const published = preview.get('[data-renderer-node-id="features"]').element as HTMLElement;
+		const published = htmlElementOf(preview.get('[data-renderer-node-id="features"]'));
 		expect(published.style.marginBottom).toBe('88px');
 		expect(published.style.marginTop).toBe('16px');
 		expect(preview.get('.docs-renderer-features').classes()).not.toContain('is-full-width');
@@ -450,8 +469,8 @@ describe('Renderer and Combo', () => {
 
 		const combo = mount(Combo, { props: { modelValue: document } });
 		await flushPromises();
-		const node = combo.get('[data-renderer-node-id="features"]').element as HTMLElement;
-		const item = node.closest('.docs-renderer-frame__item') as HTMLElement | null;
+		const node = htmlElementOf(combo.get('[data-renderer-node-id="features"]'));
+		const item = closestHTMLElement(node, '.docs-renderer-frame__item');
 		expect(item?.classList.contains('is-full-width')).toBe(false);
 		expect(item?.style.marginTop).toBe('16px');
 		expect(item?.style.marginBottom).toBe('88px');
@@ -461,7 +480,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('keeps empty sortable nodes selectable only in Combo', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'empty-text',
 			module: { type: 'text', version: 1, props: { text: '' } },
@@ -469,7 +488,7 @@ describe('Renderer and Combo', () => {
 		});
 		const combo = mount(Combo, { props: { modelValue: document } });
 		await flushPromises();
-		expect((combo.find('[data-renderer-node-id="empty-text"]').element as HTMLElement).style.minHeight)
+		expect(htmlElementOf(combo.find('[data-renderer-node-id="empty-text"]')).style.minHeight)
 			.toBe('20px');
 		combo.unmount();
 	});
@@ -485,7 +504,7 @@ describe('Renderer and Combo', () => {
 			editor: defineComponent(() => () => h('div')),
 			frames: { sortable: {} }
 		});
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'broken',
 			module: { type: 'broken', version: 1, props: {} },
@@ -517,7 +536,7 @@ describe('Renderer and Combo', () => {
 			editor: defineComponent(() => () => h('div')),
 			frames: { sortable: {} }
 		});
-		const document = reactive(createEmptyRendererDocument('sortable') as RendererSortableDocument);
+		const document = reactive(createEmptyRendererDocument('sortable'));
 		document.blocks.push({
 			id: 'conditional',
 			module: { type: 'conditional', version: 1, props: { broken: true } },
@@ -543,7 +562,7 @@ describe('Renderer and Combo', () => {
 			editor: defineComponent(() => () => h('div')),
 			frames: { sortable: {} }
 		});
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'localized',
 			module: { type: 'localized', version: 1, props: {} },
@@ -557,7 +576,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('treats an explicit empty module list as authoritative', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'title',
 			module: { type: 'title', version: 1, props: { text: 'Hidden' } },
@@ -570,12 +589,12 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('fits draggable Renderer documents by width, containment or no scaling', async () => {
-		const document = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
+		const document = createEmptyRendererDocument('draggable');
 		document.layout.width = 1000;
 		document.layout.height = 500;
 		const wrapper = mount(Renderer, { props: { document, fit: 'width' } });
 		await flushPromises();
-		const host = wrapper.get('.docs-renderer').element as HTMLElement;
+		const host = htmlElementOf(wrapper.get('.docs-renderer'));
 		Object.defineProperties(host, {
 			clientWidth: { configurable: true, value: 500 },
 			clientHeight: { configurable: true, value: 100 }
@@ -591,11 +610,11 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('renders fatal structural errors and isolated lazy-module failures', async () => {
-		const invalid = mount(Renderer, { props: { document: { schemaVersion: 1 } as never } });
+		const invalid = mount(Renderer, { props: { document: invalidValue<RendererDocument>({ schemaVersion: 1 }) } });
 		await flushPromises();
 		expect(invalid.find('.docs-renderer__error').exists()).toBe(true);
 
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'offline',
 			module: { type: 'offline', version: 1, props: {} },
@@ -617,7 +636,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('reacts to nested document changes and replacement module catalogs', async () => {
-		const document = reactive(createEmptyRendererDocument('sortable') as RendererSortableDocument);
+		const document = reactive(createEmptyRendererDocument('sortable'));
 		document.blocks.push({
 			id: 'dynamic',
 			module: { type: 'dynamic', version: 1, props: { text: 'First' } },
@@ -688,15 +707,7 @@ describe('Renderer and Combo', () => {
 		await flushPromises();
 		expect(instanceDocument(wrapper).layout).toEqual(expect.objectContaining({ maxWidth: 1400 }));
 		expect(cssPx(canvasStyleOf(), 'width')).toBe(1400);
-		const instance = wrapper.vm as unknown as {
-			getDocument: () => RendererSortableDocument;
-			validate: () => Promise<{ valid: boolean }>;
-			undo: () => void;
-			redo: () => void;
-			importDocument: (value: unknown) => Promise<{ valid: boolean; document?: RendererSortableDocument }>;
-			exportDocument: () => string;
-			select: (id: string | null) => void;
-		};
+		const instance = comboVm(wrapper);
 		expect(instance.getDocument().schemaVersion).toBe(2);
 		expect((await instance.validate()).valid).toBe(true);
 		instance.undo();
@@ -714,7 +725,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('selects the first invalid node and does not emit save', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'invalid-title',
 			module: {
@@ -729,9 +740,7 @@ describe('Renderer and Combo', () => {
 		});
 		const wrapper = mount(Combo, { props: { modelValue: document } });
 		await flushPromises();
-		const result = await (wrapper.vm as unknown as {
-			save: () => Promise<{ valid: boolean; issues: Array<{ nodeId?: string }> }>;
-		}).save();
+		const result = await comboVm(wrapper).save();
 		await flushPromises();
 		expect(result.valid).toBe(false);
 		expect(result.issues).toContainEqual(expect.objectContaining({ nodeId: 'invalid-title' }));
@@ -740,7 +749,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('does not crash when an external document contains a cyclic value', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		const props: Record<string, unknown> = {};
 		props.self = props;
 		document.blocks.push({
@@ -813,7 +822,7 @@ describe('Renderer and Combo', () => {
 
 	it('keeps canvas module clicks inert while editing', async () => {
 		const navigate = vi.fn();
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'actions',
 			module: {
@@ -838,7 +847,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('returns to page properties when clicking outside a selected module', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'text',
 			module: { type: 'text', version: 1, props: { text: 'Keep' } },
@@ -846,7 +855,7 @@ describe('Renderer and Combo', () => {
 		});
 		const wrapper = mount(Combo, { props: { modelValue: document } });
 		await flushPromises();
-		const instance = wrapper.vm as unknown as { select: (id: string | null) => void };
+		const instance = comboVm(wrapper);
 		instance.select('text');
 		await flushPromises();
 		expect(wrapper.findComponent(PageEditor).exists()).toBe(false);
@@ -869,7 +878,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('switches the canvas between sortable and draggable from page properties', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'text',
 			module: { type: 'text', version: 1, props: { text: 'Keep' } },
@@ -921,7 +930,7 @@ describe('Renderer and Combo', () => {
 			editor: Editor,
 			frames: { sortable: { maxInstances: 1 } }
 		});
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'limited',
 			module: { type: 'limited', version: 1, props: {} },
@@ -933,7 +942,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('renders draggable controls and the eight resize handles', async () => {
-		const document = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
+		const document = createEmptyRendererDocument('draggable');
 		document.blocks.push({
 			id: 'first',
 			module: { type: 'text', version: 1, props: { text: 'First' } },
@@ -959,7 +968,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('creates draggable modules at the drop point and validates a successful save', async () => {
-		const document = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
+		const document = createEmptyRendererDocument('draggable');
 		const wrapper = mount(Combo, { props: { modelValue: document } });
 		await flushPromises();
 		wrapper.findComponent(DraggableFrame).vm.$emit('create', {
@@ -970,34 +979,32 @@ describe('Renderer and Combo', () => {
 		await flushPromises();
 		const created = instanceDraggableDocument(wrapper).blocks[0];
 		expect(created.placement).toEqual(expect.objectContaining({ x: 160, y: 160, zIndex: 1 }));
-		const result = await (wrapper.vm as unknown as {
-			save: () => Promise<{ valid: boolean }>;
-		}).save();
+		const result = await comboVm(wrapper).save();
 		expect(result.valid).toBe(true);
 		expect(wrapper.emitted('save')?.[0]?.[0]).toEqual(expect.objectContaining({ schemaVersion: 2 }));
 	});
 
 	it('syncs external documents and rejects invalid or cyclic replacements', async () => {
 		const wrapper = mount(Combo, { props: { modelValue: createEmptyRendererDocument('sortable') } });
-		const replacement = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const replacement = createEmptyRendererDocument('sortable');
 		replacement.meta.title = 'External replacement';
 		await wrapper.setProps({ modelValue: replacement });
 		expect(instanceDocument(wrapper).meta.title).toBe('External replacement');
 
-		await wrapper.setProps({ modelValue: { schemaVersion: 1 } as never });
+		await wrapper.setProps({ modelValue: invalidValue<RendererDocument>({ schemaVersion: 1 }) });
 		expect(wrapper.emitted('error')?.at(-1)?.[0]).toEqual(expect.arrayContaining([
 			expect.objectContaining({ severity: 'error' })
 		]));
-		const cyclic = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const cyclic = createEmptyRendererDocument('sortable');
 		const value: Record<string, unknown> = {};
 		value.self = value;
-		cyclic.meta = value as never;
+		cyclic.meta = invalidValue<RendererDocument['meta']>(value);
 		await wrapper.setProps({ modelValue: cyclic });
 		expect(wrapper.emitted('error')?.at(-1)?.[0]).toContainEqual(expect.objectContaining({ code: 'document.json' }));
 	});
 
 	it('supports toolbar back, export and JSON file import without mutating invalid input', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.meta.title = 'Exported';
 		const wrapper = mount(Combo, { props: { modelValue: document }, attachTo: globalThis.document.body });
 		await flushPromises();
@@ -1016,7 +1023,7 @@ describe('Renderer and Combo', () => {
 		const inputClick = vi.spyOn(input.element as HTMLInputElement, 'click').mockImplementation(() => undefined);
 		await wrapper.findAll('button').find(button => button.text() === 'Import')?.trigger('click');
 		expect(inputClick).toHaveBeenCalled();
-		const imported = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const imported = createEmptyRendererDocument('sortable');
 		imported.meta.title = 'Imported';
 		Object.defineProperty(input.element, 'files', {
 			configurable: true,
@@ -1039,7 +1046,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('handles undo, redo and deletable keyboard commands outside form controls', async () => {
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'space',
 			module: { type: 'space', version: 1, props: { height: 24, background: '' } },
@@ -1047,7 +1054,7 @@ describe('Renderer and Combo', () => {
 		});
 		const wrapper = mount(Combo, { props: { modelValue: document } });
 		await flushPromises();
-		const instance = wrapper.vm as unknown as { select: (id: string | null) => void };
+		const instance = comboVm(wrapper);
 		instance.select('space');
 		await wrapper.get('.docs-renderer-combo').trigger('keydown', { key: 'Delete' });
 		await flushPromises();
@@ -1067,7 +1074,7 @@ describe('Renderer and Combo', () => {
 	});
 
 	it('copies, pastes and skips cutting grouped modules from the keyboard', async () => {
-		const document = createEmptyRendererDocument('draggable') as RendererDraggableDocument;
+		const document = createEmptyRendererDocument('draggable');
 		document.blocks.push({
 			id: 'a',
 			module: { type: 'text', version: 1, props: { text: 'A' } },
@@ -1079,16 +1086,16 @@ describe('Renderer and Combo', () => {
 		});
 		const wrapper = mount(Combo, { props: { modelValue: document } });
 		await flushPromises();
-		const instance = wrapper.vm as unknown as { select: (id: string | null) => void };
+		const instance = comboVm(wrapper);
 		instance.select('a');
 		await wrapper.get('.docs-renderer-combo').trigger('keydown', { key: 'c', ctrlKey: true });
 		await wrapper.get('.docs-renderer-combo').trigger('keydown', { key: 'v', ctrlKey: true });
 		await flushPromises();
-		expect(instanceDocument(wrapper).blocks).toHaveLength(3);
+		expect(instanceDraggableDocument(wrapper).blocks).toHaveLength(3);
 		instance.select('a');
 		await wrapper.get('.docs-renderer-combo').trigger('keydown', { key: 'x', ctrlKey: true });
 		await flushPromises();
-		expect(instanceDocument(wrapper).blocks.some(node => node.id === 'a')).toBe(false);
+		expect(instanceDraggableDocument(wrapper).blocks.some(node => node.id === 'a')).toBe(false);
 		wrapper.unmount();
 	});
 
@@ -1157,10 +1164,10 @@ describe('Renderer and Combo', () => {
 	it('restores a newer draft and persists later document changes', async () => {
 		const key = `draft-${Date.now()}`;
 		const cache = new RendererDraftCache();
-		const draft = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const draft = createEmptyRendererDocument('sortable');
 		draft.meta.title = 'Recovered draft';
 		await cache.set({ key, document: draft, updatedAt: 200 });
-		const source = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const source = createEmptyRendererDocument('sortable');
 		source.meta.updatedAt = 100;
 		const wrapper = mount(Combo, { props: { modelValue: source, draftKey: key } });
 		await vi.waitFor(() => expect(instanceDocument(wrapper).meta.title).toBe('Recovered draft'));
@@ -1175,10 +1182,10 @@ describe('Renderer and Combo', () => {
 	it('clears the indexeddb draft and restores the source document', async () => {
 		const key = `draft-clear-${Date.now()}`;
 		const cache = new RendererDraftCache();
-		const draft = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const draft = createEmptyRendererDocument('sortable');
 		draft.meta.title = 'Recovered draft';
 		await cache.set({ key, document: draft, updatedAt: 200 });
-		const source = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const source = createEmptyRendererDocument('sortable');
 		source.meta.title = 'Source page';
 		source.meta.updatedAt = 100;
 		const wrapper = mount(Combo, { props: { modelValue: source, draftKey: key } });
@@ -1196,10 +1203,10 @@ describe('Renderer and Combo', () => {
 	it('removes the indexeddb draft after a successful save', async () => {
 		const key = `draft-save-${Date.now()}`;
 		const cache = new RendererDraftCache();
-		const draft = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const draft = createEmptyRendererDocument('sortable');
 		draft.meta.title = 'Recovered draft';
 		await cache.set({ key, document: draft, updatedAt: 200 });
-		const source = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const source = createEmptyRendererDocument('sortable');
 		source.meta.updatedAt = 100;
 		const wrapper = mount(Combo, { props: { modelValue: source, draftKey: key } });
 		await vi.waitFor(() => expect(instanceDocument(wrapper).meta.title).toBe('Recovered draft'));
@@ -1210,10 +1217,10 @@ describe('Renderer and Combo', () => {
 	});
 });
 
-const instanceDocument = (wrapper: ReturnType<typeof mount>) => (
-	(wrapper.vm as unknown as { getDocument: () => RendererSortableDocument }).getDocument()
+const instanceDocument = (wrapper: VueWrapper<InstanceType<typeof Combo>>) => (
+	sortableDocumentOf(comboVm(wrapper).getDocument())
 );
 
-const instanceDraggableDocument = (wrapper: ReturnType<typeof mount>) => (
-	(wrapper.vm as unknown as { getDocument: () => RendererDraggableDocument }).getDocument()
+const instanceDraggableDocument = (wrapper: VueWrapper<InstanceType<typeof Combo>>) => (
+	draggableDocumentOf(comboVm(wrapper).getDocument())
 );

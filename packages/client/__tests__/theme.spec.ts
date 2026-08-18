@@ -3,21 +3,27 @@
 import 'fake-indexeddb/auto';
 import { Settings } from '../src/modules/settings';
 import { Theme, ThemeRuntime } from '../src/modules/theme';
+import { createDocsConfig } from './fixtures/docs';
 import type { DocsConfig } from '../src/types';
 
-const createConfig = (namespace: string, theme?: DocsConfig['theme']): DocsConfig => ({
-	locales: { 'en-US': { label: 'English' } },
-	namespace,
-	routes: {},
-	theme
-});
+const createConfig = (namespace: string, theme?: DocsConfig['theme']): DocsConfig => (
+	createDocsConfig({
+		locales: { 'en-US': { label: 'English' } },
+		namespace,
+		theme
+	})
+);
 
-const createMedia = (dark = false, reduced = false) => vi.fn((query: string) => ({
-	addEventListener: vi.fn(),
+const createMedia = (dark = false, reduced = false): Window['matchMedia'] => query => ({
 	matches: query.includes('reduced-motion') ? reduced : dark,
 	media: query,
-	removeEventListener: vi.fn()
-})) as unknown as Window['matchMedia'];
+	onchange: null,
+	addListener: vi.fn(),
+	removeListener: vi.fn(),
+	addEventListener: vi.fn(),
+	removeEventListener: vi.fn(),
+	dispatchEvent: vi.fn(() => false)
+});
 
 describe('docs theme', () => {
 	beforeEach(() => {
@@ -89,14 +95,20 @@ describe('docs theme', () => {
 		const namespace = 'theme-system';
 		let systemListener: ((event: MediaQueryListEvent) => void) | undefined;
 		const removeEventListener = vi.fn();
-		window.matchMedia = vi.fn((query: string) => ({
-			addEventListener: vi.fn((_: string, listener: (event: MediaQueryListEvent) => void) => {
-				if (query.includes('prefers-color-scheme')) systemListener = listener;
-			}),
+		window.matchMedia = query => ({
 			matches: query.includes('prefers-color-scheme'),
 			media: query,
-			removeEventListener
-		})) as unknown as Window['matchMedia'];
+			onchange: null,
+			addListener: vi.fn(),
+			removeListener: vi.fn(),
+			addEventListener: (type: string, listener: EventListenerOrEventListenerObject) => {
+				if (type === 'change' && query.includes('prefers-color-scheme') && typeof listener === 'function') {
+					systemListener = listener as (event: MediaQueryListEvent) => void;
+				}
+			},
+			removeEventListener,
+			dispatchEvent: vi.fn(() => false)
+		});
 
 		const stop = ThemeRuntime.start(createConfig(namespace, true));
 		await vi.waitFor(() => expect(Theme.ready.value).toBe(true));

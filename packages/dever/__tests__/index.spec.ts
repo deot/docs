@@ -14,6 +14,7 @@ import {
 } from '../src/plugins';
 import { createPreviewRequestHandler } from '../src/preview';
 import { resolveDocsWorkspace } from '../src/workspace';
+import { findPlugin, htmlTagsOf, pluginHook } from './fixtures';
 
 // @vitest-environment node
 describe('dever configuration', () => {
@@ -120,15 +121,15 @@ describe('dever configuration', () => {
 		fs.writeFileSync(path.join(root, 'index.html'), '<div />');
 		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
 		try {
-			const development = Dever.createDeverConfig({ workspace: '.' } as any);
+			const development = Dever.createDeverConfig({ workspace: '.' });
 			expect(development.root).toBe(fs.realpathSync(root));
-			const preview = Dever.createDeverConfig({ workspace: '.', preview: true } as any);
+			const preview = Dever.createDeverConfig({ workspace: '.', preview: true });
 			expect(preview.root).toBe(fs.realpathSync(root));
 			const build = Dever.createDeverConfig({
 				workspace: '.',
 				build: true,
 				outDir: 'dist'
-			} as any);
+			});
 			expect(build.root).toBe(fs.realpathSync(root));
 			expect(build.build?.rollupOptions?.input).toBe(fs.realpathSync(path.join(root, 'index.html')));
 		} finally {
@@ -236,7 +237,7 @@ describe('dever configuration', () => {
 
 	it('exports run and creates isolated development, build and preview configs', () => {
 		expect(Dever.run).toBeTypeOf('function');
-		const development = Dever.createDeverConfig({ workspace: 'site' } as any);
+		const development = Dever.createDeverConfig({ workspace: 'site' });
 		expect(development.root).toBe(process.cwd());
 		expect(development.resolve?.alias).toMatchObject({
 			'@deot/docs-locale': expect.stringContaining('packages/locale/src/index.ts'),
@@ -251,7 +252,7 @@ describe('dever configuration', () => {
 			workspace: 'site',
 			outDir: 'preview',
 			build: true
-		} as any);
+		});
 		expect(production.root).toBe(path.resolve('site'));
 		expect(production.build?.rollupOptions?.input).toBe(path.resolve('site/index.html'));
 		expect(production.build?.outDir).toBe(path.resolve('preview'));
@@ -259,26 +260,26 @@ describe('dever configuration', () => {
 			workspace: 'site',
 			outDir: '.',
 			build: true
-		} as any)).toThrow('Build outDir must not contain the workspace');
+		})).toThrow('Build outDir must not contain the workspace');
 		expect(() => Dever.createDeverConfig({
 			workspace: 'site',
 			outDir: 'site',
 			build: true
-		} as any)).toThrow('Build outDir must not contain the workspace');
+		})).toThrow('Build outDir must not contain the workspace');
 		expect(Dever.createDeverConfig({
 			workspace: 'site',
 			outDir: 'site/preview',
 			build: true
-		} as any).build?.outDir).toBe(path.resolve('site/preview'));
+		}).build?.outDir).toBe(path.resolve('site/preview'));
 
 		const preview = Dever.createDeverConfig({
 			workspace: 'site',
 			preview: true
-		} as any);
+		});
 		expect(preview.root).toBe(path.resolve('site'));
 		expect(preview.build).toBeUndefined();
 		expect(preview.server).toBeUndefined();
-		expect(() => Dever.createDeverConfig({ build: true, preview: true } as any))
+		expect(() => Dever.createDeverConfig({ build: true, preview: true }))
 			.toThrow('build and preview modes are mutually exclusive');
 	});
 
@@ -300,11 +301,8 @@ describe('dever configuration', () => {
 				workspace: 'site',
 				outDir: 'site/output/dist',
 				build: true
-			}) as any;
-			const copyPlugin = config.plugins.find((plugin: any) => (
-				plugin.name === 'docs-static-resources'
-			));
-			copyPlugin.writeBundle();
+			});
+			pluginHook(findPlugin(config, 'docs-static-resources').writeBundle, 'writeBundle')();
 			expect(fs.readFileSync(path.join(outDir, 'zh-CN/index.md'), 'utf8')).toBe('# Docs');
 			expect(fs.readFileSync(path.join(outDir, 'zh-CN/.assets/theme.css'), 'utf8'))
 				.toBe(':root {}');
@@ -321,11 +319,8 @@ describe('dever configuration', () => {
 				workspace: 'site',
 				outDir: 'linked-output',
 				build: true
-			}) as any;
-			const linkedCopyPlugin = linkedConfig.plugins.find((plugin: any) => (
-				plugin.name === 'docs-static-resources'
-			));
-			linkedCopyPlugin.writeBundle();
+			});
+			pluginHook(findPlugin(linkedConfig, 'docs-static-resources').writeBundle, 'writeBundle')();
 			expect(fs.readFileSync(path.join(outDir, 'zh-CN/index.md'), 'utf8')).toBe('# Docs');
 			expect(fs.readFileSync(path.join(outDir, 'output/source.txt'), 'utf8'))
 				.toBe('skip output tree');
@@ -366,11 +361,9 @@ describe('dever configuration', () => {
 				workspace: '.',
 				outDir: 'dist',
 				build: true
-			}) as any;
-			const copyPlugin = config.plugins.find((plugin: any) => (
-				plugin.name === 'docs-static-resources'
-			));
-			copyPlugin.writeBundle();
+			});
+			const copyPlugin = findPlugin(config, 'docs-static-resources');
+			pluginHook(copyPlugin.writeBundle, 'writeBundle')();
 			expect(fs.readFileSync(path.join(outDir, 'zh-CN/index.md'), 'utf8'))
 				.toBe('# Root Docs');
 			expect(fs.existsSync(path.join(outDir, 'node_modules'))).toBe(false);
@@ -382,7 +375,7 @@ describe('dever configuration', () => {
 			expect(fs.existsSync(path.join(outDir, 'dist'))).toBe(false);
 			fs.writeFileSync(path.join(outside, 'secret.md'), '# Outside');
 			fs.symlinkSync(path.join(outside, 'secret.md'), path.join(root, 'escaped.md'));
-			expect(() => copyPlugin.writeBundle()).toThrow(
+			expect(() => pluginHook(copyPlugin.writeBundle, 'writeBundle')()).toThrow(
 				'Static resource symlink escapes the workspace'
 			);
 		} finally {
@@ -516,8 +509,7 @@ describe('dever configuration', () => {
 
 	it('injects the development runtime before application scripts', () => {
 		const plugin = createRuntimePlugin({ workspace: 'site' });
-		const transform = plugin.transformIndexHtml as any;
-		const tags = transform.handler();
+		const tags = htmlTagsOf(pluginHook(plugin.transformIndexHtml, 'transformIndexHtml')());
 		expect(tags[0]).toMatchObject({ tag: 'script', injectTo: 'head-prepend' });
 		expect(tags[0].children).toContain('window.__DOCS_RUNTIME__');
 		expect(tags[0].children).toContain('"workspace":"/site/"');
@@ -525,8 +517,10 @@ describe('dever configuration', () => {
 		fs.writeFileSync(path.join(root, 'index.html'), '<div />');
 		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
 		try {
-			const rootTags = (createRuntimePlugin({ workspace: '.' }).transformIndexHtml as any)
-				.handler();
+			const rootTags = htmlTagsOf(pluginHook(
+				createRuntimePlugin({ workspace: '.' }).transformIndexHtml,
+				'transformIndexHtml'
+			)());
 			expect(rootTags[0].children).toContain('"workspace":"/"');
 		} finally {
 			restoreCwd.mockRestore();
@@ -539,10 +533,10 @@ describe('dever configuration', () => {
 		const previewWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-plugin-preview-'));
 		fs.writeFileSync(path.join(previewWorkspace, 'index.html'), '<div />');
 		fs.writeFileSync(path.join(previewWorkspace, 'index.vue'), '<template><div /></template>');
-		const previewPlugins = createDocsPlugins({ workspace: 'site', preview: true }) as any;
-		const workspacePlugin = previewPlugins.plugins.find((item: any) => (
-			item.name === 'docs-workspace-resources'
-		));
+		const workspacePlugin = findPlugin(
+			createDocsPlugins({ workspace: 'site', preview: true }),
+			'docs-workspace-resources'
+		);
 		let previewRawMiddleware: Function | undefined;
 		const previewServer = {
 			config: { root: previewWorkspace },
@@ -554,7 +548,7 @@ describe('dever configuration', () => {
 			watcher: { add: vi.fn(), on: vi.fn() },
 			httpServer: { once: vi.fn() }
 		};
-		workspacePlugin.configureServer(previewServer);
+		pluginHook(workspacePlugin.configureServer, 'configureServer')(previewServer);
 		expect(previewServer.middlewares.use).toHaveBeenCalledOnce();
 		expect(previewServer.watcher.on).not.toHaveBeenCalled();
 		expect(previewServer.httpServer.once).not.toHaveBeenCalled();
@@ -586,11 +580,11 @@ describe('dever configuration', () => {
 			},
 			transformIndexHtml: vi.fn(async (_url, html) => html)
 		};
-		const config = createDocsPlugins({ workspace: 'site', preview: true }) as any;
-		const historyPlugin = config.plugins.find((plugin: any) => (
-			plugin.name === 'docs-history-fallback'
-		));
-		historyPlugin.configureServer(server);
+		pluginHook(
+			findPlugin(createDocsPlugins({ workspace: 'site', preview: true }), 'docs-history-fallback')
+				.configureServer,
+			'configureServer'
+		)(server);
 		const response = {
 			writableEnded: false,
 			statusCode: 0,
@@ -637,11 +631,11 @@ describe('dever configuration', () => {
 			watcher: { add: vi.fn(), on: vi.fn() },
 			httpServer: { once: vi.fn() }
 		};
-		const config = createDocsPlugins({ workspace: 'site' }) as any;
-		const workspacePlugin = config.plugins.find((plugin: any) => (
-			plugin.name === 'docs-workspace-resources'
-		));
-		workspacePlugin.configureServer(server);
+		pluginHook(
+			findPlugin(createDocsPlugins({ workspace: 'site' }), 'docs-workspace-resources')
+				.configureServer,
+			'configureServer'
+		)(server);
 		const middleware = middlewares[0];
 		expect(server.watcher.add).toHaveBeenCalledWith(path.resolve('packages'));
 		expect(server.watcher.add).toHaveBeenCalledWith(path.resolve('README.md'));
@@ -758,11 +752,11 @@ describe('dever configuration', () => {
 				httpServer: { once: vi.fn() },
 				transformIndexHtml: vi.fn(async (_url: string, html: string) => html)
 			};
-			const config = createDocsPlugins({ workspace: '.' }) as any;
-			const workspacePlugin = config.plugins.find((plugin: any) => (
-				plugin.name === 'docs-workspace-resources'
-			));
-			workspacePlugin.configureServer(server);
+			const config = createDocsPlugins({ workspace: '.' });
+			pluginHook(
+				findPlugin(config, 'docs-workspace-resources').configureServer,
+				'configureServer'
+			)(server);
 			const rawMiddleware = middlewareEntries
 				.find(([route]) => typeof route === 'function')![0] as Function;
 			const createResponse = () => ({
@@ -804,10 +798,10 @@ describe('dever configuration', () => {
 			expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining('"type":"reload"'));
 
 			let historyMiddleware: Function | undefined;
-			const historyPlugin = config.plugins.find((plugin: any) => (
-				plugin.name === 'docs-history-fallback'
-			));
-			historyPlugin.configureServer({
+			pluginHook(
+				findPlugin(config, 'docs-history-fallback').configureServer,
+				'configureServer'
+			)({
 				...server,
 				middlewares: { use: vi.fn((handler: Function) => { historyMiddleware = handler; }) }
 			});
@@ -846,11 +840,11 @@ describe('dever configuration', () => {
 				})
 			}
 		};
-		const config = createDocsPlugins({ workspace: 'site' }) as any;
-		const workspacePlugin = config.plugins.find((plugin: any) => (
-			plugin.name === 'docs-workspace-resources'
-		));
-		workspacePlugin.configureServer(server);
+		pluginHook(
+			findPlugin(createDocsPlugins({ workspace: 'site' }), 'docs-workspace-resources')
+				.configureServer,
+			'configureServer'
+		)(server);
 
 		const eventsEntry = middlewareEntries.find(([route]) => route === '/__docs/events');
 		expect(eventsEntry).toBeDefined();

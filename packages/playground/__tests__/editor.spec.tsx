@@ -8,7 +8,10 @@ import EditorWrapper from '../src/editor/editor.vue';
 const { destroy, focus, listener, dragOff, javascriptMode, messageError, vueMode, scrollerRefresh, setScrollLeft } = vi.hoisted(() => ({
 	destroy: vi.fn(),
 	focus: vi.fn(),
-	listener: { callback: undefined as any },
+	listener: { callback: undefined as ((update: {
+		docChanged: boolean;
+		state: { doc: { toString: () => string } };
+	}) => void) | undefined },
 	dragOff: vi.fn(),
 	javascriptMode: vi.fn(() => 'javascript'),
 	messageError: vi.fn(),
@@ -82,8 +85,8 @@ describe('editor', () => {
 		expect(focus).toHaveBeenCalled();
 		expect(vueMode).toHaveBeenCalled();
 
-		listener.callback({ docChanged: false, state: { doc: { toString: () => 'ignored' } } });
-		listener.callback({ docChanged: true, state: { doc: { toString: () => 'changed' } } });
+		listener.callback?.({ docChanged: false, state: { doc: { toString: () => 'ignored' } } });
+		listener.callback?.({ docChanged: true, state: { doc: { toString: () => 'changed' } } });
 		expect(onChange).toHaveBeenCalledWith('changed');
 
 		await wrapper.find('.docs-playground-editor__header span:last-child').trigger('click');
@@ -123,7 +126,7 @@ describe('editor', () => {
 		expect(onActiveChange).toHaveBeenCalledWith('util.ts');
 		expect(javascriptMode).toHaveBeenCalledWith({ jsx: false, typescript: true });
 
-		listener.callback({ docChanged: true, state: { doc: { toString: () => 'export const value = 2' } } });
+		listener.callback?.({ docChanged: true, state: { doc: { toString: () => 'export const value = 2' } } });
 		expect(onFilesChange).toHaveBeenLastCalledWith(
 			expect.objectContaining({ 'util.ts': 'export const value = 2' }),
 			'App.vue',

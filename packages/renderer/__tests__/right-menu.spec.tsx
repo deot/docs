@@ -11,7 +11,7 @@ describe('renderer right menu', () => {
 		expect(typeof portal.popup).toBe('function');
 	});
 	it('emits the chosen action and flips lock label', async () => {
-		const event = { clientX: 80, clientY: 40, target: document.body } as unknown as MouseEvent;
+		const event = { clientX: 80, clientY: 40, target: document.body };
 		const wrapper = mount(RightMenu, {
 			props: {
 				event,
@@ -28,7 +28,7 @@ describe('renderer right menu', () => {
 	});
 
 	it('marks grouped and destructive items', () => {
-		const event = { clientX: 80, clientY: 40, target: document.body } as unknown as MouseEvent;
+		const event = { clientX: 80, clientY: 40, target: document.body };
 		const wrapper = mount(RightMenu, {
 			props: {
 				event,
@@ -50,7 +50,7 @@ describe('renderer right menu', () => {
 	});
 
 	it('rejects clicks outside the menu', async () => {
-		const event = { clientX: 80, clientY: window.innerHeight - 10, target: document.body } as unknown as MouseEvent;
+		const event = { clientX: 80, clientY: window.innerHeight - 10, target: document.body };
 		const wrapper = mount(RightMenu, {
 			props: {
 				event,

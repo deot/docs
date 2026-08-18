@@ -23,7 +23,7 @@ import type {
 	ResourcePollOptions,
 	ResourcePrefetchOptions,
 	ResourceRecord,
-	ResourceRecordInput,
+	ResourceRecordDraft,
 	ResourceRequest,
 	ResourceStatus
 } from './types';
@@ -55,6 +55,7 @@ export type {
 	ResourcePollOptions,
 	ResourcePrefetchOptions,
 	ResourceRecord,
+	ResourceRecordInput,
 	ResourceStatus,
 	ResourceStatusHistory,
 	ResourceVersion
@@ -333,15 +334,15 @@ export class ResourceGateway {
 		// 若在 target 内读取可变 barrier，会形成死锁。
 		const deletionBarrier = this.deletionBarrier;
 		let scheduled: ScheduledResult<ResourceContentRecord> | null = null;
-		const entry: PendingRequest = {
-			promise: undefined as unknown as Promise<ResourceContentRecord>,
+		// promise 与 promote 都需要回引 entry 自身，先构建其余字段，最后补上 promise。
+		const init: Omit<PendingRequest, 'promise'> = {
 			controller,
 			consumers: new Set(),
 			settled: false,
 			priority: options.priority ?? (prefetch ? 25 : 100),
 			promote: (priority) => {
-				if (priority <= entry.priority) return;
-				entry.priority = priority;
+				if (priority <= init.priority) return;
+				init.priority = priority;
 				scheduled?.setPriority(priority);
 			}
 		};
@@ -384,23 +385,25 @@ export class ResourceGateway {
 					);
 					throw reason;
 				}
-			}, entry.priority);
+			}, init.priority);
 			return scheduled;
 		})();
 
-		entry.promise = (async () => {
-			try {
-				return await target;
-			} finally {
-				entry.settled = true;
-				const ownsPendingSlot = this.pending.get(key) === entry;
-				if (ownsPendingSlot) this.pending.delete(key);
-				if (this.controllers.get(key) === controller) this.controllers.delete(key);
-				// 已失效 attempt 可能在替代请求接管 key 后才结束；只有替代请求
-				// 可以处理它自己的尾随通知。
-				if (ownsPendingSlot) this.flushTrailing(key);
-			}
-		})();
+		const entry: PendingRequest = Object.assign(init, {
+			promise: (async () => {
+				try {
+					return await target;
+				} finally {
+					init.settled = true;
+					const ownsPendingSlot = this.pending.get(key) === init;
+					if (ownsPendingSlot) this.pending.delete(key);
+					if (this.controllers.get(key) === controller) this.controllers.delete(key);
+					// 已失效 attempt 可能在替代请求接管 key 后才结束；只有替代请求
+					// 可以处理它自己的尾随通知。
+					if (ownsPendingSlot) this.flushTrailing(key);
+				}
+			})()
+		});
 
 		/**
 		 * 在 waiting 写入或 scheduler 执行前先占用 identity，避免并发调用方
@@ -613,7 +616,7 @@ export class ResourceGateway {
 	}
 
 	private async writeRecord(
-		record: ResourceRecordInput,
+		record: ResourceRecordDraft,
 		notifyStatus = false,
 		token?: ResourceMutationToken
 	) {
@@ -683,7 +686,7 @@ export class ResourceGateway {
 		const key = resourceIdentityKey(identity);
 		const current = await this.readRecord(key, token);
 		const timestamp = Date.now();
-		const base: ResourceRecordInput = current || {
+		const base: ResourceRecordDraft = current || {
 			identity,
 			url: options.url || identity.source,
 			requestStatus: status,
@@ -769,7 +772,7 @@ export class ResourceGateway {
 			}, attemptId, false, token);
 		}
 
-		const record: ResourceRecordInput = {
+		const record: ResourceRecordDraft = {
 			...(current || {}),
 			identity,
 			url,
@@ -797,7 +800,7 @@ export class ResourceGateway {
 	}
 
 	private async completeSuccess(
-		record: ResourceRecordInput,
+		record: ResourceRecordDraft,
 		attemptId: string,
 		contentChanged: boolean,
 		token: ResourceMutationToken

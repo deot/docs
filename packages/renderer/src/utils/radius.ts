@@ -16,19 +16,20 @@ const clampRadius = (value: unknown, fallback = 0) => {
 
 /**
  * 从 appearance / placement 中挑出已写入的圆角字段，切换 Frame 时用来保留圆角。
- * @param value 当前节点上的圆角来源。
+ * @param value 当前节点上的圆角来源，允许混入其他字段。
  * @returns 只包含有效数值的圆角补丁。
  */
 export const pickRendererCornerRadii = (
-	value?: RendererCornerRadii | null
+	value?: unknown
 ): RendererCornerRadii => {
 	const next: RendererCornerRadii = {};
-	if (!value) return next;
-	if (typeof value.borderRadius === 'number' && Number.isFinite(value.borderRadius)) {
-		next.borderRadius = value.borderRadius;
+	if (!value || typeof value !== 'object') return next;
+	const record = value as Record<string, unknown>;
+	if (typeof record.borderRadius === 'number' && Number.isFinite(record.borderRadius)) {
+		next.borderRadius = record.borderRadius;
 	}
 	RENDERER_CORNER_RADIUS_KEYS.forEach((key) => {
-		const radius = value[key];
+		const radius = record[key];
 		if (typeof radius === 'number' && Number.isFinite(radius)) next[key] = radius;
 	});
 	return next;

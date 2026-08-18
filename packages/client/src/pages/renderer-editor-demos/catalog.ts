@@ -30,7 +30,13 @@ export interface RendererEditorDemoItem {
 	name: RendererEditorDemo;
 	title: string;
 	description: string;
+	/**
+	 * 该演示用到的模块 type 列表。
+	 */
 	modules: readonly string[];
+	/**
+	 * 演示卡片强调色。
+	 */
 	accent: string;
 }
 
@@ -45,11 +51,9 @@ const factories: Record<RendererEditorDemo, (lang: string) => RendererDocument> 
 	selection: createSelectionDemo
 };
 
-const catalog: Record<RendererEditorDemo, {
+const catalog: Record<RendererEditorDemo, Omit<RendererEditorDemoItem, 'name' | 'title' | 'description'> & {
 	title: [string, string];
 	description: [string, string];
-	modules: readonly string[];
-	accent: string;
 }> = {
 	sortable: {
 		title: ['流式画布', 'Sortable canvas'],

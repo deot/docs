@@ -2,6 +2,9 @@ import type { RendererDocument } from '../types';
 import { cloneRendererValue } from '../validate';
 
 export interface RendererDraftRecord {
+	/**
+	 * IndexedDB 主键，通常是页面逻辑地址。
+	 */
 	key: string;
 	document: RendererDocument;
 	updatedAt: number;

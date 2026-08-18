@@ -3,11 +3,14 @@ import * as fs from 'node:fs';
 import * as http from 'node:http';
 import * as path from 'node:path';
 import { Shell } from '@deot/dev-shared';
-import type { DeverOptions } from './index';
-import { resolveDocsWorkspace } from './workspace';
+import type { DeverOptions } from './types';
+import { isInside, resolveDocsWorkspace } from './workspace';
 
 export interface PreviewRequestHandlerOptions {
 	workspace: string;
+	/**
+	 * 本地 `@deot/docs-client` 的 dist 目录。缺省时按包路径解析，用来改写预览 HTML 里的 CDN 地址。
+	 */
 	clientDist?: string;
 }
 
@@ -47,11 +50,6 @@ const errorMessages: Record<number, string> = {
 	500: 'Internal Server Error'
 };
 
-const isInside = (parent: string, target: string) => {
-	const relative = path.relative(parent, target);
-	return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
-};
-
 const decodeRequestPath = (requestUrl: string) => {
 	const rawPathname = requestUrl.split(/[?#]/u, 1)[0] || '/';
 	let decoded: string;
@@ -82,7 +80,7 @@ const findLocalClientWorkspace = (cwd: string) => {
 	}
 };
 
-const getLatestModification = (filename: string): number => {
+const getLatestModification = (filename: string) => {
 	if (!fs.existsSync(filename)) return 0;
 	const stat = fs.statSync(filename);
 	if (!stat.isDirectory()) return stat.mtimeMs;

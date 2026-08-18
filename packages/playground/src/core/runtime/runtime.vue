@@ -118,11 +118,14 @@ import type { EditorFilesChangeAction } from '../../editor';
 import PlaygroundIcon from '../../icon';
 import type {
 	PlaygroundFiles,
+	PlaygroundFilesProps,
 	PlaygroundOptions,
 	PlaygroundPreviewOptions,
 	PlaygroundView,
-	PlaygroundViewport
+	PlaygroundViewport,
+	PlaygroundViewsProps
 } from '../../types';
+import { filesEqual, playgroundViewMessage } from '../../utils';
 import { resolveSandboxContainer, useSandboxAutoHeight } from './auto-height';
 import type { SandboxExposed } from './auto-height';
 import { useSandboxRuntimeErrorGuard } from './error-guard';
@@ -141,14 +144,10 @@ import {
 	toReplFilename
 } from '../store';
 
-const props = withDefaults(defineProps<{
-	files: PlaygroundFiles;
-	entry: string;
+const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<PlaygroundViewsProps> & {
 	options: PlaygroundOptions;
 	previewOptions?: PlaygroundPreviewOptions;
 	styleless?: boolean;
-	activeView?: PlaygroundView;
-	views?: PlaygroundView[];
 	viewport?: PlaygroundViewport;
 	viewportOptions?: PlaygroundViewport[];
 }>(), {
@@ -159,9 +158,7 @@ const props = withDefaults(defineProps<{
 	viewportOptions: () => ['auto', 375]
 });
 const { locale, t } = useLocale();
-const getViewText = (view: PlaygroundView) => t(
-	view === 'runtime' ? 'playground.runtime.preview' : 'playground.runtime.files'
-);
+const getViewText = (view: PlaygroundView) => t(playgroundViewMessage(view));
 const emit = defineEmits<{
 	'files-change': [files: PlaygroundFiles, entry: string, action: EditorFilesChangeAction];
 	'view-change': [view: PlaygroundView];
@@ -225,13 +222,6 @@ const viewportStyle = computed(() => {
 });
 let syncedFiles = { ...props.files };
 let syncedEntry = props.entry;
-
-const filesEqual = (a: PlaygroundFiles, b: PlaygroundFiles) => {
-	const aKeys = Object.keys(a);
-	const bKeys = Object.keys(b);
-	return aKeys.length === bKeys.length
-		&& aKeys.every(key => a[key] === b[key]);
-};
 
 const handleFilesChange = (
 	files: PlaygroundFiles,

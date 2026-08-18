@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { computed, defineComponent, h, ref } from 'vue';
-import type { App } from 'vue';
+import type { PropType } from 'vue';
 import { mount } from '@vue/test-utils';
 import {
 	buildTranslator,
@@ -13,7 +13,9 @@ import {
 	useLocale,
 	zhCN
 } from '../src';
-import type { Language } from '../src';
+import type { Language, LocaleKey } from '../src';
+
+const invalidKey = (value: string): LocaleKey => value as LocaleKey;
 
 describe('docs locale', () => {
 	it('translates namespaced keys and preserves missing placeholders', () => {
@@ -25,8 +27,8 @@ describe('docs locale', () => {
 		expect(t('client.search.placeholder.extra')).toBe('client.search.placeholder.extra');
 		expect(t('renderer.common.save')).toBe('Save');
 		expect(t('client.demos.title')).toBe('Renderer demos');
-		expect(t('editor.common.save' as any)).toBe('editor.common.save');
-		expect(t('invalid.path' as any)).toBe('invalid.path');
+		expect(t(invalidKey('editor.common.save'))).toBe('editor.common.save');
+		expect(t(invalidKey('invalid.path'))).toBe('invalid.path');
 	});
 
 	it('normalizes aliases, merges overrides and falls back to English', () => {
@@ -61,7 +63,7 @@ describe('docs locale', () => {
 		const context = buildLocaleContext(enUS);
 		expect(context.lang.value).toBe('en-US');
 		expect(context.t('markdown.indicator.document')).toBe('Document');
-		const app = { provide: vi.fn() } as unknown as App;
+		const app = { provide: vi.fn() };
 		const provided = provideLocale(zhCN, app);
 		expect(app.provide).toHaveBeenCalled();
 		expect(provided.value).toEqual(zhCN);
@@ -70,9 +72,9 @@ describe('docs locale', () => {
 	it('supports provider, reactive updates, override and English fallback', async () => {
 		const current = ref<Language>(enUS);
 		const Child = defineComponent({
-			props: { override: Object },
+			props: { override: Object as PropType<Language> },
 			setup: props => () => {
-				const { t } = useLocale(computed(() => props.override as any));
+				const { t } = useLocale(computed(() => props.override));
 				return h('span', t('client.search.placeholder'));
 			}
 		});

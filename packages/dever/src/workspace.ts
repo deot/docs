@@ -2,19 +2,36 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 export interface ResolvedDocsWorkspace {
-	/** 经过 realpath 解析的项目根目录。 */
+	/**
+	 * 经过 realpath 解析的项目根目录。
+	 */
 	projectRoot: string;
-	/** 经过 realpath 解析的文档 workspace。 */
+	/**
+	 * 经过 realpath 解析的文档 workspace。
+	 */
 	root: string;
-	/** 相对于项目根的 POSIX 路径；根 workspace 为空字符串。 */
+	/**
+	 * 相对于项目根的 POSIX 路径；根 workspace 为空字符串。
+	 */
 	relative: string;
-	/** 浏览器访问资源时使用的规范路径前缀。 */
+	/**
+	 * 浏览器访问资源时使用的规范路径前缀。
+	 */
 	urlBase: string;
-	/** workspace 中经过安全检查的入口文件。 */
+	/**
+	 * workspace 中经过安全检查的入口文件。
+	 */
 	entry: string;
 }
 
-const isInside = (parent: string, target: string) => {
+/**
+ * 判断 target 是否位于 parent 目录树内。只把 `..` 与 `..${sep}` 视为越界，
+ * 避免把合法文件名（如 `..foo`）误判为父路径。
+ * @param parent 作为边界的目录。
+ * @param target 待检查的路径。
+ * @returns 是否仍在边界内。
+ */
+export const isInside = (parent: string, target: string) => {
 	const relative = path.relative(parent, target);
 	return relative === '' || (
 		relative !== '..'

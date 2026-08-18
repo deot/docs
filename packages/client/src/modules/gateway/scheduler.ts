@@ -3,7 +3,9 @@ import { Parallel, Task } from '@deot/helper-fp';
 type ScheduledRequest = (() => Promise<unknown>) & { priority: number };
 
 export type ScheduledResult<T> = Promise<T> & {
-	/** 仅当任务仍在共享队列等待时提升优先级。 */
+	/**
+	 * 仅当任务仍在共享队列等待时提升优先级。
+	 */
 	setPriority: (priority: number) => void;
 };
 
@@ -51,7 +53,7 @@ export class RequestScheduler {
 
 	private start() {
 		if (!this.parallel) {
-			const parallel = new Parallel(this.queue as any, this.concurrency, { skipError: true });
+			const parallel = new Parallel(this.queue, this.concurrency, { skipError: true });
 			this.parallel = parallel;
 			void this.run(parallel);
 		}

@@ -1,14 +1,18 @@
 import { Gateway } from './modules';
 import { createResourceIdentity, getDefaultLanguage } from './utils/resolver';
 import { getDocsConfig, getDocsRuntime } from './utils/runtime';
+import { DOCS_RESOURCE_TYPES } from './types';
 import type { DocsResourceType } from './types';
 
+/** dever `configureEvents` 广播的 SSE 载荷。 */
 type DocsResourceEvent = {
 	type: 'reload';
 	timestamp: number;
 } | {
 	type: 'add' | 'change' | 'unlink';
-	/** 空字符串表示所有已配置语言共用的仓库级资源。 */
+	/**
+	 * 空字符串表示所有已配置语言共用的仓库级资源。
+	 */
 	lang: string;
 	source: string;
 	resourceType: DocsResourceType;
@@ -16,7 +20,7 @@ type DocsResourceEvent = {
 };
 
 const EVENT_TYPES: DocsResourceEvent['type'][] = ['add', 'change', 'unlink', 'reload'];
-const RESOURCE_TYPES: DocsResourceType[] = ['markdown', 'sidebar', 'page', 'sfc', 'module', 'style'];
+const RESOURCE_TYPES = DOCS_RESOURCE_TYPES;
 
 const isDocsResourceEvent = (value: unknown): value is DocsResourceEvent => {
 	if (!value || typeof value !== 'object') return false;

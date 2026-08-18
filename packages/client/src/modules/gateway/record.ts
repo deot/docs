@@ -24,6 +24,8 @@ const isResourceStatus = (value: unknown): value is ResourceStatus => (
 	typeof value === 'string' && RESOURCE_STATUSES.includes(value as ResourceStatus)
 );
 
+const isInteger = (value: unknown): value is number => Number.isInteger(value);
+
 export const hasContent = (record: ResourceRecord): record is ResourceContentRecord => (
 	typeof record.content === 'string'
 	&& typeof record.hash === 'string'
@@ -101,22 +103,24 @@ const compactStatusHistory = (
 };
 
 // 每次经过缓存边界前修复旧记录，并派生内容状态。
-export const normalizeResourceRecord = (input: ResourceRecordInput): ResourceRecord => {
-	const legacy = input as any;
+export const normalizeResourceRecord = (legacy: ResourceRecordInput): ResourceRecord => {
 	const now = Date.now();
-	const contentAvailable = typeof legacy.content === 'string';
-	let updatedAt: number | undefined;
-	if (contentAvailable) {
-		updatedAt = typeof legacy.updatedAt === 'number'
-			? legacy.updatedAt
-			: legacy.checkedAt || legacy.accessedAt || now;
-	}
+	const content = typeof legacy.content === 'string' ? legacy.content : undefined;
+	const contentAvailable = content !== undefined;
+	const checkedAt = typeof legacy.checkedAt === 'number' ? legacy.checkedAt : 0;
+	const accessedAt = typeof legacy.accessedAt === 'number' ? legacy.accessedAt : 0;
+	// 内容时间戳始终可计算，仅在没有内容时才不写入记录。
+	const contentUpdatedAt = typeof legacy.updatedAt === 'number'
+		? legacy.updatedAt
+		: checkedAt || accessedAt || now;
+	const updatedAt = contentAvailable ? contentUpdatedAt : undefined;
 	const requestStatus = isResourceStatus(legacy.requestStatus)
 		? legacy.requestStatus
 		: contentAvailable ? 'success' : 'error';
 	const requestStatusUpdatedAt = typeof legacy.requestStatusUpdatedAt === 'number'
 		? legacy.requestStatusUpdatedAt
-		: legacy.checkedAt || updatedAt || legacy.accessedAt || now;
+		: checkedAt || updatedAt || accessedAt || now;
+
 	const history = Array.isArray(legacy.statusHistory)
 		? legacy.statusHistory.map(normalizeHistoryEntry)
 		: [];
@@ -127,7 +131,7 @@ export const normalizeResourceRecord = (input: ResourceRecordInput): ResourceRec
 	let source = contentHistoryId
 		? history.find(entry => entry.id === contentHistoryId && entry.status === 'success')
 		: undefined;
-	if (!source && Number.isInteger(legacy.contentHistoryIndex)) {
+	if (!source && isInteger(legacy.contentHistoryIndex)) {
 		const indexed = history[legacy.contentHistoryIndex];
 		if (indexed?.status === 'success') {
 			source = indexed;
@@ -135,7 +139,7 @@ export const normalizeResourceRecord = (input: ResourceRecordInput): ResourceRec
 		}
 	}
 	if (contentAvailable && !source) {
-		source = createSyntheticSuccess(updatedAt!);
+		source = createSyntheticSuccess(contentUpdatedAt);
 		history.push(source);
 		contentHistoryId = source.id;
 	}
@@ -157,13 +161,13 @@ export const normalizeResourceRecord = (input: ResourceRecordInput): ResourceRec
 		contentHistoryId: compacted.contentHistoryId,
 		contentHistoryIndex: compacted.contentHistoryIndex,
 		reason,
-		content: contentAvailable ? legacy.content : undefined,
+		content,
 		hash: contentAvailable
-			? (typeof legacy.hash === 'string' ? legacy.hash : hashContent(legacy.content))
+			? (typeof legacy.hash === 'string' ? legacy.hash : hashContent(content))
 			: undefined,
 		updatedAt,
-		checkedAt: typeof legacy.checkedAt === 'number' ? legacy.checkedAt : 0,
-		accessedAt: typeof legacy.accessedAt === 'number' ? legacy.accessedAt : 0
+		checkedAt,
+		accessedAt
 	};
 	// statusUpdatedAt 属于旧的单状态 schema；懒迁移后若继续持久化，
 	// 会导致请求时间和内容时间含义不清。
@@ -171,7 +175,7 @@ export const normalizeResourceRecord = (input: ResourceRecordInput): ResourceRec
 	return normalized;
 };
 
-export const recordsEqual = (left: ResourceRecord, right: ResourceRecord) => (
+export const recordsEqual = (left: unknown, right: unknown) => (
 	JSON.stringify(left) === JSON.stringify(right)
 );
 

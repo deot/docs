@@ -6,6 +6,7 @@ import {
 	snapPlacementToGuides,
 	transformPoint
 } from '../src/frame/draggable/geometry';
+import { invalid } from './fixtures';
 
 const placement = { x: 100, y: 80, width: 240, height: 120, rotate: 37, zIndex: 1 };
 
@@ -38,7 +39,7 @@ describe('draggable geometry', () => {
 				return { x: this.x + matrix.x, y: this.y + matrix.y };
 			}
 		});
-		const matrix = { inverse: () => ({ x: 10, y: 20 }) } as unknown as DOMMatrixReadOnly;
+		const matrix = invalid<DOMMatrixReadOnly>({ inverse: () => ({ x: 10, y: 20 }) });
 		expect(transformPoint({ x: 2, y: 3 }, matrix)).toEqual({ x: 12, y: 23 });
 	});
 

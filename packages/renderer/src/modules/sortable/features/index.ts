@@ -2,15 +2,16 @@ import { defineRendererModule } from '../../../catalog';
 import {
 	localeText,
 	moduleIssue,
+	normalizeSectionHeader,
 	SECTION_ALIGNMENTS,
 	toArrayValue,
-	toEnumValue,
 	toLength,
 	toRecord,
 	toStringValue,
 	validateEnum,
 	validateNumberRange
 } from '../../shared/utils';
+import type { RendererSectionHeader } from '../../shared/utils';
 import { sectionDraggableFrame, sectionSortableFrame } from '../../shared/canvas-frame';
 import { featureAccentOf } from './palette';
 import Editor from './editor.vue';
@@ -20,7 +21,13 @@ export interface RendererFeatureItem {
 	title: string;
 	description: string;
 	badge: string;
+	/**
+	 * 内置图标名，不是图片 URL。
+	 */
 	icon: string;
+	/**
+	 * 强调色，CSS 颜色。
+	 */
 	accent: string;
 }
 
@@ -41,11 +48,7 @@ const normalizeItem = (item: unknown, index: number): RendererFeatureItem => {
 	};
 };
 
-export const FeaturesModule = defineRendererModule<{
-	eyebrow: string;
-	title: string;
-	description: string;
-	align: typeof SECTION_ALIGNMENTS[number];
+export const FeaturesModule = defineRendererModule<RendererSectionHeader & {
 	columns: number;
 	gap: number;
 	accent: string;
@@ -74,10 +77,7 @@ export const FeaturesModule = defineRendererModule<{
 		normalize: (value) => {
 			const record = toRecord(value);
 			return {
-				eyebrow: toStringValue(record.eyebrow),
-				title: toStringValue(record.title),
-				description: toStringValue(record.description),
-				align: toEnumValue(record.align, SECTION_ALIGNMENTS, 'center'),
+				...normalizeSectionHeader(record, 'center'),
 				columns: toLength(record.columns, 3),
 				gap: toLength(record.gap, 20),
 				accent: toStringValue(record.accent),
@@ -104,11 +104,12 @@ export const FeaturesModule = defineRendererModule<{
 	},
 	integrations: {
 		collectSearchText: (props) => {
+			const record = toRecord(props);
 			const section = {
-				title: String(props.title || ''),
-				text: [props.eyebrow, props.description].filter(Boolean).join(' ')
+				title: String(record.title || ''),
+				text: [record.eyebrow, record.description].filter(Boolean).join(' ')
 			};
-			const items = (Array.isArray(props.items) ? props.items : []).map((item) => {
+			const items = (Array.isArray(record.items) ? record.items : []).map((item) => {
 				const current = toRecord(item);
 				return {
 					title: String(current.title || ''),

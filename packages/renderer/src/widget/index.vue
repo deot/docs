@@ -101,6 +101,7 @@ import {
 	beginWidgetDrag,
 	endWidgetDrag
 } from './constants';
+import type { RendererCreateTarget } from './constants';
 
 const props = defineProps<{
 	catalog: RendererModuleCatalog;
@@ -109,7 +110,7 @@ const props = defineProps<{
 	document: Readonly<RendererDocument>;
 }>();
 const emit = defineEmits<{
-	create: [payload: { type: string; presetKey?: string }];
+	create: [payload: RendererCreateTarget];
 }>();
 const { t } = useLocale(computed(() => props.context.locale));
 const showTip = ref(true);

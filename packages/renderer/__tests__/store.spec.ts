@@ -147,8 +147,10 @@ describe('RendererStore', () => {
 		store.redo();
 		expect(store.getNode('a')?.module.props).toEqual({ text: 'C' });
 
-		const first = { ...store.document.layout, maxWidth: 900 } as RendererSortableDocument['layout'];
-		const second = { ...store.document.layout, maxWidth: 800 } as RendererSortableDocument['layout'];
+		const layout = store.document.layout;
+		if (layout.mode !== 'sortable') throw new Error('expected sortable layout');
+		const first = { ...layout, maxWidth: 900 };
+		const second = { ...layout, maxWidth: 800 };
 		store.updateLayout(first);
 		vi.setSystemTime(1_400);
 		store.updateLayout(second);
@@ -225,8 +227,10 @@ describe('RendererStore', () => {
 
 	it('commits live layout updates as one undoable command', () => {
 		const store = new RendererStore(draggable());
-		const before = { ...store.document.layout };
-		store.updateLayout({ ...before, width: 1100 } as RendererDraggableDocument['layout'], { history: false });
+		const current = store.document.layout;
+		if (current.mode !== 'draggable') throw new Error('expected draggable layout');
+		const before = { ...current };
+		store.updateLayout({ ...before, width: 1100 }, { history: false });
 		expect(store.document.layout).toEqual(expect.objectContaining({ width: 1100 }));
 		expect(store.canUndo).toBe(false);
 		store.commitLayout(before, store.document.layout);

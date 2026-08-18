@@ -1,11 +1,12 @@
 import { defineRendererModule } from '../../../catalog';
 import {
+	SECTION_ALIGNMENTS,
 	localeText,
 	moduleIssue,
 	normalizeActionValues,
+	normalizeSectionHeader,
 	toArrayValue,
 	toBooleanValue,
-	toEnumValue,
 	toLength,
 	toRecord,
 	toStringValue,
@@ -13,15 +14,19 @@ import {
 	validateEnum,
 	validateNumberRange
 } from '../../shared/utils';
-import type { RendererActionValue } from '../../shared/utils';
+import type { RendererActionValue, RendererSectionHeader } from '../../shared/utils';
 import { sectionDraggableFrame, sectionSortableFrame } from '../../shared/canvas-frame';
 import Editor from './editor.vue';
 import Viewer from './viewer.vue';
 
-const ALIGNMENTS = ['left', 'center'] as const;
-
 export interface RendererHeroHighlight {
+	/**
+	 * 高亮主文案，通常是短数字或技术名。
+	 */
 	value: string;
+	/**
+	 * 主文案下方的说明。
+	 */
 	label: string;
 	color: string;
 }
@@ -43,12 +48,8 @@ const normalizeHighlights = (value: unknown): RendererHeroHighlight[] => (
 	})
 );
 
-export const HeroModule = defineRendererModule<{
-	eyebrow: string;
-	title: string;
-	description: string;
+export const HeroModule = defineRendererModule<RendererSectionHeader & {
 	actions: RendererActionValue[];
-	align: typeof ALIGNMENTS[number];
 	accent: string;
 	accentSecondary: string;
 	background: string;
@@ -80,11 +81,8 @@ export const HeroModule = defineRendererModule<{
 		normalize: (value) => {
 			const record = toRecord(value);
 			return {
-				eyebrow: toStringValue(record.eyebrow),
-				title: toStringValue(record.title),
-				description: toStringValue(record.description),
+				...normalizeSectionHeader(record, 'left'),
 				actions: normalizeActionValues(record.actions),
-				align: toEnumValue(record.align, ALIGNMENTS, 'left'),
 				accent: toStringValue(record.accent),
 				accentSecondary: toStringValue(record.accentSecondary),
 				background: toStringValue(record.background),
@@ -97,7 +95,7 @@ export const HeroModule = defineRendererModule<{
 			...(value.title.trim()
 				? []
 				: [moduleIssue('$.title', 'title.required', '首屏标题不能为空')]),
-			...validateEnum(value.align, '$.align', ALIGNMENTS),
+			...validateEnum(value.align, '$.align', SECTION_ALIGNMENTS),
 			...validateNumberRange(value.minHeight, '$.minHeight', { min: 0, max: 960 }),
 			...validateActionValues(value.actions, '$.actions')
 		]
@@ -110,14 +108,15 @@ export const HeroModule = defineRendererModule<{
 	},
 	integrations: {
 		collectSearchText: (props) => {
-			const highlights = Array.isArray(props.highlights) ? props.highlights : [];
+			const record = toRecord(props);
+			const highlights = Array.isArray(record.highlights) ? record.highlights : [];
 			const extra = highlights.map((item) => {
 				const current = toRecord(item);
 				return [current.value, current.label].filter(Boolean).join(' ');
 			}).filter(Boolean).join(' ');
 			return [{
-				title: String(props.title || ''),
-				text: [props.eyebrow, props.description, extra].filter(Boolean).join(' ')
+				title: String(record.title || ''),
+				text: [record.eyebrow, record.description, extra].filter(Boolean).join(' ')
 			}];
 		}
 	}

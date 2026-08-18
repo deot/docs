@@ -47,11 +47,15 @@ export const AreaModule = defineRendererModule<{
 		sortable: sectionSortableFrame()
 	},
 	integrations: {
-		collectResources: props => collectImageResources([props.src]),
+		collectResources: (props) => {
+			const record = toRecord(props);
+			return collectImageResources([record.src]);
+		},
 		collectSearchText: (props) => {
-			const areas = Array.isArray(props.areas) ? props.areas : [];
+			const record = toRecord(props);
+			const areas = Array.isArray(record.areas) ? record.areas : [];
 			return [
-				{ title: String(props.alt || ''), text: '' },
+				{ title: String(record.alt || ''), text: '' },
 				...areas.map((item) => {
 					const current = toRecord(item);
 					return {

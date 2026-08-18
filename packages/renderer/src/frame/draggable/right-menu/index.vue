@@ -49,7 +49,7 @@ const MENU_GROUP: Record<RendererRightMenuAction, number> = {
 };
 
 const props = withDefaults(defineProps<{
-	event: MouseEvent;
+	event: Pick<MouseEvent, 'clientX' | 'clientY' | 'target'>;
 	items: RendererRightMenuAction[];
 	locked?: boolean;
 	locale?: Language;

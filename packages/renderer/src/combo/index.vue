@@ -112,18 +112,19 @@ import Widget from '../widget/index.vue';
 import SortableFrame from '../frame/sortable/index.vue';
 import DraggableFrame from '../frame/draggable/index.vue';
 import { containRotatedPlacement } from '../frame/draggable/geometry';
+import type { Point } from '../frame/draggable/geometry';
 import { deactivateRendererSelection } from '../frame/shared/blur-selection';
+import type { RendererCreateTarget } from '../widget/constants';
 import PropertyEditor from '../editor/index.vue';
 import JsonPopup from '../editor/json/popup';
 import PreviewPopup from '../assist/preview/popup.vue';
 import { RendererDraftCache } from './draft';
 
-interface CreatePayload {
-	type: string;
-	presetKey?: string;
+/** 两种画布都会触发创建，sortable 只给 index，draggable 额外给落点。 */
+type CreatePayload = RendererCreateTarget & {
 	index?: number;
-	point?: { x: number; y: number };
-}
+	point?: Point;
+};
 
 const props = withDefaults(defineProps<{
 	modelValue?: RendererDocument | null;
@@ -228,11 +229,12 @@ watch(() => store.document, (value) => {
 	externalSignature = signature;
 	emit('update:modelValue', document);
 	emit('change', document);
-	if (props.draftKey && draftReady && !suppressDraftWrite) {
+	const draftKey = props.draftKey;
+	if (draftKey && draftReady && !suppressDraftWrite) {
 		if (draftTimer) clearTimeout(draftTimer);
 		draftTimer = setTimeout(() => {
 			draftCache.set({
-				key: props.draftKey!,
+				key: draftKey,
 				document: cloneRendererValue(store.document) as RendererDocument,
 				updatedAt: Date.now()
 			}).catch(() => {
@@ -313,7 +315,8 @@ const handleCreate = async (payload: CreatePayload) => {
 				}
 			} satisfies RendererSortableNode;
 		} else {
-			const draggable = definition.frames.draggable!;
+			const draggable = definition.frames.draggable;
+			if (!draggable) return;
 			let placement = { ...draggable.initialPlacement(), ...draft?.placement };
 			if (typeof draft.placement?.zIndex !== 'number') {
 				placement.zIndex = Math.max(

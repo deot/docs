@@ -13,6 +13,7 @@ import {
 	provideRendererModules,
 	useRendererModules
 } from '../src/components/renderer';
+import { createRendererCreateContext } from './fixtures/docs';
 
 const { load, subscribe, unsubscribe } = vi.hoisted(() => ({
 	load: vi.fn(),
@@ -86,7 +87,7 @@ describe('client Renderer integrations', () => {
 		expect(markdown?.integrations?.collectResources?.({ source: './guide.md', content: '# Inline' }))
 			.toEqual([]);
 		expect(markdown?.integrations?.collectResources?.({ source: '' })).toEqual([]);
-		expect(markdown?.data.create({} as never)).toEqual({ source: '' });
+		expect(markdown?.data.create(createRendererCreateContext())).toEqual({ source: '' });
 		expect(markdown?.data.normalize?.({ source: 1, content: '' })).toEqual({ source: '', content: '' });
 		expect(markdown?.data.normalize?.({
 			source: './guide.md',
@@ -131,7 +132,7 @@ describe('client Renderer integrations', () => {
 		expect(sfc?.integrations?.collectResources?.({ source: './demo.vue' }))
 			.toEqual([{ type: 'sfc', source: './demo.vue' }]);
 		expect(sfc?.integrations?.collectResources?.({ source: '' })).toEqual([]);
-		expect(sfc?.data.create({} as never)).toEqual({ source: '' });
+		expect(sfc?.data.create(createRendererCreateContext())).toEqual({ source: '' });
 		expect(sfc?.data.normalize?.({ source: 1 })).toEqual({ source: '' });
 		expect(sfc?.data.normalize?.(null)).toEqual({ source: '' });
 		expect(sfc?.data.validate?.({ source: '' })).toContainEqual(expect.objectContaining({

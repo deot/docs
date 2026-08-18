@@ -17,7 +17,7 @@ const route = reactive({
 });
 
 vi.mock('vue-router', async original => ({
-	...await original<any>(),
+	...await original<typeof import('vue-router')>(),
 	useRoute: () => route,
 	useRouter: () => ({
 		push: routerPush,
@@ -36,7 +36,7 @@ vi.mock('../src/modules', () => ({
 	}
 }));
 vi.mock('@deot/docs-renderer', async original => ({
-	...await original<any>(),
+	...await original<typeof import('@deot/docs-renderer')>(),
 	Combo: defineComponent({
 		props: ['modelValue', 'modules', 'context', 'draftKey'],
 		emits: ['back', 'save', 'update:modelValue'],

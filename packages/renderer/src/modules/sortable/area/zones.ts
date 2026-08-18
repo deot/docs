@@ -1,4 +1,5 @@
 import {
+	isUnsafeHref,
 	moduleIssue,
 	toArrayValue,
 	toLength,
@@ -6,32 +7,26 @@ import {
 	toStringValue,
 	validateNumberRange
 } from '../../shared/utils';
-import type { RendererIssue } from '../../../types';
+import { clamp } from '../../../utils/number';
+import type { RendererIssue, RendererPlacement, RendererResizeHandle } from '../../../types';
 
 export const AREA_ZONE_MAX = 10;
 export const AREA_ZONE_MIN = 4;
 
-export type RendererAreaHandle = 'move' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
+export type RendererAreaHandle = 'move' | RendererResizeHandle;
 
-export const AREA_HANDLES: readonly Exclude<RendererAreaHandle, 'move'>[] = [
+export const AREA_HANDLES: readonly RendererResizeHandle[] = [
 	'n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'
 ];
 
-export interface RendererAreaZone {
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-	zIndex: number;
+/** 热区复用 placement 的几何字段，坐标与尺寸都是图片百分比。 */
+export type RendererAreaZone = Pick<RendererPlacement, 'x' | 'y' | 'width' | 'height' | 'zIndex'> & {
+	/**
+	 * 点击热区后的跳转目标。
+	 */
 	to: string;
 	label: string;
-}
-
-const UNSAFE_HREF = /^(?:data|javascript|vbscript):/iu;
-
-export const isUnsafeAreaHref = (value: string) => UNSAFE_HREF.test(value.trim());
-
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+};
 
 /**
  * 把热区限制在图片范围内，避免拖拽后跑出画布。
@@ -162,7 +157,7 @@ export const validateAreaZones = (zones: readonly RendererAreaZone[], path = '$.
 			...validateNumberRange(zone.height, `${itemPath}.height`, { min: AREA_ZONE_MIN, max: 100 }),
 			...validateNumberRange(zone.zIndex, `${itemPath}.zIndex`, { min: 1, max: 1000, integer: true })
 		);
-		if (zone.to.trim() && isUnsafeAreaHref(zone.to)) {
+		if (zone.to.trim() && isUnsafeHref(zone.to)) {
 			issues.push(moduleIssue(`${itemPath}.to`, 'area.target.unsafe', '热区链接协议不安全'));
 		}
 	});

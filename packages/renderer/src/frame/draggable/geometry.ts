@@ -10,7 +10,13 @@ export interface ResizeOptions {
 	minHeight?: number;
 	maxWidth?: number;
 	maxHeight?: number;
+	/**
+	 * 固定宽高比 `width / height`。省略则自由拉伸。
+	 */
 	aspectRatio?: number;
+	/**
+	 * 缩放吸附网格，`[x 间距, y 间距]`，画布像素。
+	 */
 	grid?: [number, number];
 }
 
@@ -25,7 +31,7 @@ const HANDLE_VECTOR: Record<RendererResizeHandle, Point> = {
 	nw: { x: -1, y: -1 }
 };
 
-const rotatePoint = (point: Point, angle: number): Point => {
+const rotatePoint = (point: Point, angle: number) => {
 	const radians = angle * Math.PI / 180;
 	const cos = Math.cos(radians);
 	const sin = Math.sin(radians);
@@ -201,7 +207,13 @@ export const containRotatedPlacement = (
 export interface AlignmentSnapResult {
 	dx: number;
 	dy: number;
+	/**
+	 * 本次吸附命中的垂直参考线，画布 X。会话辅助线见 `RendererViewportState.guideX`。
+	 */
 	guideX: number[];
+	/**
+	 * 本次吸附命中的水平参考线，画布 Y。
+	 */
 	guideY: number[];
 }
 

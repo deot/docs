@@ -4,6 +4,7 @@ import { localeText, toArrayValue, toRecord, toStringValue } from '../utils';
 import {
 	isRendererSelectionModule
 } from './group';
+import type { RendererSelectionProps } from './group';
 import Editor from './editor.vue';
 import Viewer from './viewer.vue';
 
@@ -39,7 +40,7 @@ export const rendererPublishedBlocks = <T extends { module: { type: string } }>(
 	node.module.type !== 'page' && !isRendererSelectionModule(node.module.type)
 ));
 
-export const SelectionModule = defineRendererModule<{ members: string[] }>({
+export const SelectionModule = defineRendererModule<RendererSelectionProps>({
 	identity: {
 		type: RENDERER_SELECTION_TYPE,
 		version: 1,

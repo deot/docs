@@ -31,6 +31,6 @@ describe('renderer corner radius', () => {
 		expect(pickRendererCornerRadii({
 			borderRadius: 8,
 			marginTop: 1
-		} as never)).toEqual({ borderRadius: 8 });
+		})).toEqual({ borderRadius: 8 });
 	});
 });

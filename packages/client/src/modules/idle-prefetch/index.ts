@@ -2,13 +2,12 @@ import { Gateway } from '../gateway';
 import { ResourcePlan } from '../resource-plan';
 import { resourceIdentityKey } from '../../utils/resolver';
 import type { DocsConfig, DocsPrefetchOptions, ResourceIdentity } from '../../types';
-import type { ResourceContentRecord } from '../gateway';
+import type { ResourcePrefetchOutcome } from '../gateway/types';
 
 const DEFAULT_BATCH_SIZE = 2;
 const DEFAULT_IDLE_TIMEOUT = 1500;
 const FALLBACK_DELAY = 16;
 
-type PrefetchResult = PromiseSettledResult<ResourceContentRecord>;
 type IdleHandle = { id: number; type: 'idle' | 'timer' };
 type IdleWindow = Window & {
 	cancelIdleCallback?: (handle: number) => void;
@@ -18,10 +17,7 @@ type IdleWindow = Window & {
 	) => number;
 };
 
-export interface NormalizedDocsPrefetchOptions {
-	batchSize: number;
-	idleTimeout: number;
-}
+export type NormalizedDocsPrefetchOptions = Required<DocsPrefetchOptions>;
 
 /**
  * 封装浏览器空闲预加载入口；实例只提供稳定方法，每次 start 的运行状态
@@ -37,7 +33,7 @@ class IdlePrefetchScheduler {
 		value: DocsConfig['prefetch']
 	): NormalizedDocsPrefetchOptions | null {
 		if (value === false) return null;
-		const options: DocsPrefetchOptions = typeof value === 'object' ? value : {};
+		const options = typeof value === 'object' ? value : {};
 		const requestedBatchSize = Number(options.batchSize);
 		const requestedIdleTimeout = Number(options.idleTimeout);
 		return {
@@ -128,15 +124,13 @@ class IdlePrefetchScheduler {
 		 * @returns 与 identities 顺序一致的 settled 结果。
 		 */
 		const prefetchResources = async (identities: ResourceIdentity[]) => {
-			const results = new Array<PrefetchResult>(identities.length);
+			const results = new Array<ResourcePrefetchOutcome>(identities.length);
 			const pending = identities
 				.map((identity, index) => ({ identity, index }))
 				.filter(({ identity, index }) => {
 					if (!completed.has(resourceIdentityKey(identity))) return true;
-					results[index] = {
-						status: 'fulfilled',
-						value: undefined as unknown as ResourceContentRecord
-					};
+					// 已完成资源返回合成结果，消费方只读 status。
+					results[index] = { status: 'fulfilled' };
 					return false;
 				});
 

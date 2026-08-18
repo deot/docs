@@ -1,19 +1,25 @@
 // @vitest-environment jsdom
 
-const { gateway, runtime, config } = vi.hoisted(() => ({
-	gateway: {
-		isSubscribed: vi.fn(),
-		isPrefetched: vi.fn(),
-		revalidate: vi.fn(() => Promise.resolve()),
-		invalidate: vi.fn(() => Promise.resolve())
-	},
-	runtime: { mode: 'development', events: '/__docs/events' } as any,
-	config: {
+import type { DocsConfig, DocsRuntime } from '../src/types';
+
+const { gateway, runtime, config } = vi.hoisted(() => {
+	const nextRuntime: DocsRuntime = { mode: 'development', events: '/__docs/events' };
+	const nextConfig: DocsConfig = {
 		locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
 		routes: {},
 		namespace: 'events-test'
-	} as any
-}));
+	};
+	return {
+		gateway: {
+			isSubscribed: vi.fn(),
+			isPrefetched: vi.fn(),
+			revalidate: vi.fn(() => Promise.resolve()),
+			invalidate: vi.fn(() => Promise.resolve())
+		},
+		runtime: nextRuntime,
+		config: nextConfig
+	};
+});
 
 vi.mock('../src/modules', () => ({ Gateway: gateway }));
 vi.mock('../src/utils/runtime', () => ({

@@ -54,6 +54,7 @@ import { computed, ref, watch } from 'vue';
 import { provideLocale, useLocale } from '@deot/docs-locale';
 import type { Language } from '@deot/docs-locale';
 import { DEFAULT_ENTRY, NEW_SFC_CODE } from './constants';
+import { filesEqual } from './utils';
 import { FilesPreview, RuntimePreview } from './core';
 import type { EditorFilesChangeAction } from './editor';
 import type {
@@ -84,9 +85,9 @@ const props = withDefaults(defineProps<{
 	modelValue?: string;
 	files?: PlaygroundFiles;
 	entry?: string;
-	views?: PlaygroundView[];
+	views?: readonly string[];
 	viewport?: PlaygroundViewport;
-	viewportOptions?: PlaygroundViewport[];
+	viewportOptions?: readonly unknown[];
 	styleless?: boolean;
 	options?: PlaygroundOptions;
 	previewOptions?: PlaygroundPreviewOptions;
@@ -104,12 +105,6 @@ const locale = computed(() => props.locale || inheritedLocale.locale.value);
 provideLocale(locale);
 const { t } = useLocale(locale);
 
-const filesEqual = (a: PlaygroundFiles, b: PlaygroundFiles) => {
-	const aKeys = Object.keys(a);
-	const bKeys = Object.keys(b);
-	return aKeys.length === bKeys.length
-		&& aKeys.every(key => a[key] === b[key]);
-};
 const initialFiles: PlaygroundFiles = Object.keys(props.files).length
 	? { ...props.files }
 	: { [DEFAULT_ENTRY]: props.modelValue || NEW_SFC_CODE };
@@ -120,13 +115,14 @@ const sourceFiles = ref<PlaygroundFiles>(initialFiles);
 const currentEntry = ref(initialEntry);
 const fileActiveFilename = ref(initialEntry);
 
-const normalizeViews = (views: PlaygroundView[]) => {
+const normalizeViews = (views: readonly unknown[]) => {
 	const normalized: PlaygroundView[] = [];
 	for (const view of views) {
-		if (!['runtime', 'files'].includes(view) || normalized.includes(view)) continue;
+		if (view !== 'runtime' && view !== 'files') continue;
+		if (normalized.includes(view)) continue;
 		normalized.push(view);
 	}
-	return normalized.length ? normalized : ['runtime'] as PlaygroundView[];
+	return normalized.length ? normalized : ['runtime'] satisfies PlaygroundView[];
 };
 const normalizedViews = computed(() => normalizeViews(props.views));
 const activeView = ref<PlaygroundView>(normalizedViews.value[0]);
@@ -204,7 +200,7 @@ const handleFilesChange = (
 	}
 };
 
-watch(() => props.modelValue, (value: string) => {
+watch(() => props.modelValue, (value) => {
 	if (Object.keys(props.files).length || sourceFiles.value[currentEntry.value] === value) return;
 	sourceFiles.value = { ...sourceFiles.value, [currentEntry.value]: value };
 });

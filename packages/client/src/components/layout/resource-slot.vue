@@ -37,7 +37,7 @@ import DefaultSidebar from './default-sidebar.vue';
 import RemoteSfc from '../remote-sfc';
 import { Gateway, Theme } from '../../modules';
 import { isExternalLink, isPlainNavigationClick } from '../../utils/link';
-import { createResourceIdentity, resolveResource } from '../../utils/resolver';
+import { classifyResourceSource, createResourceIdentity, resolveResource } from '../../utils/resolver';
 import { getRouteValue } from '../../utils/route';
 import { getDocsConfig } from '../../utils/runtime';
 import { resolveInlineSidebar } from '../../utils/sidebar';
@@ -248,15 +248,6 @@ const applyContent = (value: string, current = generation) => {
 	}
 };
 
-const classify = (value: string): DocsResourceType => {
-	if (/\.page\.json(?:$|[?#])/i.test(value)) return 'page';
-	if (/\.json(?:$|[?#])/i.test(value)) return 'sidebar';
-	if (/\.vue(?:$|[?#])/i.test(value)) return 'sfc';
-	if (/\.css(?:$|[?#])/i.test(value)) return 'style';
-	if (/\.[jt]s(?:$|[?#])/i.test(value)) return 'module';
-	return 'markdown';
-};
-
 /* 锚点留在当前 Scroller，Resolver 标记的站内链接交给 Vue Router。 */
 const handleMarkdownClick = async (event: MouseEvent) => {
 	if (!(event.target instanceof Element)) return;
@@ -369,7 +360,7 @@ const load = async () => {
 		}
 		if (current !== generation || typeof slot !== 'string') return;
 		source.value = slot;
-		resourceType.value = classify(slot);
+		resourceType.value = classifyResourceSource(slot);
 		if (resourceType.value === 'sfc') {
 			markStableSlot();
 			return;

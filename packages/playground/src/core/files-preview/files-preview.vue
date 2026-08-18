@@ -55,20 +55,15 @@ import { computed } from 'vue';
 import { Scroller } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import PlaygroundIcon from '../../icon';
-import type { PlaygroundFiles, PlaygroundView } from '../../types';
+import type { PlaygroundFilesProps, PlaygroundView, PlaygroundViewsProps } from '../../types';
+import { playgroundViewMessage } from '../../utils';
 import CodePreview from '../code-preview';
 
-const props = defineProps<{
-	files: PlaygroundFiles;
-	entry: string;
+const props = defineProps<PlaygroundFilesProps & PlaygroundViewsProps & {
 	activeFilename: string;
-	activeView: PlaygroundView;
-	views: PlaygroundView[];
 }>();
 const { t } = useLocale();
-const getViewText = (view: PlaygroundView) => t(
-	view === 'runtime' ? 'playground.runtime.preview' : 'playground.runtime.files'
-);
+const getViewText = (view: PlaygroundView) => t(playgroundViewMessage(view));
 const emit = defineEmits<{
 	'active-change': [filename: string];
 	'view-change': [view: PlaygroundView];

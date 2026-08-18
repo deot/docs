@@ -31,7 +31,8 @@ import type { CSSProperties } from 'vue';
 import { useLocale } from '@deot/docs-locale';
 import type { RendererModuleViewerProps } from '../../../types';
 import { resolveImageSource } from '../../shared/image-source';
-import { normalizeAreaZones, isUnsafeAreaHref, type RendererAreaZone } from './zones';
+import { isUnsafeHref } from '../../shared/utils';
+import { normalizeAreaZones, type RendererAreaZone } from './zones';
 
 const props = defineProps<RendererModuleViewerProps>();
 const { t } = useLocale(computed(() => props.context.locale));
@@ -58,7 +59,7 @@ const alt = computed(() => String(props.node.module.props.alt || ''));
 const areas = computed(() => normalizeAreaZones(props.node.module.props.areas ?? props.node.module.props.list));
 const editing = computed(() => props.context.scene === 'combo' && !props.context.readonly);
 const interactive = computed(() => props.context.readonly);
-const unsafe = (value: string) => isUnsafeAreaHref(value);
+const unsafe = (value: string) => isUnsafeHref(value);
 const external = (value: string) => /^[a-z][a-z\d+.-]*:/iu.test(value) || value.startsWith('//');
 const targetOf = (item: RendererAreaZone) => item.to.trim();
 const tagOf = (item: RendererAreaZone) => (

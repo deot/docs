@@ -20,7 +20,7 @@ export const viewportEquals = (left: PlaygroundViewport, right: PlaygroundViewpo
 export const cloneViewport = (viewport: PlaygroundViewport): PlaygroundViewport =>
 	Array.isArray(viewport) ? [viewport[0], viewport[1]] : viewport;
 
-export const normalizeViewportOptions = (options?: PlaygroundViewport[]) => {
+export const normalizeViewportOptions = (options?: readonly unknown[]) => {
 	const source = options === undefined ? DEFAULT_VIEWPORT_OPTIONS : options;
 	const normalized: PlaygroundViewport[] = [];
 	for (const viewport of source) {

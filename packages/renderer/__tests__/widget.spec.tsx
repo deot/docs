@@ -7,7 +7,8 @@ import {
 	createRendererModuleCatalog,
 	defineRendererModule
 } from '../src';
-import type { RendererModuleContext, RendererSortableDocument } from '../src';
+import type { Component } from 'vue';
+import type { RendererModuleContext, RendererWidgetPreset } from '../src';
 import Widget from '../src/widget/index.vue';
 import { RENDERER_WIDGET_MIME } from '../src/widget/constants';
 
@@ -19,18 +20,26 @@ const context: RendererModuleContext = {
 	readonly: false,
 	lang: 'en-US'
 };
-const module = (type: string, value: Record<string, unknown> = {}) => defineRendererModule({
-	identity: { type, version: 1, label: value.label as string || type, category: value.category as string || 'Group' },
+const module = (type: string, value: {
+	label?: string;
+	category?: string;
+	visible?: boolean;
+	component?: Component;
+	presets?: RendererWidgetPreset[];
+	maxInstances?: number;
+	draggable?: boolean;
+} = {}) => defineRendererModule({
+	identity: { type, version: 1, label: value.label || type, category: value.category || 'Group' },
 	widget: {
-		visible: value.visible as boolean | undefined,
-		component: value.component as never,
-		presets: value.presets as never
+		visible: value.visible,
+		component: value.component,
+		presets: value.presets
 	},
 	data: { create: () => ({}) },
 	viewer: Viewer,
 	editor: Editor,
 	frames: {
-		sortable: { maxInstances: value.maxInstances as number | undefined },
+		sortable: { maxInstances: value.maxInstances },
 		...(value.draggable
 			? {
 					draggable: {
@@ -59,7 +68,7 @@ describe('renderer Widget', () => {
 			module('hidden', { visible: false }),
 			module('free-only', { draggable: true, visible: false })
 		];
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		const wrapper = mount(Widget, {
 			props: {
 				catalog: createRendererModuleCatalog(definitions),
@@ -123,7 +132,7 @@ describe('renderer Widget', () => {
 				catalog: createRendererModuleCatalog(definitions),
 				mode: 'sortable',
 				context,
-				document: createEmptyRendererDocument('sortable') as RendererSortableDocument
+				document: createEmptyRendererDocument('sortable')
 			}
 		});
 		await flushPromises();
@@ -137,7 +146,7 @@ describe('renderer Widget', () => {
 
 	it('disables maxed modules and rejects their drag payloads', async () => {
 		const limited = module('limited', { maxInstances: 1 });
-		const document = createEmptyRendererDocument('sortable') as RendererSortableDocument;
+		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({
 			id: 'limited',
 			module: { type: 'limited', version: 1, props: {} },

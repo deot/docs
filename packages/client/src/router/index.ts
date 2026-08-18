@@ -9,6 +9,8 @@ import {
 	getDefaultLanguage,
 	getDocsDeploymentBase
 } from '../utils/resolver';
+import { isExternalLink } from '../utils/link';
+import { localizeRoutePath } from '../utils/route';
 import type { DocsConfig, DocsRouteConfig } from '../types';
 
 export { getRouteValue } from '../utils/route';
@@ -83,11 +85,10 @@ const normalizeInvalidLanguage = (
 
 // 内部重定向只补一次语言前缀，显式语言路径和外部 URL 保持不变。
 export const localizePath = (config: DocsConfig, lang: string, target: string) => {
-	if (/^[a-z][a-z\d+.-]*:/i.test(target) || target.startsWith('//') || hasLanguage(config, target)) {
+	if (isExternalLink(target) || hasLanguage(config, target)) {
 		return target;
 	}
-	const normalized = target.startsWith('/') ? target : `/${target}`;
-	return `/${lang}${normalized === '/' ? '' : normalized}`;
+	return localizeRoutePath(lang, target);
 };
 
 const resolveRedirect = (

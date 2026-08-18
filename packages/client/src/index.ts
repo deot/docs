@@ -22,6 +22,7 @@ export type {
 	ResourcePollOptions,
 	ResourcePrefetchOptions,
 	ResourceRecord,
+	ResourceRecordInput,
 	ResourceStatus,
 	ResourceStatusHistory,
 	ResourceVersion
@@ -54,7 +55,7 @@ export const bootstrap = (config?: DocsConfig) => {
 	app.mount('#app');
 	const disconnectEvents = connectResourceEvents();
 	let disconnected = false;
-	let stopPrefetch: () => void = () => undefined;
+	let stopPrefetch = () => {};
 	// 首屏路由和插槽先完成加载，再让低优先级资源进入空闲队列。
 	void (async () => {
 		try {

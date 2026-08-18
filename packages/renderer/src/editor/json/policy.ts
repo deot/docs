@@ -2,16 +2,29 @@ export type JsonPath = Array<string | number>;
 export type JsonKind = 'object' | 'array' | 'string' | 'number' | 'boolean' | 'null';
 
 export interface JsonFieldPolicy {
+	/**
+	 * 把数组下标收成星号后的协议路径，供策略表匹配。
+	 */
 	pattern: string;
-	/** 协议键名不可改。数组下标不是键名。 */
+	/**
+	 * 协议键名不可改。数组下标不是键名。
+	 */
 	keyLocked: boolean;
-	/** 只有数组元素可删，对象字段保持协议形状。 */
+	/**
+	 * 只有数组元素可删，对象字段保持协议形状。
+	 */
 	removable: boolean;
-	/** 值类型由协议决定，不可改。 */
+	/**
+	 * 值类型由协议决定，不可改。
+	 */
 	kindLocked: boolean;
-	/** 值本身不可改，例如 schemaVersion 与 layout.mode。 */
+	/**
+	 * 值本身不可改，例如 schemaVersion 与 layout.mode。
+	 */
 	valueLocked: boolean;
-	/** 只有数组可增项。 */
+	/**
+	 * 只有数组可增项。
+	 */
 	canAddChild: boolean;
 }
 

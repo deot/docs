@@ -1,10 +1,13 @@
 import { Gateway } from '../gateway';
 import {
+	classifyResourceSource,
 	createResourceIdentity,
 	getDefaultLanguage,
 	resolveResource,
 	resourceIdentityKey
 } from '../../utils/resolver';
+import { isExternalLink } from '../../utils/link';
+import { localizeRoutePath, normalizePathname } from '../../utils/route';
 import {
 	collectResourceImports,
 	isSupportedDependency,
@@ -16,7 +19,7 @@ import { resolveInlineSidebar } from '../../utils/sidebar';
 import { createRouterMatcher } from 'vue-router';
 import { resolveLocale } from '@deot/docs-locale';
 import { prepareRendererDocument } from '@deot/docs-renderer';
-import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
+import type { RouteLocationNormalizedGeneric, RouteRecordRaw } from 'vue-router';
 import type {
 	DocsConfig,
 	DocsResourceType,
@@ -26,26 +29,26 @@ import type {
 	SidebarItem
 } from '../../types';
 import type {
-	ResourceContentRecord,
+	ResourcePrefetchOutcome,
 	ResourceRecord
 } from '../gateway/types';
 import { getRendererRuntime } from '../../components/renderer';
 
 const SLOT_NAMES = ['content', 'sidebar', 'header', 'footer', 'extra'] as const;
 
-type ResourceResult = PromiseSettledResult<ResourceContentRecord>;
-type PrefetchResources = (identities: ResourceIdentity[]) => Promise<ResourceResult[]>;
+type PrefetchResources = (identities: ResourceIdentity[]) => Promise<ResourcePrefetchOutcome[]>;
+type RouteParams = Record<string, string | string[]>;
 
 interface RouteCandidate {
 	config: DocsRouteConfig;
-	params: Record<string, string | string[]>;
+	params: RouteParams;
 	pattern: string;
 	score: number;
 }
 
 interface RouteContentMatch {
 	config: DocsRoute;
-	params: Record<string, string | string[]>;
+	params: RouteParams;
 }
 
 interface RouteMatch extends RouteContentMatch {
@@ -64,21 +67,39 @@ interface ResourceCollector {
 
 export interface BuildPrefetchPlanOptions {
 	config?: DocsConfig;
+	/**
+	 * 是否把 Markdown 叶子一并下载。`false` 时只收集 identity，用于 prune。
+	 */
 	downloadMarkdown?: boolean;
+	/**
+	 * 先下载 sidebar / SFC / 样式等图描述资源，Markdown 放到最后一批。
+	 * 空闲预加载默认开启；诊断页手动预加载保持关闭。
+	 */
 	graphFirst?: boolean;
+	/**
+	 * 无法证明依赖图完整时是否抛错。失败时仍可能已写入部分缓存。
+	 */
 	strict?: boolean;
 	prefetchResources?: PrefetchResources;
 }
 
 export interface PrefetchPlan {
 	config: DocsConfig;
+	/**
+	 * 本次计划收集到的全部 identity，顺序已按深度优先排好。
+	 */
 	collector: ResourceCollector;
-	results: ResourceResult[];
+	/**
+	 * 各次加载的 settled 结果，供诊断页统计成功/失败。
+	 */
+	results: ResourcePrefetchOutcome[];
 }
 
 export interface RouteResource {
 	identity: ResourceIdentity;
-	/** 已包含语言前缀、可直接交给 Vue Router 的站内路径。 */
+	/**
+	 * 已包含语言前缀、可直接交给 Vue Router 的站内路径。
+	 */
 	path: string;
 }
 
@@ -97,15 +118,6 @@ class ResourcePlanner {
 		return Object.keys(config.locales).length
 			? Object.keys(config.locales)
 			: [getDefaultLanguage(config)];
-	}
-
-	private classify(source: string): DocsResourceType {
-		if (/\.page\.json(?:$|[?#])/i.test(source)) return 'page';
-		if (/\.json(?:$|[?#])/i.test(source)) return 'sidebar';
-		if (/\.vue(?:$|[?#])/i.test(source)) return 'sfc';
-		if (/\.css(?:$|[?#])/i.test(source)) return 'style';
-		if (/\.[jt]s(?:$|[?#])/i.test(source)) return 'module';
-		return 'markdown';
 	}
 
 	private getRouteScore(pattern: string) {
@@ -159,9 +171,9 @@ class ResourcePlanner {
 		lang: string,
 		pathname: string,
 		params: Record<string, string | string[]> = {}
-	): RouteLocationNormalized {
-		const normalizedPath = `/${pathname.split('/').filter(Boolean).join('/')}`;
-		const localizedPath = `/${lang}${normalizedPath === '/' ? '' : normalizedPath}`;
+	): RouteLocationNormalizedGeneric {
+		const normalizedPath = normalizePathname(pathname);
+		const localizedPath = localizeRoutePath(lang, normalizedPath);
 		return {
 			path: localizedPath,
 			fullPath: localizedPath,
@@ -172,12 +184,12 @@ class ResourcePlanner {
 			meta: {},
 			name: undefined,
 			redirectedFrom: undefined
-		} as unknown as RouteLocationNormalized;
+		};
 	}
 
 	private getRedirectPath(config: DocsConfig, lang: string, target: unknown) {
 		if (typeof target !== 'string' || !target) return null;
-		if (/^[a-z][a-z\d+.-]*:/i.test(target) || target.startsWith('//')) return null;
+		if (isExternalLink(target)) return null;
 		const pathname = target.split(/[?#]/u, 1)[0];
 		const segments = pathname.split('/').filter(Boolean);
 		if (
@@ -239,7 +251,7 @@ class ResourcePlanner {
 		lang: string,
 		value: string
 	): InternalRouteTarget | null {
-		if (!value || /^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith('//')) return null;
+		if (!value || isExternalLink(value)) return null;
 		let target: URL;
 		try {
 			target = new URL(value, 'https://docs.local/');
@@ -381,7 +393,7 @@ class ResourcePlanner {
 		const identities = new Map<string, ResourceIdentity>();
 		const add = (lang: string, source: unknown, type?: DocsResourceType) => {
 			if (typeof source !== 'string' || !source || source === 'default') return null;
-			const identity = createResourceIdentity(config, lang, type || this.classify(source), source);
+			const identity = createResourceIdentity(config, lang, type || classifyResourceSource(source), source);
 			const key = resourceIdentityKey(identity);
 			if (identities.has(key)) return null;
 			identities.set(key, identity);
@@ -404,7 +416,7 @@ class ResourcePlanner {
 		if (slot === null) return null;
 		if (slot !== 'default') {
 			if (typeof slot !== 'string') return null;
-			return createResourceIdentity(config, lang, this.classify(slot), slot);
+			return createResourceIdentity(config, lang, classifyResourceSource(slot), slot);
 		}
 		const params = Object.values(routeMatch.params).flatMap(value => value).filter(Boolean);
 		const value = typeof routeMatch.config.value === 'function'
@@ -606,7 +618,7 @@ class ResourcePlanner {
 				const candidate = createResourceIdentity(
 					config,
 					identity.lang,
-					this.classify(source),
+					classifyResourceSource(source),
 					source
 				);
 				const dependency = collector.add(identity.lang, source)
@@ -639,8 +651,7 @@ class ResourcePlanner {
 	}
 
 	private toLocalizedRoutePath(lang: string, pathname: string) {
-		const normalized = `/${pathname.split('/').filter(Boolean).join('/')}`;
-		return `/${lang}${normalized === '/' ? '' : normalized}`;
+		return localizeRoutePath(lang, normalizePathname(pathname));
 	}
 
 	/**
@@ -652,7 +663,7 @@ class ResourcePlanner {
 	 */
 	async collectRouteResources(
 		config: DocsConfig,
-		records: ResourceRecord[]
+		records: ReadonlyArray<Pick<ResourceRecord, 'identity'> & { content?: string }>
 	): Promise<RouteResource[]> {
 		const resources = new Map<string, RouteResource>();
 		const add = async (lang: string, pathname: string) => {
@@ -737,7 +748,7 @@ class ResourcePlanner {
 	 * @param results Gateway 返回的逐资源 settled 结果。
 	 * @returns 成功与失败资源的数量。
 	 */
-	summarize(results: ResourceResult[]) {
+	summarize(results: ResourcePrefetchOutcome[]) {
 		return {
 			fulfilled: results.filter(result => result.status === 'fulfilled').length,
 			rejected: results.filter(result => result.status === 'rejected').length
@@ -746,7 +757,7 @@ class ResourcePlanner {
 
 	private getRejectedIdentity(
 		identities: ResourceIdentity[],
-		results: ResourceResult[]
+		results: ResourcePrefetchOutcome[]
 	): ResourceIdentity | null {
 		const index = results.findIndex(result => result.status === 'rejected');
 		return index >= 0 ? identities[index] : null;
@@ -857,7 +868,7 @@ class ResourcePlanner {
 		strict: boolean;
 		loadResources: PrefetchResources;
 	}) {
-		const results: ResourceResult[] = [];
+		const results: ResourcePrefetchOutcome[] = [];
 		const processed = new Set<string>();
 		while (true) {
 			const records = new Map((await Gateway.list()).map(record => [
@@ -914,8 +925,8 @@ class ResourcePlanner {
 		seeds: ResourceIdentity[];
 		strict: boolean;
 		loadResources: PrefetchResources;
-	}): Promise<ResourceResult[]> {
-		const results: ResourceResult[] = [];
+	}): Promise<ResourcePrefetchOutcome[]> {
+		const results: ResourcePrefetchOutcome[] = [];
 		const processed = new Set<string>();
 		let queue = seeds;
 		while (queue.length) {
