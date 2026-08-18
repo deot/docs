@@ -4,6 +4,12 @@ import { defineComponent, nextTick, ref } from 'vue';
 import { mount } from '@vue/test-utils';
 import { useStore } from '@vue/repl';
 import { zhCN } from '@deot/docs-locale';
+import { DEFAULT_CDN_URL } from '../src/constants';
+import {
+	createBuiltinImports,
+	createRuntimePreviewOptions,
+	normalizeCdnURL
+} from '../src/core/store';
 import Playground from '../src/playground.vue';
 import type { PlaygroundStoreStub } from './fixtures';
 
@@ -152,13 +158,51 @@ describe('Playground', () => {
 			.toBe(false);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').showRuntimeWarning)
 			.toBe(false);
-		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML).toContain('@deot/style');
+		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
+			.toContain('@deot/style');
+		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
+			.toContain(`${DEFAULT_CDN_URL}/@deot/style/dist/index.css`);
+		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
+			.not.toContain('unpkg.com');
+		expect(store.options.builtinImportMap.value.imports['@deot/vc'])
+			.toBe(`${DEFAULT_CDN_URL}/@deot/vc/dist/index.js`);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
 			.toContain('name="viewport"');
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').customCode.useCode)
 			.toContain('app.component("DocsLink"');
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').customCode.useCode)
 			.toContain('textDecoration:"none"');
+	});
+
+	it('shares a configurable npm CDN between preview styles and builtin imports', () => {
+		expect(normalizeCdnURL(' https://unpkg.com/ ')).toBe('https://unpkg.com');
+		expect(normalizeCdnURL('')).toBe(DEFAULT_CDN_URL);
+		expect(createBuiltinImports()['@deot/vc'])
+			.toBe(`${DEFAULT_CDN_URL}/@deot/vc/dist/index.js`);
+		expect(createBuiltinImports()['lodash-es']).toBe(`${DEFAULT_CDN_URL}/lodash-es/lodash.js`);
+		expect(createRuntimePreviewOptions().headHTML)
+			.toContain(`${DEFAULT_CDN_URL}/@deot/vc-components/dist/index.style.css`);
+
+		const wrapper = mount(Playground, {
+			props: {
+				modelValue: '<template>cdn</template>',
+				options: {
+					cdnURL: 'https://unpkg.com/',
+					builtinImportMap: { imports: { custom: '/custom.js' } }
+				}
+			}
+		});
+		const imports = store.options.builtinImportMap.value.imports;
+		const headHTML = wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML;
+
+		expect(imports['@deot/vc']).toBe('https://unpkg.com/@deot/vc/dist/index.js');
+		expect(imports['lodash-es']).toBe('https://unpkg.com/lodash-es/lodash.js');
+		expect(imports.custom).toBe('/custom.js');
+		expect(imports.vue).toBe('https://play.vuejs.org/vue.runtime.esm-browser.js');
+		expect(headHTML).toContain('https://unpkg.com/@deot/style/dist/index.normalize-only.css');
+		expect(headHTML).toContain('https://unpkg.com/@deot/vc-components/dist/index.style.css');
+		expect(headHTML).toContain('https://unpkg.com/@deot/style/dist/index.css');
+		expect(headHTML).not.toContain('cdn.jsdelivr.net');
 	});
 
 	it('keeps the sandbox body theme in sync with the host document', async () => {

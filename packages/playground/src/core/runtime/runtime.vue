@@ -153,8 +153,8 @@ import {
 } from './viewport';
 import {
 	createReplFile,
+	createRuntimePreviewOptions,
 	createRuntimeStore,
-	runtimePreviewOptions,
 	toReplFilename
 } from '../store';
 
@@ -181,21 +181,27 @@ const emit = defineEmits<{
 }>();
 
 const joinCode = (...values: Array<string | undefined>) => values.filter(Boolean).join('\n');
-const mergedPreviewOptions = computed(() => ({
-	...runtimePreviewOptions,
-	...props.previewOptions,
-	headHTML: [runtimePreviewOptions?.headHTML, props.previewOptions?.headHTML].filter(Boolean).join('\n'),
-	customCode: {
-		importCode: joinCode(
-			runtimePreviewOptions?.customCode?.importCode,
-			props.previewOptions?.customCode?.importCode
-		),
-		useCode: joinCode(
-			runtimePreviewOptions?.customCode?.useCode,
-			props.previewOptions?.customCode?.useCode
-		)
-	}
-}));
+const mergedPreviewOptions = computed(() => {
+	const runtimePreviewOptions = createRuntimePreviewOptions(props.options.cdnURL);
+	return {
+		...runtimePreviewOptions,
+		...props.previewOptions,
+		headHTML: [
+			runtimePreviewOptions.headHTML,
+			props.previewOptions?.headHTML
+		].filter(Boolean).join('\n'),
+		customCode: {
+			importCode: joinCode(
+				runtimePreviewOptions.customCode?.importCode,
+				props.previewOptions?.customCode?.importCode
+			),
+			useCode: joinCode(
+				runtimePreviewOptions.customCode?.useCode,
+				props.previewOptions?.customCode?.useCode
+			)
+		}
+	};
+});
 
 const env = (import.meta as ImportMeta & { env: { MODE?: string } }).env;
 const clearConsole = env.MODE !== 'development';

@@ -49,7 +49,7 @@ const files = ref({
 | `viewport` | `'auto' \| number \| [number, number]` | `'auto'` | 运行时宽度，或固定宽高。 |
 | `viewportOptions` | `PlaygroundViewport[]` | `['auto', 375]` | 可切换的视口列表。 |
 | `styleless` | `boolean` | `false` | 只渲染无工具栏的运行时预览。 |
-| `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项。 |
+| `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项；`cdnURL` 会同时作用于预览样式和默认 import map。 |
 | `previewOptions` | `SandboxProps['previewOptions']` | `undefined` | 传给当前 iframe 的 preview 选项。 |
 | `locale` | `Language` | `en-US` | 界面语言；未传入时使用上层 Locale Provider。 |
 
@@ -83,7 +83,8 @@ Playground 只接受来自自身 iframe 的导航消息。宿主应用应监听 
 ## 运行环境
 
 - Playground 运行时通过公共 CDN 加载 Vue 和默认 import map 中的依赖，手工预览需要网络访问。
-- `options.builtinImportMap.imports` 可以覆盖默认模块 URL。
+- 默认 CDN 为 `https://cdn.jsdelivr.net/npm`，可通过 `options.cdnURL` 换成 unpkg 等兼容 `/{package}/{file}` 路径的镜像；该地址同时用于预览样式和内置 import map。
+- `options.builtinImportMap.imports` 可以覆盖默认模块 URL。Vue 运行时仍从 `play.vuejs.org` 加载。
 - 每个 Playground 实例都使用自己的 preview 配置和 iframe 消息来源校验。
 
 ## 仓库内验证

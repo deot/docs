@@ -34,6 +34,11 @@ export type PlaygroundOptions = Omit<Partial<StoreState>,
 	'builtinImportMap' | 'files' | 'activeFilename' | 'mainFile' | 'template'
 > & {
 	/**
+	 * npm CDN 前缀，同时用于默认 import map 和预览样式。
+	 * 例如 `https://cdn.jsdelivr.net/npm` 或 `https://unpkg.com`。
+	 */
+	cdnURL?: string;
+	/**
 	 * 覆盖 REPL 内置 import map。`files` / `mainFile` 仍由 playground 自己管理。
 	 */
 	builtinImportMap?: ImportMap;
