@@ -1,3 +1,4 @@
+import { IndexedDBStore } from '@deot/helper-cache';
 import type { RendererDocument } from '../types';
 import { cloneRendererValue } from '../validate';
 
@@ -10,96 +11,62 @@ export interface RendererDraftRecord {
 	updatedAt: number;
 }
 
-const DATABASE = 'deot-docs-renderer';
-const STORE = 'drafts';
+const isRendererDraftRecord = (value: unknown): value is RendererDraftRecord => {
+	if (!value || typeof value !== 'object') return false;
+	const record = value as Partial<RendererDraftRecord>;
+	return typeof record.key === 'string'
+		&& typeof record.updatedAt === 'number'
+		&& Boolean(record.document)
+		&& typeof record.document === 'object';
+};
 
 /**
  * Combo 草稿与资源 Gateway 分库保存，缓存清理不会误删尚未发布的页面。
- * 每次事务结束后立即关闭连接，避免多个编辑实例互相阻塞数据库升级。
+ * helper-cache 在每次事务结束后关闭连接，避免多个编辑实例互相阻塞数据库升级。
  */
 export class RendererDraftCache {
-	private open() {
-		return new Promise<IDBDatabase>((resolve, reject) => {
-			if (typeof indexedDB === 'undefined') {
-				reject(new Error('IndexedDB is unavailable'));
-				return;
-			}
-			const request = indexedDB.open(DATABASE, 1);
-			request.onupgradeneeded = () => {
-				if (!request.result.objectStoreNames.contains(STORE)) {
-					request.result.createObjectStore(STORE, { keyPath: 'key' });
-				}
-			};
-			request.onsuccess = () => resolve(request.result);
-			request.onerror = () => reject(request.error);
-		});
+	private store = new IndexedDBStore({
+		name: 'deot-docs-renderer',
+		storeName: 'drafts',
+		keyPath: '__id',
+		// schema 字段保存在 JSON value 内；修改数据库版本会使 helper-cache
+		// 重建 object store，从而清除已有草稿。
+		version: 1
+	});
+
+	private assertAvailable() {
+		if (typeof indexedDB === 'undefined') {
+			throw new Error('IndexedDB is unavailable');
+		}
 	}
 
 	async get(key: string) {
-		const database = await this.open();
-		try {
-			return await new Promise<RendererDraftRecord | null>((resolve, reject) => {
-				const request = database.transaction(STORE).objectStore(STORE).get(key);
-				request.onsuccess = () => resolve(request.result || null);
-				request.onerror = () => reject(request.error);
-			});
-		} finally {
-			database.close();
-		}
+		this.assertAvailable();
+		const record = await this.store.get(key);
+		return isRendererDraftRecord(record) ? record : null;
 	}
 
 	async set(record: RendererDraftRecord) {
-		const database = await this.open();
-		try {
-			await new Promise<void>((resolve, reject) => {
-				// Vue Proxy 不能被 structured clone，写入前固定为 JSON-safe 快照。
-				const request = database.transaction(STORE, 'readwrite')
-					.objectStore(STORE)
-					.put(cloneRendererValue(record));
-				request.onsuccess = () => resolve();
-				request.onerror = () => reject(request.error);
-			});
-		} finally {
-			database.close();
-		}
+		this.assertAvailable();
+		// Vue Proxy 先拍成 JSON-safe 快照，再交给 helper-cache 序列化。
+		await this.store.set(record.key, cloneRendererValue(record));
 	}
 
 	async remove(key: string) {
-		const database = await this.open();
-		try {
-			await new Promise<void>((resolve, reject) => {
-				const request = database.transaction(STORE, 'readwrite').objectStore(STORE).delete(key);
-				request.onsuccess = () => resolve();
-				request.onerror = () => reject(request.error);
-			});
-		} finally {
-			database.close();
-		}
+		this.assertAvailable();
+		await this.store.remove(key);
 	}
 
 	async list() {
-		const database = await this.open();
-		try {
-			return await new Promise<RendererDraftRecord[]>((resolve, reject) => {
-				const request = database.transaction(STORE).objectStore(STORE).getAll();
-				request.onsuccess = () => resolve(request.result || []);
-				request.onerror = () => reject(request.error);
-			});
-		} finally {
-			database.close();
-		}
+		this.assertAvailable();
+		const rows = await this.store.search();
+		const records = await Promise.all(rows.map(row => this.store.get(String(row.__id))));
+		return records.filter(isRendererDraftRecord);
 	}
 
 	async clear() {
-		const database = await this.open();
-		try {
-			await new Promise<void>((resolve, reject) => {
-				const request = database.transaction(STORE, 'readwrite').objectStore(STORE).clear();
-				request.onsuccess = () => resolve();
-				request.onerror = () => reject(request.error);
-			});
-		} finally {
-			database.close();
-		}
+		this.assertAvailable();
+		const rows = await this.store.search();
+		await Promise.all(rows.map(row => this.store.remove(String(row.__id))));
 	}
 }

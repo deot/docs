@@ -19,6 +19,7 @@
   "dependencies": {
     "@deot/docs-locale": "*",
     "@deot/docs-theme": "*",
+    "@deot/helper-cache": "^1.1.10",
     "@deot/helper-resize": "^1.1.3"
   },
   "peerDependencies": {

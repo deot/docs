@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import 'fake-indexeddb/auto';
 import { RendererDraftCache } from '../src/combo/draft';
 import { createEmptyRendererDocument } from '../src/document';
@@ -8,8 +10,36 @@ const deleteDatabase = () => new Promise<void>((resolve, reject) => {
 	request.onerror = () => reject(request.error);
 });
 
+const putRawRow = async (row: Record<string, unknown>) => {
+	await new Promise<void>((resolve, reject) => {
+		const openRequest = window.indexedDB.open('deot-docs-renderer', 1);
+		openRequest.onerror = () => reject(openRequest.error);
+		openRequest.onupgradeneeded = () => {
+			const database = openRequest.result;
+			if (!database.objectStoreNames.contains('drafts')) {
+				database.createObjectStore('drafts', { keyPath: '__id' });
+			}
+		};
+		openRequest.onsuccess = () => {
+			const database = openRequest.result;
+			const transaction = database.transaction('drafts', 'readwrite');
+			transaction.objectStore('drafts').put(row);
+			transaction.oncomplete = () => {
+				database.close();
+				resolve();
+			};
+			transaction.onerror = () => {
+				database.close();
+				reject(transaction.error);
+			};
+		};
+	});
+};
+
 describe('RendererDraftCache', () => {
 	beforeEach(deleteDatabase);
+
+	afterAll(deleteDatabase);
 
 	it('persists JSON snapshots across cache instances and removes them', async () => {
 		const first = new RendererDraftCache();
@@ -38,6 +68,43 @@ describe('RendererDraftCache', () => {
 		await cache.clear();
 		expect(await cache.list()).toEqual([]);
 		expect(await cache.get('home')).toBeNull();
+	});
+
+	it('ignores malformed storage rows when reading drafts', async () => {
+		const cache = new RendererDraftCache();
+		await cache.set({
+			key: 'home',
+			document: createEmptyRendererDocument(),
+			updatedAt: 1
+		});
+		await putRawRow({ __id: 'missing-data' });
+		await putRawRow({ __id: 'invalid-data', data: JSON.stringify('not-a-record') });
+		await putRawRow({ __id: 'invalid-key', data: JSON.stringify({
+			key: 1,
+			updatedAt: 1,
+			document: {}
+		}) });
+		await putRawRow({ __id: 'invalid-updated-at', data: JSON.stringify({
+			key: 'invalid-updated-at',
+			updatedAt: '1',
+			document: {}
+		}) });
+		await putRawRow({ __id: 'missing-document', data: JSON.stringify({
+			key: 'missing-document',
+			updatedAt: 1
+		}) });
+		await putRawRow({ __id: 'invalid-document', data: JSON.stringify({
+			key: 'invalid-document',
+			updatedAt: 1,
+			document: 'nope'
+		}) });
+
+		expect(await cache.get('invalid-data')).toBeNull();
+		expect(await cache.get('invalid-key')).toBeNull();
+		expect(await cache.get('invalid-updated-at')).toBeNull();
+		expect(await cache.get('missing-document')).toBeNull();
+		expect(await cache.get('invalid-document')).toBeNull();
+		expect((await cache.list()).map(item => item.key)).toEqual(['home']);
 	});
 
 	it('reports browsers without IndexedDB as an optional draft capability', async () => {
