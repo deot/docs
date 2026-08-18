@@ -191,7 +191,7 @@ const scheduleRefresh = () => {
 	if (refreshFrame) cancelAnimationFrame(refreshFrame);
 	refreshFrame = requestAnimationFrame(() => {
 		refreshFrame = 0;
-		void scroller.value?.refresh();
+		void scroller.value?.refresh()?.catch(() => undefined);
 	});
 };
 onMounted(() => nextTick(scheduleRefresh));

@@ -206,13 +206,20 @@ let mutationObserver: MutationObserver | undefined;
 let sizeObserver: ResizeObserver | undefined;
 let resizeFrame = 0;
 let pendingForceRefresh = false;
+const refreshScroller = async () => {
+	try {
+		await scroller.value?.refresh();
+	} catch {
+		// @deot/vc Scroller 在内容节点未就绪或已卸载时会读到 null.scrollHeight。
+	}
+};
 const syncCanvasHeight = async (forceRefresh = false) => {
 	const next = Math.max(canvas.value?.scrollHeight || 0, canvas.value?.offsetHeight || 0);
 	const changed = next !== canvasHeight.value;
 	if (changed) canvasHeight.value = next;
 	if (!changed && !forceRefresh) return;
 	await nextTick();
-	await scroller.value?.refresh();
+	await refreshScroller();
 };
 const scheduleCanvasHeight = (forceRefresh = false) => {
 	pendingForceRefresh = pendingForceRefresh || forceRefresh;
@@ -254,7 +261,8 @@ const handleScaleUpdate = async (value: number) => {
 	const anchor = captureZoomAnchor(wrapper, canvas.value || null, selected);
 	props.store.updateViewport({ scale: value });
 	await nextTick();
-	await scroller.value?.refresh();
+	if (active !== scaleGeneration) return;
+	await refreshScroller();
 	await nextTick();
 	if (active === scaleGeneration) restoreZoomAnchor(wrapper, anchor);
 };
@@ -347,7 +355,7 @@ onMounted(() => {
 	window.addEventListener('pointerup', handleIdlePointerUp);
 	nextTick(() => {
 		syncViewportSize();
-		handleScaleUpdate(fitScale.value);
+		if (viewportSize.value.width > 0) void handleScaleUpdate(fitScale.value);
 		scheduleCanvasHeight(true);
 	});
 });

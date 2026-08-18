@@ -412,6 +412,7 @@ describe('renderer frame interactions', () => {
 			}
 		});
 		await flushPromises();
+		await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
 		store.updateViewport({ scale: 1, showGuides: false });
 		store.select('a');
 		await flushPromises();

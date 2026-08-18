@@ -672,6 +672,13 @@ const fitScale = computed(() => {
 	);
 });
 let scaleGeneration = 0;
+const refreshScroller = async () => {
+	try {
+		await scroller.value?.refresh();
+	} catch {
+		// @deot/vc Scroller 在内容节点未就绪或已卸载时会读到 null.scrollHeight。
+	}
+};
 const handleScaleUpdate = async (value: number) => {
 	const active = ++scaleGeneration;
 	const wrapper = getScrollWrapper();
@@ -681,7 +688,8 @@ const handleScaleUpdate = async (value: number) => {
 	const anchor = captureZoomAnchor(wrapper, artboard.value || null, selected);
 	props.store.updateViewport({ scale: value });
 	await nextTick();
-	await scroller.value?.refresh();
+	if (active !== scaleGeneration) return;
+	await refreshScroller();
 	await nextTick();
 	if (active === scaleGeneration) restoreZoomAnchor(wrapper, anchor);
 };
@@ -887,12 +895,17 @@ const handleContextMenu = async (event: MouseEvent, nodeId?: string) => {
 		rightMenuLeaf = undefined;
 	}
 };
+let fitFrame = 0;
 onMounted(() => {
 	window.addEventListener('resize', syncViewportSize);
 	nextTick(() => {
 		bindScrollerEvents();
 		syncViewportSize();
-		requestAnimationFrame(() => handleScaleUpdate(fitScale.value));
+		fitFrame = requestAnimationFrame(() => {
+			fitFrame = 0;
+			if (viewportSize.value.width <= 0 || viewportSize.value.height <= 0) return;
+			void handleScaleUpdate(fitScale.value);
+		});
 	});
 });
 watch(
@@ -903,6 +916,7 @@ watch(
 	})
 );
 onBeforeUnmount(() => {
+	if (fitFrame) cancelAnimationFrame(fitFrame);
 	capabilityGeneration += 1;
 	scaleGeneration += 1;
 	rightMenuLeaf?.destroy?.();
