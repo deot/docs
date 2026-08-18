@@ -37,21 +37,26 @@
 import { ref } from 'vue';
 import { Playground } from '@deot/docs-playground';
 import '/node_modules/@deot/vc-components/dist/index.style.css';
+import sourceText from './fixtures/source.vue?raw';
+import javascriptMain from './fixtures/javascript/main.js?raw';
+import javascriptApp from './fixtures/javascript/App.vue?raw';
+import javascriptMessage from './fixtures/javascript/message.js?raw';
+import vueApp from './fixtures/vue/App.vue?raw';
+import vueCard from './fixtures/vue/Card.vue?raw';
 
-// eslint-disable-next-line @stylistic/max-len
-const source = ref(`<script setup>\nimport { ref } from 'vue'\n\nconst msg = ref('Hello World!!')\n<\/script>\n\n<template>\n  <h1>{{ msg }}<\/h1>\n  <input v-model="msg" />\n<\/template>\n`);
+const source = ref(sourceText);
 const viewport = ref('auto');
 const viewportOptions = ['auto', 375, [375, 667], 768];
 const javascriptEntry = ref('main.js');
 const javascriptFiles = ref({
-	'main.js': `import { createApp } from 'vue';\nimport App from './App.vue';\n\ncreateApp(App).mount('#app');\n`,
-	'App.vue': `<script setup>\nimport { message } from './message.js';\n<\/script>\n\n<template>\n  <h2>{{ message }}<\/h2>\n<\/template>\n`,
-	'message.js': `export const message = 'Hello from a JavaScript entry';\n`
+	'main.js': javascriptMain,
+	'App.vue': javascriptApp,
+	'message.js': javascriptMessage
 });
 const vueEntry = ref('App.vue');
 const vueFiles = ref({
-	'App.vue': `<script setup>\nimport Card from './Card.vue';\n<\/script>\n\n<template>\n  <Card title="Vue SFC entry" />\n<\/template>\n`,
-	'Card.vue': `<script setup>\ndefineProps({ title: String });\n<\/script>\n\n<template>\n  <strong>{{ title }}<\/strong>\n<\/template>\n`
+	'App.vue': vueApp,
+	'Card.vue': vueCard
 });
 </script>
 <style lang="scss" scoped>

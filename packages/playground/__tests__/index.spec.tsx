@@ -148,6 +148,10 @@ describe('Playground', () => {
 		expect(store.files['src/App.vue'].code).toContain('hello');
 		expect(store.init).toHaveBeenCalledTimes(1);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('autoStoreInit')).toBe(false);
+		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').showRuntimeError)
+			.toBe(false);
+		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').showRuntimeWarning)
+			.toBe(false);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML).toContain('@deot/style');
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
 			.toContain('name="viewport"');
@@ -248,6 +252,30 @@ describe('Playground', () => {
 			source: window
 		}));
 		expect(navigate).toHaveBeenCalledTimes(1);
+	});
+
+	it('surfaces sandbox runtime errors in the playground chrome', async () => {
+		const wrapper = mount(Playground, {
+			attachTo: document.body,
+			props: { modelValue: '<template>error</template>' }
+		});
+		await nextTick();
+		expect(wrapper.find('.docs-playground__runtime-error').exists()).toBe(false);
+
+		window.dispatchEvent(new MessageEvent('message', {
+			data: {
+				action: 'error',
+				value: 'Failed to resolve module specifier "lodash". Relative references must start with "/", "./" or "../".'
+			},
+			source: wrapper.find('iframe').element.contentWindow
+		}));
+		await nextTick();
+		expect(wrapper.find('.docs-playground__runtime-error').text())
+			.toContain('Failed to resolve module specifier "lodash"');
+		expect(wrapper.find('.docs-playground__runtime-error').text())
+			.toContain('Import Map');
+		expect(wrapper.find('.docs-playground__runtime-error').attributes('role')).toBe('alert');
+		wrapper.unmount();
 	});
 
 	it('forwards runtime navigation in standard and styleless layouts', async () => {

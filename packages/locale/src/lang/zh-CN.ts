@@ -125,7 +125,8 @@ const zhCN = {
 			auto: '自适应',
 			viewport: '视口：{value}',
 			viewportMenu: '运行时视口',
-			editFiles: '编辑文件'
+			editFiles: '编辑文件',
+			importMapTip: '请检查导入路径，或为该依赖补充 Import Map。'
 		},
 		files: {
 			entry: '入口'

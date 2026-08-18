@@ -20,13 +20,15 @@ const DOCS_LINK_USE_CODE = [
 ].join('');
 
 export const runtimePreviewOptions: SandboxProps['previewOptions'] = {
+	showRuntimeError: false,
+	showRuntimeWarning: false,
 	headHTML: [
 		SANDBOX_RUNTIME_ERROR_CAPTURE_HTML,
 		'<meta name="viewport" content="width=device-width, initial-scale=1">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/style/dist/index.normalize-only.css">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/vc-components/dist/index.style.css">',
 		'<link rel="stylesheet" href="https://unpkg.com/@deot/style/dist/index.css">',
-		'<style>body{color:var(--vc-foreground-color,#080f20);background:var(--vc-background-color-light,#fff)}</style>'
+		'<style>html,body{height:auto;min-height:0}body{color:var(--vc-foreground-color,#080f20);background:var(--vc-background-color-light,#fff)}</style>'
 	].join('\n'),
 	customCode: {
 		importCode: DOCS_LINK_IMPORT_CODE,
@@ -86,8 +88,7 @@ export const createRuntimeStore = (
 				'normalize-wheel': `${cdnURL}/normalize-wheel-es/dist/index.mjs`,
 				'photoswipe': `${cdnURL}/photoswipe/dist/photoswipe.esm.js`,
 				'photoswipe/lightbox': `${cdnURL}/photoswipe/dist/photoswipe-lightbox.esm.js`,
-				'lodash-es': `${cdnURL}/lodash-es/lodash.js`,
-				'lodash': `${cdnURL}/lodash/lodash.js`,
+				'lodash-es': `${cdnURL}/lodash-es/+esm`,
 				'vue': 'https://play.vuejs.org/vue.runtime.esm-browser.js',
 				'vue/server-renderer': 'https://play.vuejs.org/server-renderer.esm-browser.js',
 				...options.builtinImportMap?.imports

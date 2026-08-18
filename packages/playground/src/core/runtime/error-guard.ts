@@ -1,9 +1,10 @@
-import { onBeforeUnmount } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
 import type { Ref } from 'vue';
 import { resolveSandboxContainer } from './auto-height';
 import type { SandboxExposed } from './auto-height';
 
 export const UNKNOWN_RUNTIME_ERROR = '运行时发生未知错误';
+const MODULE_SPECIFIER_RE = /Failed to resolve module specifier|Error resolving module specifier/u;
 
 export const forwardSandboxRuntimeError = (event: ErrorEvent) => {
 	if (!(event instanceof ErrorEvent) || event.error != null || !event.message) return;
@@ -53,14 +54,29 @@ export const normalizeRuntimeErrorMessage = (data: unknown) => {
 	return true;
 };
 
+export const toErrorText = (value: unknown) => {
+	if (typeof value === 'string' && value) return value;
+	if (value instanceof Error && value.message) return value.message;
+	return '';
+};
+
+export const formatSandboxRuntimeError = (message: string, importMapTip: string) => {
+	if (!MODULE_SPECIFIER_RE.test(message)) return message;
+	const cleaned = message.replace(/\. Relative references must.*$/u, '').replace(/\.$/u, '');
+	return `${cleaned}.\n${importMapTip}`;
+};
+
 export const useSandboxRuntimeErrorGuard = (sandboxRef: Ref<SandboxExposed | null>) => {
-	if (typeof window === 'undefined') return;
+	const error = ref('');
+	if (typeof window === 'undefined') return error;
 	const handleMessage = (event: MessageEvent) => {
 		const iframe = resolveSandboxContainer(sandboxRef.value)?.querySelector('iframe');
 		if (!iframe || event.source !== iframe.contentWindow) return;
-		normalizeRuntimeErrorMessage(event.data);
+		if (!normalizeRuntimeErrorMessage(event.data)) return;
+		error.value = (event.data as RuntimeErrorMessage).value as string;
 	};
 
 	window.addEventListener('message', handleMessage, true);
 	onBeforeUnmount(() => window.removeEventListener('message', handleMessage, true));
+	return error;
 };

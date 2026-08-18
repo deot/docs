@@ -4,6 +4,11 @@
 		class="docs-playground-runtime--styleless"
 		:style="stylelessStyle"
 	>
+		<pre
+			v-if="errorText"
+			class="docs-playground__runtime-error"
+			role="alert"
+		>{{ errorText }}</pre>
 		<div class="docs-playground-runtime__viewport" :style="viewportStyle">
 			<Sandbox
 				ref="sandboxRef"
@@ -93,6 +98,11 @@
 				</button>
 			</div>
 		</div>
+		<pre
+			v-if="errorText"
+			class="docs-playground__runtime-error"
+			role="alert"
+		>{{ errorText }}</pre>
 		<section class="docs-playground__preview" :style="previewStyle">
 			<div class="docs-playground-runtime__viewport-stage">
 				<div class="docs-playground-runtime__viewport" :style="viewportStyle">
@@ -128,7 +138,11 @@ import type {
 import { filesEqual, playgroundViewMessage } from '../../utils';
 import { resolveSandboxContainer, useSandboxAutoHeight } from './auto-height';
 import type { SandboxExposed } from './auto-height';
-import { useSandboxRuntimeErrorGuard } from './error-guard';
+import {
+	formatSandboxRuntimeError,
+	toErrorText,
+	useSandboxRuntimeErrorGuard
+} from './error-guard';
 import { useSandboxTheme } from './theme';
 import {
 	formatViewportLabel,
@@ -189,8 +203,18 @@ const copyValue = computed(() => props.files[props.entry] || '');
 const store = createRuntimeStore(props.files, props.entry, props.options);
 const sandboxRef = ref<SandboxExposed | null>(null);
 const runtimeHeight = useSandboxAutoHeight(sandboxRef);
-useSandboxRuntimeErrorGuard(sandboxRef);
+const runtimeError = useSandboxRuntimeErrorGuard(sandboxRef);
 useSandboxTheme(sandboxRef);
+const compileErrorText = computed(() => (store.errors || [])
+	.map(toErrorText)
+	.filter(Boolean)
+	.join('\n'));
+const errorText = computed(() => {
+	const runtime = runtimeError.value
+		? formatSandboxRuntimeError(runtimeError.value, t('playground.runtime.importMapTip'))
+		: '';
+	return [compileErrorText.value, runtime].filter(Boolean).join('\n\n');
+});
 const handleBridgeMessage = (event: MessageEvent) => {
 	const iframe = resolveSandboxContainer(sandboxRef.value)?.querySelector('iframe');
 	if (!iframe || event.source !== iframe.contentWindow) return;
@@ -211,7 +235,9 @@ const viewportLabel = computed(() => formatViewportLabel(
 ));
 const desiredViewportHeight = computed(() => getViewportHeight(props.viewport) || runtimeHeight.value);
 const previewStyle = computed(() => ({ height: `${desiredViewportHeight.value + 20}px` }));
-const stylelessStyle = computed(() => ({ height: `${desiredViewportHeight.value}px` }));
+const stylelessStyle = computed(() => (errorText.value
+	? undefined
+	: { height: `${desiredViewportHeight.value}px` }));
 const viewportStyle = computed(() => {
 	const width = getViewportWidth(props.viewport);
 	return {
@@ -283,6 +309,7 @@ watch(() => props.files, (files) => {
 	if (filesEqual(files, syncedFiles)) return;
 	syncedFiles = { ...files };
 	syncedEntry = props.entry;
+	runtimeError.value = '';
 	void store.setFiles(files, props.entry);
 }, { deep: true });
 
@@ -309,7 +336,12 @@ watch(() => props.entry, (entry) => {
 		width: 100%;
 		min-height: 0;
 		overflow: hidden;
-		justify-content: center;
+		flex-direction: column;
+		align-items: center;
+
+		.docs-playground__runtime-error {
+			align-self: stretch;
+		}
 	}
 
 	@include element(viewport-stage) {
@@ -434,6 +466,22 @@ watch(() => props.entry, (entry) => {
 		background: var(--docs-background-color, var(--vc-background-color-light, #fff));
 		box-sizing: border-box;
 		flex: 1 1 auto;
+	}
+
+	@include element(runtime-error) {
+		max-height: 240px;
+		padding: 12px 16px;
+		margin: 0;
+		overflow: auto;
+		font: inherit;
+		font-size: 13px;
+		line-height: 1.6;
+		color: var(--vc-color-error, #b91c1c);
+		white-space: pre-wrap;
+		background: var(--docs-error-background, #fef2f2);
+		border-top: 1px solid #f5c2c2;
+		box-sizing: border-box;
+		overflow-wrap: anywhere;
 	}
 }
 </style>

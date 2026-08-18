@@ -47,12 +47,20 @@ export const useSandboxAutoHeight = (sandboxRef: Ref<SandboxExposed | null>) => 
 			const bodyStyle = iframeWindow.getComputedStyle(body);
 			const bodyMargins = (Number.parseFloat(bodyStyle.marginTop) || 0)
 				+ (Number.parseFloat(bodyStyle.marginBottom) || 0);
+			// 标题默认 margin 会穿过 body 折叠到 html 外侧；相对 body 测量会漏掉这段高度，
+			// 再和 html{height:100%} 的 scrollHeight 来回取值，预览就会抖动。
+			const rootTop = documentElement.getBoundingClientRect().top;
 			const bodyRect = body.getBoundingClientRect();
+			const collapsedTop = Math.max(0, bodyRect.top - rootTop);
 			let childrenBottom = 0;
 			for (const child of body.children) {
+				const rect = child.getBoundingClientRect();
+				const marginBottom = Number.parseFloat(
+					iframeWindow.getComputedStyle(child).marginBottom
+				) || 0;
 				childrenBottom = Math.max(
 					childrenBottom,
-					child.getBoundingClientRect().bottom - bodyRect.top
+					rect.bottom + marginBottom - rootTop
 				);
 			}
 			const scrollHeight = Math.max(body.scrollHeight, documentElement.scrollHeight);
@@ -60,9 +68,9 @@ export const useSandboxAutoHeight = (sandboxRef: Ref<SandboxExposed | null>) => 
 				? scrollHeight
 				: 0;
 			const contentHeight = Math.ceil(Math.max(
-				body.offsetHeight + bodyMargins,
-				bodyRect.height + bodyMargins,
-				childrenBottom + bodyMargins,
+				body.offsetHeight + bodyMargins + collapsedTop,
+				bodyRect.height + bodyMargins + collapsedTop,
+				childrenBottom,
 				overflowingHeight
 			));
 			const nextHeight = Math.max(contentHeight, MIN_RUNTIME_HEIGHT);

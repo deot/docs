@@ -11,8 +11,10 @@ import type { SandboxExposed } from '../src/core/runtime/auto-height';
 import {
 	SANDBOX_RUNTIME_ERROR_CAPTURE_HTML,
 	UNKNOWN_RUNTIME_ERROR,
+	formatSandboxRuntimeError,
 	forwardSandboxRuntimeError,
 	normalizeRuntimeErrorMessage,
+	toErrorText,
 	useSandboxRuntimeErrorGuard
 } from '../src/core/runtime/error-guard';
 
@@ -72,14 +74,24 @@ describe('runtime error guard', () => {
 		normalizeRuntimeErrorMessage(unprintableError);
 		expect(unprintableError.value).toBe(UNKNOWN_RUNTIME_ERROR);
 		expect(normalizeRuntimeErrorMessage({ action: 'console', value: null })).toBe(false);
+		expect(toErrorText('compile failed')).toBe('compile failed');
+		expect(toErrorText(new Error('parse failed'))).toBe('parse failed');
+		expect(toErrorText(null)).toBe('');
+		expect(formatSandboxRuntimeError(
+			'Failed to resolve module specifier "lodash". Relative references must start with "/", "./" or "../".',
+			'Check the import path.'
+		)).toBe('Failed to resolve module specifier "lodash".\nCheck the import path.');
+		expect(formatSandboxRuntimeError('Uncaught TypeError: x is not a function', 'unused'))
+			.toBe('Uncaught TypeError: x is not a function');
 	});
 
 	it('guards only messages from the current sandbox and releases the listener', async () => {
 		let sandboxRef!: Ref<SandboxExposed | null>;
+		let runtimeError!: Ref<string>;
 		const Harness = defineComponent({
 			setup() {
 				sandboxRef = shallowRef<SandboxExposed | null>(null);
-				useSandboxRuntimeErrorGuard(sandboxRef);
+				runtimeError = useSandboxRuntimeErrorGuard(sandboxRef);
 				return () => <div />;
 			}
 		});
@@ -102,6 +114,7 @@ describe('runtime error guard', () => {
 			source: iframe.contentWindow
 		}))).not.toThrow();
 		expect(currentError.value).toBe(UNKNOWN_RUNTIME_ERROR);
+		expect(runtimeError.value).toBe(UNKNOWN_RUNTIME_ERROR);
 		expect(replHandler).toHaveBeenCalledTimes(1);
 		window.removeEventListener('message', replHandler);
 
