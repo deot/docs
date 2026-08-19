@@ -1,7 +1,7 @@
 # @deot/docs-renderer
 
 `@deot/docs-renderer` 同时提供只读 `Renderer` 与可视化装修 `Combo`。两者共享
-V2 扁平文档协议、模块定义和校验流程，但每个实例都有自己的 Module Catalog，
+扁平页面文档协议、模块定义和校验流程，但每个实例都有自己的 Module Catalog，
 不会通过全局注册表互相污染。
 
 ## 安装
@@ -46,7 +46,7 @@ const document = {
 };
 ```
 
-V2 的 `blocks` 始终是扁平数组，不支持 `children`。`sortable` 使用自然文档流：
+`blocks` 始终是扁平数组，不支持 `children`。`sortable` 使用自然文档流：
 `layout.maxWidth` 是画布宽度（默认 1920）。发布页画布随实际容器铺开；Combo
 按该宽度绘制画板。
 
@@ -172,11 +172,15 @@ Combo 的 JSON 树与源码视图共用同一套字段策略：键名和值类�
 | `Combo` / `Renderer` | 可视化编辑器与只读渲染器。 |
 | `BuiltinModules` | 内置模块表。 |
 | `defineRendererModule` / `createRendererModuleCatalog` | 定义模块、创建实例级 Catalog。 |
+| `RendererModuleCatalog` | 实例级模块目录类。 |
 | `createEmptyRendererDocument` / `prepareRendererDocument` / `validateRendererDocument` | 空文档、规范化与校验。 |
+| `createRendererLayout` | 创建默认 `layout` 对象。 |
+| `convertRendererDocumentFrame` | 在 `sortable` 与 `draggable` 布局间迁移文档。 |
+| `createRendererId` | 生成模块或节点 ID。 |
 | `createRendererPageNode` / `createRendererSelectionNode` | 页面与组合框辅助函数。 |
 | `cloneRendererValue` | 深拷贝协议值。 |
 
-同时导出 V2 协议类型与画布宽度常量。站点接入、`.page.json` 保存和 `docs:` 模块见
+同时导出页面协议类型与画布宽度常量。站点接入、`.page.json` 保存和 `docs:` 模块见
 [`@deot/docs-client`](../client/README.md) 与 [`@deot/docs-dever`](../dever/README.md)。
 
 ## 包内目录
@@ -186,7 +190,7 @@ Combo 的 JSON 树与源码视图共用同一套字段策略：键名和值类�
 ```text
 src/
 ├── index.ts
-├── types.ts               # V2 协议
+├── types.ts               # 页面协议
 ├── catalog.ts             # 实例级 Module Catalog
 ├── document.ts            # 空文档、Frame 迁移、插入边界
 ├── validate.ts

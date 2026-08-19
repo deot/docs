@@ -37,7 +37,7 @@
     "url": "git+https://github.com/deot/docs.git"
   },
   "author": "deot",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/deot/docs/issues"
   },

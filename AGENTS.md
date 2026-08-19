@@ -13,8 +13,10 @@ This is a **pnpm monorepo** for `@deot/docs`, a Vue 3 documentation toolchain. I
 | `packages/dever` | `@deot/docs-dever` | Vite dev-server and build implementation used by the CLI |
 | `packages/markdown` | `@deot/docs-markdown` | Markdown renderer, highlighting, and `playground` container blocks |
 | `packages/playground` | `@deot/docs-playground` | Vue REPL preview and editor UI |
-| `packages/renderer` | `@deot/docs-renderer` | V2 flat document protocol, read-only `Renderer`, and visual editor `Combo` |
+| `packages/renderer` | `@deot/docs-renderer` | Flat page document protocol, read-only `Renderer`, and visual editor `Combo` |
 | `packages/index` | `@deot/docs` | Umbrella package |
+| `packages/locale` | `@deot/docs-locale` | Shared UI translation, Vue Provider, and built-in `zh-CN` / `en-US` |
+| `packages/theme` | `@deot/docs-theme` | Shared Light/Dark types, CSS variables, and SCSS utilities |
 
 The sample documentation workspace is in `site/`; localized content lives under `site/zh-CN` and `site/en-US`.
 
@@ -35,7 +37,7 @@ The sample documentation workspace is in `site/`; localized content lives under 
 | Serve the sample documentation site | `npm run cli:dev` |
 | Build the sample documentation site (known baseline failure; see below) | `npm run cli:build` |
 
-Valid package folder names for targeted tests and builds are `cli`, `client`, `dever`, `index`, `markdown`, `playground`, and `renderer`. Use `--include '<pattern>'` for a narrower Vitest run. For example, validate Markdown with `npm run test -- --package-name markdown` and `npm run build -- --package-name markdown`. Tests collect coverage by default. The CI-equivalent checks are typecheck, all-package tests, and build.
+Valid package folder names for targeted tests and builds are `cli`, `client`, `dever`, `index`, `locale`, `markdown`, `playground`, `renderer`, and `theme`. Use `--include '<pattern>'` for a narrower Vitest run. For example, validate Markdown with `npm run test -- --package-name markdown` and `npm run build -- --package-name markdown`. Tests collect coverage by default. The CI-equivalent checks are typecheck, all-package tests, and build.
 
 ### Development notes
 

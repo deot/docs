@@ -2,6 +2,8 @@
 
 `@deot/docs` 是 `@deot/docs` 工具链的聚合包。公共入口导出 `Dever`、`Locale`、`Renderer` 与 `Theme` 命名空间，分别用于文档服务、界面国际化、页面渲染/装修和主题协议。
 
+**不包含** Markdown、Playground、Client 或 CLI 的 re-export。使用这些能力请直接安装 [`@deot/docs-markdown`](../markdown/README.md)、[`@deot/docs-playground`](../playground/README.md)、[`@deot/docs-client`](../client/README.md) 或 [`@deot/docs-cli`](../cli/README.md)。
+
 ## 安装
 
 ```bash

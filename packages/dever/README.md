@@ -50,7 +50,7 @@ development 和 preview 会保持服务运行；build 在 Vite 构建结束后�
 
 - 在 development 模式注入 `window.__DOCS_RUNTIME__`；
 - 为 workspace 资源提供安全的原始文本响应；`.page.json` 按页面文档（`page`）处理，其余 `.json` 按 sidebar 处理；
-- 在 development 模式开放 `/__docs/events`，以及 `PUT /__docs/page`（只写工作区内、带语言前缀的 V2 `.page.json`）；
+- 在 development 模式开放 `/__docs/events`，以及 `PUT /__docs/page`（只写工作区内、带语言前缀的 `.page.json`）；
 - 为客户端路由提供 HTML history fallback；
 - 在 build 模式复制 Markdown、JSON（含 `.page.json`）、SFC 等静态内容资源；
 - 当当前仓库源码存在时，将 locale、renderer、markdown、playground、theme 包映射到本地入口。
@@ -65,6 +65,10 @@ development 和 preview 会保持服务运行；build 在 Vite 构建结束后�
 URL 前缀和入口文件。未显式指定时优先查找 `site/index.html`，再查找项目根
 `index.html`；显式路径缺少入口时不会回退。
 
+### `assertSafeBuildOutDir(workspace, outDir)`
+
+校验 build 输出目录不会包含 workspace 本身，避免清空输出时误删文档源文件。若 `outDir` 解析后位于 workspace 内会抛出 `RangeError`。
+
 ### 类型
 
 包同时导出 `DeverOptions`、`DeverMode` 和 `ResolvedDocsWorkspace`。
@@ -76,7 +80,7 @@ development 开放 `PUT /__docs/page`，JSON body 为 `{ lang, source, document 
 - `lang` 必须是业务语言代码；
 - `source` 必须是带 `.page.json` 后缀的相对地址，不能含 `..` 或绝对路径；
 - 文件写入 `{workspace}/{lang}/{source}`，不会越过 workspace 或符号链接边界；
-- `document` 必须是 `schemaVersion: 2`，并包含 `meta.id`、`layout.mode`（`sortable` 或 `draggable`）和 `blocks` 数组。
+- `document` 须为合法的 Renderer 页面文档，包含 `meta.id`、`layout.mode`（`sortable` 或 `draggable`）和 `blocks` 数组，并通过 `validateRendererDocument` 校验。
 
 preview 与 production 不提供该入口；`/__docs/*` 在 preview 下返回 404。
 

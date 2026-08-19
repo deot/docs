@@ -55,7 +55,7 @@ pnpm add @deot/docs-client
 ```ts
 import { bootstrap } from '@deot/docs-client';
 
-const { app, router, disconnect } = bootstrap(window.$docs);
+const { app, router, disconnect } = await bootstrap(window.$docs);
 ```
 
 `disconnect()` 用于关闭当前实例创建的 SSE、空闲预加载和联网恢复监听。
@@ -85,7 +85,7 @@ const { app, router, disconnect } = bootstrap(window.$docs);
 - `.md`：渲染 Markdown；
 - `.json`：解析为数据，当前主要用于递归 sidebar；
 - `.vue`：通过独立 Playground iframe 渲染远程 SFC。
-- `.page.json`：使用 `@deot/docs-renderer` 渲染版本化模块页面，并订阅 Gateway 内容更新。
+- `.page.json`：使用 `@deot/docs-renderer` 渲染模块化页面，并订阅 Gateway 内容更新。
 
 Sidebar 使用递归的 `{ label, value?, children? }` 结构。原有 JSON/Gateway
 加载方式保持不变，也可以直接传入 JavaScript 数组：
@@ -151,14 +151,9 @@ window.$docs = {
 
 `/packages/:name`、`/components/:name`、`/api/:version/:name` 等只是业务配置，Client 不固定前缀、参数名或参数数量。
 
-路由的 `content` 也可直接传入 Renderer 文档。开发模式下可从 Header 进入
-`/:lang/__docs/renderer-editor`，编辑 Markdown、远程 SFC、内置模块和业务通过
-`renderers` 声明的模块。保存会 `PUT /__docs/page`，body 为 `{ lang, source, document }`，
-只写入工作区内带语言前缀的 V2 `.page.json`。production 不开放该接口，仍可使用导入、
-导出和预览。Combo 草稿写入 IndexedDB 库 `deot-docs-renderer`，与 Gateway 的
-`deot-docs` 分库。
+路由的 `content` 也可直接传入 Renderer 文档。`/:lang/__docs/renderer-editor` 在所有运行模式下都会注册；可从 Header 进入，编辑 Markdown、远程 SFC、内置模块和业务通过 `renderers` 声明的模块。development 下保存会 `PUT /__docs/page`，body 为 `{ lang, source, document }`，只写入工作区内带语言前缀的 `.page.json`；production 不开放该接口，仍可使用导入、导出和预览。Combo 草稿写入 IndexedDB 库 `deot-docs-renderer`，与 Gateway 的 `deot-docs` 分库。
 
-对照组合仅在 development 注入 `/:lang/renderer-editor-demos`。目录页列出全部演示，`?name=landing` 进入对应 Combo。若站点占用了 `/renderer-editor-demos`，改从 `/:lang/__docs/renderer-editor-demos` 访问。production 不注册这些路由。工厂函数也可直接赋给 `$docs.home` 或路由 `content`：
+对照组合与短路径 `/:lang/renderer-editor-demos` 仅在 development 注入；目录页列出全部演示，`?name=landing` 进入对应 Combo。若站点占用了 `/renderer-editor-demos`，改从 `/:lang/__docs/renderer-editor-demos` 访问。production 不注册这些演示路由。工厂函数也可直接赋给 `$docs.home` 或路由 `content`：
 
 | 查询 | 内容 |
 |---|---|

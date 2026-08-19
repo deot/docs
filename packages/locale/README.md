@@ -2,6 +2,14 @@
 
 `@deot/docs-locale` 为 Docs Client、Markdown、Playground 和 Renderer 提供统一的响应式界面翻译能力。内置 `zh-CN` 与 `en-US`，匹配失败或字段缺失时回退到 `en-US`。
 
+## 安装
+
+```bash
+pnpm add @deot/docs-locale vue
+```
+
+`vue` 为 peer dependency（^3.5）。
+
 ## 使用
 
 ```ts

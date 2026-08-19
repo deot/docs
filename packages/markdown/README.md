@@ -123,7 +123,13 @@ Playground 只在页面出现 fence 或 `:::playground` 时动态加载。使用
 | `Markdown` | Vue Markdown 渲染组件。 |
 | `parseMarkdownSearchSections(content)` | 使用渲染器相同的标题锚点规则提取文档标题、正文和小节，供搜索索引使用。 |
 
+类型：`MarkdownSearchDocument`、`MarkdownSearchSection`、`MarkdownIndicatorConfig`、`MarkdownIndicatorOptions`、`MarkdownPlaygroundConfig`、`MarkdownPlaygroundMountProps`。
+
 底层 markdown-it 实例和内部指令不是包入口的公共导出。搜索解析结果不会包含代码围栏和 HTML 内容。
+
+## 仓库内 examples
+
+在 monorepo 根目录执行 `npm run dev` 可预览 [`packages/markdown/examples`](examples/) 下的 Markdown 与 Playground 容器示例。
 
 ## 仓库内验证
 

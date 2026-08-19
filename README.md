@@ -1,6 +1,6 @@
 # @deot/docs
 
-`@deot/docs` 是一套面向 Vue 3 的文档站点工具链。它以 `window.$docs` 作为页面协议，将 Markdown、V2 页面文档（`.page.json`）、递归 Sidebar、远程 Vue SFC、主题、Locale、搜索和离线缓存组合成可直接部署的文档应用。
+`@deot/docs` 是一套面向 Vue 3 的文档站点工具链。它以 `window.$docs` 作为页面协议，将 Markdown、页面文档（`.page.json`）、递归 Sidebar、远程 Vue SFC、主题、Locale、搜索和离线缓存组合成可直接部署的文档应用。
 
 ## 特性
 
@@ -12,7 +12,7 @@
 - **缓存与预加载**：使用 IndexedDB 保存资源版本，支持离线回退、空闲预加载、批量更新和缓存诊断。
 - **Light / Dark Theme**：Docs 与 `@deot/vc` 共享主题状态，支持系统偏好、持久化和切换动画。
 - **内置文档搜索**：搜索当前语言下已缓存的 Markdown 与页面文档，支持小节定位、历史记录和收藏。
-- **模块化页面**：Renderer 使用版本化 JSON 协议组合 Hero、特性和业务模块，Combo 提供上下排序与自由布局装修工作台。
+- **模块化页面**：Renderer 使用 JSON 页面协议组合 Hero、特性和业务模块，Combo 提供上下排序与自由布局装修工作台。
 
 ## 包结构
 
@@ -22,11 +22,13 @@
 | [`@deot/docs-cli`](packages/cli/README.md) | 提供 `doc dev`、`doc build` 和 `doc preview` 命令。 |
 | [`@deot/docs-dever`](packages/dever/README.md) | Development、build 和 preview 的运行层。 |
 | [`@deot/docs-client`](packages/client/README.md) | Vue 应用壳、Router、布局、搜索和 ResourceGateway。 |
-| [`@deot/docs-renderer`](packages/renderer/README.md) | 版本化页面协议、只读 Renderer 和装修 Combo。 |
+| [`@deot/docs-renderer`](packages/renderer/README.md) | 页面文档协议、只读 Renderer 和装修 Combo。 |
 | [`@deot/docs-markdown`](packages/markdown/README.md) | Markdown 渲染、指示器、代码高亮与 Playground 容器。 |
 | [`@deot/docs-playground`](packages/playground/README.md) | 远程 SFC 编译、编辑器和 iframe 预览。 |
 | [`@deot/docs-locale`](packages/locale/README.md) | 分包命名空间 Locale、翻译函数和 Vue Provider。 |
 | [`@deot/docs-theme`](packages/theme/README.md) | 公共主题协议、CSS 变量与 SCSS 工具。 |
+
+`@deot/docs` 聚合包仅 re-export `Dever`、`Locale`、`Renderer` 与 `Theme` 四个命名空间；Markdown、Playground、Client 与 CLI 需按上表单独安装，见各子包 README。
 
 ## 快速开始
 
@@ -111,7 +113,8 @@ site/
 				batchSize: 2,
 				idleTimeout: 1500
 			},
-			modules: {}
+			modules: {},
+			styles: {}
 		};
 	</script>
 
@@ -194,6 +197,7 @@ const routes = {
 | `base` | Production 资源基准 URL。 |
 | `namespace` | IndexedDB 缓存隔离标识。 |
 | `modules` | 远程 SFC 裸模块名到 URL 的映射。 |
+| `styles` | Playground 预览 CSS 的站点默认地址；同名 key 覆盖内置样式表。 |
 | `theme` | 主题开关或默认主题配置。 |
 | `prefetch` | 空闲预加载开关或批次配置。 |
 | `home` | 可选的多语言首页页面文档或 `.page.json` 地址；未配置时首页为空。 |
@@ -206,26 +210,38 @@ const routes = {
 
 ## 本仓库开发
 
+上方「快速开始」面向**新建文档站点**的通用 `site/` 模板（含 `sidebar.json`、`index.md` 等）。本仓库自带的 [`site/`](site/) 是 **README 聚合演示**：仅含 [`site/index.html`](site/index.html)，Sidebar 与首页 Renderer 文档在 JS 内联生成，开发模式下读取根目录与各子包 README；因此克隆后找不到 `site/zh-CN/index.md` 或 `sidebar.json` 是预期行为。
+
 ```bash
 pnpm install
 
-# 启动示例文档站点
+# 启动本仓库示例文档站点（doc dev，读 site/index.html）
 npm run cli:dev
+
+# 启动 Markdown / Playground 包 examples（扫 packages/*/examples）
+npm run dev
 
 # Production Runtime 预览
 npm run cli:preview
 
+# 构建示例文档站点（当前会因 production 配置未指向 site/index.html 而失败）
+npm run cli:build
+
 # 类型、测试与构建
 npm run typecheck
 npm run test -- --package-name '*'
-npm run build
+npm run build -- --package-name '<folder>'   # 单包：cli、client、dever、index、markdown、playground、renderer、locale、theme
+npm run build                                 # 全量；declaration 可能打印上游类型告警，以各包 Success 为准
 
 # 代码与样式检查
 npm run lint
+npm run lint:fix
 npm run lint:style
 ```
 
-仓库中的 [`site/index.html`](site/index.html) 直接读取各子包 README，展示了按 Runtime 在本地文件与远程 Raw URL 之间切换的完整 resolver 配置，并用内联 Renderer 文档作为首页。
+[`site/index.html`](site/index.html) 展示了按 Runtime 在本地文件与 GitHub Raw URL 之间切换的完整 resolver 配置，并用内联 Renderer 文档作为首页。
+
+贡献代码前请阅读 [贡献指南](.github/CONTRIBUTING.md)。
 
 ## 许可证
 

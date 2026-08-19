@@ -1,60 +1,63 @@
 # 贡献指南
 
-这篇指南会指导你如何为 `@deot/docs` 贡献一份自己的力量，请在你要提 `issue` 或者 `pull request` 之前花几分钟来阅读一遍这篇指南。
+感谢你对 `@deot/docs` 的关注。在提交 Issue 或 Pull Request 之前，请先阅读本指南。
 
 ## 行为准则
 
-我们有一份 [行为准则](./CODE_OF_CONDUCT.md)，希望所有的贡献者都能遵守，请花时间阅读一遍全文以确保你能明白哪些是可以做的，哪些是不可以做的。
+我们采用 [Contributor Covenant 行为准则](./CODE_OF_CONDUCT.md)。参与本项目的讨论与贡献时，请遵守其中的约定。
 
-## 透明的开发
+## 开发环境
 
-我们所有的工作都会放在 [`GitHub`](https://github.com/deot) 上。不管是核心团队的成员还是外部贡献者的 `pull request` 都需要经过同样流程的 `review`。
+本仓库是 **pnpm monorepo**。请在仓库根目录操作：
 
-## 分支管理
+```bash
+pnpm install
+```
 
-基于我们的 [发布周期](./CHANGELOG.md)，我们每个月都会从 `master` 分支切一个 `feature` 分支出来（比如 `features-3.1` 分支用来发布 3.1 版本）。 如果你要修一个 `bug`，那么请发 `pull request` 到 `master`；如果你要提一个增加新功能的 `pull request`，那么请基于 `feature` 分支来做。
+常用命令：
 
-## Bugs
+| 任务 | 命令 |
+| --- | --- |
+| 示例文档站点（`site/index.html`） | `npm run cli:dev` |
+| Markdown / Playground 包 examples | `npm run dev` |
+| Production 预览 | `npm run cli:preview` |
+| 类型检查 | `npm run typecheck` |
+| 全部测试 | `npm run test -- --package-name '*'` |
+| 单包测试 / 构建 | `npm run test -- --package-name '<folder>'` / `npm run build -- --package-name '<folder>'` |
+| ESLint | `npm run lint` / `npm run lint:fix` |
+| 样式 | `npm run lint:style` |
 
-我们使用 [`GitHub Issues`](https://github.com/deot/dev/issues) 来做 `bug` 追踪。
+有效包目录名：`cli`、`client`、`dever`、`index`、`locale`、`markdown`、`playground`、`renderer`、`theme`。
 
-在你报告一个 `bug` 之前，请先确保已经搜索过已有的 `issue` 和阅读了我们的 [常见问题](https://github.com/deot/dev/wiki/FAQ)。
+## 分支与 Issue
 
-## 新增功能
+- 默认分支为 **`main`**。请基于最新的 `main` 创建分支并提交 PR。
+- Bug 与功能请求请使用 [GitHub Issues](https://github.com/deot/docs/issues)。
+- 较大改动建议先开 Issue 讨论方案，再动手实现。
 
-如果你有改进我们的 `API` 或者新增功能的想法，新建一个添加新功能的 `issue`。
+## Pull Request 检查清单
 
-## 第一次贡献
+提交 PR 前请确认：
 
-如果你还不清楚怎么在 `GitHub` 上提 `Pull Request` ，可以阅读下面这篇文章来学习：
+1. 变更范围清晰，commit 信息符合项目规范（Husky 会运行 `lint-staged` 与 `dd-commitlint`）。
+2. 相关包已补充或更新测试；修复 bug 或新增功能时测试很重要。
+3. 全部相关测试通过：`npm run test -- --package-name '*'`（或针对改动包的 `--package-name`）。
+4. 代码通过 lint：`npm run lint`（提交时也会自动检查 staged 文件）。
+5. 若改动 Markdown / Playground 容器语法，请同时检查 `packages/markdown` 与 `packages/playground` 的测试。
 
-[如何优雅地在 `GitHub` 上贡献代码](https://segmentfault.com/a/1190000000736629)
+## 已知基线问题
 
-为了能帮助你开始你的第一次尝试，我们用 `good first issues` 标记了一些比较比较容易修复的 `bug` 和小功能。这些 `issue` 可以很好地做为你的首次尝试。
+以下现象在部分环境下**不是**你的改动导致的回归：
 
-如果你打算开始处理一个 `issue`，请先检查一下 `issue` 下面的留言以确保没有别人正在处理这个 `issue`。如果当前没有人在处理的话你可以留言告知其他人你将会处理这个 `issue`，以免别人重复劳动。
+- **全量 `npm run build`**：declaration 生成可能打印 `@deot/vc`、`@vue/repl` 等上游类型告警；以各包最终的 `Success` 为准，且无 `Error! Build failed`。
+- **单包 Markdown build**：可能出现大量 declaration 诊断，但 `@deot/docs-markdown: Success` 即表示通过。
+- **`npm run cli:build`**：当前会因 production 配置未指向 `site/index.html` 而失败（`Cannot resolve entry module index.html`）。日常预览请用 `npm run cli:dev` 或 `npm run cli:preview`。
 
-如果之前有人留言说会处理这个 `issue` 但是一两个星期都没有动静，那么你也可以接手处理这个 `issue`，当然还是需要留言告知其他人。
+## 文档
 
-## Pull Request
+- 用户向说明见根 [README.md](../README.md) 与各 `packages/*/README.md`。
+- 本仓库 `site/` 是 README 聚合演示，结构与根 README「快速开始」中的通用模板不同。
 
-`WYA` 团队会关注所有的 `pull request`，我们会 `review` 以及合并你的代码，也有可能要求你做一些修改或者告诉你我们为什么不能接受这样的修改。
+## 许可证
 
-**在你发送 `Pull Request` 之前**，请确认你是按照下面的步骤来做的：
-
-1. 基于 [正确的分支](/)来做修改。
-2. 在项目根目录下运行了 `npm install`。
-3. 如果你修复了一个 `bug` 或者新增了一个功能，请确保写了相应的测试，这很重要。
-4. 确认所有的测试都是通过的 `npm run test`。 小贴士：开发过程中可以用 `npm run test -- --watch --packageName '*'` 来运行指定的测试。
-5. 确保你的代码通过了 `lint` 检查 `npm run lint`. 小贴士: `Lint` 会在你 `git commit` 的时候自动运行。
-
-
-## 开发流程
-
-在你 `clone` 了 `dev`  的代码并且使用 `npm run init` 安装完依赖后，你还可以运行下面几个常用的命令：
-
-1. `npm run dev` 在本地运行 `dev`。
-2. `npm run lint` / `npm run lint:fix` / `npm run lint:watch` 检查代码风格/修复/监听。
-3. `npm run build` 构建 `dev` 到 `dist` 目录。
-4. `npm run add` 添加子包或依赖
-5. `npm run test` 运行测试。
+贡献的代码将按仓库 [LICENSE](../LICENSE)（MIT）发布。

@@ -77,8 +77,13 @@ Playground 只接受来自自身 iframe 的导航消息。宿主应用应监听 
 | `resolveHighlightLanguage(filename)` | 将常见扩展名映射为 highlight.js 语言。 |
 | `registerVueHighlight(api?)` | 向 highlight.js 注册 Vue SFC 语法。 |
 | `vueHighlight` | Vue SFC 的 highlight.js 语言定义。 |
+| `DEFAULT_CDN_URL` | 默认 CDN 根地址（jsDelivr）。 |
+| `createBuiltinImports(cdnURL?)` / `createBuiltinStyles(cdnURL?)` | 按 CDN 生成内置 import map 与预览样式表 URL。 |
+| `normalizeCdnURL(value?)` | 规范化 CDN 根地址。 |
 
 同时导出 `PlaygroundFiles`、`PlaygroundView`、`PlaygroundViewport`、`PlaygroundOptions`、`PlaygroundPreviewOptions`、`EditorFilesChange` 和 `EditorFilesChangeAction` 类型。
+
+站点级 Playground 模块与预览 CSS 默认由 Client 的 `$docs.modules` 与 `$docs.styles` 管理（见 [`@deot/docs-client`](../client/README.md)）。独立嵌入 Playground 时，可通过 `options.builtinImportMap` 与 `options.cdnURL` 覆盖实例级配置。
 
 ## 运行环境
 
@@ -88,6 +93,10 @@ Playground 只接受来自自身 iframe 的导航消息。宿主应用应监听 
 - Vue SFC 的 `<style lang="scss">` / `lang="sass"` 以及独立 `.scss` / `.sass` 文件会在浏览器里编译；`_partial.scss` 只作为 `@use` 依赖。
 - `options.builtinImportMap.imports` 可以覆盖默认模块 URL。Vue 运行时仍从 `play.vuejs.org` 加载。
 - 每个 Playground 实例都使用自己的 preview 配置和 iframe 消息来源校验。
+
+## 仓库内 examples
+
+在 monorepo 根目录执行 `npm run dev` 可预览 [`packages/playground/examples`](examples/) 下的单文件与多文件 Playground 示例。
 
 ## 仓库内验证
 
