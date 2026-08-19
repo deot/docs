@@ -181,6 +181,45 @@ defineProps({ label: String });
 ```
 :::
 
+## 在线 SCSS
+
+Vue SFC 的 `<style lang="scss">` 和独立 `.scss` 文件会在浏览器里编译。`_partial.scss` 只作为 `@use` 依赖，不会单独注入预览。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	entry: 'App.vue',
+	views: ['runtime', 'files'],
+}
+</config>
+-->
+```vue App.vue
+<template>
+	<p class="scss-box">SCSS playground</p>
+</template>
+
+<style lang="scss">
+@use './variables' as *;
+
+.scss-box {
+	color: $accent;
+	padding: 8px;
+}
+</style>
+```
+
+```scss _variables.scss
+$accent: #c2410c;
+```
+
+```scss theme.scss
+.scss-box {
+	font-weight: 600;
+}
+```
+:::
+
 ## 普通代码块
 
 ```vue

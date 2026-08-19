@@ -34,8 +34,9 @@ export type PlaygroundOptions = Omit<Partial<StoreState>,
 	'builtinImportMap' | 'files' | 'activeFilename' | 'mainFile' | 'template'
 > & {
 	/**
-	 * npm CDN 前缀，同时用于默认 import map 和预览样式。
+	 * npm CDN 前缀，用于默认 import map 和预览样式。
 	 * 例如 `https://cdn.jsdelivr.net/npm` 或 `https://unpkg.com`。
+	 * jsDelivr 专有的 `/+esm` 资源（`lodash-es`、Sass）仍走默认 jsDelivr。
 	 */
 	cdnURL?: string;
 	/**

@@ -15,6 +15,8 @@ describe('playground highlight', () => {
 		['main.tsx', 'typescript'],
 		['index.html', 'xml'],
 		['style.css', 'css'],
+		['style.scss', 'scss'],
+		['theme.sass', 'scss'],
 		['data.json', 'json'],
 		['README.txt', 'plaintext']
 	])('maps %s to %s', (filename, language) => {

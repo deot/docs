@@ -5,7 +5,7 @@ import { mount } from '@vue/test-utils';
 import { zhCN } from '@deot/docs-locale';
 import EditorWrapper from '../src/editor/editor.vue';
 
-const { destroy, focus, listener, dragOff, javascriptMode, messageError, vueMode, scrollerRefresh, setScrollLeft } = vi.hoisted(() => ({
+const { destroy, focus, listener, dragOff, cssMode, javascriptMode, messageError, vueMode, scrollerRefresh, setScrollLeft } = vi.hoisted(() => ({
 	destroy: vi.fn(),
 	focus: vi.fn(),
 	listener: { callback: undefined as ((update: {
@@ -13,6 +13,7 @@ const { destroy, focus, listener, dragOff, javascriptMode, messageError, vueMode
 		state: { doc: { toString: () => string } };
 	}) => void) | undefined },
 	dragOff: vi.fn(),
+	cssMode: vi.fn(() => 'css'),
 	javascriptMode: vi.fn(() => 'javascript'),
 	messageError: vi.fn(),
 	vueMode: vi.fn(() => 'vue'),
@@ -62,6 +63,7 @@ vi.mock('codemirror', () => ({
 	}
 }));
 vi.mock('@codemirror/lang-javascript', () => ({ javascript: javascriptMode }));
+vi.mock('@codemirror/lang-css', () => ({ css: cssMode }));
 vi.mock('@codemirror/lang-vue', () => ({ vue: vueMode }));
 vi.mock('@codemirror/view', () => ({ highlightActiveLine: vi.fn(() => 'line') }));
 vi.mock('../src/editor/drag', () => ({ Drag: class { off = dragOff; } }));
@@ -71,6 +73,7 @@ describe('editor', () => {
 		destroy.mockClear();
 		focus.mockClear();
 		dragOff.mockClear();
+		cssMode.mockClear();
 		javascriptMode.mockClear();
 		messageError.mockClear();
 		vueMode.mockClear();
@@ -244,6 +247,27 @@ describe('editor', () => {
 			{ type: 'delete', filename: 'util.ts' }
 		);
 		expect(onActiveChange).toHaveBeenLastCalledWith('App.vue');
+	});
+
+	it('accepts scss filenames and uses the css editor mode', async () => {
+		const onFilesChange = vi.fn();
+		const wrapper = mount(EditorWrapper, {
+			props: {
+				files: { 'App.vue': '<template />', 'util.ts': '' },
+				entry: 'App.vue',
+				onFilesChange
+			}
+		});
+		await nextTick();
+		await wrapper.find('[data-filename="util.ts"]').trigger('dblclick');
+		await wrapper.find('.docs-playground-editor__filename').setValue('theme.scss');
+		await wrapper.find('.docs-playground-editor__filename').trigger('blur');
+		expect(onFilesChange).toHaveBeenLastCalledWith(
+			expect.objectContaining({ 'theme.scss': '' }),
+			'App.vue',
+			{ type: 'rename', filename: 'theme.scss', previousFilename: 'util.ts' }
+		);
+		expect(cssMode).toHaveBeenCalled();
 	});
 
 	it.each([

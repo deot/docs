@@ -93,6 +93,7 @@ import { Message, Popconfirm, Scroller, TransitionFade } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import type { Language } from '@deot/docs-locale';
 import { EditorView, basicSetup } from 'codemirror';
+import { css } from '@codemirror/lang-css';
 import { javascript } from '@codemirror/lang-javascript';
 import { vue } from '@codemirror/lang-vue';
 import { highlightActiveLine } from '@codemirror/view';
@@ -101,7 +102,7 @@ import type { PlaygroundFiles } from '../types';
 import type { EditorFilesChange, EditorFilesChangeAction } from './types';
 import { Drag } from './drag';
 
-const SUPPORTED_FILE_RE = /\.(vue|js|ts|jsx|tsx|css|json|html)$/i;
+const SUPPORTED_FILE_RE = /\.(vue|js|ts|jsx|tsx|css|s[ac]ss|json|html)$/i;
 
 const props = withDefaults(defineProps<{
 	value?: string;
@@ -167,6 +168,7 @@ const languageExtension = (filename: string) => {
 			typescript: /\.tsx?$/i.test(filename)
 		});
 	}
+	if (/\.(css|s[ac]ss)$/i.test(filename)) return css();
 	return undefined;
 };
 

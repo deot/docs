@@ -112,6 +112,8 @@ createApp(App).mount('#app');
 
 支持的 `views` 值为 `runtime` 和 `files`。`viewport` 可为 `auto`、正数宽度或 `[width, height]`。
 
+Playground 会在浏览器里编译 Vue SFC 的 `<style lang="scss">` 以及独立 `.scss` / `.sass` 文件。下划线 partial（如 `_variables.scss`）只作为 `@use` 依赖，不会单独注入预览。
+
 Playground 只在页面出现 fence 或 `:::playground` 时动态加载。使用 Playground 容器时，还需要加载 `@deot/docs-playground/dist/index.style.css` 和宿主应用使用的 `@deot/vc-components` 样式。
 
 ## 公共 API

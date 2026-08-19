@@ -157,6 +157,7 @@ import {
 	createRuntimeStore,
 	toReplFilename
 } from '../store';
+import { whenSassReady } from '../scss';
 
 const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<PlaygroundViewsProps> & {
 	options: PlaygroundOptions;
@@ -262,31 +263,34 @@ const handleFilesChange = (
 ) => {
 	syncedFiles = { ...files };
 	syncedEntry = entry;
-	switch (action.type) {
-		case 'update': {
-			const file = store.files[toReplFilename(action.filename)];
-			if (file) file.code = files[action.filename];
-			break;
+	const apply = () => {
+		switch (action.type) {
+			case 'update': {
+				const file = store.files[toReplFilename(action.filename)];
+				if (file) file.code = files[action.filename];
+				break;
+			}
+			case 'create':
+				store.addFile(createReplFile(action.filename, files[action.filename]));
+				break;
+			case 'rename':
+				store.renameFile(
+					toReplFilename(action.previousFilename),
+					toReplFilename(action.filename)
+				);
+				break;
+			case 'delete':
+				store.setActive(toReplFilename(entry));
+				delete store.files[toReplFilename(action.filename)];
+				break;
+			case 'entry':
+				store.mainFile = toReplFilename(entry);
+				store.setActive(toReplFilename(entry));
+				break;
 		}
-		case 'create':
-			store.addFile(createReplFile(action.filename, files[action.filename]));
-			break;
-		case 'rename':
-			store.renameFile(
-				toReplFilename(action.previousFilename),
-				toReplFilename(action.filename)
-			);
-			break;
-		case 'delete':
-			store.setActive(toReplFilename(entry));
-			delete store.files[toReplFilename(action.filename)];
-			break;
-		case 'entry':
-			store.mainFile = toReplFilename(entry);
-			store.setActive(toReplFilename(entry));
-			break;
-	}
-	emit('files-change', files, entry, action);
+		emit('files-change', files, entry, action);
+	};
+	whenSassReady(files, apply);
 };
 
 const handleEditor = () => {

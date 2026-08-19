@@ -192,6 +192,8 @@ describe('Playground', () => {
 		expect(createBuiltinImports()['@deot/vc'])
 			.toBe(`${DEFAULT_CDN_URL}/@deot/vc/dist/index.js`);
 		expect(createBuiltinImports()['lodash-es']).toBe(`${DEFAULT_CDN_URL}/lodash-es/+esm`);
+		expect(createBuiltinImports('https://unpkg.com/')['lodash-es'])
+			.toBe(`${DEFAULT_CDN_URL}/lodash-es/+esm`);
 		expect(createRuntimePreviewOptions().headHTML)
 			.toContain(`${DEFAULT_CDN_URL}/@deot/vc-components/dist/index.style.css`);
 
@@ -208,7 +210,7 @@ describe('Playground', () => {
 		const headHTML = wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML;
 
 		expect(imports['@deot/vc']).toBe('https://unpkg.com/@deot/vc/dist/index.js');
-		expect(imports['lodash-es']).toBe('https://unpkg.com/lodash-es/+esm');
+		expect(imports['lodash-es']).toBe(`${DEFAULT_CDN_URL}/lodash-es/+esm`);
 		expect(imports.custom).toBe('/custom.js');
 		expect(imports.vue).toBe('https://play.vuejs.org/vue.runtime.esm-browser.js');
 		expect(headHTML).toContain('https://unpkg.com/@deot/style/dist/index.normalize-only.css');

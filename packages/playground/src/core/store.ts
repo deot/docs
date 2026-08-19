@@ -15,6 +15,7 @@ import {
 } from '../import-map';
 import type { PlaygroundFiles, PlaygroundOptions } from '../types';
 import { SANDBOX_RUNTIME_ERROR_CAPTURE_HTML } from './runtime/error-guard';
+import { bindPlaygroundScss, whenSassReady } from './scss';
 
 const DOCS_LINK_IMPORT_CODE = 'import { h as __docsH } from "vue"';
 const DOCS_LINK_USE_CODE = [
@@ -107,6 +108,7 @@ export const createRuntimeStore = (
 			newSFC: NEW_SFC_CODE
 		})
 	});
-	void store.init();
+	bindPlaygroundScss(store);
+	whenSassReady(files, () => store.init());
 	return store;
 };

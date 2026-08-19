@@ -28,9 +28,7 @@ const BUILTIN_IMPORT_ASSETS: Record<string, string> = {
 	'@deot/helper': '@deot/helper/dist/index.js',
 	'normalize-wheel': 'normalize-wheel-es/dist/index.mjs',
 	'photoswipe': 'photoswipe/dist/photoswipe.esm.js',
-	'photoswipe/lightbox': 'photoswipe/dist/photoswipe-lightbox.esm.js',
-	// jsDelivr `+esm`：避免走 lodash-es/lodash.js 再拆出几百个请求。
-	'lodash-es': 'lodash-es/+esm'
+	'photoswipe/lightbox': 'photoswipe/dist/photoswipe-lightbox.esm.js'
 };
 
 export const normalizeCdnURL = (cdnURL = DEFAULT_CDN_URL) => {
@@ -38,9 +36,15 @@ export const normalizeCdnURL = (cdnURL = DEFAULT_CDN_URL) => {
 	return origin || DEFAULT_CDN_URL;
 };
 
-const cdnAsset = (cdnURL: string, asset: string) => (
-	`${normalizeCdnURL(cdnURL)}/${asset.replace(/^\/+/u, '')}`
+// jsDelivr `/{package}/+esm`；unpkg 等 CDN 不支持该路径。
+const cdnJoin = (origin: string, asset: string) => (
+	`${origin}/${asset.replace(/^\/+/u, '')}`
 );
+const jsdelivrEsmURL = (asset: string) => cdnJoin(DEFAULT_CDN_URL, asset);
+
+export const SASS_CDN_URL = jsdelivrEsmURL('sass/+esm');
+
+const cdnAsset = (cdnURL: string, asset: string) => cdnJoin(normalizeCdnURL(cdnURL), asset);
 
 export const createBuiltinImports = (
 	cdnURL = DEFAULT_CDN_URL
@@ -51,6 +55,8 @@ export const createBuiltinImports = (
 			cdnAsset(cdnURL, asset)
 		])
 	),
+	// 避免走 lodash-es/lodash.js 再拆出几百个请求。
+	'lodash-es': jsdelivrEsmURL('lodash-es/+esm'),
 	'vue': 'https://play.vuejs.org/vue.runtime.esm-browser.js',
 	'vue/server-renderer': 'https://play.vuejs.org/server-renderer.esm-browser.js'
 });

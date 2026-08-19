@@ -31,6 +31,13 @@
 			v-model:entry="vueEntry"
 			:views="['runtime', 'files']"
 		/>
+
+		<h2>在线 SCSS</h2>
+		<Playground
+			v-model:files="scssFiles"
+			v-model:entry="scssEntry"
+			:views="['runtime', 'files']"
+		/>
 	</div>
 </template>
 <script setup>
@@ -43,6 +50,9 @@ import javascriptApp from './fixtures/javascript/App.vue?raw';
 import javascriptMessage from './fixtures/javascript/message.js?raw';
 import vueApp from './fixtures/vue/App.vue?raw';
 import vueCard from './fixtures/vue/Card.vue?raw';
+import scssApp from './fixtures/scss/App.vue?raw';
+import scssVariables from './fixtures/scss/_variables.scss?raw';
+import scssTheme from './fixtures/scss/theme.scss?raw';
 
 const source = ref(sourceText);
 const viewport = ref('auto');
@@ -57,6 +67,12 @@ const vueEntry = ref('App.vue');
 const vueFiles = ref({
 	'App.vue': vueApp,
 	'Card.vue': vueCard
+});
+const scssEntry = ref('App.vue');
+const scssFiles = ref({
+	'App.vue': scssApp,
+	'_variables.scss': scssVariables,
+	'theme.scss': scssTheme
 });
 </script>
 <style lang="scss" scoped>

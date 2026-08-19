@@ -56,6 +56,7 @@ export const resolveHighlightLanguage = (filename: string) => {
 	if (/\.jsx?$/i.test(filename)) return 'javascript';
 	if (/\.html$/i.test(filename)) return 'xml';
 	if (/\.css$/i.test(filename)) return 'css';
+	if (/\.s[ac]ss$/i.test(filename)) return 'scss';
 	if (/\.json$/i.test(filename)) return 'json';
 	return 'plaintext';
 };
