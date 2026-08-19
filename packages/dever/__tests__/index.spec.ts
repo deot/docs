@@ -395,7 +395,9 @@ describe('dever configuration', () => {
 			'<!DOCTYPE html>',
 			'<link href="https://unpkg.com/@deot/docs-client@1.0.0/dist/index.style.css?theme=docs#style">',
 			'<script type="module" src="//unpkg.com/@deot/docs-client/dist/index.js"></script>',
+			'<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm"></script>',
 			'<script>const client = "http://cdn.example.com/vendor/npm/@deot/docs-client@next/dist/index.js?module#entry";</script>',
+			'<script>const esm = "https://cdn.jsdelivr.net/npm/@deot/docs-client@next/+esm?module#entry";</script>',
 			'<script>const style = "https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css";</script>',
 			'<script>const sourceMap = "https://cdn.example.com/@deot/docs-client/dist/index.js.map";</script>',
 			'<script>const bareText = "@deot/docs-client/dist/index.js";</script>',
@@ -424,10 +426,10 @@ describe('dever configuration', () => {
 			});
 			const html = await page.text();
 			expect(page.status).toBe(200);
-			expect(html).toContain('/@deot/docs-client/index.js');
-			expect(html).toContain('/@deot/docs-client/index.style.css?theme=docs#style');
-			expect(html).toContain('/@deot/docs-client/index.js?module#entry');
-			expect(html).toContain('/@deot/docs-client/index.style.css');
+			expect(html).toContain('/@deot/docs-client/dist/index.js');
+			expect(html).toContain('/@deot/docs-client/dist/index.style.css?theme=docs#style');
+			expect(html).toContain('/@deot/docs-client/dist/index.js?module#entry');
+			expect(html).toContain('/@deot/docs-client/dist/index.style.css');
 			expect(html).toContain('https://cdn.example.com/@deot/docs-client/dist/index.js.map');
 			expect(html).toContain('@deot/docs-client/dist/index.js');
 			expect(html).toContain('https://esm.sh/@deot/docs-client');
@@ -436,10 +438,20 @@ describe('dever configuration', () => {
 			expect(html).not.toContain('//unpkg.com/@deot/docs-client/dist/index.js');
 			expect(html).not.toContain('http://cdn.example.com/vendor/npm/@deot/docs-client@next/dist/index.js');
 			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css');
+			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm');
+			expect(html).not.toContain('@deot/docs-client@next/+esm');
 			expect(html).not.toContain('/@vite/client');
 			expect(html).not.toContain('__DOCS_RUNTIME__');
-			expect(await (await fetch(`${base}/@deot/docs-client/index.js`)).text())
+			expect(await (await fetch(`${base}/@deot/docs-client/dist/index.js`)).text())
 				.toContain('./chunks/lazy.js');
+			expect(await (await fetch(`${base}/@deot/docs-client/+esm`)).text())
+				.toContain('./chunks/lazy.js');
+			const stylesheet = await fetch(`${base}/@deot/docs-client/dist/index.style.css`);
+			expect(stylesheet.status).toBe(200);
+			expect(stylesheet.headers.get('content-type')).toContain('text/css');
+			expect(await stylesheet.text()).toContain('.docs {}');
+			expect(await (await fetch(`${base}/@deot/docs-client/dist/chunks/lazy.js`)).text())
+				.toBe('export default 1;');
 			const markdown = await fetch(`${base}/zh-CN/index.md`);
 			expect(markdown.status).toBe(200);
 			expect((await fetch(`${base}/zh-CN/index.md`, {
@@ -469,7 +481,8 @@ describe('dever configuration', () => {
 					'https://unpkg.com/@deot/docs-client@1.0.0/dist/index.style.css?theme=docs#style'
 				);
 				expect(remoteHtml).toContain('//unpkg.com/@deot/docs-client/dist/index.js');
-				expect(remoteHtml).not.toContain('/@deot/docs-client/index.js');
+				expect(remoteHtml).toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm');
+				expect(remoteHtml).not.toContain('="/@deot/docs-client/');
 			} finally {
 				await new Promise<void>((resolve, reject) => {
 					remoteServer.close((reason) => {

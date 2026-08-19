@@ -39,7 +39,8 @@ export type PlaygroundOptions = Omit<Partial<StoreState>,
 	 */
 	cdnURL?: string;
 	/**
-	 * 覆盖 REPL 内置 import map。`files` / `mainFile` 仍由 playground 自己管理。
+	 * 实例层 import，合并时高于站点默认、低于管理页覆盖。
+	 * `files` / `mainFile` 仍由 playground 自己管理。
 	 */
 	builtinImportMap?: ImportMap;
 };

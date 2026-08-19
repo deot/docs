@@ -134,11 +134,15 @@ describe('client layout components', () => {
 		const wrapper = mount(() => (<DefaultHeader />));
 		expect(wrapper.findAll('a').map(link => link.attributes('href'))).toEqual([
 			'/zh-CN',
+			'/zh-CN/__docs/playground-resource',
 			'/zh-CN/__docs/database'
 		]);
 		expect(wrapper.find('.docs-header__database').attributes('aria-label'))
 			.toBe('Open resource database');
+		expect(wrapper.find('.docs-header__playground-resource').attributes('aria-label'))
+			.toBe('Manage Playground resources');
 		expect(wrapper.find('[data-icon="database"]').exists()).toBe(true);
+		expect(wrapper.find('[data-icon="playgroundResource"]').exists()).toBe(true);
 		expect(wrapper.find('[data-icon="language"]').exists()).toBe(true);
 		expect(wrapper.find('.docs-header__actions').element.lastElementChild?.classList)
 			.toContain('docs-header__database');
@@ -168,6 +172,15 @@ describe('client layout components', () => {
 		const wrapper = mount(() => <DefaultHeader />);
 		expect(wrapper.find('.docs-header__database').attributes('href'))
 			.toBe('/zh-CN/__docs/database');
+		expect(wrapper.find('.docs-header__playground-resource').attributes('href'))
+			.toBe('/zh-CN/__docs/playground-resource');
+	});
+
+	it('uses the utility shell for playground import map pages', () => {
+		route.meta = { docsPlaygroundResource: true };
+		const wrapper = mount(() => (<App />));
+		expect(wrapper.find('.docs-app--database').exists()).toBe(true);
+		expect(wrapper.find('.docs-layout--database').exists()).toBe(true);
 	});
 
 	it('opens the Renderer editor with the active content source', async () => {

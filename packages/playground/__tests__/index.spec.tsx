@@ -7,9 +7,20 @@ import { zhCN } from '@deot/docs-locale';
 import { DEFAULT_CDN_URL } from '../src/constants';
 import {
 	createBuiltinImports,
-	createRuntimePreviewOptions,
 	normalizeCdnURL
+} from '../src/cdn';
+import {
+	createRuntimePreviewOptions
 } from '../src/core/store';
+import {
+	applyPlaygroundImportMapOverride,
+	applyPlaygroundStyleOverride,
+	clearPlaygroundMaps,
+	removePlaygroundImportMapOverride,
+	removePlaygroundStyleOverride,
+	setPlaygroundSiteModules,
+	setPlaygroundSiteStyles
+} from '../src/import-map';
 import Playground from '../src/playground.vue';
 import type { PlaygroundStoreStub } from './fixtures';
 
@@ -136,6 +147,7 @@ describe('Playground', () => {
 		popup.mockReset();
 		setFiles.mockReset();
 		vi.mocked(useStore).mockClear();
+		clearPlaygroundMaps();
 	});
 
 	it('renders the preview and merges custom imports', () => {
@@ -203,6 +215,145 @@ describe('Playground', () => {
 		expect(headHTML).toContain('https://unpkg.com/@deot/vc-components/dist/index.style.css');
 		expect(headHTML).toContain('https://unpkg.com/@deot/style/dist/index.css');
 		expect(headHTML).not.toContain('cdn.jsdelivr.net');
+	});
+
+	it('applies site-level import map overrides above instance imports', () => {
+		applyPlaygroundImportMapOverride('vue', 'https://cdn.example.com/vue.js');
+		applyPlaygroundImportMapOverride('custom', 'https://cdn.example.com/custom.js');
+		const wrapper = mount(Playground, {
+			props: {
+				modelValue: '<template>override</template>',
+				options: {
+					builtinImportMap: {
+						imports: {
+							vue: '/vue.js',
+							custom: '/custom.js'
+						}
+					}
+				}
+			}
+		});
+		const imports = store.options.builtinImportMap.value.imports;
+		expect(imports.vue).toBe('https://cdn.example.com/vue.js');
+		expect(imports.custom).toBe('https://cdn.example.com/custom.js');
+		expect(imports['@deot/vc']).toBe(`${DEFAULT_CDN_URL}/@deot/vc/dist/index.js`);
+
+		removePlaygroundImportMapOverride('vue');
+		mount(Playground, {
+			props: {
+				modelValue: '<template>reset</template>',
+				options: { builtinImportMap: { imports: { vue: '/vue.js' } } }
+			}
+		});
+		expect(store.options.builtinImportMap.value.imports.vue).toBe('/vue.js');
+		expect(store.options.builtinImportMap.value.imports.custom)
+			.toBe('https://cdn.example.com/custom.js');
+		wrapper.unmount();
+	});
+
+	it('ignores unsafe site-level import overrides so instance defaults remain', () => {
+		applyPlaygroundImportMapOverride('vue', 'javascript:alert(1)');
+		const wrapper = mount(Playground, {
+			props: {
+				modelValue: '<template>unsafe</template>',
+				options: { builtinImportMap: { imports: { vue: '/vue.js' } } }
+			}
+		});
+		const imports = store.options.builtinImportMap.value.imports;
+		expect(imports.vue).toBe('/vue.js');
+		expect(JSON.stringify(imports)).not.toContain('javascript:');
+		wrapper.unmount();
+	});
+
+	it('ignores unsafe instance import map entries so builtin defaults remain', () => {
+		const wrapper = mount(Playground, {
+			props: {
+				modelValue: '<template>unsafe-instance</template>',
+				options: {
+					builtinImportMap: {
+						imports: {
+							vue: 'javascript:alert(1)',
+							evil: 'data:text/javascript,alert(1)'
+						}
+					}
+				}
+			}
+		});
+		const imports = store.options.builtinImportMap.value.imports;
+		expect(imports.vue).toBe(createBuiltinImports().vue);
+		expect(imports.evil).toBeUndefined();
+		expect(JSON.stringify(imports)).not.toContain('javascript:');
+		wrapper.unmount();
+	});
+
+	it('applies site-level default styles to preview headHTML', () => {
+		setPlaygroundSiteStyles({
+			'@deot/style/dist/index.css': 'https://cdn.example.com/theme.css',
+			'@my/ui/dist/index.css': '/assets/ui.css',
+			'evil': 'javascript:alert(1)'
+		});
+		const wrapper = mount(Playground, {
+			props: { modelValue: '<template>site-style</template>' }
+		});
+		const headHTML = wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML;
+		expect(headHTML).toContain('https://cdn.example.com/theme.css');
+		expect(headHTML).toContain('/assets/ui.css');
+		expect(headHTML).not.toContain(`${DEFAULT_CDN_URL}/@deot/style/dist/index.css`);
+		expect(headHTML).toContain(`${DEFAULT_CDN_URL}/@deot/style/dist/index.normalize-only.css`);
+		expect(headHTML).not.toContain('javascript:alert');
+		wrapper.unmount();
+	});
+
+	it('applies site-level style overrides to preview headHTML', () => {
+		applyPlaygroundStyleOverride(
+			'@deot/style/dist/index.css',
+			'https://cdn.example.com/custom-style.css'
+		);
+		const wrapper = mount(Playground, {
+			props: {
+				modelValue: '<template>style</template>'
+			}
+		});
+		const headHTML = wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML;
+		expect(headHTML).toContain('https://cdn.example.com/custom-style.css');
+		expect(headHTML).not.toContain(`${DEFAULT_CDN_URL}/@deot/style/dist/index.css`);
+		expect(headHTML).toContain(`${DEFAULT_CDN_URL}/@deot/style/dist/index.normalize-only.css`);
+		removePlaygroundStyleOverride('@deot/style/dist/index.css');
+		wrapper.unmount();
+	});
+
+	it('merges site modules below instance imports and escapes unsafe style hrefs', () => {
+		setPlaygroundSiteModules({
+			'site-lib': 'https://cdn.example.com/site-lib.js',
+			'vue': 'https://cdn.example.com/site-vue.js'
+		});
+		applyPlaygroundStyleOverride(
+			'@deot/style/dist/index.css',
+			'javascript:alert(1)'
+		);
+		applyPlaygroundStyleOverride(
+			'custom.css',
+			'https://cdn.example.com/x.css" onload="alert(1)'
+		);
+		const wrapper = mount(Playground, {
+			props: {
+				modelValue: '<template>site</template>',
+				options: {
+					builtinImportMap: {
+						imports: { vue: '/vue.js' }
+					}
+				}
+			}
+		});
+		const imports = store.options.builtinImportMap.value.imports;
+		expect(imports['site-lib']).toBe('https://cdn.example.com/site-lib.js');
+		expect(imports.vue).toBe('/vue.js');
+		const headHTML = wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML;
+		expect(headHTML).toContain(`${DEFAULT_CDN_URL}/@deot/style/dist/index.css`);
+		expect(headHTML).not.toContain('javascript:alert');
+		expect(headHTML).toContain('https://cdn.example.com/x.css&quot; onload=&quot;alert(1)');
+		expect(headHTML).not.toContain('onload="alert');
+		wrapper.unmount();
 	});
 
 	it('keeps the sandbox body theme in sync with the host document', async () => {

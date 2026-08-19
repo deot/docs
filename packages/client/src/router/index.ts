@@ -5,6 +5,7 @@ import DatabasePage from '../pages/database/index.vue';
 import EditorDemosPage from '../pages/renderer-editor-demos/index.vue';
 import EditorPage from '../pages/renderer-editor/index.vue';
 import HomePage from '../pages/home/index.vue';
+import PlaygroundResourcePage from '../pages/playground-resource/index.vue';
 import {
 	getDefaultLanguage,
 	getDocsDeploymentBase
@@ -149,6 +150,11 @@ export const createDocsRouter = (config: DocsConfig) => {
 			path: '/:lang/__docs/database',
 			component: DatabasePage,
 			meta: { docsDatabase: true, docsLocalized: true }
+		},
+		{
+			path: '/:lang/__docs/playground-resource',
+			component: PlaygroundResourcePage,
+			meta: { docsPlaygroundResource: true, docsLocalized: true }
 		},
 		{
 			path: '/:lang/__docs/renderer-editor',

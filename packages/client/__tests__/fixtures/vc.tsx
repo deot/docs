@@ -5,6 +5,7 @@ interface VcStubOptions {
 	message?: {
 		success: (value: string) => void;
 		error: (value: string) => void;
+		info?: (value: string) => void;
 	};
 	setScrollTop?: (value: number) => void;
 }
@@ -276,6 +277,44 @@ export const createVcStubs = (options: VcStubOptions = {}) => ({
 			>
 				{props.label}
 			</button>
+		)
+	}),
+	Modal: defineComponent({
+		props: {
+			modelValue: Boolean,
+			title: String,
+			width: [String, Number],
+			maskClosable: Boolean
+		},
+		emits: ['update:modelValue', 'ok', 'cancel', 'close'],
+		setup: (props, { emit, slots }) => () => (
+			props.modelValue
+				? (
+						<div class="modal" data-title={props.title}>
+							<div class="modal-body">{slots.default?.()}</div>
+							<div class="modal-footer">
+								<button type="button" data-modal="cancel" onClick={() => emit('cancel')}>Cancel</button>
+								<button type="button" data-modal="ok" onClick={() => emit('ok')}>OK</button>
+							</div>
+						</div>
+					)
+				: null
+		)
+	}),
+	Textarea: defineComponent({
+		props: {
+			modelValue: String,
+			rows: Number,
+			placeholder: String
+		},
+		emits: ['update:modelValue'],
+		setup: (props, { emit }) => () => (
+			<textarea
+				value={props.modelValue}
+				rows={props.rows}
+				placeholder={props.placeholder}
+				onInput={event => emit('update:modelValue', (event.target as HTMLTextAreaElement).value)}
+			/>
 		)
 	}),
 	Scroller: defineComponent({

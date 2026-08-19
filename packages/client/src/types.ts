@@ -168,9 +168,14 @@ export interface DocsConfig {
 	 */
 	namespace?: string;
 	/**
-	 * 远程 SFC 模块的逻辑名到资源地址映射，供 `docs:sfc` 解析。
+	 * 远程 SFC 的 Playground import 映射，也会作为全站 Playground 的 import 默认。
+	 * 同名 key 覆盖内置 CDN，也可追加。远程 SFC 会再把它传给实例 `builtinImportMap`。
 	 */
 	modules?: Record<string, string>;
+	/**
+	 * Playground 预览 CSS 的站点默认地址。同名 key 覆盖内置样式表，也可追加新表。
+	 */
+	styles?: Record<string, string>;
 	/**
 	 * 空闲预加载。`false` 关闭；`true` 用默认批次。
 	 */

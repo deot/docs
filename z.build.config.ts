@@ -43,6 +43,15 @@ if (isClientBrowserEntry) {
 		generateBundle(_options, bundle) {
 			const outputs = new Set(Object.keys(bundle));
 			const invalid: string[] = [];
+			const cssText = Object.values(bundle).flatMap((output) => {
+				if (output.type !== 'asset' || !output.fileName.endsWith('.css')) return [];
+				return [typeof output.source === 'string'
+					? output.source
+					: Buffer.from(output.source).toString('utf8')];
+			}).join('');
+			if (!cssText.includes('.docs-app') || !cssText.includes('docs-renderer-hero')) {
+				invalid.push('client CSS is missing shell or bundled renderer styles');
+			}
 			Object.values(bundle).forEach((output) => {
 				if (output.type !== 'chunk') return;
 				if (/\bprocess\.env\b/u.test(output.code)) {
@@ -67,6 +76,7 @@ if (isClientBrowserEntry) {
 	};
 	config.build = {
 		...config.build,
+		cssCodeSplit: false,
 		minify: true,
 		rolldownOptions: {
 			...config.build?.rolldownOptions,

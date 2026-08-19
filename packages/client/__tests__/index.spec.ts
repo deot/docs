@@ -4,13 +4,14 @@ import { createApp, defineComponent } from 'vue';
 import { defineRendererModule } from '@deot/docs-renderer';
 import { createDocsConfig, createDocsRuntime } from './fixtures/docs';
 
-const { use, provide, mount, disconnectEvents, router, startIdlePrefetch, stopPrefetch } = vi.hoisted(() => ({
+const { use, provide, mount, disconnectEvents, router, startIdlePrefetch, stopPrefetch, startPlaygroundResource } = vi.hoisted(() => ({
 	use: vi.fn(),
 	provide: vi.fn(),
 	mount: vi.fn(),
 	disconnectEvents: vi.fn(),
 	startIdlePrefetch: vi.fn(),
 	stopPrefetch: vi.fn(),
+	startPlaygroundResource: vi.fn(async () => () => {}),
 	router: {
 		name: 'router',
 		currentRoute: { value: { params: { lang: 'zh-CN' } } },
@@ -32,6 +33,12 @@ vi.mock('../src/modules/idle-prefetch', () => ({
 		})
 	}
 }));
+vi.mock('../src/modules/playground-resource', () => ({
+	PlaygroundResource: {
+		start: startPlaygroundResource
+	},
+	PlaygroundResourceCache: class {}
+}));
 
 describe('client entry', () => {
 	it('normalizes runtime and mounts the configured application', async () => {
@@ -39,7 +46,7 @@ describe('client entry', () => {
 		window.$docs = createDocsConfig({ locales: { 'zh-CN': { label: '简体中文' } } });
 		window.__DOCS_RUNTIME__ = createDocsRuntime({ workspace: '/site/' });
 		const client = await import('../src');
-		await Promise.resolve();
+		await vi.waitFor(() => expect(createApp).toHaveBeenCalled());
 		expect(window.$docs.runtime).toEqual({ mode: 'development', workspace: '/site/' });
 		expect(createApp).toHaveBeenCalledOnce();
 		expect(use).toHaveBeenCalledWith(router);
@@ -49,10 +56,11 @@ describe('client entry', () => {
 		expect(client.bootstrap).toBeTypeOf('function');
 		expect(client.Network).toBeDefined();
 		expect(client.Gateway).toBeInstanceOf(client.ResourceGateway);
+		expect(startPlaygroundResource).toHaveBeenCalled();
 
 		const explicit = createDocsConfig({ locales: { en: { label: 'English' } } });
 		router.currentRoute.value.params.lang = 'en';
-		const instance = client.bootstrap(explicit);
+		const instance = await client.bootstrap(explicit);
 		await Promise.resolve();
 		expect(window.$docs).toBe(explicit);
 		expect(explicit.runtime).toEqual({ mode: 'development', workspace: '/site/' });
@@ -78,12 +86,11 @@ describe('client entry', () => {
 				frames: { sortable: {} }
 			})]
 		});
-		const instance = client.bootstrap(explicit);
+		await client.bootstrap(explicit);
 		const rendererProvision = provide.mock.calls.find(call => (
 			Array.isArray(call[1]) && call[1].some((item: { identity?: { type?: string } }) => item.identity?.type === 'company:banner')
 		));
 		expect(rendererProvision).toBeDefined();
 		await Promise.resolve();
-		instance.disconnect();
 	});
 });

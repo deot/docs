@@ -15,11 +15,12 @@ export interface PreviewRequestHandlerOptions {
 }
 
 const CLIENT_PREFIX = '/@deot/docs-client/';
+const CLIENT_ENTRY = 'dist/index.js';
 const CLIENT_ASSET_PATTERN = new RegExp([
 	String.raw`(?:https?:)?//[^/"'\x60\s<>]+`,
 	String.raw`(?:/[^/"'\x60\s<>?#]+)*/@deot/docs-client`,
-	String.raw`(?:@[^/"'\x60\s<>?#]+)?/dist/`,
-	String.raw`(index\.js|index\.style\.css)`,
+	String.raw`(?:@[^/"'\x60\s<>?#]+)?`,
+	String.raw`(/dist/index\.style\.css|/dist/index\.js|/\+esm)`,
 	String.raw`((?:[?#][^"'\x60\s<>]*)?)(?=["'\x60\s<>]|$)`
 ].join(''), 'gu');
 
@@ -99,6 +100,7 @@ const ensureLocalClientDist = async (cwd: string) => {
 		path.resolve(cwd, 'packages/locale/package.json'),
 		path.resolve(cwd, 'packages/markdown/package.json'),
 		path.resolve(cwd, 'packages/playground/package.json'),
+		path.resolve(cwd, 'packages/renderer/package.json'),
 		path.resolve(cwd, 'packages/theme/package.json'),
 		path.resolve(cwd, 'packages/shims.d.ts'),
 		path.resolve(cwd, 'z.build.config.ts'),
@@ -108,6 +110,7 @@ const ensureLocalClientDist = async (cwd: string) => {
 		path.resolve(cwd, 'packages/locale/src'),
 		path.resolve(cwd, 'packages/markdown/src'),
 		path.resolve(cwd, 'packages/playground/src'),
+		path.resolve(cwd, 'packages/renderer/src'),
 		path.resolve(cwd, 'packages/theme/src')
 	];
 	const outputTime = getLatestModification(output);
@@ -132,7 +135,9 @@ const rewriteLocalClient = (html: Buffer, clientDist?: string) => (
 	clientDist
 		? Buffer.from(html.toString('utf8').replace(
 				CLIENT_ASSET_PATTERN,
-				(_url, filename: string, suffix: string) => `${CLIENT_PREFIX}${filename}${suffix}`
+				(_url, asset: string, suffix: string) => (
+					`${CLIENT_PREFIX}${asset === '/+esm' ? CLIENT_ENTRY : asset.slice(1)}${suffix}`
+				)
 			))
 		: html
 );
@@ -216,7 +221,8 @@ export const createPreviewRequestHandler = (options: PreviewRequestHandlerOption
 			let relative = pathname.replace(/^\/+/, '');
 			if (clientDist && pathname.startsWith(CLIENT_PREFIX)) {
 				root = clientDist;
-				relative = pathname.slice(CLIENT_PREFIX.length);
+				const rest = pathname.slice(CLIENT_PREFIX.length);
+				relative = rest === '+esm' ? 'index.js' : rest.replace(/^dist\//u, '');
 			}
 			let filename = path.resolve(root, relative || 'index.html');
 			if (!isInside(root, filename)) {
@@ -258,8 +264,10 @@ export const createPreviewRequestHandler = (options: PreviewRequestHandlerOption
  * 启动生产模式预览，但不生成站点输出目录。
  *
  * docs 仓库源码在需要时构建并提供本地 client；消费项目不存在对应的软件包
- * 工作区，因此继续使用 HTML 中声明的远程发布地址。本地替换只识别标准的
- * `@deot/docs-client[/@version]/dist/index.*` 产物路径，不绑定具体 CDN 域名。
+ * 工作区，因此继续使用 HTML 中声明的远程发布地址。本地替换识别
+ * `@deot/docs-client[/@version]/dist/index.*`，以及 jsDelivr 的 `/+esm`
+ * （映射到 `dist/index.js`），不绑定具体 CDN 域名。本地地址保留 `dist/`，
+ * 与 package.json 的 `main` / `style` 一致。
  * @param options CLI/dever 选项。
  * @returns 已开始监听的 HTTP 服务器。
  */

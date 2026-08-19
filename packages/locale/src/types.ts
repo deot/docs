@@ -7,6 +7,7 @@ export interface ClientLocaleMessages {
 	demos: Record<string, string>;
 	search: Record<string, string>;
 	database: Record<string, string>;
+	playgroundResource: Record<string, string>;
 	paging: Record<string, string>;
 }
 

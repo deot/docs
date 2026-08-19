@@ -56,6 +56,14 @@
 				<ClientIcon name="editor" />
 			</button>
 			<RouterLink
+				class="docs-header__action docs-header__playground-resource"
+				:to="playgroundResourcePath"
+				:title="t('client.header.playgroundResource')"
+				:aria-label="t('client.header.playgroundResource')"
+			>
+				<ClientIcon name="playgroundResource" />
+			</RouterLink>
+			<RouterLink
 				class="docs-header__action docs-header__database"
 				:to="databasePath"
 				:title="t('client.header.database')"
@@ -86,6 +94,7 @@ const { t } = useLocale();
 const localeMenuVisible = ref(false);
 const lang = computed(() => String(route.params.lang));
 const databasePath = computed(() => `/${lang.value}/__docs/database`);
+const playgroundResourcePath = computed(() => `/${lang.value}/__docs/playground-resource`);
 const localeOptions = computed(() => Object.entries(config.locales).map(([value, item]) => ({
 	label: item.label,
 	value
@@ -223,6 +232,13 @@ const handleEditor = async () => {
 	}
 
 	@include element(editor) {
+		.docs-client-icon {
+			width: 22px;
+			height: 22px;
+		}
+	}
+
+	@include element(playground-resource) {
 		.docs-client-icon {
 			width: 22px;
 			height: 22px;

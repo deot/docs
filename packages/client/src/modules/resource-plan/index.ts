@@ -368,7 +368,9 @@ class ResourcePlanner {
 		let sidebarValues: string[] | null = null;
 		for (const [pattern, route] of Object.entries(config.routes)) {
 			const normalizedPattern = pattern.startsWith('/') ? pattern : `/${pattern}`;
-			if (!route || pattern === '/' || pattern === '*' || normalizedPattern === '/__docs/database') continue;
+			if (!route || pattern === '/' || pattern === '*'
+				|| normalizedPattern === '/__docs/database'
+				|| normalizedPattern === '/__docs/playground-resource') continue;
 			if (typeof route === 'object' && route.content === null) continue;
 			if (typeof route === 'string' && (
 				/^[a-z][a-z\d+.-]*:/i.test(route) || route.startsWith('//')

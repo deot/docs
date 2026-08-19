@@ -44,6 +44,12 @@ describe('docs router', () => {
 		expect(router.currentRoute.value.meta.docsDatabase).toBe(true);
 		await router.push('/fr-FR/__docs/database');
 		expect(router.currentRoute.value.path).toBe('/zh-CN/__docs/database');
+
+		await router.push('/zh-CN/__docs/playground-resource');
+		expect(router.currentRoute.value.path).toBe('/zh-CN/__docs/playground-resource');
+		expect(router.currentRoute.value.meta.docsPlaygroundResource).toBe(true);
+		await router.push('/fr-FR/__docs/playground-resource');
+		expect(router.currentRoute.value.path).toBe('/zh-CN/__docs/playground-resource');
 	});
 
 	it('derives content values from explicit config, params and path', async () => {

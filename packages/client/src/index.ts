@@ -2,10 +2,13 @@ import { computed, createApp, watch } from 'vue';
 import { provideLocale, resolveLocale } from '@deot/docs-locale';
 import '../../../node_modules/@deot/style/dist/index.normalize-only.css';
 import '../../../node_modules/@deot/vc-components/dist/index.style.css';
+// 浏览器入口会内联 Renderer JS；这里从源码打入模块样式，不依赖 renderer dist。
+import '../../renderer/src/styles/style.scss';
 import App from './app.vue';
 import { provideRendererModules } from './components/renderer';
 import { connectResourceEvents } from './events';
 import { IdlePrefetch } from './modules/idle-prefetch';
+import { PlaygroundResource } from './modules/playground-resource';
 import { ThemeRuntime } from './modules/theme';
 import { createDocsRouter } from './router';
 import { getDefaultLanguage } from './utils/resolver';
@@ -15,8 +18,21 @@ import type { DocsConfig } from './types';
 export * from './utils/resolver';
 export * from './utils/runtime';
 export * from './types';
-export { Gateway, Network, ResourceGateway, Theme } from './modules';
+export {
+	Gateway,
+	Network,
+	PlaygroundResource,
+	PlaygroundResourceCache,
+	ResourceGateway,
+	Theme
+} from './modules';
 export type {
+	PlaygroundResourceKind,
+	PlaygroundResourceLastAction,
+	PlaygroundResourceProbeSummary,
+	PlaygroundResourceRecord,
+	PlaygroundResourceRequestStatus,
+	PlaygroundResourceRow,
 	ResourceContentRecord,
 	ResourceLoadOptions,
 	ResourcePollOptions,
@@ -36,10 +52,11 @@ export {
 } from './pages/renderer-editor-demos/catalog';
 export type { RendererEditorDemo } from './pages/renderer-editor-demos/catalog';
 
-export const bootstrap = (config?: DocsConfig) => {
+export const bootstrap = async (config?: DocsConfig) => {
 	config ||= window.$docs || { locales: {}, routes: {} };
 	initializeDocsRuntime(window, config);
 	const stopTheme = ThemeRuntime.start(config);
+	const stopPlaygroundResource = await PlaygroundResource.start(config);
 	const router = createDocsRouter(config);
 	const app = createApp(App);
 	app.use(router);
@@ -71,6 +88,7 @@ export const bootstrap = (config?: DocsConfig) => {
 		disconnectEvents();
 		stopPrefetch();
 		stopDocumentLanguage();
+		stopPlaygroundResource();
 		stopTheme();
 	};
 	return { app, router, disconnect };
@@ -78,4 +96,4 @@ export const bootstrap = (config?: DocsConfig) => {
 
 if (typeof window !== 'undefined'
 	&& typeof document !== 'undefined'
-	&& document.querySelector('#app')) bootstrap();
+	&& document.querySelector('#app')) void bootstrap();

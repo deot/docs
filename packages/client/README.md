@@ -41,7 +41,8 @@ pnpm add @deot/docs-client
 		resolve: {
 			markdown: ({ value }) => `./${value}.md`
 		},
-		modules: {}
+		modules: {},
+		styles: {}
 	};
 </script>
 
@@ -67,7 +68,8 @@ const { app, router, disconnect } = bootstrap(window.$docs);
 | `routes` | 去掉语言前缀后的路由配置。字符串和函数表示重定向。 |
 | `base` | production 资源的基准 URL。 |
 | `namespace` | IndexedDB 缓存隔离标识；未设置时使用规范化后的 `base`。 |
-| `modules` | 远程 SFC 中裸模块名到 URL 的映射。 |
+| `modules` | 站点级裸模块名到 URL 的映射，对所有 Playground（含 Markdown）生效；远程 SFC 仍可通过实例 `builtinImportMap` 覆盖。 |
+| `styles` | 站点级预览 CSS 默认地址；同名 key 覆盖内置样式表，也可追加。管理页 `/:lang/__docs/playground-resource` 与 `modules` 同一张表管理。 |
 | `prefetch` | 空闲预加载开关或 `{ batchSize, idleTimeout }` 配置，默认开启。 |
 | `theme` | 主题开关或 `{ default: 'system' \| 'light' \| 'dark' }`，默认跟随系统。 |
 | `home` | 可选的 `{ locales }` 首页配置；语言值是 Renderer 文档或 `.page.json` 地址。未配置时首页为空。 |
@@ -217,7 +219,7 @@ window.$docs = {
 };
 ```
 
-设置 `prefetch: false` 可关闭自动预加载，不影响诊断页的手动 Prefetch。诊断页位于 `/:lang/__docs/database`。离线失败会保留历史内容和 error 状态；浏览器恢复联网后，只补充本会话失败、未完成和新发现的资源。
+设置 `prefetch: false` 可关闭自动预加载，不影响诊断页的手动 Prefetch。诊断页位于 `/:lang/__docs/database`。Playground 资源管理页位于 `/:lang/__docs/playground-resource`，可覆盖模块 import 与预览 CSS，并对当前地址做探测（阶段状态 waiting/pending/success/error）；`$docs.modules` 与 `$docs.styles` 作为站点默认对所有 Playground 生效，并出现在同一张管理表中。默认地址、探测结果与覆盖都保存在独立的 `deot-docs-playground-resource` IndexedDB 中；当前地址与默认不同才算覆盖，启动时只有覆盖会灌进内存。保存后对新打开的 Playground 生效；已挂载的 Playground 不会热更新 import map。回滚覆盖后回退默认地址。离线失败会保留历史内容和 error 状态；浏览器恢复联网后，只补充本会话失败、未完成和新发现的资源。
 
 ## Runtime 与资源寻址
 
@@ -310,8 +312,9 @@ const unsubscribe = Gateway.subscribe(identity, () => undefined);
 
 - Runtime：`initializeDocsRuntime`、`getDocsConfig`、`getDocsRuntime`。
 - Resolver：`getDocsBase`、`getDocsDeploymentBase`、`getDefaultLanguage`、`getDocsNamespace`、`resolveResource`、`createResourceIdentity`、`resourceIdentityKey`。
+- Playground 资源：`PlaygroundResource`、`PlaygroundResourceCache`。
 - 演示文档：`createRendererEditorDemoDocument`、`RENDERER_EDITOR_DEMOS`、`listRendererEditorDemos`、`isRendererEditorDemo`、`rendererEditorDemoPath`。
-- 类型：`DocsConfig`、`DocsPrefetchOptions`、`DocsRoute`、`DocsRuntime`、`DocsLinkContext`、`DocsResourceType`、`ResourceIdentity`、`ResourceRecord`、`ResourceContentRecord`、`ResourceLoadOptions`、`ResourcePrefetchOptions` 等。
+- 类型：`DocsConfig`、`DocsPrefetchOptions`、`DocsRoute`、`DocsRuntime`、`DocsLinkContext`、`DocsResourceType`、`ResourceIdentity`、`ResourceRecord`、`ResourceContentRecord`、`ResourceLoadOptions`、`ResourcePrefetchOptions`、`PlaygroundResourceRecord` 等。
 
 ## 仓库内验证
 

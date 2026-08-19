@@ -311,7 +311,7 @@
 		if (window.__DOCS_RUNTIME__?.mode !== 'development') {
 			const stylesheet = document.createElement('link');
 			stylesheet.rel = 'stylesheet';
-			stylesheet.href = '//unpkg.com/@deot/docs-client/dist/index.style.css';
+			stylesheet.href = 'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css';
 			document.head.appendChild(stylesheet);
 		}
 
@@ -319,7 +319,7 @@
 		script.type = 'module';
 		script.src = window.__DOCS_RUNTIME__?.mode === 'development'
 			? '/packages/client/src/index.ts'
-			: '//unpkg.com/@deot/docs-client/dist/index.js';
+			: 'https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm';
 		document.body.appendChild(script);
 	</script>
 </body>

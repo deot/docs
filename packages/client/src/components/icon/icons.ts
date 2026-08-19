@@ -28,6 +28,13 @@ export const CLIENT_ICON_DEFINITIONS = {
 			'M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6'
 		].join('')
 	},
+	playgroundResource: {
+		filled: false,
+		path: [
+			'M3 4.5h18v3H3zm0 6h12v3H3zm0 6h18v3H3z',
+			'M16.5 8.25 22 12l-5.5 3.75V8.25z'
+		].join('')
+	},
 	editor: {
 		filled: false,
 		path: [

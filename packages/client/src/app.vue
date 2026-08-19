@@ -1,12 +1,18 @@
 <template>
-	<div class="docs-app" :class="{ 'docs-app--database': route.meta?.docsDatabase, 'docs-app--editor': isEditorShell }">
+	<div
+		class="docs-app"
+		:class="{
+			'docs-app--database': isUtilityShell,
+			'docs-app--editor': isEditorShell
+		}"
+	>
 		<div class="docs-app__header">
 			<ResourceSlot name="header" />
 		</div>
 		<div
 			class="docs-layout"
 			:class="{
-				'docs-layout--database': route.meta?.docsDatabase,
+				'docs-layout--database': isUtilityShell,
 				'docs-layout--editor': isEditorShell,
 				'docs-layout--home': route.meta?.docsHome
 			}"
@@ -52,6 +58,9 @@ import { isRendererEditorDemo } from './pages/renderer-editor-demos/catalog';
 
 const route = useRoute();
 const mainScroller = ref<ScrollerExposed>();
+const isUtilityShell = computed(() => (
+	Boolean(route.meta?.docsDatabase || route.meta?.docsPlaygroundResource)
+));
 const isEditorShell = computed(() => (
 	Boolean(route.meta?.docsEditor)
 	|| (Boolean(route.meta?.docsEditorDemos) && isRendererEditorDemo(route.query.name))
