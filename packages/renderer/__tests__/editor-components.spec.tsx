@@ -15,9 +15,11 @@ import JsonPopup from '../src/editor/json/popup';
 import ArrayEditor from '../src/editor/array/index.vue';
 import ImageSource from '../src/editor/common/image/index.vue';
 import NumberEditor from '../src/editor/common/number/index.vue';
+import RadiusEditor from '../src/editor/common/radius/index.vue';
 import SortableBox from '../src/editor/common/sortable-box/index.vue';
 import { toRecord } from '../src/modules/shared/utils';
 import PageEditor from '../src/modules/shared/page/editor.vue';
+import PageEditorShell from '../src/editor/page/index.vue';
 import PreviewPopup from '../src/assist/preview/popup.vue';
 import ActionsEditor from '../src/modules/shared/actions/editor.vue';
 import FeaturesEditor from '../src/modules/sortable/features/editor.vue';
@@ -58,6 +60,9 @@ describe('renderer editor surfaces', () => {
 		expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([0]);
 		wrapper.findComponent({ name: 'vc-input-number' }).vm.$emit('update:modelValue', '');
 		expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([0]);
+		const beforeInvalid = wrapper.emitted('update:modelValue')?.length;
+		wrapper.findComponent({ name: 'vc-input-number' }).vm.$emit('update:modelValue', 'nope');
+		expect(wrapper.emitted('update:modelValue')?.length).toBe(beforeInvalid);
 	});
 
 	it('treats max width 0 as unset and does not clamp boxed modules to 320', async () => {
@@ -187,8 +192,24 @@ describe('renderer editor surfaces', () => {
 		});
 		await functional.get('.update-item').trigger('click');
 		expect(functional.emitted('update:modelValue')?.at(-1)?.[0]).toEqual([{ key: 'a', value: 9 }]);
+		await functional.get('.docs-renderer-array-editor__remove').trigger('click');
+		expect(functional.emitted('update:modelValue')?.at(-1)?.[0]).toEqual([{ key: 'a', value: 9 }]);
 		expect(keyed.find('.docs-renderer-array-editor__handle').exists()).toBe(false);
 		expect(functional.find('.docs-renderer-array-editor__handle').exists()).toBe(false);
+
+		const numbered = mount(ArrayEditor, {
+			props: {
+				modelValue: [{ id: 1, value: 'a' }],
+				itemKey: 'id',
+				createItem: () => ({ id: 2, value: 'b' }),
+				max: 1
+			}
+		});
+		await numbered.find('.docs-renderer-array-editor__add').trigger('click');
+		expect(numbered.emitted('update:modelValue')).toBeUndefined();
+		await numbered.setProps({ modelValue: [{ id: 2, value: 'c' }] });
+		const numberedRows = numbered.findComponent({ name: 'vc-sort-list' }).props('modelValue') as Array<{ id: string }>;
+		expect(numberedRows).toHaveLength(1);
 	});
 
 	it('keeps every built-in module editor on immutable update events', async () => {
@@ -305,6 +326,9 @@ describe('renderer editor surfaces', () => {
 		await vi.waitFor(() => {
 			expect(String(wrapper.emitted('update:modelValue')?.[1]?.[0])).toMatch(/^data:image\/png;base64,/);
 		});
+		Object.defineProperty(input.element, 'files', { configurable: true, value: [] });
+		await input.trigger('change');
+		expect(wrapper.emitted('update:modelValue')).toHaveLength(2);
 		wrapper.unmount();
 	});
 
@@ -717,7 +741,102 @@ describe('renderer editor surfaces', () => {
 		});
 		await flushPromises();
 		expect(wrapper.text()).toContain('Preview');
+		const modal = wrapper.findComponent({ name: 'vc-modal' });
+		modal.vm.$emit('update:modelValue', false);
 		await wrapper.find('.vc-modal__close').trigger('click');
+		modal.vm.$emit('cancel');
 		expect(wrapper.emitted('portal-fulfilled')).toHaveLength(1);
+	});
+
+	it('splits, edits and merges independent corner radii', async () => {
+		const wrapper = mount(RadiusEditor, { props: { modelValue: { borderRadius: 8 } } });
+		await wrapper.get('.docs-renderer-radius-editor__independent').trigger('click');
+		expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toEqual({
+			borderRadius: 8,
+			borderRadiusTopLeft: 8,
+			borderRadiusTopRight: 8,
+			borderRadiusBottomRight: 8,
+			borderRadiusBottomLeft: 8
+		});
+		await wrapper.setProps({
+			modelValue: {
+				borderRadius: 8,
+				borderRadiusTopLeft: 8,
+				borderRadiusTopRight: 8,
+				borderRadiusBottomRight: 8,
+				borderRadiusBottomLeft: 8
+			}
+		});
+		wrapper.findAllComponents(NumberEditor)[1].vm.$emit('update:modelValue', 4);
+		expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toEqual({ borderRadiusTopLeft: 4 });
+		wrapper.findAllComponents(NumberEditor)[0].vm.$emit('update:modelValue', 12);
+		expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toEqual({
+			borderRadius: 12,
+			borderRadiusTopLeft: 12,
+			borderRadiusTopRight: 12,
+			borderRadiusBottomRight: 12,
+			borderRadiusBottomLeft: 12
+		});
+		await wrapper.get('.docs-renderer-radius-editor__independent').trigger('click');
+		expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toEqual({
+			borderRadius: 8,
+			borderRadiusTopLeft: undefined,
+			borderRadiusTopRight: undefined,
+			borderRadiusBottomRight: undefined,
+			borderRadiusBottomLeft: undefined
+		});
+	});
+
+	it('forwards page layout patches through the inspector shell', async () => {
+		const layout = createEmptyRendererDocument('sortable').layout;
+		const wrapper = mount(PageEditorShell, {
+			props: {
+				node: createRendererPageNode(layout),
+				modelValue: toRecord(layout),
+				context
+			}
+		});
+		wrapper.findComponent(PageEditor).vm.$emit('update:modelValue', {
+			...layout,
+			maxWidth: 960
+		});
+		expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toEqual(expect.objectContaining({
+			maxWidth: 960
+		}));
+	});
+
+	it('updates page layout and reports catalog failures from the inspector', async () => {
+		const store = new RendererStore(createEmptyRendererDocument('sortable'));
+		const catalog = createRendererModuleCatalog([
+			{ type: 'page', load: async () => { throw new Error('page offline'); } },
+			{ type: 'text', load: async () => { throw 'text offline'; } }
+		]);
+		const wrapper = mount(PropertyEditor, {
+			props: { store, catalog, context, mode: 'sortable' }
+		});
+		await flushPromises();
+		wrapper.findComponent(PageEditor).vm.$emit('update:modelValue', {
+			...store.document.layout,
+			maxWidth: 900
+		});
+		expect(store.document.layout).toEqual(expect.objectContaining({ maxWidth: 900 }));
+		wrapper.findComponent(PageEditor).vm.$emit('update:modelValue', { mode: 'grid' });
+		expect(store.document.layout.mode).toBe('sortable');
+
+		const document = createEmptyRendererDocument('sortable');
+		document.blocks.push({
+			id: 'text',
+			module: { type: 'text', version: 1, props: { text: 'Hi' } },
+			appearance: { marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }
+		});
+		const textStore = new RendererStore(document);
+		textStore.select('text');
+		const failing = mount(PropertyEditor, {
+			props: { store: textStore, catalog, context, mode: 'sortable' }
+		});
+		await flushPromises();
+		expect(failing.text()).toContain('text offline');
+		failing.unmount();
+		wrapper.unmount();
 	});
 });

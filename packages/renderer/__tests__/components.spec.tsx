@@ -14,6 +14,7 @@ import {
 	defineRendererModule
 } from '../src';
 import type { RendererDocument, RendererSortableDocument } from '../src';
+import * as documentApi from '../src/document';
 import PageEditor from '../src/modules/shared/page/editor.vue';
 import TextEditor from '../src/modules/shared/text/editor.vue';
 import DraggableFrame from '../src/frame/draggable/index.vue';
@@ -633,6 +634,84 @@ describe('Renderer and Combo', () => {
 		});
 		await flushPromises();
 		expect(offline.text()).toContain('Module offline');
+
+		const crashing = defineRendererModule({
+			identity: { type: 'crash', version: 1, label: 'Crash', category: 'Test' },
+			widget: { visible: false },
+			data: { create: () => ({}) },
+			viewer: defineComponent({
+				setup() {
+					return () => {
+						throw new Error('viewer crashed');
+					};
+				}
+			}),
+			editor: defineComponent(() => () => h('div')),
+			frames: {
+				sortable: {},
+				draggable: {
+					initialPlacement: () => ({ x: 0, y: 0, width: 80, height: 40, rotate: 0, zIndex: 1 })
+				}
+			}
+		});
+		const live = mount(RendererNode, {
+			props: {
+				node: {
+					id: 'crash',
+					module: { type: 'crash', version: 1, props: {} },
+					appearance: { marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }
+				},
+				context: { scene: 'combo', frameMode: 'sortable', readonly: false },
+				catalog: createRendererModuleCatalog([crashing]),
+				frameMode: 'sortable'
+			}
+		});
+		await flushPromises();
+		await live.trigger('click');
+		await live.trigger('auxclick');
+		expect(live.classes()).toContain('is-editing');
+		expect(live.text()).toContain('viewer crashed');
+		live.unmount();
+
+		const floating = mount(RendererNode, {
+			props: {
+				node: invalidValue<import('../src').RendererNode>({
+					id: 'free',
+					module: { type: 'crash', version: 1, props: {} }
+				}),
+				context: { scene: 'renderer', frameMode: 'draggable', readonly: true },
+				catalog: createRendererModuleCatalog([crashing]),
+				frameMode: 'draggable'
+			}
+		});
+		await flushPromises();
+		expect(htmlElementOf(floating).style.position).toBe('');
+		floating.unmount();
+	});
+
+	it('observes host size and surfaces thrown prepare failures', async () => {
+		const observe = vi.fn();
+		const disconnect = vi.fn();
+		vi.stubGlobal('ResizeObserver', class {
+			observe = observe;
+			unobserve = vi.fn();
+			disconnect = disconnect;
+		});
+		const observed = mount(Renderer, {
+			props: { document: createEmptyRendererDocument('draggable'), fit: 'contain' }
+		});
+		await flushPromises();
+		expect(observe).toHaveBeenCalled();
+		observed.unmount();
+		expect(disconnect).toHaveBeenCalled();
+		vi.unstubAllGlobals();
+
+		const spy = vi.spyOn(documentApi, 'prepareRendererDocument').mockRejectedValueOnce('prepare exploded');
+		const failed = mount(Renderer, { props: { document: createEmptyRendererDocument() } });
+		await flushPromises();
+		expect(failed.find('.docs-renderer__error').text()).toContain('prepare exploded');
+		spy.mockRestore();
+		failed.unmount();
 	});
 
 	it('reacts to nested document changes and replacement module catalogs', async () => {

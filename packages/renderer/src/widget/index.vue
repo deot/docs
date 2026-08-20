@@ -85,7 +85,7 @@
 	</aside>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, shallowRef, watch } from 'vue';
 import { Scroller } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import type { RendererModuleCatalog } from '../catalog';
@@ -116,7 +116,7 @@ const { t } = useLocale(computed(() => props.context.locale));
 const showTip = ref(true);
 const currentTab = ref('');
 const expanded = ref<Record<string, boolean>>({});
-const definitions = ref<RendererModuleDefinition[]>([]);
+const definitions = shallowRef<RendererModuleDefinition[]>([]);
 let generation = 0;
 const getWidget = (module: RendererModuleDefinition) => module.frames[props.mode]?.widget || module.widget;
 const canCreate = (module: RendererModuleDefinition) => {
