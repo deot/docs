@@ -165,3 +165,47 @@ onBeforeUnmount(() => {
 	observer?.disconnect();
 });
 </script>
+<style lang="scss">
+@use '../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+@media (prefers-reduced-motion: reduce) {
+	.docs-renderer * {
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+.docs-renderer {
+	width: 100%;
+	min-width: 0;
+	color: varfix(foreground-color);
+
+	&__viewport {
+		position: relative;
+		min-width: 0;
+		overflow: hidden;
+	}
+
+	&__canvas {
+		box-sizing: border-box;
+	}
+
+	&[data-renderer-mode="sortable"] &__canvas > .docs-renderer-node {
+		width: 100%;
+		max-width: var(--docs-renderer-content-width, 100%);
+		margin-inline: auto;
+
+		&.is-full-width {
+			max-width: none;
+		}
+	}
+
+	&__error {
+		padding: 16px;
+		color: varfix(foreground-color-mute);
+		background: varfix(background-color-soft);
+		border: 1px dashed varfix(border-color);
+		border-radius: 8px;
+	}
+}
+</style>

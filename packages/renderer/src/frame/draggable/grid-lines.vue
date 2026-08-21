@@ -36,3 +36,35 @@ const yArr = computed(() => {
 	return Array.from({ length }, (_, index) => index * step);
 });
 </script>
+<style lang="scss">
+@use '../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-grid-lines {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	pointer-events: none;
+
+	&__x {
+		position: absolute;
+		top: 0;
+		width: 1px;
+		height: 100%;
+		border-left: 1px dotted varfix(border-color);
+		box-sizing: border-box;
+	}
+
+	&__y {
+		position: absolute;
+		left: 0;
+		width: 100%;
+		height: 1px;
+		border-top: 1px dotted varfix(border-color);
+		box-sizing: border-box;
+	}
+}
+</style>

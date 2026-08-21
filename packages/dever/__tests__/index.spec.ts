@@ -18,6 +18,19 @@ import { findPlugin, htmlTagsOf, pluginHook } from './fixtures';
 
 // @vitest-environment node
 describe('dever configuration', () => {
+	const createSiteProject = (prefix = 'docs-site-') => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+		fs.mkdirSync(path.join(root, 'site/zh-CN'), { recursive: true });
+		fs.mkdirSync(path.join(root, 'packages/client/src'), { recursive: true });
+		fs.writeFileSync(path.join(root, 'site/index.html'), '<div id="site-docs"></div>');
+		fs.writeFileSync(path.join(root, 'site/zh-CN/guide.md'), '# Guide');
+		fs.writeFileSync(path.join(root, 'README.md'), '# Root');
+		fs.writeFileSync(path.join(root, 'packages/client/README.md'), '# Client');
+		fs.writeFileSync(path.join(root, 'packages/client/src/index.ts'), 'export {};');
+		fs.writeFileSync(path.join(root, 'package.json'), '{}');
+		return root;
+	};
+
 	it('resolves page editor saves inside the selected workspace only', () => {
 		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-page-save-'));
 		const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-page-save-outside-'));
@@ -139,8 +152,10 @@ describe('dever configuration', () => {
 	});
 
 	it('maps package readmes to local dev resources and remote preview resources', () => {
-		const html = fs.readFileSync(path.resolve('site/index.html'), 'utf8');
-		const configScript = html.match(/<script>([\s\S]*?)<\/script>/u)?.[1];
+		const html = fs.readFileSync(path.resolve('index.html'), 'utf8');
+		const configScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/gu)]
+			.map(([, script]) => script)
+			.find(script => script.includes('window.$docs'));
 		expect(configScript).toBeTruthy();
 		const target: Record<string, any> = {};
 		vm.runInNewContext(configScript!, {
@@ -237,7 +252,7 @@ describe('dever configuration', () => {
 
 	it('exports run and creates isolated development, build and preview configs', () => {
 		expect(Dever.run).toBeTypeOf('function');
-		const development = Dever.createDeverConfig({ workspace: 'site' });
+		const development = Dever.createDeverConfig({ workspace: '.' });
 		expect(development.root).toBe(process.cwd());
 		expect(development.resolve?.alias).toMatchObject({
 			'@deot/docs-locale': expect.stringContaining('packages/locale/src/index.ts'),
@@ -248,39 +263,56 @@ describe('dever configuration', () => {
 		});
 		expect(development.server?.watch?.ignored).toEqual(['**/coverage/**', '**/dist/**']);
 
-		const production = Dever.createDeverConfig({
-			workspace: 'site',
+		const rootProduction = Dever.createDeverConfig({
+			workspace: '.',
 			outDir: 'preview',
 			build: true
 		});
-		expect(production.root).toBe(path.resolve('site'));
-		expect(production.build?.rollupOptions?.input).toBe(path.resolve('site/index.html'));
-		expect(production.build?.outDir).toBe(path.resolve('preview'));
-		expect(() => Dever.createDeverConfig({
-			workspace: 'site',
-			outDir: '.',
-			build: true
-		})).toThrow('Build outDir must not contain the workspace');
-		expect(() => Dever.createDeverConfig({
-			workspace: 'site',
-			outDir: 'site',
-			build: true
-		})).toThrow('Build outDir must not contain the workspace');
-		expect(Dever.createDeverConfig({
-			workspace: 'site',
-			outDir: 'site/preview',
-			build: true
-		}).build?.outDir).toBe(path.resolve('site/preview'));
-
-		const preview = Dever.createDeverConfig({
-			workspace: 'site',
-			preview: true
-		});
-		expect(preview.root).toBe(path.resolve('site'));
-		expect(preview.build).toBeUndefined();
-		expect(preview.server).toBeUndefined();
+		expect(rootProduction.root).toBe(fs.realpathSync(process.cwd()));
+		expect(rootProduction.build?.rollupOptions?.input).toBe(path.resolve('index.html'));
+		expect(rootProduction.build?.outDir).toBe(path.resolve('preview'));
 		expect(() => Dever.createDeverConfig({ build: true, preview: true }))
 			.toThrow('build and preview modes are mutually exclusive');
+
+		const root = createSiteProject('docs-site-config-');
+		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
+		try {
+			const production = Dever.createDeverConfig({
+				workspace: 'site',
+				outDir: 'preview',
+				build: true
+			});
+			expect(production.root).toBe(fs.realpathSync(path.join(root, 'site')));
+			expect(production.build?.rollupOptions?.input)
+				.toBe(path.join(fs.realpathSync(path.join(root, 'site')), 'index.html'));
+			expect(production.build?.outDir).toBe(path.resolve(root, 'preview'));
+			expect(() => Dever.createDeverConfig({
+				workspace: 'site',
+				outDir: '.',
+				build: true
+			})).toThrow('Build outDir must not contain the workspace');
+			expect(() => Dever.createDeverConfig({
+				workspace: 'site',
+				outDir: 'site',
+				build: true
+			})).toThrow('Build outDir must not contain the workspace');
+			expect(Dever.createDeverConfig({
+				workspace: 'site',
+				outDir: 'site/preview',
+				build: true
+			}).build?.outDir).toBe(path.resolve(root, 'site/preview'));
+
+			const preview = Dever.createDeverConfig({
+				workspace: 'site',
+				preview: true
+			});
+			expect(preview.root).toBe(fs.realpathSync(path.join(root, 'site')));
+			expect(preview.build).toBeUndefined();
+			expect(preview.server).toBeUndefined();
+		} finally {
+			restoreCwd.mockRestore();
+			fs.rmSync(root, { recursive: true, force: true });
+		}
 	});
 
 	it('skips only a nested build output while retaining its static siblings', () => {
@@ -393,8 +425,8 @@ describe('dever configuration', () => {
 		fs.mkdirSync(path.join(clientDist, 'chunks'), { recursive: true });
 		fs.writeFileSync(path.join(workspace, 'index.html'), [
 			'<!DOCTYPE html>',
-			'<link href="https://unpkg.com/@deot/docs-client@1.0.0/dist/index.style.css?theme=docs#style">',
-			'<script type="module" src="//unpkg.com/@deot/docs-client/dist/index.js"></script>',
+			'<link href="https://cdn.jsdelivr.net/npm/@deot/docs-client@1.0.0/dist/index.style.css?theme=docs#style">',
+			'<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js"></script>',
 			'<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm"></script>',
 			'<script>const client = "http://cdn.example.com/vendor/npm/@deot/docs-client@next/dist/index.js?module#entry";</script>',
 			'<script>const esm = "https://cdn.jsdelivr.net/npm/@deot/docs-client@next/+esm?module#entry";</script>',
@@ -434,8 +466,8 @@ describe('dever configuration', () => {
 			expect(html).toContain('@deot/docs-client/dist/index.js');
 			expect(html).toContain('https://esm.sh/@deot/docs-client');
 			expect(html).toContain('https://cdn.example.com/@deot/docs-client-extra/dist/index.js');
-			expect(html).not.toContain('https://unpkg.com/@deot/docs-client@1.0.0/dist/index.style.css');
-			expect(html).not.toContain('//unpkg.com/@deot/docs-client/dist/index.js');
+			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client@1.0.0/dist/index.style.css');
+			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js');
 			expect(html).not.toContain('http://cdn.example.com/vendor/npm/@deot/docs-client@next/dist/index.js');
 			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css');
 			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm');
@@ -478,9 +510,9 @@ describe('dever configuration', () => {
 					{ headers: { Accept: 'text/html' } }
 				)).text();
 				expect(remoteHtml).toContain(
-					'https://unpkg.com/@deot/docs-client@1.0.0/dist/index.style.css?theme=docs#style'
+					'https://cdn.jsdelivr.net/npm/@deot/docs-client@1.0.0/dist/index.style.css?theme=docs#style'
 				);
-				expect(remoteHtml).toContain('//unpkg.com/@deot/docs-client/dist/index.js');
+				expect(remoteHtml).toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js');
 				expect(remoteHtml).toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm');
 				expect(remoteHtml).not.toContain('="/@deot/docs-client/');
 			} finally {
@@ -503,9 +535,13 @@ describe('dever configuration', () => {
 	});
 
 	it('classifies resources and rejects paths outside the workspace', () => {
-		const workspace = path.resolve('site');
-		expect(isInside(workspace, path.join(workspace, 'zh-CN/index.vue'))).toBe(true);
-		expect(isInside(workspace, path.resolve('package.json'))).toBe(false);
+		const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-inside-'));
+		try {
+			expect(isInside(workspace, path.join(workspace, 'zh-CN/index.vue'))).toBe(true);
+			expect(isInside(workspace, path.resolve('package.json'))).toBe(false);
+		} finally {
+			fs.rmSync(workspace, { recursive: true, force: true });
+		}
 		expect(getResourceType('index.md')).toBe('markdown');
 		expect(getResourceType('sidebar.json')).toBe('sidebar');
 		expect(getResourceType('index.vue')).toBe('sfc');
@@ -521,11 +557,21 @@ describe('dever configuration', () => {
 	});
 
 	it('injects the development runtime before application scripts', () => {
-		const plugin = createRuntimePlugin({ workspace: 'site' });
-		const tags = htmlTagsOf(pluginHook(plugin.transformIndexHtml, 'transformIndexHtml')());
-		expect(tags[0]).toMatchObject({ tag: 'script', injectTo: 'head-prepend' });
-		expect(tags[0].children).toContain('window.__DOCS_RUNTIME__');
-		expect(tags[0].children).toContain('"workspace":"/site/"');
+		const siteRoot = createSiteProject('docs-site-runtime-');
+		const restoreSiteCwd = vi.spyOn(process, 'cwd').mockReturnValue(siteRoot);
+		let tags: ReturnType<typeof htmlTagsOf>;
+		try {
+			const plugin = createRuntimePlugin({ workspace: 'site' });
+			tags = htmlTagsOf(pluginHook(plugin.transformIndexHtml, 'transformIndexHtml')());
+			expect(tags[0]).toMatchObject({ tag: 'script', injectTo: 'head-prepend' });
+			expect(tags[0].children).toContain('window.__DOCS_RUNTIME__');
+			expect(tags[0].children).toContain('"workspace":"/site/"');
+			expect(tags).toHaveLength(1);
+		} finally {
+			restoreSiteCwd.mockRestore();
+			fs.rmSync(siteRoot, { recursive: true, force: true });
+		}
+
 		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-root-runtime-'));
 		fs.writeFileSync(path.join(root, 'index.html'), '<div />');
 		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
@@ -535,11 +581,16 @@ describe('dever configuration', () => {
 				'transformIndexHtml'
 			)());
 			expect(rootTags[0].children).toContain('"workspace":"/"');
+			expect(rootTags.slice(1).map(tag => tag.attrs?.href)).toEqual([
+				'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css',
+				'https://cdn.jsdelivr.net/npm/@deot/docs-renderer/dist/index.style.css',
+				'https://cdn.jsdelivr.net/npm/@deot/docs-markdown/dist/index.style.css',
+				'https://cdn.jsdelivr.net/npm/@deot/docs-playground/dist/index.style.css'
+			]);
 		} finally {
 			restoreCwd.mockRestore();
 			fs.rmSync(root, { recursive: true, force: true });
 		}
-		expect(tags).toHaveLength(1);
 		expect(createRuntimePlugin({ build: true }).transformIndexHtml).toBeUndefined();
 		expect(createRuntimePlugin({ preview: true }).transformIndexHtml).toBeUndefined();
 
@@ -547,7 +598,7 @@ describe('dever configuration', () => {
 		fs.writeFileSync(path.join(previewWorkspace, 'index.html'), '<div />');
 		fs.writeFileSync(path.join(previewWorkspace, 'index.vue'), '<template><div /></template>');
 		const workspacePlugin = findPlugin(
-			createDocsPlugins({ workspace: 'site', preview: true }),
+			createDocsPlugins({ workspace: '.', preview: true }),
 			'docs-workspace-resources'
 		);
 		let previewRawMiddleware: Function | undefined;
@@ -583,158 +634,178 @@ describe('dever configuration', () => {
 	});
 
 	it('serves preview history from the workspace root without a development runtime', async () => {
-		let middleware: Function | undefined;
-		const server = {
-			config: { root: path.resolve('site') },
-			middlewares: {
-				use: vi.fn((handler: Function) => {
-					middleware = handler;
-				})
-			},
-			transformIndexHtml: vi.fn(async (_url, html) => html)
-		};
-		pluginHook(
-			findPlugin(createDocsPlugins({ workspace: 'site', preview: true }), 'docs-history-fallback')
-				.configureServer,
-			'configureServer'
-		)(server);
-		const response = {
-			writableEnded: false,
-			statusCode: 0,
-			setHeader: vi.fn(),
-			end: vi.fn()
-		};
-		await middleware!({
-			url: '/zh-CN/changelog-1.0',
-			headers: { accept: 'text/html' }
-		}, response, vi.fn());
+		const siteRoot = createSiteProject('docs-site-history-');
+		const siteWorkspace = path.join(siteRoot, 'site');
+		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(siteRoot);
+		try {
+			let middleware: Function | undefined;
+			const server = {
+				config: { root: siteWorkspace },
+				middlewares: {
+					use: vi.fn((handler: Function) => {
+						middleware = handler;
+					})
+				},
+				transformIndexHtml: vi.fn(async (_url, html) => html)
+			};
+			pluginHook(
+				findPlugin(createDocsPlugins({ workspace: 'site', preview: true }), 'docs-history-fallback')
+					.configureServer,
+				'configureServer'
+			)(server);
+			const response = {
+				writableEnded: false,
+				statusCode: 0,
+				setHeader: vi.fn(),
+				end: vi.fn()
+			};
+			await middleware!({
+				url: '/zh-CN/changelog-1.0',
+				headers: { accept: 'text/html' }
+			}, response, vi.fn());
 
-		expect(server.transformIndexHtml).not.toHaveBeenCalled();
-		expect(response.setHeader).toHaveBeenCalledWith('Content-Type', 'text/html; charset=utf-8');
-		expect(response.end).toHaveBeenCalledWith(expect.not.stringContaining('__DOCS_RUNTIME__ ='));
-		expect(response.end).toHaveBeenCalledWith(expect.not.stringContaining('/@vite/client'));
+			expect(server.transformIndexHtml).not.toHaveBeenCalled();
+			expect(response.setHeader).toHaveBeenCalledWith('Content-Type', 'text/html; charset=utf-8');
+			expect(response.end).toHaveBeenCalledWith(expect.not.stringContaining('__DOCS_RUNTIME__ ='));
+			expect(response.end).toHaveBeenCalledWith(expect.not.stringContaining('/@vite/client'));
+			expect(response.end).toHaveBeenCalledWith('<div id="site-docs"></div>');
 
-		const next = vi.fn();
-		await middleware!({
-			url: '/zh-CN/missing.md',
-			headers: { accept: 'text/plain' }
-		}, response, next);
-		expect(next).toHaveBeenCalledOnce();
+			const next = vi.fn();
+			await middleware!({
+				url: '/zh-CN/missing.md',
+				headers: { accept: 'text/plain' }
+			}, response, next);
+			expect(next).toHaveBeenCalledOnce();
 
-		const docsResponse = {
-			...response,
-			statusCode: 0,
-			setHeader: vi.fn(),
-			end: vi.fn()
-		};
-		await middleware!({ url: '/__docs/events' }, docsResponse, vi.fn());
-		expect(docsResponse.statusCode).toBe(404);
-		expect(docsResponse.end).toHaveBeenCalledWith('Not Found');
+			const docsResponse = {
+				...response,
+				statusCode: 0,
+				setHeader: vi.fn(),
+				end: vi.fn()
+			};
+			await middleware!({ url: '/__docs/events' }, docsResponse, vi.fn());
+			expect(docsResponse.statusCode).toBe(404);
+			expect(docsResponse.end).toHaveBeenCalledWith('Not Found');
+		} finally {
+			restoreCwd.mockRestore();
+			fs.rmSync(siteRoot, { recursive: true, force: true });
+		}
 	});
 
 	it('serves direct resources and rejects encoded workspace traversal before URL normalization', () => {
-		const middlewares: Function[] = [];
-		const server = {
-			config: { root: process.cwd() },
-			middlewares: {
-				use: vi.fn((pathOrHandler: string | Function) => {
-					if (typeof pathOrHandler === 'function') middlewares.push(pathOrHandler);
-				})
-			},
-			watcher: { add: vi.fn(), on: vi.fn() },
-			httpServer: { once: vi.fn() }
-		};
-		pluginHook(
-			findPlugin(createDocsPlugins({ workspace: 'site' }), 'docs-workspace-resources')
-				.configureServer,
-			'configureServer'
-		)(server);
-		const middleware = middlewares[0];
-		expect(server.watcher.add).toHaveBeenCalledWith(path.resolve('packages'));
-		expect(server.watcher.add).toHaveBeenCalledWith(path.resolve('README.md'));
-		const createResponse = () => ({
-			statusCode: 200,
-			setHeader: vi.fn(),
-			end: vi.fn()
-		});
+		const siteRoot = createSiteProject('docs-site-resources-');
+		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(siteRoot);
+		try {
+			const middlewares: Function[] = [];
+			const server = {
+				config: { root: siteRoot },
+				middlewares: {
+					use: vi.fn((pathOrHandler: string | Function) => {
+						if (typeof pathOrHandler === 'function') middlewares.push(pathOrHandler);
+					})
+				},
+				watcher: { add: vi.fn(), on: vi.fn() },
+				httpServer: { once: vi.fn() }
+			};
+			pluginHook(
+				findPlugin(createDocsPlugins({ workspace: 'site' }), 'docs-workspace-resources')
+					.configureServer,
+				'configureServer'
+			)(server);
+			const middleware = middlewares[0];
+			expect(server.watcher.add).toHaveBeenCalledWith(
+				fs.realpathSync(path.resolve(siteRoot, 'packages'))
+			);
+			expect(server.watcher.add).toHaveBeenCalledWith(
+				fs.realpathSync(path.resolve(siteRoot, 'README.md'))
+			);
+			const createResponse = () => ({
+				statusCode: 200,
+				setHeader: vi.fn(),
+				end: vi.fn()
+			});
 
-		const markdownResponse = createResponse();
-		middleware({
-			url: '/packages/client/README.md',
-			headers: { accept: 'text/plain' }
-		}, markdownResponse, vi.fn());
-		expect(markdownResponse.setHeader).toHaveBeenCalledWith(
-			'Content-Type',
-			'text/markdown; charset=utf-8'
-		);
-		expect(markdownResponse.end).toHaveBeenCalledWith(expect.any(Buffer));
+			const markdownResponse = createResponse();
+			middleware({
+				url: '/packages/client/README.md',
+				headers: { accept: 'text/plain' }
+			}, markdownResponse, vi.fn());
+			expect(markdownResponse.setHeader).toHaveBeenCalledWith(
+				'Content-Type',
+				'text/markdown; charset=utf-8'
+			);
+			expect(markdownResponse.end).toHaveBeenCalledWith(expect.any(Buffer));
 
-		const rootReadmeResponse = createResponse();
-		middleware({
-			url: '/README.md',
-			headers: { accept: 'text/plain' }
-		}, rootReadmeResponse, vi.fn());
-		expect(rootReadmeResponse.setHeader).toHaveBeenCalledWith(
-			'Content-Type',
-			'text/markdown; charset=utf-8'
-		);
-		expect(rootReadmeResponse.setHeader).toHaveBeenCalledWith('ETag', expect.any(String));
-		expect(rootReadmeResponse.end).toHaveBeenCalledWith(expect.any(Buffer));
-		const rootReadmeEtag = rootReadmeResponse.setHeader.mock.calls
-			.find(([name]) => name === 'ETag')?.[1];
-		const notModifiedResponse = createResponse();
-		middleware({
-			url: '/README.md',
-			headers: { 'accept': 'text/plain', 'if-none-match': rootReadmeEtag }
-		}, notModifiedResponse, vi.fn());
-		expect(notModifiedResponse.statusCode).toBe(304);
-		expect(notModifiedResponse.end).toHaveBeenCalledWith();
+			const rootReadmeResponse = createResponse();
+			middleware({
+				url: '/README.md',
+				headers: { accept: 'text/plain' }
+			}, rootReadmeResponse, vi.fn());
+			expect(rootReadmeResponse.setHeader).toHaveBeenCalledWith(
+				'Content-Type',
+				'text/markdown; charset=utf-8'
+			);
+			expect(rootReadmeResponse.setHeader).toHaveBeenCalledWith('ETag', expect.any(String));
+			expect(rootReadmeResponse.end).toHaveBeenCalledWith(expect.any(Buffer));
+			const rootReadmeEtag = rootReadmeResponse.setHeader.mock.calls
+				.find(([name]) => name === 'ETag')?.[1];
+			const notModifiedResponse = createResponse();
+			middleware({
+				url: '/README.md',
+				headers: { 'accept': 'text/plain', 'if-none-match': rootReadmeEtag }
+			}, notModifiedResponse, vi.fn());
+			expect(notModifiedResponse.statusCode).toBe(304);
+			expect(notModifiedResponse.end).toHaveBeenCalledWith();
 
-		const traversalResponse = createResponse();
-		middleware({
-			url: '/site/%2e%2e/package.json',
-			headers: { accept: 'text/plain' }
-		}, traversalResponse, vi.fn());
-		expect(traversalResponse.statusCode).toBe(403);
-		expect(traversalResponse.end).toHaveBeenCalledWith('Forbidden');
+			const traversalResponse = createResponse();
+			middleware({
+				url: '/site/%2e%2e/package.json',
+				headers: { accept: 'text/plain' }
+			}, traversalResponse, vi.fn());
+			expect(traversalResponse.statusCode).toBe(403);
+			expect(traversalResponse.end).toHaveBeenCalledWith('Forbidden');
 
-		const malformedResponse = createResponse();
-		middleware({
-			url: '/site/%E0%A4%A',
-			headers: { accept: 'text/plain' }
-		}, malformedResponse, vi.fn());
-		expect(malformedResponse.statusCode).toBe(400);
-		expect(malformedResponse.end).toHaveBeenCalledWith('Bad Request');
+			const malformedResponse = createResponse();
+			middleware({
+				url: '/site/%E0%A4%A',
+				headers: { accept: 'text/plain' }
+			}, malformedResponse, vi.fn());
+			expect(malformedResponse.statusCode).toBe(400);
+			expect(malformedResponse.end).toHaveBeenCalledWith('Bad Request');
 
-		const escapedSourceResponse = createResponse();
-		middleware({
-			url: '/package.json',
-			headers: { accept: 'text/plain' }
-		}, escapedSourceResponse, vi.fn());
-		expect(escapedSourceResponse.statusCode).toBe(403);
-		expect(escapedSourceResponse.end).toHaveBeenCalledWith('Forbidden');
+			const escapedSourceResponse = createResponse();
+			middleware({
+				url: '/package.json',
+				headers: { accept: 'text/plain' }
+			}, escapedSourceResponse, vi.fn());
+			expect(escapedSourceResponse.statusCode).toBe(403);
+			expect(escapedSourceResponse.end).toHaveBeenCalledWith('Forbidden');
 
-		const packageSourceResponse = createResponse();
-		middleware({
-			url: '/packages/client/src/index.ts',
-			headers: { accept: 'text/plain' }
-		}, packageSourceResponse, vi.fn());
-		expect(packageSourceResponse.statusCode).toBe(403);
-		expect(packageSourceResponse.end).toHaveBeenCalledWith('Forbidden');
+			const packageSourceResponse = createResponse();
+			middleware({
+				url: '/packages/client/src/index.ts',
+				headers: { accept: 'text/plain' }
+			}, packageSourceResponse, vi.fn());
+			expect(packageSourceResponse.statusCode).toBe(403);
+			expect(packageSourceResponse.end).toHaveBeenCalledWith('Forbidden');
 
-		const moduleNext = vi.fn();
-		middleware({
-			url: '/packages/client/src/index.ts',
-			headers: { accept: '*/*' }
-		}, createResponse(), moduleNext);
-		expect(moduleNext).toHaveBeenCalledOnce();
+			const moduleNext = vi.fn();
+			middleware({
+				url: '/packages/client/src/index.ts',
+				headers: { accept: '*/*' }
+			}, createResponse(), moduleNext);
+			expect(moduleNext).toHaveBeenCalledOnce();
 
-		const viteNext = vi.fn();
-		middleware({
-			url: '/@vite/client.ts',
-			headers: { accept: 'text/plain' }
-		}, createResponse(), viteNext);
-		expect(viteNext).toHaveBeenCalledOnce();
+			const viteNext = vi.fn();
+			middleware({
+				url: '/@vite/client.ts',
+				headers: { accept: 'text/plain' }
+			}, createResponse(), viteNext);
+			expect(viteNext).toHaveBeenCalledOnce();
+		} finally {
+			restoreCwd.mockRestore();
+			fs.rmSync(siteRoot, { recursive: true, force: true });
+		}
 	});
 
 	it('serves root workspace resources, history and SSE with canonical paths', async () => {
@@ -831,77 +902,84 @@ describe('dever configuration', () => {
 	});
 
 	it('streams workspace changes over SSE and releases disconnected clients', () => {
-		const middlewareEntries: Array<[string | Function, Function?]> = [];
-		const watcherHandlers = new Map<string, (filename: string) => void>();
-		let closeServer: (() => void) | undefined;
-		const server = {
-			config: { root: process.cwd() },
-			middlewares: {
-				use: vi.fn((pathOrHandler: string | Function, handler?: Function) => {
-					middlewareEntries.push([pathOrHandler, handler]);
+		const siteRoot = createSiteProject('docs-site-sse-');
+		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(siteRoot);
+		try {
+			const middlewareEntries: Array<[string | Function, Function?]> = [];
+			const watcherHandlers = new Map<string, (filename: string) => void>();
+			let closeServer: (() => void) | undefined;
+			const server = {
+				config: { root: siteRoot },
+				middlewares: {
+					use: vi.fn((pathOrHandler: string | Function, handler?: Function) => {
+						middlewareEntries.push([pathOrHandler, handler]);
+					})
+				},
+				watcher: {
+					add: vi.fn(),
+					on: vi.fn((event: string, handler: (filename: string) => void) => {
+						watcherHandlers.set(event, handler);
+					})
+				},
+				httpServer: {
+					once: vi.fn((_event: string, handler: () => void) => {
+						closeServer = handler;
+					})
+				}
+			};
+			pluginHook(
+				findPlugin(createDocsPlugins({ workspace: 'site' }), 'docs-workspace-resources')
+					.configureServer,
+				'configureServer'
+			)(server);
+
+			const eventsEntry = middlewareEntries.find(([route]) => route === '/__docs/events');
+			expect(eventsEntry).toBeDefined();
+			const eventsMiddleware = eventsEntry![1]!;
+			let closeClient: (() => void) | undefined;
+			const request = {
+				on: vi.fn((_event: string, handler: () => void) => {
+					closeClient = handler;
 				})
-			},
-			watcher: {
-				add: vi.fn(),
-				on: vi.fn((event: string, handler: (filename: string) => void) => {
-					watcherHandlers.set(event, handler);
-				})
-			},
-			httpServer: {
-				once: vi.fn((_event: string, handler: () => void) => {
-					closeServer = handler;
-				})
-			}
-		};
-		pluginHook(
-			findPlugin(createDocsPlugins({ workspace: 'site' }), 'docs-workspace-resources')
-				.configureServer,
-			'configureServer'
-		)(server);
+			};
+			const response = {
+				statusCode: 0,
+				setHeader: vi.fn(),
+				write: vi.fn(),
+				end: vi.fn()
+			};
+			eventsMiddleware(request, response);
+			expect(response.statusCode).toBe(200);
+			expect(response.setHeader).toHaveBeenCalledWith('Content-Type', 'text/event-stream');
+			expect(response.write).toHaveBeenCalledWith(': connected\n\n');
 
-		const eventsEntry = middlewareEntries.find(([route]) => route === '/__docs/events');
-		expect(eventsEntry).toBeDefined();
-		const eventsMiddleware = eventsEntry![1]!;
-		let closeClient: (() => void) | undefined;
-		const request = {
-			on: vi.fn((_event: string, handler: () => void) => {
-				closeClient = handler;
-			})
-		};
-		const response = {
-			statusCode: 0,
-			setHeader: vi.fn(),
-			write: vi.fn(),
-			end: vi.fn()
-		};
-		eventsMiddleware(request, response);
-		expect(response.statusCode).toBe(200);
-		expect(response.setHeader).toHaveBeenCalledWith('Content-Type', 'text/event-stream');
-		expect(response.write).toHaveBeenCalledWith(': connected\n\n');
+			watcherHandlers.get('change')!(path.resolve(siteRoot, 'site/zh-CN/guide.md'));
+			expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
+				'"type":"change","lang":"zh-CN","source":"./guide.md","resourceType":"markdown"'
+			));
+			watcherHandlers.get('change')!(path.resolve(siteRoot, 'package.json'));
+			expect(response.write).toHaveBeenCalledTimes(2);
+			watcherHandlers.get('change')!(path.resolve(siteRoot, 'packages/client/README.md'));
+			expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
+				'"lang":"","source":"packages/client/README.md","resourceType":"markdown"'
+			));
+			watcherHandlers.get('change')!(path.resolve(siteRoot, 'README.md'));
+			expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
+				'"lang":"","source":"README.md","resourceType":"markdown"'
+			));
 
-		watcherHandlers.get('change')!(path.resolve('site/zh-CN/guide.md'));
-		expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
-			'"type":"change","lang":"zh-CN","source":"./guide.md","resourceType":"markdown"'
-		));
-		watcherHandlers.get('change')!(path.resolve('package.json'));
-		expect(response.write).toHaveBeenCalledTimes(2);
-		watcherHandlers.get('change')!(path.resolve('packages/client/README.md'));
-		expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
-			'"lang":"","source":"packages/client/README.md","resourceType":"markdown"'
-		));
-		watcherHandlers.get('change')!(path.resolve('README.md'));
-		expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
-			'"lang":"","source":"README.md","resourceType":"markdown"'
-		));
+			watcherHandlers.get('change')!(path.resolve(siteRoot, 'site/index.html'));
+			expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining('"type":"reload"'));
+			closeClient!();
+			watcherHandlers.get('unlink')!(path.resolve(siteRoot, 'site/zh-CN/guide.md'));
+			expect(response.write).toHaveBeenCalledTimes(5);
 
-		watcherHandlers.get('change')!(path.resolve('site/index.html'));
-		expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining('"type":"reload"'));
-		closeClient!();
-		watcherHandlers.get('unlink')!(path.resolve('site/zh-CN/guide.md'));
-		expect(response.write).toHaveBeenCalledTimes(5);
-
-		eventsMiddleware(request, response);
-		closeServer!();
-		expect(response.end).toHaveBeenCalledOnce();
+			eventsMiddleware(request, response);
+			closeServer!();
+			expect(response.end).toHaveBeenCalledOnce();
+		} finally {
+			restoreCwd.mockRestore();
+			fs.rmSync(siteRoot, { recursive: true, force: true });
+		}
 	});
 });

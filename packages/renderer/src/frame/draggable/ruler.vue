@@ -163,3 +163,187 @@ watch(
 );
 onMounted(() => nextTick(refreshCanvas));
 </script>
+<style lang="scss">
+@use '../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-guide {
+	position: absolute;
+	z-index: 100001;
+	pointer-events: none;
+	box-sizing: border-box;
+
+	> span {
+		position: absolute;
+		padding: 0 4px;
+		font-size: 12px;
+		line-height: 20px;
+		color: #fff;
+		background: color-mix(in srgb, varfix(link-color) 70%, transparent);
+		border-radius: 1px;
+		box-shadow: 0 0 5px -3px varfix(shadow-color);
+		user-select: none;
+	}
+
+	&.is-user {
+		pointer-events: auto;
+		cursor: ew-resize;
+	}
+
+	&--horizontal.is-user {
+		cursor: ns-resize;
+	}
+
+	&--vertical {
+		top: 0;
+		bottom: 0;
+		width: 0;
+		border-left: 1px dotted varfix(link-color);
+	}
+
+	&--horizontal {
+		right: 0;
+		left: 0;
+		height: 0;
+		border-top: 1px dotted varfix(link-color);
+	}
+}
+
+.docs-renderer-ruler {
+	position: relative;
+	display: flex;
+	height: 100%;
+	min-width: 0;
+	min-height: 0;
+	flex: 1;
+	flex-direction: column;
+
+	&__origin {
+		position: absolute;
+		top: 0;
+		left: 0;
+		z-index: 3;
+		width: 20px;
+		height: 20px;
+		cursor: pointer;
+		background: varfix(background-color-mute);
+	}
+
+	&__x {
+		position: relative;
+		z-index: 2;
+		display: flex;
+		width: 100%;
+		min-width: 0;
+		overflow: visible;
+		flex-shrink: 0;
+		cursor: crosshair;
+	}
+
+	&__wrapper {
+		display: flex;
+		min-width: 0;
+		min-height: 0;
+		flex: 1;
+	}
+
+	&__y {
+		z-index: 2;
+		width: 20px;
+		height: 100%;
+		overflow: visible;
+		flex-shrink: 0;
+		cursor: crosshair;
+	}
+
+	&__y-rotate {
+		position: relative;
+		display: flex;
+		margin-top: -39px;
+		transform-origin: 0 100%;
+	}
+
+	&__slot {
+		min-width: 0;
+		min-height: 0;
+		flex: 1;
+
+		> .vc-scroller,
+		> .vc-scroller > .vc-scroller__wrapper {
+			width: 100%;
+			height: 100%;
+			min-width: 0;
+			min-height: 0;
+		}
+	}
+
+	&__canvas {
+		display: block;
+		pointer-events: none;
+		background: varfix(background-color-soft);
+	}
+
+	.docs-renderer-guide {
+		z-index: 2;
+
+		> span {
+			position: absolute;
+			display: flex;
+			padding: 0 4px;
+			font-size: 12px;
+			line-height: 20px;
+			color: #fff;
+			background: color-mix(in srgb, varfix(link-color) 70%, transparent);
+			border-radius: 1px;
+			box-shadow: 0 0 5px -3px varfix(shadow-color);
+			user-select: none;
+			justify-content: center;
+			align-items: center;
+		}
+	}
+
+	.docs-renderer-guide--vertical {
+		top: 0;
+		right: auto;
+		bottom: auto;
+		height: 100vh;
+		padding-left: 5px;
+		cursor: ew-resize;
+		border: 0;
+		border-left: 1px dashed color-mix(in srgb, varfix(link-color) 84%, transparent);
+
+		&.is-user {
+			border-left-style: solid;
+		}
+
+		> span {
+			top: auto;
+			left: auto;
+		}
+	}
+
+	.docs-renderer-guide--horizontal {
+		top: 20px;
+		right: auto;
+		left: auto;
+		width: 100vw;
+		height: auto;
+		padding-bottom: 5px;
+		cursor: ns-resize;
+		border: 0;
+		border-bottom: 1px dashed color-mix(in srgb, varfix(link-color) 84%, transparent);
+		transform: rotate(-90deg);
+		transform-origin: 0 100%;
+
+		&.is-user {
+			border-bottom-style: solid;
+		}
+
+		> span {
+			top: 5px;
+			left: 25px;
+			transform: rotate(90deg);
+			transform-origin: 0 0;
+		}
+	}
+}
+</style>

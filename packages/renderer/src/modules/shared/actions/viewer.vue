@@ -74,3 +74,112 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 	}
 };
 </script>
+<style lang="scss">
+@use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-actions {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.docs-renderer-action {
+	--docs-renderer-action-color: var(--docs-renderer-accent, varfix(primary-color));
+
+	display: inline-flex;
+	min-height: 36px;
+	padding: 0 16px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--docs-renderer-action-text, #fff);
+	text-decoration: none;
+	cursor: pointer;
+	background: var(--docs-renderer-action-color);
+	border: 1px solid var(--docs-renderer-action-color);
+	border-radius: 10px;
+	box-sizing: border-box;
+	transition: transform 0.22s ease, filter 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+	appearance: none;
+	user-select: none;
+	align-items: center;
+	justify-content: center;
+
+	&.is-small {
+		min-height: 28px;
+		padding: 0 12px;
+		font-size: 12px;
+	}
+
+	&.is-large {
+		min-height: 48px;
+		padding: 0 22px;
+		font-size: 15px;
+		border-radius: 12px;
+	}
+
+	&.is-outline,
+	&.is-ghost,
+	&.is-link {
+		color: var(--docs-renderer-action-text, var(--docs-renderer-action-color));
+		background: transparent;
+	}
+
+	&.is-outline {
+		border-color: color-mix(in srgb, var(--docs-renderer-action-color) 55%, varfix(border-color));
+	}
+
+	&.is-ghost {
+		background: color-mix(in srgb, var(--docs-renderer-action-color) 12%, transparent);
+		border-color: transparent;
+	}
+
+	&.is-link {
+		min-height: 0;
+		padding: 0;
+		border-color: transparent;
+		border-radius: 0;
+	}
+
+	&:hover,
+	&:focus-visible {
+		outline: none;
+		filter: brightness(1.06);
+		transform: translateY(-1px);
+		box-shadow: 0 8px 18px color-mix(in srgb, var(--docs-renderer-action-color) 24%, transparent);
+	}
+
+	&.is-outline:hover,
+	&.is-outline:focus-visible,
+	&.is-ghost:hover,
+	&.is-ghost:focus-visible {
+		background: color-mix(in srgb, var(--docs-renderer-action-color) 12%, transparent);
+		filter: none;
+	}
+
+	&.is-link:hover,
+	&.is-link:focus-visible {
+		text-decoration: underline;
+		filter: none;
+		transform: none;
+		box-shadow: none;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
+		filter: none;
+		transform: none;
+		box-shadow: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.docs-renderer-action {
+		animation: none !important;
+		transition: none !important;
+	}
+}
+</style>

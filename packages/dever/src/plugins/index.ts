@@ -232,7 +232,12 @@ export const createRuntimePlugin = (
 					}).replace(/</g, '\\u003c');
 					const styles = fs.existsSync(localClientEntry)
 						? []
-						: ['//unpkg.com/@deot/docs-client/dist/index.style.css'];
+						: [
+								'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css',
+								'https://cdn.jsdelivr.net/npm/@deot/docs-renderer/dist/index.style.css',
+								'https://cdn.jsdelivr.net/npm/@deot/docs-markdown/dist/index.style.css',
+								'https://cdn.jsdelivr.net/npm/@deot/docs-playground/dist/index.style.css'
+							];
 					return [
 						{
 							tag: 'script',

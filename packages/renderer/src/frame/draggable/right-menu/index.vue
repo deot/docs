@@ -118,3 +118,72 @@ onBeforeUnmount(() => {
 	document.documentElement.removeEventListener('contextmenu', handleDeselect);
 });
 </script>
+<style lang="scss">
+@use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-right-menu {
+	position: fixed;
+	z-index: 1999;
+	min-width: 168px;
+	padding: 6px;
+	color: varfix(foreground-color);
+	background: varfix(background-color);
+	border: 1px solid varfix(border-color);
+	border-radius: 8px;
+	box-shadow: 0 8px 24px varfix(shadow-color);
+	box-sizing: border-box;
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	&__item {
+		display: flex;
+		width: 100%;
+		min-height: 28px;
+		padding: 0 10px;
+		font: inherit;
+		font-size: 12px;
+		line-height: 28px;
+		color: inherit;
+		text-align: left;
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		border-radius: 6px;
+		align-items: center;
+		box-sizing: border-box;
+		user-select: none;
+
+		&.is-divided {
+			position: relative;
+			margin-top: 6px;
+
+			&::before {
+				position: absolute;
+				top: -3px;
+				right: 4px;
+				left: 4px;
+				height: 1px;
+				background: varfix(border-color-light);
+				content: '';
+			}
+		}
+
+		&:hover,
+		&:focus-visible {
+			color: varfix(primary-color);
+			background: varfix(primary-color-light);
+			outline: none;
+		}
+
+		&.is-danger:hover,
+		&.is-danger:focus-visible {
+			color: varfix(error-color);
+			background: varfix(error-background);
+		}
+	}
+}
+</style>

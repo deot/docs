@@ -97,3 +97,56 @@ const handleClick = async (event: MouseEvent, item: RendererAreaZone) => {
 	}
 };
 </script>
+<style lang="scss">
+@use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-area {
+	position: relative;
+	display: block;
+	overflow: hidden;
+	background: varfix(background-color);
+
+	&__image {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+
+	&__empty {
+		display: grid;
+		min-height: 160px;
+		color: varfix(foreground-color-mute);
+		border: 1px dashed varfix(border-color);
+		place-items: center;
+	}
+
+	&__zone {
+		position: absolute;
+		box-sizing: border-box;
+	}
+
+	&.is-editing &__zone {
+		pointer-events: none;
+		border: 1px dashed varfix(primary-color);
+	}
+
+	&:not(.is-editing) &__zone {
+		pointer-events: none;
+	}
+
+	&:not(.is-editing) a.docs-renderer-area__zone {
+		pointer-events: auto;
+		cursor: pointer;
+	}
+
+	&__label {
+		display: inline-block;
+		padding: 1px 4px;
+		font-size: 12px;
+		line-height: 1.2;
+		color: #fff;
+		white-space: nowrap;
+		background: varfix(primary-color);
+	}
+}
+</style>

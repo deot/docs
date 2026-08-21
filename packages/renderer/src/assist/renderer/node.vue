@@ -142,3 +142,27 @@ onErrorCaptured((reason) => {
 	return false;
 });
 </script>
+<style lang="scss">
+@use '../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-node__state {
+	padding: 16px;
+	color: varfix(foreground-color-mute);
+	background: varfix(background-color-soft);
+	border: 1px dashed varfix(border-color);
+	border-radius: 8px;
+}
+
+.docs-renderer-node {
+	min-width: 0;
+	box-sizing: border-box;
+
+	&.is-editing :is(a, button, input, textarea, select) {
+		pointer-events: none;
+	}
+
+	&.is-editing :is(img, a) {
+		-webkit-user-drag: none;
+	}
+}
+</style>

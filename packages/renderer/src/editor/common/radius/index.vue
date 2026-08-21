@@ -109,3 +109,45 @@ const toggleIndependent = () => {
 	});
 };
 </script>
+<style lang="scss">
+@use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-radius-editor {
+	display: grid;
+	gap: 6px;
+	min-width: 0;
+
+	&__row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 26px;
+		gap: 6px;
+		min-width: 0;
+		align-items: center;
+	}
+
+	&__independent {
+		position: relative;
+		width: 26px;
+		height: 26px;
+		padding: 0;
+		color: varfix(foreground-color-mute);
+		cursor: pointer;
+		background: varfix(background-color-soft);
+		border: 0;
+		border-radius: 6px;
+
+		&::before {
+			position: absolute;
+			inset: 7px;
+			border: 1.5px solid currentcolor;
+			border-radius: 2px;
+			content: '';
+		}
+
+		&.is-active {
+			color: varfix(primary-color);
+			background: varfix(primary-color-light);
+		}
+	}
+}
+</style>

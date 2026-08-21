@@ -44,3 +44,43 @@ const onFile = (event: Event) => {
 	reader.readAsDataURL(file);
 };
 </script>
+<style lang="scss">
+@use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-image-source {
+	display: flex;
+	min-width: 0;
+	gap: 6px;
+	align-items: center;
+
+	.vc-input {
+		min-width: 0;
+		flex: 1;
+	}
+
+	&__pick {
+		display: inline-flex;
+		width: 26px;
+		height: 26px;
+		color: varfix(foreground-color-mute);
+		cursor: pointer;
+		background: varfix(background-color-soft);
+		border-radius: 6px;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+
+		.vc-icon {
+			font-size: 14px;
+		}
+
+		&:hover {
+			color: varfix(primary-color);
+		}
+	}
+
+	&__file {
+		display: none;
+	}
+}
+</style>

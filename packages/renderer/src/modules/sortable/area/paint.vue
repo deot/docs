@@ -182,3 +182,132 @@ const handleOk = () => emit('portal-fulfilled', draft.value.map(item => containA
 const handleCancel = () => emit('portal-rejected');
 onBeforeUnmount(handlePointerUp);
 </script>
+<style lang="scss">
+@use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-area-paint {
+	display: grid;
+	grid-template-columns: minmax(0, 500px) minmax(240px, 1fr);
+	gap: 16px;
+	height: 100%;
+	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
+	text-align: left;
+
+	&__stage {
+		position: relative;
+		min-width: 0;
+		overflow: auto;
+		background: varfix(background-color-soft);
+		user-select: none;
+	}
+
+	&__image {
+		display: block;
+		width: 100%;
+		height: auto;
+		-webkit-user-drag: none;
+		pointer-events: none;
+	}
+
+	&__zone {
+		position: absolute;
+		overflow: visible;
+		cursor: move;
+		border: 1px dashed varfix(primary-color);
+		box-sizing: border-box;
+
+		&.is-selected {
+			z-index: 20 !important;
+			background: color-mix(in srgb, varfix(primary-color) 12%, transparent);
+		}
+	}
+
+	&__label {
+		display: inline-block;
+		padding: 1px 4px;
+		font-size: 12px;
+		line-height: 1.2;
+		color: #fff;
+		white-space: nowrap;
+		pointer-events: none;
+		background: varfix(primary-color);
+	}
+
+	&__side {
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
+		min-width: 0;
+		min-height: 0;
+	}
+
+	&__toolbar {
+		display: flex;
+		padding-bottom: 8px;
+		border-bottom: 1px solid varfix(border-color-light);
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 8px;
+
+		span {
+			font-size: 12px;
+			color: varfix(foreground-color-mute);
+		}
+	}
+
+	&__list {
+		display: grid;
+		gap: 12px;
+
+		// 给角上探出的关闭按钮留空，避免 overflow 裁切或引出横向滚动。
+		padding: 12px 10px 4px 2px;
+		overflow: hidden auto;
+		align-content: start;
+	}
+
+	&__item {
+		position: relative;
+		display: grid;
+		gap: 8px;
+		min-width: 0;
+		padding: 12px 10px 10px;
+		cursor: pointer;
+		border: 1px dashed varfix(border-color);
+		box-sizing: border-box;
+
+		&.is-selected {
+			border-color: varfix(primary-color);
+		}
+
+		strong {
+			overflow: hidden;
+			font-size: 12px;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.vc-input {
+			max-width: 100%;
+			min-width: 0;
+		}
+	}
+
+	&__remove {
+		position: absolute;
+		top: -8px;
+		right: -8px;
+		z-index: 1;
+		width: 18px;
+		height: 18px;
+		padding: 0;
+		font-size: 12px;
+		line-height: 16px;
+		color: varfix(foreground-color-mute);
+		cursor: pointer;
+		background: varfix(background-color);
+		border: 1px solid varfix(border-color);
+		border-radius: 50%;
+	}
+}
+</style>

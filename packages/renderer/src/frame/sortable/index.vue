@@ -419,3 +419,374 @@ const handleWidgetDrop = (event: DragEvent) => {
 	}
 };
 </script>
+<style lang="scss">
+@use '../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-frame {
+	position: relative;
+	display: grid;
+	grid-template-rows: minmax(0, 1fr) 40px;
+	height: 100%;
+	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
+
+	> .vc-scroller,
+	> .vc-scroller > .vc-scroller__wrapper {
+		width: 100%;
+		height: 100%;
+		min-width: 0;
+		min-height: 0;
+	}
+
+	&__inner {
+		position: relative;
+		display: flex;
+		min-width: 0;
+		min-height: 0;
+		overflow: hidden;
+		background: varfix(background-color-mute);
+		border-left: 1px solid varfix(border-color);
+		flex: 1;
+		flex-direction: column;
+
+		&.is-hide-ruler {
+			border-left: 0;
+		}
+	}
+
+	&__viewport {
+		min-width: 100%;
+		min-height: 100%;
+		padding: 48px;
+		box-sizing: border-box;
+
+		&--draggable {
+			min-width: 100%;
+			min-height: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+	}
+
+	&__canvas,
+	&__artboard {
+		position: relative;
+		box-sizing: border-box;
+	}
+
+	&__canvas {
+		margin: 0;
+		overflow: visible;
+		border: 1px solid color-mix(in srgb, varfix(border-color) 72%, transparent);
+		box-shadow:
+			0 1px 2px varfix(shadow-color),
+			0 10px 30px varfix(shadow-color);
+	}
+
+	&__artboard {
+		margin: 0;
+		overflow: visible;
+		border: 1px solid varfix(border-color);
+		transform-origin: top left;
+	}
+
+	&__item {
+		position: relative;
+		display: block;
+		width: 100%;
+		max-width: var(--docs-renderer-content-width, 100%);
+		margin-inline: auto;
+		isolation: isolate;
+		box-sizing: border-box;
+		user-select: none;
+
+		&.is-full-width {
+			width: 100%;
+			max-width: none;
+			margin-inline: 0;
+		}
+
+		&.is-selected {
+			z-index: 2;
+		}
+
+		&.is-dragging {
+			opacity: 0;
+		}
+
+		&-body {
+			display: block;
+			width: 100%;
+			min-height: 3px;
+		}
+
+		.docs-renderer-node {
+			width: 100%;
+			box-sizing: border-box;
+		}
+	}
+
+	&__list {
+		display: block;
+	}
+
+	&__drop-slot {
+		display: flex;
+		height: 55px;
+		margin: 4px 0;
+		color: varfix(primary-color);
+		pointer-events: none;
+		background: color-mix(in srgb, varfix(primary-color) 12%, varfix(background-color));
+		border: 1px dotted varfix(primary-color);
+		box-sizing: border-box;
+		align-items: center;
+		justify-content: center;
+	}
+
+	&__drop-indicator {
+		position: relative;
+		z-index: 20;
+		height: 2px;
+		margin: -1px 0;
+		background: varfix(primary-color);
+		box-shadow: 0 0 0 1px varfix(background-color);
+	}
+
+	&__empty {
+		display: grid;
+		min-height: 300px;
+		color: varfix(foreground-color-mute);
+		border: 1px dashed varfix(border-color);
+		place-items: center;
+	}
+
+	&__controls {
+		display: flex;
+		gap: 4px;
+		font-size: 12px;
+		align-items: center;
+	}
+
+	&__scaled {
+		position: relative;
+		flex: none;
+
+		&--sortable {
+			margin-inline: auto;
+		}
+	}
+}
+
+.docs-renderer-selection {
+	pointer-events: auto;
+	border: 1px dotted varfix(primary-color);
+	box-sizing: border-box;
+
+	&--sortable {
+		position: absolute;
+		z-index: 10;
+		inset: 0;
+		pointer-events: none;
+	}
+
+	&--draggable {
+		position: absolute;
+		cursor: move;
+
+		&.is-locked {
+			cursor: not-allowed;
+		}
+	}
+
+	&__delete {
+		position: absolute;
+		top: 0;
+		right: 0;
+		z-index: 300;
+		width: 20px;
+		height: 20px;
+		padding: 0;
+		font-size: 12px;
+		line-height: 20px;
+		color: #fff;
+		text-align: center;
+		pointer-events: auto;
+		cursor: pointer;
+		background: varfix(primary-color);
+		border: 0;
+		border-radius: 0;
+		box-sizing: border-box;
+	}
+
+	&__rotate,
+	&__handle {
+		position: absolute;
+		padding: 0;
+		pointer-events: auto;
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		box-sizing: border-box;
+	}
+
+	&__handle {
+		z-index: 999;
+		display: block;
+
+		&--n,
+		&--s {
+			left: 0;
+			width: 100%;
+			height: 5px;
+			cursor: ns-resize;
+		}
+
+		&--n {
+			top: -5px;
+
+			&:hover {
+				background: linear-gradient(to bottom, transparent, varfix(primary-color));
+			}
+		}
+
+		&--s {
+			bottom: -5px;
+
+			&:hover {
+				background: linear-gradient(to top, transparent, varfix(primary-color));
+			}
+		}
+
+		&--e,
+		&--w {
+			top: 0;
+			width: 5px;
+			height: 100%;
+			cursor: ew-resize;
+		}
+
+		&--e {
+			right: -5px;
+
+			&:hover {
+				background: linear-gradient(to left, transparent, varfix(primary-color));
+			}
+		}
+
+		&--w {
+			left: -5px;
+
+			&:hover {
+				background: linear-gradient(to right, transparent, varfix(primary-color));
+			}
+		}
+
+		&--nw,
+		&--ne,
+		&--sw,
+		&--se {
+			width: 10px;
+			height: 10px;
+			padding: 5px;
+		}
+
+		&--nw {
+			top: 0;
+			left: 0;
+			cursor: nwse-resize;
+		}
+
+		&--ne {
+			top: 0;
+			right: 0;
+			cursor: nesw-resize;
+		}
+
+		&--sw {
+			bottom: 0;
+			left: 0;
+			cursor: nesw-resize;
+		}
+
+		&--se {
+			right: 0;
+			bottom: 0;
+			cursor: nwse-resize;
+		}
+	}
+
+	&__rotate {
+		top: 0;
+		left: 50%;
+		z-index: 1000;
+		display: flex;
+		width: 12px;
+		height: 22px;
+		color: varfix(primary-color);
+		cursor: crosshair;
+		transform: translate(-50%, -100%);
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-end;
+
+		&::before {
+			width: 8px;
+			height: 8px;
+			border: 1px solid varfix(primary-color);
+			content: '';
+			box-sizing: border-box;
+		}
+
+		&::after {
+			width: 1px;
+			height: 10px;
+			background: varfix(primary-color);
+			content: '';
+		}
+	}
+
+	&__rotate-beam {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		z-index: 2;
+		height: 1px;
+		pointer-events: none;
+		background: varfix(link-color);
+		border: 1px solid varfix(link-color);
+		transform: translate(-50%, -50%) rotate(90deg);
+	}
+
+	&__rotate-tip {
+		position: absolute;
+		top: -50px;
+		left: 60%;
+		width: 40px;
+		height: 16px;
+		font-size: 12px;
+		line-height: 16px;
+		color: varfix(foreground-color);
+		text-align: center;
+		pointer-events: none;
+		background: varfix(background-color);
+		border: 1px solid varfix(border-color);
+		border-radius: 8px;
+	}
+}
+
+.docs-renderer-flip-enter-active,
+.docs-renderer-flip-leave-active {
+	transition: all 0.5s ease;
+}
+
+.docs-renderer-flip-enter-from,
+.docs-renderer-flip-leave-to {
+	opacity: 0;
+}
+
+.docs-renderer-flip-leave-active {
+	position: absolute;
+	display: none;
+}
+</style>

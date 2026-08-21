@@ -77,3 +77,79 @@ const handleChange = (value: number | string | null | undefined) => {
 	emit('update:modelValue', clampValue(number));
 };
 </script>
+<style lang="scss">
+@use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-number-editor {
+	display: flex;
+	min-width: 0;
+	min-height: 26px;
+	overflow: visible;
+	background: varfix(background-color-soft);
+	border-radius: 6px;
+	align-items: center;
+
+	&.has-slider {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(72px, 88px);
+		gap: 8px;
+		overflow: visible;
+		background: transparent;
+
+		.docs-renderer-number-editor__box {
+			background: varfix(background-color-soft);
+			border-radius: 6px;
+		}
+	}
+
+	&__box {
+		display: flex;
+		min-width: 0;
+		flex: 1;
+		align-items: center;
+	}
+
+	&__prefix {
+		flex: none;
+		min-width: 14px;
+		margin-left: 8px;
+		font-size: 11px;
+		line-height: 1;
+		color: varfix(foreground-color-mute);
+	}
+
+	&__slider {
+		min-width: 0;
+	}
+
+	&__input {
+		width: auto;
+		min-width: 0;
+		flex: 1;
+	}
+
+	.vc-input,
+	.vc-input-number {
+		min-height: 26px;
+		background: transparent;
+
+		&::before,
+		&::after {
+			border-color: transparent;
+		}
+
+		&.is-focus::before,
+		&.is-focus::after {
+			border-color: varfix(primary-color);
+		}
+	}
+
+	.vc-input__content input {
+		padding: 4px 8px 4px 6px;
+	}
+
+	.vc-input-number__icon {
+		display: none;
+	}
+}
+</style>

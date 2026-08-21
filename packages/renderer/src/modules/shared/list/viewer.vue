@@ -10,3 +10,11 @@ import type { RendererModuleViewerProps } from '../../../types';
 const props = defineProps<RendererModuleViewerProps>();
 const items = computed(() => Array.isArray(props.node.module.props.items) ? props.node.module.props.items : []);
 </script>
+<style lang="scss">
+@use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-list {
+	margin: 0;
+	color: varfix(foreground-color);
+}
+</style>

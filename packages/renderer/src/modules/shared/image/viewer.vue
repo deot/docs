@@ -43,3 +43,28 @@ const loading = computed(() => props.node.module.props.eager ? 'eager' : 'lazy')
 const wrapperStyle = computed(() => ({ borderRadius: `${Math.max(0, toLength(props.node.module.props.borderRadius, 0))}px` }));
 const imageStyle = computed(() => ({ objectFit: String(props.node.module.props.fit || 'contain') as 'contain' | 'cover' | 'fill' }));
 </script>
+<style lang="scss">
+.docs-renderer-image {
+	display: block;
+	height: 100%;
+	overflow: hidden;
+
+	img {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	&__dark {
+		display: none !important;
+	}
+}
+
+[data-vc-theme="dark"] .docs-renderer-image__light:has(+ .docs-renderer-image__dark) {
+	display: none;
+}
+
+[data-vc-theme="dark"] .docs-renderer-image__dark {
+	display: block !important;
+}
+</style>

@@ -18,7 +18,7 @@ This is a **pnpm monorepo** for `@deot/docs`, a Vue 3 documentation toolchain. I
 | `packages/locale` | `@deot/docs-locale` | Shared UI translation, Vue Provider, and built-in `zh-CN` / `en-US` |
 | `packages/theme` | `@deot/docs-theme` | Shared Light/Dark types, CSS variables, and SCSS utilities |
 
-The sample documentation workspace is in `site/`; localized content lives under `site/zh-CN` and `site/en-US`.
+The sample documentation workspace uses the repository root `index.html` (README aggregation demo). Generic new-project templates still use a `site/` directory.
 
 ### Quick reference
 
@@ -35,14 +35,14 @@ The sample documentation workspace is in `site/`; localized content lives under 
 | Build all packages (known baseline failure; see below) | `npm run build` |
 | Serve package examples | `npm run dev` |
 | Serve the sample documentation site | `npm run cli:dev` |
-| Build the sample documentation site (known baseline failure; see below) | `npm run cli:build` |
+| Preview the sample site (production runtime) | `npm run cli:preview` |
 
 Valid package folder names for targeted tests and builds are `cli`, `client`, `dever`, `index`, `locale`, `markdown`, `playground`, `renderer`, and `theme`. Use `--include '<pattern>'` for a narrower Vitest run. For example, validate Markdown with `npm run test -- --package-name markdown` and `npm run build -- --package-name markdown`. Tests collect coverage by default. The CI-equivalent checks are typecheck, all-package tests, and build.
 
 ### Development notes
 
 - Root commands are implemented by the `ddc` CLI from `@deot/dev`. Run them from the repository root so workspace discovery and the source aliases in `tsconfig.json` work correctly.
-- `npm run dev` scans `packages/*/examples` and serves the Markdown and Playground examples. `npm run cli:dev` instead runs this repository's `doc dev` command against the default `site/` workspace. Both are long-running Vite processes.
+- `npm run dev` scans `packages/*/examples` and serves the Markdown and Playground examples. `npm run cli:dev` instead runs this repository's `doc dev` command against the default root `index.html` workspace (auto-detected after `site/` is absent). Both are long-running Vite processes.
 - Tests use Vitest through `ddc test`. Browser-facing tests normally declare `// @vitest-environment jsdom`; CLI and build tests use the Node environment and dry-run paths so they do not start persistent servers.
 - The CLI tests and `cli:*` scripts invoke `tsx`, which creates a local IPC socket. In a restricted sandbox they can fail with `listen EPERM .../tsx-*.pipe`; rerun them with permission to create that socket rather than treating this as a product regression.
 - `playground` container blocks in the Markdown package are converted into Playground mount points. Changes to this syntax usually require coordinated tests in both `packages/markdown` and `packages/playground`.
@@ -59,4 +59,4 @@ Valid package folder names for targeted tests and builds are `cli`, `client`, `d
 
 - `npm run build` currently includes `client` and `renderer` in `--vue-package`. Declaration generation may still print upstream type warnings from `@deot/vc` and `@vue/repl`; confirm the final per-package `Success` line and absence of `Error! Build failed`.
 - A targeted Markdown build currently exits successfully and ends with `@deot/docs-markdown: Success`, but declaration generation prints many upstream diagnostics—some formatted as TypeScript errors—before that summary. Confirm the final per-package `Success` line and absence of `Error! Build failed`; do not judge this build from the diagnostic wording alone.
-- `npm run cli:build` currently stops with `Cannot resolve entry module index.html` because the production config does not point Vite at `site/index.html`. `npm run cli:dev` does use the `site/` workspace and is the working manual-preview entry.
+- `npm run cli:build` is not the publish path for this repository's README demo: a root workspace build would copy monorepo sources into `dist`. Use `npm run cli:dev` or `npm run cli:preview`, or deploy the root `index.html` (and `404.html` for GitHub Pages SPA fallback) directly.

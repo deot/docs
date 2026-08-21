@@ -316,3 +316,114 @@ const handleUpdateLayout = async (value: Record<string, unknown> | RendererLayou
 	));
 };
 </script>
+<style lang="scss">
+@use '../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-panel-title {
+	display: flex;
+	height: 32px;
+	padding: 0 10px;
+	font-size: 12px;
+	font-weight: 600;
+	border-bottom: 1px solid varfix(border-color-light);
+	align-items: center;
+	justify-content: space-between;
+
+	small {
+		font-weight: 400;
+		color: varfix(foreground-color-mute);
+	}
+}
+
+.docs-renderer-editor {
+	display: grid;
+	grid-template-rows: 32px minmax(0, 1fr);
+	min-width: 0;
+	min-height: 0;
+	font-size: 12px;
+	text-align: left;
+	background: varfix(background-color);
+	border-left: 1px solid varfix(border-color-light);
+
+	&__content {
+		padding: 10px 12px 20px;
+	}
+
+	&__section + &__section {
+		padding-top: 10px;
+		margin-top: 10px;
+		border-top: 1px solid varfix(border-color-light);
+	}
+
+	&__section h3 {
+		padding: 0;
+		margin: 0 0 8px;
+		font-size: 12px;
+		font-weight: 600;
+		border: 0;
+	}
+
+	&__sub {
+		margin: 8px 0 4px;
+		font-size: 11px;
+		line-height: 1.3;
+		color: varfix(foreground-color-mute);
+	}
+
+	&__pair {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: 6px 8px;
+		min-width: 0;
+	}
+
+	&__grid,
+	.docs-renderer-module-editor {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: 8px;
+		align-items: start;
+	}
+
+	&__grid > label,
+	.docs-renderer-module-editor > label {
+		grid-column: 1 / -1;
+		padding: 0;
+		font-size: 11px;
+		line-height: 1.3;
+		color: varfix(foreground-color-mute);
+		text-align: left;
+	}
+
+	.docs-renderer-module-editor > :not(.docs-renderer-field, label) {
+		grid-column: 1 / -1;
+	}
+
+	input,
+	textarea {
+		text-align: left;
+	}
+
+	.vc-textarea__wrapper,
+	.vc-textarea__content {
+		align-items: stretch;
+	}
+
+	.vc-input,
+	.vc-input-number,
+	.vc-textarea,
+	.vc-select {
+		min-height: 26px;
+		font-size: 12px;
+	}
+
+	.vc-input__content input,
+	.vc-textarea__content textarea {
+		padding: 4px 8px;
+	}
+
+	&__error {
+		color: varfix(error-color);
+	}
+}
+</style>

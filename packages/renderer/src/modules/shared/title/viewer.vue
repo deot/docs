@@ -18,3 +18,11 @@ const style = computed(() => ({
 	textAlign: String(props.node.module.props.align || 'left') as 'left' | 'center' | 'right'
 }));
 </script>
+<style lang="scss">
+@use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-title {
+	margin: 0;
+	color: varfix(foreground-color);
+}
+</style>

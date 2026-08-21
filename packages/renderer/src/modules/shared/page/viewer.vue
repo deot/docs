@@ -104,3 +104,43 @@ onBeforeUnmount(() => {
 	window.removeEventListener('pointercancel', handlePointerUp);
 });
 </script>
+<style lang="scss">
+.docs-renderer-page {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+
+	&__handle {
+		position: absolute;
+		padding: 0;
+		pointer-events: auto;
+		cursor: ew-resize;
+		background: transparent;
+		border: 0;
+
+		&--e {
+			top: 0;
+			right: 0;
+			bottom: 0;
+			width: 4px;
+		}
+
+		&--s {
+			right: 0;
+			bottom: 0;
+			left: 0;
+			height: 4px;
+			cursor: ns-resize;
+		}
+
+		&--se {
+			right: 0;
+			bottom: 0;
+			width: 16px;
+			height: 16px;
+			cursor: nwse-resize;
+		}
+	}
+}
+</style>

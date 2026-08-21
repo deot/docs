@@ -18,7 +18,7 @@ pnpm install
 
 | 任务 | 命令 |
 | --- | --- |
-| 示例文档站点（`site/index.html`） | `npm run cli:dev` |
+| 示例文档站点（根 `index.html`） | `npm run cli:dev` |
 | Markdown / Playground 包 examples | `npm run dev` |
 | Production 预览 | `npm run cli:preview` |
 | 类型检查 | `npm run typecheck` |
@@ -51,12 +51,12 @@ pnpm install
 
 - **全量 `npm run build`**：declaration 生成可能打印 `@deot/vc`、`@vue/repl` 等上游类型告警；以各包最终的 `Success` 为准，且无 `Error! Build failed`。
 - **单包 Markdown build**：可能出现大量 declaration 诊断，但 `@deot/docs-markdown: Success` 即表示通过。
-- **`npm run cli:build`**：当前会因 production 配置未指向 `site/index.html` 而失败（`Cannot resolve entry module index.html`）。日常预览请用 `npm run cli:dev` 或 `npm run cli:preview`。
+- **`npm run cli:build`**：本仓库 README 演示使用根 `index.html` 作为 workspace，不适合作为发布路径（会把 monorepo 源码一并复制）。日常预览请用 `npm run cli:dev` 或 `npm run cli:preview`；直接部署时托管根 `index.html` 与 `404.html` 即可。
 
 ## 文档
 
 - 用户向说明见根 [README.md](../README.md) 与各 `packages/*/README.md`。
-- 本仓库 `site/` 是 README 聚合演示，结构与根 README「快速开始」中的通用模板不同。
+- 本仓库演示入口是根 [`index.html`](../index.html)（README 聚合），结构与根 README「快速开始」中的通用 `site/` 模板不同。
 
 ## 许可证
 

@@ -43,3 +43,13 @@ const handleClose = () => {
 	emit('portal-fulfilled');
 };
 </script>
+<style lang="scss">
+.docs-renderer-preview-modal {
+	&__content {
+		height: 100%;
+		min-height: 0;
+		padding: 24px;
+		box-sizing: border-box;
+	}
+}
+</style>

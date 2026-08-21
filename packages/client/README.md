@@ -46,8 +46,8 @@ pnpm add @deot/docs-client
 	};
 </script>
 
-<link rel="stylesheet" href="//unpkg.com/@deot/docs-client/dist/index.style.css">
-<script type="module" src="//unpkg.com/@deot/docs-client/dist/index.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css">
+<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js"></script>
 ```
 
 入口模块检测到页面存在 `#app` 时会自动调用 `bootstrap()`。也可以在不触发自动启动的环境中导入并手动调用：

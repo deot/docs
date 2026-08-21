@@ -2,8 +2,6 @@ import { computed, createApp, watch } from 'vue';
 import { provideLocale, resolveLocale } from '@deot/docs-locale';
 import '../../../node_modules/@deot/style/dist/index.normalize-only.css';
 import '../../../node_modules/@deot/vc-components/dist/index.style.css';
-// 浏览器入口会内联 Renderer JS；这里从源码打入模块样式，不依赖 renderer dist。
-import '../../renderer/src/styles/style.scss';
 import App from './app.vue';
 import { provideRendererModules } from './components/renderer';
 import { connectResourceEvents } from './events';

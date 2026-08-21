@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createApp, defineComponent } from 'vue';
 import { defineRendererModule } from '@deot/docs-renderer';
 import { createDocsConfig, createDocsRuntime } from './fixtures/docs';
@@ -41,6 +44,14 @@ vi.mock('../src/modules/playground-resource', () => ({
 }));
 
 describe('client entry', () => {
+	it('does not import markdown / playground / renderer styles from workspace', () => {
+		const dir = path.dirname(fileURLToPath(import.meta.url));
+		const entry = fs.readFileSync(path.resolve(dir, '../src/index.ts'), 'utf8');
+		expect(entry).not.toContain('markdown/src/style.scss');
+		expect(entry).not.toContain('playground/src/bundle.scss');
+		expect(entry).not.toContain('renderer/src/styles/style.scss');
+	});
+
 	it('normalizes runtime and mounts the configured application', async () => {
 		document.body.innerHTML = '<div id="app"></div>';
 		window.$docs = createDocsConfig({ locales: { 'zh-CN': { label: '简体中文' } } });

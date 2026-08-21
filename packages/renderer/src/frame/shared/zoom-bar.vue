@@ -82,3 +82,47 @@ const handleSelectReady = async () => {
 	].join(',')).forEach(element => Resize.off(element));
 };
 </script>
+<style lang="scss">
+@use '../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-zoom-bar {
+	position: relative;
+	z-index: 32;
+	display: flex;
+	height: 40px;
+	padding: 0 16px;
+	overflow: visible;
+	background: varfix(background-color);
+	border-top: 1px solid varfix(border-color-light);
+	box-shadow: 0 -2px 10px varfix(shadow-color);
+	align-items: center;
+	justify-content: flex-end;
+
+	&__popup {
+		z-index: 4000;
+		min-width: 120px;
+	}
+
+	&__aids {
+		display: flex;
+		min-width: 0;
+		align-items: center;
+	}
+
+	&__content {
+		display: flex;
+		margin-left: auto;
+		align-items: center;
+	}
+
+	&__select {
+		width: 110px;
+	}
+
+	&__slider {
+		width: 160px;
+		margin-right: 15px;
+		margin-left: 16px;
+	}
+}
+</style>

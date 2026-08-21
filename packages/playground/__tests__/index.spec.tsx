@@ -175,7 +175,7 @@ describe('Playground', () => {
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
 			.toContain(`${DEFAULT_CDN_URL}/@deot/style/dist/index.css`);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
-			.not.toContain('unpkg.com');
+			.not.toContain('cdn.example.com');
 		expect(store.options.builtinImportMap.value.imports['@deot/vc'])
 			.toBe(`${DEFAULT_CDN_URL}/@deot/vc/dist/index.js`);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
@@ -187,12 +187,12 @@ describe('Playground', () => {
 	});
 
 	it('shares a configurable npm CDN between preview styles and builtin imports', () => {
-		expect(normalizeCdnURL(' https://unpkg.com/ ')).toBe('https://unpkg.com');
+		expect(normalizeCdnURL(' https://cdn.example.com/npm/ ')).toBe('https://cdn.example.com/npm');
 		expect(normalizeCdnURL('')).toBe(DEFAULT_CDN_URL);
 		expect(createBuiltinImports()['@deot/vc'])
 			.toBe(`${DEFAULT_CDN_URL}/@deot/vc/dist/index.js`);
 		expect(createBuiltinImports()['lodash-es']).toBe(`${DEFAULT_CDN_URL}/lodash-es/+esm`);
-		expect(createBuiltinImports('https://unpkg.com/')['lodash-es'])
+		expect(createBuiltinImports('https://cdn.example.com/npm/')['lodash-es'])
 			.toBe(`${DEFAULT_CDN_URL}/lodash-es/+esm`);
 		expect(createRuntimePreviewOptions().headHTML)
 			.toContain(`${DEFAULT_CDN_URL}/@deot/vc-components/dist/index.style.css`);
@@ -201,7 +201,7 @@ describe('Playground', () => {
 			props: {
 				modelValue: '<template>cdn</template>',
 				options: {
-					cdnURL: 'https://unpkg.com/',
+					cdnURL: 'https://cdn.example.com/npm/',
 					builtinImportMap: { imports: { custom: '/custom.js' } }
 				}
 			}
@@ -209,13 +209,13 @@ describe('Playground', () => {
 		const imports = store.options.builtinImportMap.value.imports;
 		const headHTML = wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML;
 
-		expect(imports['@deot/vc']).toBe('https://unpkg.com/@deot/vc/dist/index.js');
+		expect(imports['@deot/vc']).toBe('https://cdn.example.com/npm/@deot/vc/dist/index.js');
 		expect(imports['lodash-es']).toBe(`${DEFAULT_CDN_URL}/lodash-es/+esm`);
 		expect(imports.custom).toBe('/custom.js');
 		expect(imports.vue).toBe('https://play.vuejs.org/vue.runtime.esm-browser.js');
-		expect(headHTML).toContain('https://unpkg.com/@deot/style/dist/index.normalize-only.css');
-		expect(headHTML).toContain('https://unpkg.com/@deot/vc-components/dist/index.style.css');
-		expect(headHTML).toContain('https://unpkg.com/@deot/style/dist/index.css');
+		expect(headHTML).toContain('https://cdn.example.com/npm/@deot/style/dist/index.normalize-only.css');
+		expect(headHTML).toContain('https://cdn.example.com/npm/@deot/vc-components/dist/index.style.css');
+		expect(headHTML).toContain('https://cdn.example.com/npm/@deot/style/dist/index.css');
 		expect(headHTML).not.toContain('cdn.jsdelivr.net');
 	});
 

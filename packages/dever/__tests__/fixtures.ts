@@ -33,5 +33,10 @@ export const pluginHook = (
 
 export const htmlTagsOf = (value: unknown) => {
 	if (!Array.isArray(value)) throw new TypeError('expected html tags');
-	return value as Array<{ tag?: string; injectTo?: string; children?: string }>;
+	return value as Array<{
+		tag?: string;
+		injectTo?: string;
+		children?: string;
+		attrs?: Record<string, string | undefined>;
+	}>;
 };

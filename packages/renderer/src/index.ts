@@ -1,5 +1,3 @@
-import './styles/style.scss';
-
 export { default as Combo } from './combo/index.vue';
 export { default as Renderer } from './assist/renderer/index.vue';
 export { BuiltinModules } from './modules';

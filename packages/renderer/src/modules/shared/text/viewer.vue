@@ -21,3 +21,11 @@ const style = computed(() => {
 	} as CSSProperties;
 });
 </script>
+<style lang="scss">
+@use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-text {
+	margin: 0;
+	color: varfix(foreground-color);
+}
+</style>

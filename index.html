@@ -1,10 +1,24 @@
 <!DOCTYPE html>
+<!-- Keep in sync with 404.html (GitHub Pages SPA fallback). -->
 <html>
 <head>
 	<title>@deot/docs 文档</title>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<meta charset="UTF-8">
+	<script>
+		if (window.__DOCS_RUNTIME__?.mode !== 'development') {
+			const styles = [
+				'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css',
+				'https://cdn.jsdelivr.net/npm/@deot/docs-renderer/dist/index.style.css',
+				'https://cdn.jsdelivr.net/npm/@deot/docs-markdown/dist/index.style.css',
+				'https://cdn.jsdelivr.net/npm/@deot/docs-playground/dist/index.style.css'
+			];
+			document.write(styles.map(href => (
+				`<link rel="stylesheet" href="${href}">`
+			)).join(''));
+		}
+	</script>
 </head>
 <body>
 	<div id="app"></div>
@@ -308,13 +322,6 @@
 		}
 	</script>
 	<script>
-		if (window.__DOCS_RUNTIME__?.mode !== 'development') {
-			const stylesheet = document.createElement('link');
-			stylesheet.rel = 'stylesheet';
-			stylesheet.href = 'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css';
-			document.head.appendChild(stylesheet);
-		}
-
 		const script = document.createElement('script');
 		script.type = 'module';
 		script.src = window.__DOCS_RUNTIME__?.mode === 'development'

@@ -120,11 +120,11 @@ site/
 
 	<link
 		rel="stylesheet"
-		href="//unpkg.com/@deot/docs-client/dist/index.style.css"
+		href="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css"
 	>
 	<script
 		type="module"
-		src="//unpkg.com/@deot/docs-client/dist/index.js"
+		src="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js"
 	></script>
 </body>
 </html>
@@ -210,22 +210,22 @@ const routes = {
 
 ## 本仓库开发
 
-上方「快速开始」面向**新建文档站点**的通用 `site/` 模板（含 `sidebar.json`、`index.md` 等）。本仓库自带的 [`site/`](site/) 是 **README 聚合演示**：仅含 [`site/index.html`](site/index.html)，Sidebar 与首页 Renderer 文档在 JS 内联生成，开发模式下读取根目录与各子包 README；因此克隆后找不到 `site/zh-CN/index.md` 或 `sidebar.json` 是预期行为。
+上方「快速开始」面向**新建文档站点**的通用 `site/` 模板（含 `sidebar.json`、`index.md` 等）。本仓库自带的演示是 **README 聚合**：根目录 [`index.html`](index.html)（与 [`404.html`](404.html) 保持同步，供 GitHub Pages 深链回退）内联 Sidebar 与首页 Renderer 文档，开发模式下读取根目录与各子包 README；因此克隆后找不到 `site/zh-CN/index.md` 或 `sidebar.json` 是预期行为。未指定 `--workspace` 时 CLI 仍优先探测 `site/index.html`，本仓库没有 `site/` 时回退到根 `index.html`。
 
 ```bash
 pnpm install
 
-# 启动本仓库示例文档站点（doc dev，读 site/index.html）
+# 启动本仓库示例文档站点（doc dev，读根 index.html）
 npm run cli:dev
 
 # 启动 Markdown / Playground 包 examples（扫 packages/*/examples）
 npm run dev
 
-# Production Runtime 预览
+# Production Runtime 预览（同样自动命中根 index.html）
 npm run cli:preview
 
-# 构建示例文档站点（当前会因 production 配置未指向 site/index.html 而失败）
-npm run cli:build
+# 本仓库演示不要用 cli:build 发布：根 workspace 会把 monorepo 源码复制进 dist。
+# 直接部署时托管根 index.html 与 404.html 即可。
 
 # 类型、测试与构建
 npm run typecheck
@@ -239,7 +239,7 @@ npm run lint:fix
 npm run lint:style
 ```
 
-[`site/index.html`](site/index.html) 展示了按 Runtime 在本地文件与 GitHub Raw URL 之间切换的完整 resolver 配置，并用内联 Renderer 文档作为首页。
+[`index.html`](index.html) 展示了按 Runtime 在本地文件与 GitHub Raw URL 之间切换的完整 resolver 配置，并用内联 Renderer 文档作为首页。
 
 贡献代码前请阅读 [贡献指南](.github/CONTRIBUTING.md)。
 

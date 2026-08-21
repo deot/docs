@@ -106,3 +106,99 @@ const handleSort = (value: ArrayEditorRow[]) => {
 
 watch(() => props.modelValue, syncRows, { immediate: true });
 </script>
+<style lang="scss">
+@use '../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer-array-editor {
+	display: grid;
+	grid-column: 1 / -1;
+	gap: 8px;
+	min-width: 0;
+
+	&__list,
+	&__list > .vc-transition-fade {
+		display: grid;
+		gap: 8px;
+	}
+
+	&__item {
+		position: relative;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		padding: 10px 8px;
+		background: varfix(background-color);
+		border: 1px dashed varfix(border-color);
+		border-radius: 4px;
+	}
+
+	&__remove {
+		position: absolute;
+		top: -9px;
+		right: -9px;
+		z-index: 1;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 20px;
+		height: 20px;
+		padding: 0;
+		margin: 0;
+		color: varfix(foreground-color-mute);
+		cursor: pointer;
+		background: varfix(background-color);
+		border: 1px solid varfix(border-color);
+		border-radius: 50%;
+		appearance: none;
+
+		&::before,
+		&::after {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 8px;
+			height: 1.5px;
+			background: currentcolor;
+			border-radius: 1px;
+			content: '';
+		}
+
+		&::before {
+			transform: translate(-50%, -50%) rotate(45deg);
+		}
+
+		&::after {
+			transform: translate(-50%, -50%) rotate(-45deg);
+		}
+
+		&:hover:not(:disabled) {
+			color: #fff;
+			background: varfix(error-color);
+			border-color: varfix(error-color);
+		}
+
+		&:disabled {
+			cursor: not-allowed;
+			opacity: 0.45;
+		}
+	}
+
+	&__content,
+	.docs-renderer-module-editor__row {
+		display: grid;
+		gap: 6px;
+		min-width: 0;
+	}
+
+	.docs-renderer-module-editor__row--split {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+
+	&__add {
+		width: 100%;
+		min-height: 28px;
+		color: varfix(primary-color);
+		background: varfix(background-color-soft);
+		border-style: dashed;
+	}
+}
+</style>
