@@ -308,7 +308,7 @@ export class PlaygroundResourceCache {
 	}
 }
 
-class PlaygroundResourceRuntime {
+export class PlaygroundResourceRuntime {
 	private cache = new PlaygroundResourceCache();
 	/**
 	 * start、其返回的 stop，以及 clear 共用的世代。过期的 start 结果和 hydrate 不得再写内存或库。
@@ -754,4 +754,3 @@ class PlaygroundResourceRuntime {
 /**
  * Client 内 Playground import / CSS 的默认、覆盖、探测与持久化入口。
  */
-export const PlaygroundResource = new PlaygroundResourceRuntime();

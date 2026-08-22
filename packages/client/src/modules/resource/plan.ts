@@ -1,4 +1,8 @@
-import { Gateway } from '../gateway';
+import { createRouterMatcher } from 'vue-router';
+import { resolveLocale } from '@deot/docs-locale';
+import { prepareRendererDocument } from '@deot/docs-renderer';
+import type { RouteLocationNormalizedGeneric, RouteRecordRaw } from 'vue-router';
+import type { ResourceGateway } from '../gateway';
 import {
 	classifyResourceSource,
 	createResourceIdentity,
@@ -16,10 +20,7 @@ import {
 } from '../../utils/resource-graph';
 import { getDocsConfig } from '../../utils/runtime';
 import { resolveInlineSidebar } from '../../utils/sidebar';
-import { createRouterMatcher } from 'vue-router';
-import { resolveLocale } from '@deot/docs-locale';
-import { prepareRendererDocument } from '@deot/docs-renderer';
-import type { RouteLocationNormalizedGeneric, RouteRecordRaw } from 'vue-router';
+
 import type {
 	DocsConfig,
 	DocsResourceType,
@@ -112,8 +113,12 @@ interface InternalRouteTarget {
 	pathname: string;
 }
 
-/** Client 内所有调用方共用的无状态资源计划实例。 */
-class ResourcePlanner {
+/**
+ * Client 内所有调用方共用的无状态资源计划实例。
+ */
+export class ResourcePlanner {
+	constructor(private gateway: ResourceGateway) {}
+
 	private getLanguages(config: DocsConfig) {
 		return Object.keys(config.locales).length
 			? Object.keys(config.locales)
@@ -338,7 +343,7 @@ class ResourcePlanner {
 					lang
 				});
 				if (options.signal?.aborted) break;
-				const record = await Gateway.load(identity, {
+				const record = await this.gateway.load(identity, {
 					url,
 					priority: 100,
 					signal: options.signal
@@ -771,7 +776,7 @@ class ResourcePlanner {
 
 	private async prefetchResources(identities: ResourceIdentity[]) {
 		if (!identities.length) return [];
-		return Gateway.prefetch(identities);
+		return this.gateway.prefetch(identities);
 	}
 
 	/**
@@ -873,7 +878,7 @@ class ResourcePlanner {
 		const results: ResourcePrefetchOutcome[] = [];
 		const processed = new Set<string>();
 		while (true) {
-			const records = new Map((await Gateway.list()).map(record => [
+			const records = new Map((await this.gateway.list()).map(record => [
 				resourceIdentityKey(record.identity),
 				record
 			]));
@@ -932,7 +937,7 @@ class ResourcePlanner {
 		const processed = new Set<string>();
 		let queue = seeds;
 		while (queue.length) {
-			const records = new Map<string, ResourceRecord>((await Gateway.list()).map(record => [
+			const records = new Map<string, ResourceRecord>((await this.gateway.list()).map(record => [
 				resourceIdentityKey(record.identity),
 				record
 			]));
@@ -1035,7 +1040,7 @@ class ResourcePlanner {
 		const parsedSidebarKeys = await this.collectSidebarResources(
 			config,
 			collector,
-			await Gateway.list(),
+			await this.gateway.list(),
 			sidebarKeys
 		);
 		if (strict && [...sidebarKeys].some(key => (
@@ -1101,7 +1106,7 @@ class ResourcePlanner {
 		const ordered = await this.collectResourcesDepthFirst(
 			config,
 			collector,
-			await Gateway.list()
+			await this.gateway.list()
 		);
 		collector.identities.clear();
 		ordered.forEach(identity => collector.identities.set(resourceIdentityKey(identity), identity));
@@ -1118,6 +1123,3 @@ class ResourcePlanner {
 		};
 	}
 }
-
-/** 导出 Client 内所有调用方共用的无状态资源计划实例。 */
-export const ResourcePlan = new ResourcePlanner();

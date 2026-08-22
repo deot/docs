@@ -14,7 +14,9 @@ const isResourceRecord = (value: unknown): value is ResourceRecord => {
 	);
 };
 
-/** 基于共享 deot-docs object store 的 Gateway 持久化存储。 */
+/**
+ * 基于共享 deot-docs object store 的 Gateway 持久化存储。
+ */
 export class IndexedDBResourceCache implements ResourceCache {
 	private store = new IndexedDBStore({
 		name: 'deot-docs',

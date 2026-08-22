@@ -33,8 +33,9 @@ import type {
 	RendererDocument,
 	RendererSortableDocument
 } from '@deot/docs-renderer';
-import { Gateway, Theme } from '../../modules';
+import { Gateway } from '../../modules/gateway';
 import { ResourceRequestError } from '../../modules/gateway/types';
+import { Theme } from '../../modules/settings';
 import {
 	createResourceIdentity,
 	getDocsNamespace,

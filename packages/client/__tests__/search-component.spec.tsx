@@ -54,7 +54,7 @@ vi.mock('../src/modules/search', () => ({
 	}
 }));
 
-vi.mock('../src/modules', () => ({
+vi.mock('../src/modules/gateway', () => ({
 	Gateway: { subscribeStatus }
 }));
 

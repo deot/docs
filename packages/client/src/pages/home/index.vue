@@ -11,7 +11,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useLocale } from '@deot/docs-locale';
 import { Renderer, validateRendererDocument } from '@deot/docs-renderer';
 import type { RendererContext, RendererDocument } from '@deot/docs-renderer';
-import { Gateway, Theme } from '../../modules';
+import { Gateway } from '../../modules/gateway';
+import { Theme } from '../../modules/settings';
 import {
 	createResourceIdentity,
 	getDefaultLanguage,

@@ -150,7 +150,7 @@ import { Scroller } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import type { Language } from '@deot/docs-locale';
 import HighlightText from './highlight-text.vue';
-import { Gateway } from '../../modules';
+import { Gateway } from '../../modules/gateway';
 import { Search } from '../../modules/search';
 import type { SearchHistoryRecord, SearchResult } from '../../modules/search';
 

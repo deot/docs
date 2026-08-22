@@ -126,7 +126,9 @@ export interface DocsHomeOptions {
 	locales: Record<string, RendererDocument | string>;
 }
 
-/** Sidebar 可继续使用资源地址，也可以直接声明当前语言或多语言的数据。 */
+/**
+ * Sidebar 可继续使用资源地址，也可以直接声明当前语言或多语言的数据。
+ */
 export type DocsSidebar = DocsSlot
 	| SidebarItem[]
 	| Record<string, SidebarItem[]>;

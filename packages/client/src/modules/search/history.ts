@@ -22,7 +22,9 @@ export const createSearchHistoryId = (target: SearchNavigationTarget) => (
 		.join('|')
 );
 
-/** 搜索历史使用独立数据库，避免升级 Gateway 资源库时重建其 object store。 */
+/**
+ * 搜索历史使用独立数据库，避免升级 Gateway 资源库时重建其 object store。
+ */
 export class IndexedDBSearchHistory {
 	private store = new IndexedDBStore({
 		name: 'deot-docs-search',

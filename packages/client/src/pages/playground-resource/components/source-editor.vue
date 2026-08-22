@@ -48,7 +48,7 @@ import { useLocale } from '@deot/docs-locale';
 import {
 	normalizePlaygroundResourceUrl,
 	type PlaygroundResourceRow
-} from '../../../modules/playground-resource';
+} from '../../../modules/resource/playground';
 
 const props = defineProps<{
 	row: PlaygroundResourceRow;

@@ -2,10 +2,12 @@
 
 import { flushPromises, mount } from '@vue/test-utils';
 import DatabasePage from '../src/pages/database/index.vue';
-import type { ResourceContentRecord } from '../src/modules';
+import type { ResourceContentRecord } from '../src/modules/gateway';
 import type { ResourceIdentity } from '../src/types';
-import { ResourcePlan } from '../src/modules/resource-plan';
+import { Resource } from '../src/modules/resource';
 import { getList as getDatabaseList } from '../src/pages/database/api';
+
+const ResourcePlan = Resource.plan;
 
 const {
 	list,
@@ -83,7 +85,7 @@ vi.mock('vue-router', async original => ({
 	useRouter: () => ({ back: routerBack, push: routerPush })
 }));
 
-vi.mock('../src/modules', () => ({
+vi.mock('../src/modules/gateway', () => ({
 	Gateway: {
 		list,
 		revalidate,
@@ -92,12 +94,6 @@ vi.mock('../src/modules', () => ({
 		invalidate,
 		clear,
 		subscribeStatus
-	}
-}));
-vi.mock('../src/modules/gateway', () => ({
-	Gateway: {
-		list,
-		prefetch
 	}
 }));
 vi.mock('@deot/vc', async () => {
@@ -450,8 +446,8 @@ describe('database page', () => {
 	});
 
 	it('loads graph descriptors before Markdown for automatic idle plans', async () => {
-		const importedAgain = await import('../src/modules/resource-plan');
-		expect(importedAgain.ResourcePlan).toBe(ResourcePlan);
+		const importedAgain = await import('../src/modules/resource');
+		expect(importedAgain.Resource.plan).toBe(ResourcePlan);
 		window.$docs.routes = {
 			'/guide': { content: './guide.md' },
 			'/demo': { content: './demo.vue' }

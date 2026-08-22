@@ -9,7 +9,9 @@ export type ScheduledResult<T> = Promise<T> & {
 	setPriority: (priority: number) => void;
 };
 
-/** 所有 Gateway 请求共用的、支持优先级的并发边界。 */
+/**
+ * 所有 Gateway 请求共用的、支持优先级的并发边界。
+ */
 export class RequestScheduler {
 	private queue: ScheduledRequest[] = [];
 

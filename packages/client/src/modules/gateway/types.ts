@@ -2,7 +2,9 @@ import type { ResourceIdentity } from '../../types';
 
 export type ResourceStatus = 'waiting' | 'pending' | 'success' | 'error';
 
-/** HTTP 响应已到达但状态不可用，保留状态码供业务区分 404 与传输故障。 */
+/**
+ * HTTP 响应已到达但状态不可用，保留状态码供业务区分 404 与传输故障。
+ */
 export class ResourceRequestError extends Error {
 	constructor(public readonly status: number, message = `HTTP ${status}`) {
 		super(message);
@@ -123,12 +125,16 @@ export interface ResourceContentRecord extends ResourceRecord {
 	updatedAt: number;
 }
 
-/** Gateway 内部构建中的记录；status 始终由 normalizeResourceRecord 派生。 */
+/**
+ * Gateway 内部构建中的记录；status 始终由 normalizeResourceRecord 派生。
+ */
 export type ResourceRecordDraft = Omit<ResourceRecord, 'status'> & {
 	status?: ResourceStatus;
 };
 
-/** normalizeResourceRecord 会重新派生的字段；持久化旧记录里这些字段不可信。 */
+/**
+ * normalizeResourceRecord 会重新派生的字段；持久化旧记录里这些字段不可信。
+ */
 type LegacyResourceField = Exclude<keyof ResourceRecord, 'identity' | 'url' | 'etag' | 'lastModified' | 'previous'>;
 
 /**

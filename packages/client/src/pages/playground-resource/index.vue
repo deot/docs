@@ -204,7 +204,7 @@ import type {
 import type {
 	PlaygroundResourceRequestStatus,
 	PlaygroundResourceRow
-} from '../../modules/playground-resource';
+} from '../../modules/resource/playground';
 import { getDocsNamespace } from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
 

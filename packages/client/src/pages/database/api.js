@@ -1,5 +1,5 @@
-import { Gateway } from '../../modules';
-import { ResourcePlan } from '../../modules/resource-plan';
+import { Gateway } from '../../modules/gateway';
+import { Resource } from '../../modules/resource';
 import { getDocsNamespace, resourceIdentityKey } from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
 
@@ -7,7 +7,7 @@ export const getList = async () => {
 	const records = await Gateway.list();
 	let order = [];
 	try {
-		order = await ResourcePlan.collectConfiguredOrder(getDocsConfig(), records);
+		order = await Resource.plan.collectConfiguredOrder(getDocsConfig(), records);
 	} catch {
 		// 异常的自定义 resolver 不能阻止 IndexedDB 诊断；无法推导完整路由计划时，
 		// 所有记录都使用垃圾数据的回退排序。
@@ -54,8 +54,8 @@ export const clear = async () => {
 };
 
 export const prefetch = async () => {
-	const { collector, results } = await ResourcePlan.build();
-	const summary = ResourcePlan.summarize(results);
+	const { collector, results } = await Resource.plan.build();
+	const summary = Resource.plan.summarize(results);
 	return {
 		total: collector.identities.size,
 		...summary
@@ -68,7 +68,7 @@ export const prefetch = async () => {
  * 中止清理，因为此时保留集可能不完整。
  */
 export const prune = async () => {
-	const { config, collector } = await ResourcePlan.build({
+	const { config, collector } = await Resource.plan.build({
 		strict: true,
 		downloadMarkdown: false
 	});

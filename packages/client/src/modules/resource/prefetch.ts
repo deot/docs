@@ -1,8 +1,8 @@
-import { Gateway } from '../gateway';
-import { ResourcePlan } from '../resource-plan';
 import { resourceIdentityKey } from '../../utils/resolver';
 import type { DocsConfig, DocsPrefetchOptions, ResourceIdentity } from '../../types';
+import type { ResourceGateway } from '../gateway';
 import type { ResourcePrefetchOutcome } from '../gateway/types';
+import type { ResourcePlanner } from './plan';
 
 const DEFAULT_BATCH_SIZE = 2;
 const DEFAULT_IDLE_TIMEOUT = 1500;
@@ -23,7 +23,12 @@ export type NormalizedDocsPrefetchOptions = Required<DocsPrefetchOptions>;
  * 封装浏览器空闲预加载入口；实例只提供稳定方法，每次 start 的运行状态
  * 均保留在独立闭包中，多个会话之间不会共享完成记录或取消信号。
  */
-class IdlePrefetchScheduler {
+export class IdlePrefetchScheduler {
+	constructor(
+		private gateway: ResourceGateway,
+		private plan: ResourcePlanner
+	) {}
+
 	/**
 	 * 规范化站点预加载配置；对象表示开启，非法数值回退到安全默认值。
 	 * @param value 用户声明的预加载配置。
@@ -85,7 +90,9 @@ class IdlePrefetchScheduler {
 			idleHandle = null;
 		};
 
-		/** 每批网络请求前重新等待空闲，避免一次计划持续占用主线程和网络。 */
+		/**
+		 * 每批网络请求前重新等待空闲，避免一次计划持续占用主线程和网络。
+		 */
 		const waitForIdle = () => new Promise<void>((resolve, reject) => {
 			if (controller.signal.aborted) {
 				reject(this.createAbortError());
@@ -137,7 +144,7 @@ class IdlePrefetchScheduler {
 			for (let index = 0; index < pending.length; index += options.batchSize) {
 				await waitForIdle();
 				const batch = pending.slice(index, index + options.batchSize);
-				const batchResults = await Gateway.prefetch(
+				const batchResults = await this.gateway.prefetch(
 					batch.map(item => item.identity),
 					{ priority: 25, signal: controller.signal }
 				);
@@ -156,13 +163,15 @@ class IdlePrefetchScheduler {
 			return results;
 		};
 
-		/** 串行运行完整计划；online 发生在执行期间时只追加一轮恢复。 */
+		/**
+		 * 串行运行完整计划；online 发生在执行期间时只追加一轮恢复。
+		 */
 		const run = async () => {
 			if (running || stopped) return;
 			running = true;
 			retryRequested = false;
 			try {
-				await ResourcePlan.build({ config, graphFirst: true, prefetchResources });
+				await this.plan.build({ config, graphFirst: true, prefetchResources });
 				needsRetry = failed.size > 0;
 			} catch (reason) {
 				if ((reason as Error)?.name !== 'AbortError') needsRetry = true;
@@ -193,6 +202,3 @@ class IdlePrefetchScheduler {
 		};
 	}
 }
-
-/** Client 启动流程共用的无状态空闲预加载实例。 */
-export const IdlePrefetch = new IdlePrefetchScheduler();

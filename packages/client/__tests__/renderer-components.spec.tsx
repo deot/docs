@@ -20,7 +20,7 @@ const { load, subscribe, unsubscribe } = vi.hoisted(() => ({
 	subscribe: vi.fn(),
 	unsubscribe: vi.fn()
 }));
-vi.mock('../src/modules', () => ({
+vi.mock('../src/modules/gateway', () => ({
 	Gateway: {
 		load,
 		subscribe: (...args: unknown[]) => {

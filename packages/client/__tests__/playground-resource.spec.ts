@@ -14,10 +14,12 @@ import {
 	setPlaygroundStyleOverrides
 } from '@deot/docs-playground';
 import {
-	PlaygroundResource,
 	PlaygroundResourceCache,
 	measurePlaygroundResourceBytes
-} from '../src/modules/playground-resource';
+} from '../src/modules/resource/playground';
+import { Resource } from '../src/modules/resource';
+
+const PlaygroundResource = Resource.playground;
 
 const listRows = async (...args: Parameters<typeof PlaygroundResource.listPage>) => (
 	(await PlaygroundResource.listPage(...args)).rows

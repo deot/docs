@@ -165,8 +165,8 @@ import type {
 } from '../../components/paging';
 import { getDocsNamespace, resourceIdentityKey } from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
-import { Gateway } from '../../modules';
-import type { ResourceRecord, ResourceStatus } from '../../modules';
+import { Gateway } from '../../modules/gateway';
+import type { ResourceRecord, ResourceStatus } from '../../modules/gateway';
 
 const records = ref<ResourceRecord[]>([]);
 const route = useRoute();

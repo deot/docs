@@ -12,8 +12,8 @@ vi.mock('../src/modules/gateway', () => ({
 	Gateway: { list }
 }));
 
-vi.mock('../src/modules/resource-plan', () => ({
-	ResourcePlan: { collectRouteResources }
+vi.mock('../src/modules/resource', () => ({
+	Resource: { plan: { collectRouteResources } }
 }));
 
 describe('inline home search', () => {

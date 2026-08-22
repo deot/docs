@@ -46,19 +46,18 @@ vi.mock('vue', async original => ({
 vi.mock('../src/app.vue', () => ({ default: { name: 'DocsApp' } }));
 vi.mock('../src/router', () => ({ createDocsRouter: vi.fn(() => router) }));
 vi.mock('../src/events', () => ({ connectResourceEvents: vi.fn(() => disconnectEvents) }));
-vi.mock('../src/modules/idle-prefetch', () => ({
-	IdlePrefetch: {
-		start: vi.fn((config) => {
-			startIdlePrefetch(config);
-			return stopPrefetch;
-		})
+vi.mock('../src/modules/resource', () => ({
+	Resource: {
+		prefetch: {
+			start: vi.fn((config) => {
+				startIdlePrefetch(config);
+				return stopPrefetch;
+			})
+		},
+		playground: {
+			start: startPlaygroundResource
+		}
 	}
-}));
-vi.mock('../src/modules/playground-resource', () => ({
-	PlaygroundResource: {
-		start: startPlaygroundResource
-	},
-	PlaygroundResourceCache: class {}
 }));
 vi.mock('../src/modules/settings', () => ({
 	Settings: {
@@ -94,6 +93,9 @@ describe('client entry', () => {
 		expect(client.bootstrap).toBeTypeOf('function');
 		expect(client.Network).toBeDefined();
 		expect(client.Gateway).toBeInstanceOf(client.ResourceGateway);
+		expect(client).not.toHaveProperty('ResourcePlan');
+		expect(client).not.toHaveProperty('IdlePrefetch');
+		expect(client).not.toHaveProperty('Resource');
 		expect(startPlaygroundResource).toHaveBeenCalled();
 
 		const explicit = createDocsConfig({ locales: { en: { label: 'English' } } });

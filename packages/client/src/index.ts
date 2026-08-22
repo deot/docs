@@ -5,8 +5,7 @@ import '../../../node_modules/@deot/vc-components/dist/index.style.css';
 import App from './app.vue';
 import { provideRendererModules } from './components/renderer';
 import { connectResourceEvents } from './events';
-import { IdlePrefetch } from './modules/idle-prefetch';
-import { PlaygroundResource } from './modules/playground-resource';
+import { Resource } from './modules/resource';
 import { Settings, ThemeRuntime } from './modules/settings';
 import { createDocsRouter } from './router';
 import { getDefaultLanguage } from './utils/resolver';
@@ -54,7 +53,7 @@ export const bootstrap = async (config?: DocsConfig) => {
 	config ||= window.$docs || { locales: {}, routes: {} };
 	initializeDocsRuntime(window, config);
 	const stopTheme = ThemeRuntime.start(config);
-	const stopPlaygroundResource = await PlaygroundResource.start(config);
+	const stopPlaygroundResource = await Resource.playground.start(config);
 	const initialLanguage = await Settings.language.restore(config);
 	const router = createDocsRouter(config, { initialLanguage });
 	const stopLanguagePersistence = router.afterEach((to) => {
@@ -79,7 +78,7 @@ export const bootstrap = async (config?: DocsConfig) => {
 	void (async () => {
 		try {
 			await router.isReady();
-			if (!disconnected) stopPrefetch = IdlePrefetch.start(config);
+			if (!disconnected) stopPrefetch = Resource.prefetch.start(config);
 		} catch {
 			// Router 启动失败时应用本身会呈现错误，不再启动后台预加载。
 		}

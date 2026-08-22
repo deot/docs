@@ -8,14 +8,12 @@ const { build, prefetch } = vi.hoisted(() => ({
 	prefetch: vi.fn()
 }));
 
-vi.mock('../src/modules/gateway', () => ({
-	Gateway: { prefetch }
-}));
-vi.mock('../src/modules/resource-plan', () => ({
-	ResourcePlan: { build }
-}));
+import { IdlePrefetchScheduler } from '../src/modules/resource/prefetch';
 
-import { IdlePrefetch } from '../src/modules/idle-prefetch';
+const IdlePrefetch = new IdlePrefetchScheduler(
+	{ prefetch } as never,
+	{ build } as never
+);
 
 const identity = (source: string): ResourceIdentity => ({
 	namespace: 'idle-test',
@@ -164,9 +162,7 @@ describe('idle resource prefetch', () => {
 		expect(signal.aborted).toBe(true);
 	});
 
-	it('shares one instance while isolating concurrent start sessions', async () => {
-		const importedAgain = await import('../src/modules/idle-prefetch');
-		expect(importedAgain.IdlePrefetch).toBe(IdlePrefetch);
+	it('isolates concurrent start sessions on one scheduler', async () => {
 		let session = 0;
 		build.mockImplementation(async ({ prefetchResources }) => {
 			session += 1;

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import * as api from '../src/pages/playground-resource/api';
-import type { PlaygroundResourceRow } from '../src/modules/playground-resource';
+import type { PlaygroundResourceRow } from '../src/modules/resource/playground';
 
 const {
 	listPage,
@@ -13,7 +13,7 @@ const {
 	subscribeStatus
 } = vi.hoisted(() => ({
 	listPage: vi.fn(async (): Promise<{
-		rows: import('../src/modules/playground-resource').PlaygroundResourceRow[];
+		rows: import('../src/modules/resource/playground').PlaygroundResourceRow[];
 		bytes: number;
 	}> => ({ rows: [], bytes: 0 })),
 	save: vi.fn(async () => null),
@@ -24,15 +24,17 @@ const {
 	subscribeStatus: vi.fn(() => () => undefined)
 }));
 
-vi.mock('../src/modules/playground-resource', () => ({
-	PlaygroundResource: {
-		listPage,
-		save,
-		reset,
-		clear,
-		prefetch,
-		retry,
-		subscribeStatus
+vi.mock('../src/modules/resource', () => ({
+	Resource: {
+		playground: {
+			listPage,
+			save,
+			reset,
+			clear,
+			prefetch,
+			retry,
+			subscribeStatus
+		}
 	}
 }));
 

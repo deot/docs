@@ -1,11 +1,13 @@
 export { Network } from './network';
 export { Gateway, ResourceGateway } from './gateway';
 export { Theme } from './settings';
+import { Resource } from './resource';
+
+export const PlaygroundResource = Resource.playground;
 export {
-	PlaygroundResource,
 	PlaygroundResourceCache,
 	normalizePlaygroundResourceUrl
-} from './playground-resource';
+} from './resource/playground';
 export type {
 	PlaygroundResourceKind,
 	PlaygroundResourceLastAction,
@@ -13,7 +15,7 @@ export type {
 	PlaygroundResourceRecord,
 	PlaygroundResourceRequestStatus,
 	PlaygroundResourceRow
-} from './playground-resource';
+} from './resource/playground';
 export type {
 	ResourceCache,
 	ResourceContentRecord,

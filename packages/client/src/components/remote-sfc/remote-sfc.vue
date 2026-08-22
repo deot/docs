@@ -20,7 +20,7 @@ import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue';
 import type { Component } from 'vue';
 import { useLocale } from '@deot/docs-locale';
 import { useRouter } from 'vue-router';
-import { Gateway } from '../../modules';
+import { Gateway } from '../../modules/gateway';
 import { createResourceIdentity, resolveResource, resourceIdentityKey } from '../../utils/resolver';
 import {
 	collectResourceImports,
@@ -30,7 +30,7 @@ import {
 	toLogicalResourceSource
 } from '../../utils/resource-graph';
 import { getDocsConfig } from '../../utils/runtime';
-import type { ResourceContentRecord } from '../../modules';
+import type { ResourceContentRecord } from '../../modules/gateway';
 
 const props = defineProps<{ source: string; lang: string }>();
 const { locale, t } = useLocale();

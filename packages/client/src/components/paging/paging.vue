@@ -151,7 +151,9 @@ const normalize = (result: PagingLoadResult<T>) => {
 	}
 	throw new TypeError('Invalid Paging loadData result');
 };
-/** 使用单调递增 ID，避免较慢的旧查询覆盖较新的数据。 */
+/**
+ * 使用单调递增 ID，避免较慢的旧查询覆盖较新的数据。
+ */
 const load = async () => {
 	const id = ++requestId;
 	loading.value = true;

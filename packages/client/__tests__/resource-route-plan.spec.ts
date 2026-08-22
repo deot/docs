@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { ResourcePlan } from '../src/modules/resource-plan';
+import { Resource } from '../src/modules/resource';
 import { Gateway } from '../src/modules/gateway';
 import { defineRendererModule } from '@deot/docs-renderer';
 import { defineComponent } from 'vue';
@@ -10,6 +10,7 @@ import { createContentRecord } from './fixtures/docs';
 const component = defineComponent(() => () => null);
 const pageLayout = { mode: 'sortable' as const, maxWidth: 1180, minHeight: 600, background: '#fff' };
 const appearance = { marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 };
+const ResourcePlan = Resource.plan;
 const resourceModule = (
 	type: string,
 	collectResources: (props: Record<string, unknown>) => Array<{ type: string; source: string }>

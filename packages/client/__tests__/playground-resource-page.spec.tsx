@@ -2,7 +2,7 @@
 
 import { flushPromises, mount } from '@vue/test-utils';
 import PlaygroundResourcePage from '../src/pages/playground-resource/index.vue';
-import type { PlaygroundResourceRow } from '../src/modules/playground-resource';
+import type { PlaygroundResourceRow } from '../src/modules/resource/playground';
 import { SourceEditor } from '../src/pages/playground-resource/components/portal';
 
 const {

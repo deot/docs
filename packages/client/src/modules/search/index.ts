@@ -2,7 +2,7 @@ import { parseMarkdownSearchSections } from '@deot/docs-markdown';
 import { buildTranslator, resolveLocale } from '@deot/docs-locale';
 import { prepareRendererDocument } from '@deot/docs-renderer';
 import { Gateway } from '../gateway';
-import { ResourcePlan } from '../resource-plan';
+import { Resource } from '../resource';
 import { IndexedDBSearchHistory, createSearchHistoryId } from './history';
 import { getDocsNamespace, resourceIdentityKey } from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
@@ -99,7 +99,7 @@ class SearchManager {
 		const namespace = getDocsNamespace(config);
 		const t = buildTranslator(resolveLocale(lang, config.locales));
 		const records = await Gateway.list();
-		const routes = await ResourcePlan.collectRouteResources(config, records);
+		const routes = await Resource.plan.collectRouteResources(config, records);
 		const routeMap = new Map(routes.map(item => [resourceIdentityKey(item.identity), item.path]));
 		const documents: SearchPreparedDocument[] = [];
 
@@ -266,5 +266,7 @@ class SearchManager {
 	}
 }
 
-/** Client 搜索入口只保存可复用解析缓存，不保存弹层会话状态。 */
+/**
+ * Client 搜索入口只保存可复用解析缓存，不保存弹层会话状态。
+ */
 export const Search = new SearchManager();

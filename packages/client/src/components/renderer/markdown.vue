@@ -15,7 +15,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { Markdown } from '@deot/docs-markdown';
 import { useLocale } from '@deot/docs-locale';
 import type { RendererModuleViewerProps } from '@deot/docs-renderer';
-import { Gateway } from '../../modules';
+import { Gateway } from '../../modules/gateway';
 import { createResourceIdentity, resolveResource } from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
 import {

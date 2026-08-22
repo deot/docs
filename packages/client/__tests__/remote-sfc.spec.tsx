@@ -14,7 +14,7 @@ const { load, subscribe, release, push, listeners, notifyOnLoad } = vi.hoisted((
 enableAutoUnmount(afterEach);
 
 vi.mock('vue-router', () => ({ useRouter: () => ({ push }) }));
-vi.mock('../src/modules', () => ({
+vi.mock('../src/modules/gateway', () => ({
 	Gateway: {
 		load,
 		subscribe: (identity: any, listener: () => void) => {

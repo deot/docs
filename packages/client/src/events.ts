@@ -1,10 +1,12 @@
-import { Gateway } from './modules';
+import { Gateway } from './modules/gateway';
 import { createResourceIdentity, getDefaultLanguage } from './utils/resolver';
 import { getDocsConfig, getDocsRuntime } from './utils/runtime';
 import { DOCS_RESOURCE_TYPES } from './types';
 import type { DocsResourceType } from './types';
 
-/** dever `configureEvents` 广播的 SSE 载荷。 */
+/**
+ * dever `configureEvents` 广播的 SSE 载荷。
+ */
 type DocsResourceEvent = {
 	type: 'reload';
 	timestamp: number;

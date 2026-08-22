@@ -18,7 +18,7 @@ import { Message } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import { Combo } from '@deot/docs-renderer';
 import type { RendererContext, RendererDocument } from '@deot/docs-renderer';
-import { Theme } from '../../../modules';
+import { Theme } from '../../../modules/settings';
 import { getDocsNamespace, resolveResource } from '../../../utils/resolver';
 import { getDocsConfig, getDocsRuntime } from '../../../utils/runtime';
 import { useRendererModules } from '../../../components/renderer';

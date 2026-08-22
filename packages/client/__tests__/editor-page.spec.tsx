@@ -25,8 +25,8 @@ vi.mock('vue-router', async original => ({
 		resolve: (target: string) => ({ href: target })
 	})
 }));
-vi.mock('../src/modules', () => ({
-	Gateway: { load },
+vi.mock('../src/modules/gateway', () => ({ Gateway: { load } }));
+vi.mock('../src/modules/settings', () => ({
 	Theme: {
 		current: { value: 'light' },
 		enabled: { value: true },

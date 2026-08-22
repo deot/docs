@@ -58,7 +58,7 @@ vi.mock('vue-router', async original => ({
 	useRouter: () => ({ push: routerPush, resolve: routerResolve })
 }));
 vi.mock('../src/router', () => ({ getRouteValue: () => 'installation' }));
-vi.mock('../src/modules', () => ({
+vi.mock('../src/modules/gateway', () => ({
 	Gateway: {
 		load,
 		subscribe: (identity: any, listener: (record: { content: string }) => void) => {
@@ -66,7 +66,9 @@ vi.mock('../src/modules', () => ({
 			subscribe(identity, listener);
 			return unsubscribe;
 		}
-	},
+	}
+}));
+vi.mock('../src/modules/settings', () => ({
 	Theme: {
 		current: { value: 'dark' },
 		enabled: { value: true },
