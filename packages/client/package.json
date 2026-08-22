@@ -1,6 +1,6 @@
 {
   "name": "@deot/docs-client",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "type": "module",
   "main": "dist/index.js",
   "style": "dist/index.style.css",
@@ -21,11 +21,11 @@
     "access": "public"
   },
   "dependencies": {
-    "@deot/docs-locale": "*",
-    "@deot/docs-markdown": "*",
-    "@deot/docs-playground": "*",
-    "@deot/docs-renderer": "*",
-    "@deot/docs-theme": "*",
+    "@deot/docs-locale": "^1.0.5",
+    "@deot/docs-markdown": "^1.0.5",
+    "@deot/docs-playground": "^1.0.5",
+    "@deot/docs-renderer": "^1.0.5",
+    "@deot/docs-theme": "^1.0.5",
     "@deot/helper-cache": "^1.1.10",
     "@deot/helper-fp": "^1.1.5",
     "@deot/http": "^1.1.10",

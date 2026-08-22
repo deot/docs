@@ -1,6 +1,6 @@
 {
   "name": "@deot/docs-markdown",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "main": "dist/index.js",
   "style": "dist/index.style.css",
   "types": "dist/index.d.ts",
@@ -20,9 +20,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@deot/docs-locale": "*",
-    "@deot/docs-playground": "*",
-    "@deot/docs-theme": "*",
+    "@deot/docs-locale": "^1.0.5",
+    "@deot/docs-playground": "^1.0.5",
+    "@deot/docs-theme": "^1.0.5",
     "@deot/helper-dom": "^1.1.5",
     "json5": "^2.2.3",
     "markdown-it": "^15.0.0",

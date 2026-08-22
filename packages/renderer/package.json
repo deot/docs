@@ -1,6 +1,6 @@
 {
   "name": "@deot/docs-renderer",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,8 +17,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@deot/docs-locale": "*",
-    "@deot/docs-theme": "*",
+    "@deot/docs-locale": "^1.0.5",
+    "@deot/docs-theme": "^1.0.5",
     "@deot/helper-cache": "^1.1.10",
     "@deot/helper-resize": "^1.1.3"
   },

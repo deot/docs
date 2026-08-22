@@ -1,4 +1,4 @@
-# @deot/docs-dever ChangeLog
+# @deot/docs-locale ChangeLog
 
 ## v1.0.5
 
