@@ -24,6 +24,11 @@ describe('docs router', () => {
 		expect(router.currentRoute.value.path).toBe('/zh-CN/index');
 		await router.push('/en-US/components/button');
 		expect(router.currentRoute.value.params).toMatchObject({ lang: 'en-US', name: 'button' });
+		await router.push('/');
+		expect(router.currentRoute.value.path).toBe('/en-US/index');
+		const restoredRouter = createDocsRouter(config, { initialLanguage: 'en-US' });
+		await restoredRouter.push('/');
+		expect(restoredRouter.currentRoute.value.path).toBe('/en-US/index');
 		expect(localizePath(config, 'zh-CN', '/quickstart')).toBe('/zh-CN/quickstart');
 		expect(localizePath(config, 'zh-CN', '/en-US/index')).toBe('/en-US/index');
 		expect(localizePath(config, 'zh-CN', '/en-US?tab=api#title'))

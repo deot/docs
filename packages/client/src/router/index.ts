@@ -135,8 +135,15 @@ const createRouteRecord = (
 	};
 };
 
-export const createDocsRouter = (config: DocsConfig) => {
+export const createDocsRouter = (
+	config: DocsConfig,
+	options: { initialLanguage?: string } = {}
+) => {
 	const defaultLanguage = getDefaultLanguage(config);
+	// 根路径没有语言参数，沿用最近一次有效语言；首次访问回退默认语言。
+	let currentLanguage = options.initialLanguage && hasConfiguredLanguage(config, options.initialLanguage)
+		? options.initialLanguage
+		: defaultLanguage;
 	const hasConfiguredRoot = Object.prototype.hasOwnProperty.call(config.routes, '/');
 	const hasConfiguredEditorRoute = Object.keys(config.routes).some(path => (
 		(path.startsWith('/') ? path : `/${path}`) === '/renderer-editor'
@@ -195,7 +202,7 @@ export const createDocsRouter = (config: DocsConfig) => {
 	);
 	routes.push({
 		path: '/',
-		redirect: `/${defaultLanguage}`
+		redirect: () => `/${currentLanguage}`
 	});
 	if (hasConfiguredRoot) {
 		routes.push(createRouteRecord(
@@ -263,6 +270,7 @@ export const createDocsRouter = (config: DocsConfig) => {
 			hasConfiguredLanguage(config, lang)
 			|| (!configuredLanguages.length && lang === defaultLanguage)
 		)) {
+			currentLanguage = lang;
 			return true;
 		}
 		if (to.meta.docsLocalized) {

@@ -1,4 +1,6 @@
 import { IndexedDBStore } from '@deot/helper-cache';
+import { LanguageSettingsManager } from './language';
+import { ThemeSettingsManager } from './theme';
 
 interface SettingRecord<T = unknown> {
 	id: string;
@@ -8,7 +10,9 @@ interface SettingRecord<T = unknown> {
 	updatedAt: number;
 }
 
-/** 使用独立数据库保存按文档站点隔离的界面设置。 */
+/**
+ * 使用独立数据库保存按文档站点隔离的界面设置。
+ */
 class SettingsManager {
 	private store = new IndexedDBStore({
 		name: 'deot-docs-settings',
@@ -16,6 +20,9 @@ class SettingsManager {
 		keyPath: '__id',
 		version: 1
 	});
+
+	readonly language = new LanguageSettingsManager(this);
+	readonly theme = new ThemeSettingsManager(this);
 
 	private createId(namespace: string, key: string) {
 		return [namespace, key].map(encodeURIComponent).join('|');
@@ -52,5 +59,17 @@ class SettingsManager {
 	}
 }
 
-/** Client 内所有界面设置共用的持久化实例。 */
+/**
+ * Client 内所有界面设置共用的持久化实例。
+ */
 export const Settings = new SettingsManager();
+
+/**
+ * 自定义 Header 与内置切换器共用的主题控制器。
+ */
+export const Theme = Settings.theme;
+
+/**
+ * Client 启动流程使用同一实例初始化主题会话。
+ */
+export const ThemeRuntime = Settings.theme;

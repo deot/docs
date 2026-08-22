@@ -1,6 +1,6 @@
 export { Network } from './network';
 export { Gateway, ResourceGateway } from './gateway';
-export { Theme } from './theme';
+export { Theme } from './settings';
 export {
 	PlaygroundResource,
 	PlaygroundResourceCache,

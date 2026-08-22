@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 
 import 'fake-indexeddb/auto';
-import { Settings } from '../src/modules/settings';
-import { Theme, ThemeRuntime } from '../src/modules/theme';
+import { Settings, Theme, ThemeRuntime } from '../src/modules/settings';
 import { createDocsConfig } from './fixtures/docs';
 import type { DocsConfig } from '../src/types';
 

@@ -7,7 +7,20 @@ import { createApp, defineComponent } from 'vue';
 import { defineRendererModule } from '@deot/docs-renderer';
 import { createDocsConfig, createDocsRuntime } from './fixtures/docs';
 
-const { use, provide, mount, disconnectEvents, router, startIdlePrefetch, stopPrefetch, startPlaygroundResource } = vi.hoisted(() => ({
+const {
+	use,
+	provide,
+	mount,
+	disconnectEvents,
+	router,
+	startIdlePrefetch,
+	stopPrefetch,
+	startPlaygroundResource,
+	restoreLanguage,
+	persistLanguage,
+	stopTheme,
+	stopLanguagePersistence
+} = vi.hoisted(() => ({
 	use: vi.fn(),
 	provide: vi.fn(),
 	mount: vi.fn(),
@@ -15,10 +28,15 @@ const { use, provide, mount, disconnectEvents, router, startIdlePrefetch, stopPr
 	startIdlePrefetch: vi.fn(),
 	stopPrefetch: vi.fn(),
 	startPlaygroundResource: vi.fn(async () => () => {}),
+	restoreLanguage: vi.fn(async () => undefined),
+	persistLanguage: vi.fn(async () => undefined),
+	stopTheme: vi.fn(),
+	stopLanguagePersistence: vi.fn(),
 	router: {
 		name: 'router',
 		currentRoute: { value: { params: { lang: 'zh-CN' } } },
-		isReady: vi.fn(async () => undefined)
+		isReady: vi.fn(async () => undefined),
+		afterEach: vi.fn(() => stopLanguagePersistence)
 	}
 }));
 vi.mock('vue', async original => ({
@@ -41,6 +59,15 @@ vi.mock('../src/modules/playground-resource', () => ({
 		start: startPlaygroundResource
 	},
 	PlaygroundResourceCache: class {}
+}));
+vi.mock('../src/modules/settings', () => ({
+	Settings: {
+		language: {
+			restore: restoreLanguage,
+			persist: persistLanguage
+		}
+	},
+	ThemeRuntime: { start: vi.fn(() => stopTheme) }
 }));
 
 describe('client entry', () => {
@@ -80,6 +107,7 @@ describe('client entry', () => {
 		instance.disconnect();
 		instance.disconnect();
 		expect(disconnectEvents).toHaveBeenCalled();
+		expect(stopLanguagePersistence).toHaveBeenCalledOnce();
 		expect(stopPrefetch).toHaveBeenCalled();
 	});
 

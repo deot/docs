@@ -31,7 +31,7 @@ import { computed, ref } from 'vue';
 import { Switch } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import ClientIcon from '../icon';
-import { Theme } from '../../modules/theme';
+import { Theme } from '../../modules/settings';
 
 const { t } = useLocale();
 const togglerRef = ref<HTMLElement>();

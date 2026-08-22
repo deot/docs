@@ -10,7 +10,7 @@ import DefaultHeader from '../src/components/layout/default-header.vue';
 import DefaultSidebar from '../src/components/layout/default-sidebar.vue';
 import ClientIcon from '../src/components/icon';
 import ThemeToggler from '../src/components/theme-toggler/index.vue';
-import { Theme } from '../src/modules/theme';
+import { Theme } from '../src/modules/settings';
 
 const { push, route: routeState, setScrollTop } = vi.hoisted(() => ({
 	push: vi.fn(),

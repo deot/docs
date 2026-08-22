@@ -1,6 +1,5 @@
 import { readonly, ref } from 'vue';
 import { isDocsTheme } from '@deot/docs-theme';
-import { Settings } from '../settings';
 import { getDocsNamespace } from '../../utils/resolver';
 import type {
 	DocsConfig,
@@ -25,8 +24,15 @@ interface ThemeRequest {
 	session: number;
 }
 
-/** 管理主题解析、DOM 同步、系统监听和用户设置持久化。 */
-class ThemeManager implements DocsThemeController {
+interface SettingsAccess {
+	get<T>(namespace: string, key: string): Promise<T | null>;
+	set<T>(namespace: string, key: string, value: T): Promise<void>;
+}
+
+/**
+ * 管理主题解析、DOM 同步、系统监听和用户设置持久化。
+ */
+export class ThemeSettingsManager implements DocsThemeController {
 	private value = ref<DocsTheme>('light');
 	private enabledValue = ref(true);
 	private readyValue = ref(false);
@@ -46,6 +52,8 @@ class ThemeManager implements DocsThemeController {
 	readonly current = readonly(this.value);
 	readonly enabled = readonly(this.enabledValue);
 	readonly ready = readonly(this.readyValue);
+
+	constructor(private settings: SettingsAccess) {}
 
 	private normalizeDefault(config: DocsConfig): DocsThemePreference {
 		if (!config.theme || config.theme === true) return 'system';
@@ -194,20 +202,23 @@ class ThemeManager implements DocsThemeController {
 	}
 
 	private async restore(session: number, preferenceVersion: number, namespace: string) {
+		let stored: unknown;
 		try {
-			const stored = await Settings.get<unknown>(namespace, 'theme');
-			if (session !== this.session || preferenceVersion !== this.preferenceVersion) return;
-			if (isDocsTheme(stored)) {
-				this.followingSystem = false;
-				this.detachSystemListener();
-				this.requested = stored;
-				this.apply(stored);
-			}
+			stored = await this.settings.get(namespace, 'theme');
 		} catch {
-			// IndexedDB 不可用时保留同步解析出的主题，不阻断应用启动。
-		} finally {
-			if (session === this.session) this.readyValue.value = true;
+			// IndexedDB 不可用时保留同步解析出的主题。
 		}
+		if (
+			isDocsTheme(stored)
+			&& session === this.session
+			&& preferenceVersion === this.preferenceVersion
+		) {
+			this.followingSystem = false;
+			this.detachSystemListener();
+			this.requested = stored;
+			this.apply(stored);
+		}
+		if (session === this.session) this.readyValue.value = true;
 	}
 
 	start(config: DocsConfig, target: Window = window) {
@@ -254,7 +265,7 @@ class ThemeManager implements DocsThemeController {
 			}
 			if (session !== this.session) return;
 			try {
-				await Settings.set(request.namespace, 'theme', request.theme);
+				await this.settings.set(request.namespace, 'theme', request.theme);
 			} catch {
 				// 持久化失败不撤销当前会话中已经完成的主题切换。
 			}
@@ -300,11 +311,3 @@ class ThemeManager implements DocsThemeController {
 		return this.set((this.requested || this.value.value) === 'dark' ? 'light' : 'dark', origin);
 	}
 }
-
-const manager = new ThemeManager();
-
-/** 自定义 Header 与内置切换器共用的主题控制器。 */
-export const Theme: DocsThemeController = manager;
-
-/** Client 启动流程使用同一实例初始化主题会话。 */
-export const ThemeRuntime = manager;

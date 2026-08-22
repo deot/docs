@@ -7,7 +7,7 @@ import { provideRendererModules } from './components/renderer';
 import { connectResourceEvents } from './events';
 import { IdlePrefetch } from './modules/idle-prefetch';
 import { PlaygroundResource } from './modules/playground-resource';
-import { ThemeRuntime } from './modules/theme';
+import { Settings, ThemeRuntime } from './modules/settings';
 import { createDocsRouter } from './router';
 import { getDefaultLanguage } from './utils/resolver';
 import { initializeDocsRuntime } from './utils/runtime';
@@ -55,7 +55,11 @@ export const bootstrap = async (config?: DocsConfig) => {
 	initializeDocsRuntime(window, config);
 	const stopTheme = ThemeRuntime.start(config);
 	const stopPlaygroundResource = await PlaygroundResource.start(config);
-	const router = createDocsRouter(config);
+	const initialLanguage = await Settings.language.restore(config);
+	const router = createDocsRouter(config, { initialLanguage });
+	const stopLanguagePersistence = router.afterEach((to) => {
+		void Settings.language.persist(config, to.params.lang);
+	});
 	const app = createApp(App);
 	app.use(router);
 	provideRendererModules(app, config);
@@ -84,6 +88,7 @@ export const bootstrap = async (config?: DocsConfig) => {
 		if (disconnected) return;
 		disconnected = true;
 		disconnectEvents();
+		stopLanguagePersistence();
 		stopPrefetch();
 		stopDocumentLanguage();
 		stopPlaygroundResource();
