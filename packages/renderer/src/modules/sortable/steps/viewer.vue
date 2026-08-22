@@ -387,4 +387,54 @@ const iconOf = (item: Record<string, unknown>, index: number) => (
 		animation: none;
 	}
 }
+
+@media screen and (width <= 768px) {
+	.docs-renderer-steps {
+		padding: 24px 0;
+
+		&__item,
+		&__list.is-horizontal &__item,
+		&__list.is-vertical &__item {
+			display: grid;
+			padding-bottom: 36px;
+			text-align: left;
+			grid-template-columns: var(--docs-renderer-step-size) minmax(0, 1fr);
+			column-gap: 16px;
+			justify-items: stretch;
+
+			&:last-child {
+				padding-bottom: 0;
+			}
+		}
+
+		&__marker {
+			width: var(--docs-renderer-step-size);
+			grid-row: 1;
+			grid-column: 1;
+		}
+
+		&__body {
+			width: 100%;
+			max-width: none;
+			padding-top: 2px;
+			grid-row: 1;
+			grid-column: 2;
+		}
+
+		&__rail,
+		&__list.is-horizontal &__rail,
+		&__list.is-vertical &__rail,
+		&__list.is-horizontal &__item.is-row-end:not(:last-child) &__rail {
+			inset: var(--docs-renderer-step-size) auto 0 calc(var(--docs-renderer-step-size) / 2);
+			width: 1px;
+			height: auto;
+			transform: translateX(-50%);
+
+			&::after {
+				inset: auto auto 2px 50%;
+				transform: translateX(-50%) rotate(135deg);
+			}
+		}
+	}
+}
 </style>

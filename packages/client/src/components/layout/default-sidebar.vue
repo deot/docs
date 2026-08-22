@@ -91,7 +91,23 @@ const toPath = (value: string) => {
 
 @media screen and (width <= 768px) {
 	@include block(docs-sidebar) {
-		width: 220px;
+		width: 100%;
+		padding-top: 12px;
+
+		li a {
+			height: 44px;
+			padding-left: 32px;
+		}
+
+		@include element(label) {
+			height: 44px;
+			padding-left: 24px;
+		}
+
+		&--nested &__label {
+			height: 40px;
+			padding-left: 32px;
+		}
 	}
 }
 </style>

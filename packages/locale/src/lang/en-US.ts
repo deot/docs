@@ -30,6 +30,8 @@ const enUS = {
 		},
 		header: {
 			brand: '@deot/docs',
+			openSidebar: 'Open sidebar',
+			closeSidebar: 'Close sidebar',
 			database: 'Open resource database',
 			playgroundResource: 'Manage Playground resources',
 			editor: 'Customize this page',

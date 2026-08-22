@@ -208,4 +208,20 @@ onBeforeUnmount(() => {
 		border-radius: 8px;
 	}
 }
+
+@media screen and (width <= 768px) {
+	.docs-renderer[data-renderer-mode="sortable"] .docs-renderer__canvas > .docs-renderer-node:not(.is-full-width) {
+		width: calc(100% - 32px);
+	}
+
+	.docs-renderer[data-renderer-mode="sortable"] .docs-renderer__canvas > :is(
+		.docs-renderer-node--hero,
+		.docs-renderer-node--features,
+		.docs-renderer-node--steps,
+		.docs-renderer-node--faq,
+		.docs-renderer-node--cta
+	):not(:last-child) {
+		margin-bottom: 24px !important;
+	}
+}
 </style>

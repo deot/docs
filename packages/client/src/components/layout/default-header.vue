@@ -280,14 +280,34 @@ const handleEditor = async () => {
 
 @media screen and (width <= 768px) {
 	@include block(docs-header) {
-		grid-template-columns: minmax(110px, 1fr) 34px auto;
+		grid-template-columns: minmax(0, 1fr) 34px auto;
 		column-gap: 4px;
 		padding: 0 12px;
+
+		@include element(brand) {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
 
 		@include element(action) {
 			width: 32px;
 			height: 32px;
 		}
+	}
+
+	.docs-app:has(.docs-layout__sidebar .docs-sidebar) .docs-header {
+		padding-left: 56px;
+	}
+}
+
+@media screen and (width <= 480px) {
+	@include block(docs-header) {
+		@include element(editor) { display: none; }
+
+		@include element(playground-resource) { display: none; }
+
+		@include element(database) { display: none; }
 	}
 }
 </style>

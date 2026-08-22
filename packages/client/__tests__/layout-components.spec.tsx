@@ -119,6 +119,24 @@ describe('client layout components', () => {
 		expect(wrapper.find('.docs-layout--home').exists()).toBe(false);
 	});
 
+	it('opens and closes the mobile sidebar without changing utility routes', async () => {
+		const wrapper = mount(() => (<App />));
+		const toggle = wrapper.find('.docs-app__sidebar-toggle');
+		expect(toggle.attributes('aria-expanded')).toBe('false');
+
+		await toggle.trigger('click');
+		expect(wrapper.find('.docs-app').classes()).toContain('docs-app--mobile-sidebar-open');
+		expect(toggle.attributes('aria-expanded')).toBe('true');
+
+		await wrapper.find('.docs-layout__sidebar-mask').trigger('click');
+		expect(wrapper.find('.docs-app').classes()).not.toContain('docs-app--mobile-sidebar-open');
+
+		await toggle.trigger('click');
+		route.path = '/zh-CN/components/input';
+		await flushPromises();
+		expect(wrapper.find('.docs-app').classes()).not.toContain('docs-app--mobile-sidebar-open');
+	});
+
 	it('drops main padding on the built-in home page', async () => {
 		route.meta = { docsHome: true };
 		const wrapper = mount(() => (<App />));

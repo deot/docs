@@ -203,4 +203,23 @@ const toPath = (value: string) => {
 		}
 	}
 }
+
+@media screen and (width <= 480px) {
+	@include block(docs-footer) {
+		@include element(content) {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr);
+			gap: 24px;
+			padding: 36px 20px 28px;
+		}
+
+		@include element(title) { margin-top: 0; }
+
+		@include element(links) { margin-top: 16px; }
+
+		@include element(powered-by) {
+			width: calc(100% - 40px);
+		}
+	}
+}
 </style>

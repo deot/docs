@@ -360,6 +360,7 @@ const fallbackGlyph = (item: Record<string, unknown>) => {
 
 @media screen and (width <= 768px) {
 	.docs-renderer-features {
+		padding: 24px 0;
 		grid-template-columns: minmax(0, 1fr);
 	}
 }

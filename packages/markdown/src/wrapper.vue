@@ -648,4 +648,18 @@ $sign: md;
 		background-color: var(--docs-background-color-mute, #303748);
 	}
 }
+
+@media screen and (width <= 768px) {
+	@include block(docs-markdown-reset) {
+		font-size: 14px;
+
+		& h1[#{$sign}] { font-size: 1.75em; }
+
+		& h2[#{$sign}] { font-size: 1.4em; }
+
+		& .anchor[#{$sign}] {
+			margin-left: -14px;
+		}
+	}
+}
 </style>

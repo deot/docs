@@ -253,4 +253,10 @@ const rootStyle = computed(() => rendererSortableSectionStyle(String(value.value
 		transform: translateY(0);
 	}
 }
+
+@media screen and (width <= 768px) {
+	.docs-renderer-faq {
+		padding: 24px 0;
+	}
+}
 </style>

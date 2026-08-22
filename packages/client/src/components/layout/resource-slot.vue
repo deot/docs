@@ -427,6 +427,12 @@ onBeforeUnmount(() => {
 @use '../../styles/bem' as *;
 
 @include block(docs-resource-slot) {
+	min-width: 0;
+
+	@include element(page) {
+		min-width: 0;
+	}
+
 	@include element(loading) {
 		padding: 16px;
 		color: varfix(foreground-color-mute);
