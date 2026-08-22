@@ -75,6 +75,7 @@ describe('client layout components', () => {
 		route.fullPath = '/zh-CN/components/button?tab=api#props';
 		route.query = { tab: 'api' };
 		route.hash = '#props';
+		route.params.lang = 'zh-CN';
 		route.meta = {};
 		window.$docs = {
 			locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
@@ -293,6 +294,59 @@ describe('client layout components', () => {
 		});
 
 		expect(mount(Host).find('.docs-header__brand').text()).toBe('@deot/docs 文档');
+	});
+
+	it('falls back to namespace and the built-in brand text', () => {
+		window.$docs.namespace = 'docs';
+		const namespaceBrand = mount(() => <DefaultHeader />).find('.docs-header__brand');
+		expect(namespaceBrand.text()).toBe('docs');
+		expect(namespaceBrand.attributes('href')).toBe('/zh-CN');
+
+		delete window.$docs.namespace;
+		const defaultBrand = mount(() => <DefaultHeader />).find('.docs-header__brand');
+		expect(defaultBrand.text()).toBe('@deot/docs');
+	});
+
+	it('localizes configured brand text and internal links', () => {
+		window.$docs.layout = {
+			header: {
+				brand: {
+					logo: { 'zh-CN': '/logo-zh.svg', 'en-US': '/logo-en.svg' },
+					label: { 'zh-CN': '组件文档', 'en-US': 'Component Docs' },
+					value: '/guide?tab=start#intro'
+				}
+			}
+		};
+		let brand = mount(() => <DefaultHeader />).find('.docs-header__brand');
+		expect(brand.text()).toBe('组件文档');
+		expect(brand.attributes('href')).toBe('/zh-CN/guide?tab=start#intro');
+		expect(brand.find('.docs-header__brand-logo').attributes()).toMatchObject({
+			src: '/logo-zh.svg',
+			alt: ''
+		});
+
+		window.$docs.layout.header!.brand!.value = '/en-US/guide';
+		brand = mount(() => <DefaultHeader />).find('.docs-header__brand');
+		expect(brand.attributes('href')).toBe('/en-US/guide');
+	});
+
+	it('falls back to the default language brand and renders external links safely', () => {
+		route.params.lang = 'en-US';
+		window.$docs.layout = {
+			header: {
+				brand: {
+					label: { 'zh-CN': '默认品牌' },
+					value: { 'zh-CN': 'https://example.com/docs' }
+				}
+			}
+		};
+		const brand = mount(() => <DefaultHeader />).find('.docs-header__brand');
+		expect(brand.text()).toBe('默认品牌');
+		expect(brand.attributes()).toMatchObject({
+			href: 'https://example.com/docs',
+			target: '_blank',
+			rel: 'noopener noreferrer'
+		});
 	});
 
 	it('uses the complete theme toggler as the transition origin', async () => {

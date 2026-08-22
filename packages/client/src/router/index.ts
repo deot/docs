@@ -10,11 +10,10 @@ import {
 	getDefaultLanguage,
 	getDocsDeploymentBase
 } from '../utils/resolver';
-import { isExternalLink } from '../utils/link';
-import { localizeRoutePath } from '../utils/route';
+import { localizePath } from '../utils/route';
 import type { DocsConfig, DocsRouteConfig } from '../types';
 
-export { getRouteValue } from '../utils/route';
+export { getRouteValue, localizePath } from '../utils/route';
 
 const slotComponents = {
 	default: ResourceSlot,
@@ -29,16 +28,6 @@ const slotProps = {
 const hasConfiguredLanguage = (config: DocsConfig, language: string) => (
 	Object.prototype.hasOwnProperty.call(config.locales, language)
 );
-
-const hasLanguage = (config: DocsConfig, path: string) => {
-	const pathname = path.split(/[?#]/u, 1)[0];
-	const language = pathname.split('/').filter(Boolean)[0];
-	const configuredLanguages = Object.keys(config.locales);
-	return Boolean(language && (
-		hasConfiguredLanguage(config, language)
-		|| (!configuredLanguages.length && language === getDefaultLanguage(config))
-	));
-};
 
 const matchesConfiguredPath = (config: DocsConfig, pathname: string) => {
 	const target = pathname.split('/').filter(Boolean);
@@ -82,14 +71,6 @@ const normalizeInvalidLanguage = (
 		};
 	}
 	return replaceLanguage(defaultLanguage, to);
-};
-
-// 内部重定向只补一次语言前缀，显式语言路径和外部 URL 保持不变。
-export const localizePath = (config: DocsConfig, lang: string, target: string) => {
-	if (isExternalLink(target) || hasLanguage(config, target)) {
-		return target;
-	}
-	return localizeRoutePath(lang, target);
 };
 
 const resolveRedirect = (

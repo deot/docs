@@ -1,5 +1,6 @@
 import type { RouteLocationNormalizedGeneric } from 'vue-router';
-import type { DocsRoute } from '../types';
+import { isExternalLink } from './link';
+import type { DocsConfig, DocsRoute } from '../types';
 
 /**
  * 保证路径以单个斜杠开头。
@@ -24,6 +25,26 @@ export const normalizePathname = (value: string) => `/${value.split('/').filter(
 export const localizeRoutePath = (lang: string, pathname: string) => {
 	const normalized = ensureLeadingSlash(pathname);
 	return `/${lang}${normalized === '/' ? '' : normalized}`;
+};
+
+/**
+ * 给站内地址补语言前缀；外链和已带已配置语言的地址保持不变。
+ * @param config 文档配置，用于识别语言路径段。
+ * @param lang 当前语言。
+ * @param target 原始跳转地址。
+ * @returns 可直接交给 RouterLink 的地址。
+ */
+export const localizePath = (config: DocsConfig, lang: string, target: string) => {
+	const pathname = target.split(/[?#]/u, 1)[0];
+	const language = pathname.split('/').filter(Boolean)[0];
+	const configuredLanguages = Object.keys(config.locales);
+	const hasLanguage = Boolean(language && (
+		Object.prototype.hasOwnProperty.call(config.locales, language)
+		|| (!configuredLanguages.length && language === lang)
+	));
+	return isExternalLink(target) || hasLanguage
+		? target
+		: localizeRoutePath(lang, target);
 };
 
 /**

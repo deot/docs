@@ -19,6 +19,15 @@ pnpm add @deot/docs-client
 	window.$docs = {
 		base: new URL('./', document.baseURI).href,
 		namespace: 'my-docs',
+		layout: {
+			header: {
+				brand: {
+					logo: './logo.svg',
+					label: { 'zh-CN': '组件文档', 'en-US': 'Component Docs' },
+					value: '/guide'
+				}
+			}
+		},
 		locales: {
 			'zh-CN': {
 				label: '简体中文',
@@ -73,6 +82,7 @@ const { app, router, disconnect } = await bootstrap(window.$docs);
 | `styles` | 站点级预览 CSS 默认地址；同名 key 覆盖内置样式表，也可追加。管理页 `/:lang/__docs/playground-resource` 与 `modules` 同一张表管理。 |
 | `prefetch` | 空闲预加载开关或 `{ batchSize, idleTimeout }` 配置，默认开启。 |
 | `theme` | 主题开关或 `{ default: 'system' \| 'light' \| 'dark' }`，默认跟随系统。 |
+| `layout.header` | 内置 Header 配置；`brand.logo`、`brand.label` 和 `brand.value` 均支持固定值或按语言配置。文案未配置时回退到 `namespace` 和内置翻译，链接未配置时指向当前语言首页。站内链接自动补语言前缀，外链在新窗口打开。 |
 | `layout.footer` | Footer 内容；未配置或 `default` 使用内置分组，`false` 全局隐藏，也可配置 `{ groups, poweredBy }`。两项均支持按语言代码配置，`groups` 复用 Sidebar 的 `{ label, value?, children? }` 结构。 |
 | `home` | 可选的 `{ locales }` 首页配置；语言值是 Renderer 文档或 `.page.json` 地址。未配置时首页为空。 |
 | `renderers` | 业务自定义 Renderer 模块注册项；type 必须使用非 `docs:` 的命名空间。 |

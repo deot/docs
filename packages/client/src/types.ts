@@ -165,7 +165,23 @@ export interface DocsFooterOptions {
 	poweredBy?: DocsLocalized<DocsFooterPoweredBy>;
 }
 
+export interface DocsHeaderBrandOptions {
+	/** 品牌 Logo 地址；按语言配置时与文案使用相同回退规则。 */
+	logo?: DocsLocalized<string>;
+	/** 品牌文案；缺省时依次回退到 namespace 和内置翻译。 */
+	label?: DocsLocalized<string>;
+	/** 品牌链接；缺省时跳转到当前语言首页。 */
+	value?: DocsLocalized<string>;
+}
+
+export interface DocsHeaderOptions {
+	/** 内置 Header 的品牌展示与跳转配置。 */
+	brand?: DocsHeaderBrandOptions;
+}
+
 export interface DocsLayoutOptions {
+	/** 内置 Header 配置。 */
+	header?: DocsHeaderOptions;
 	/** 未配置或 `default` 使用内置内容，`false` 全局关闭。 */
 	footer?: 'default' | DocsFooterOptions | false;
 }

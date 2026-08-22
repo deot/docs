@@ -1,7 +1,18 @@
 <template>
 	<header class="docs-header">
-		<RouterLink class="docs-header__brand" :to="`/${lang}`">
-			{{ t('client.header.brand') }}
+		<a
+			v-if="brandExternal"
+			class="docs-header__brand"
+			:href="brandValue"
+			target="_blank"
+			rel="noopener noreferrer"
+		>
+			<img v-if="brandLogo" class="docs-header__brand-logo" :src="brandLogo" alt="">
+			{{ brandLabel }}
+		</a>
+		<RouterLink v-else class="docs-header__brand" :to="brandPath">
+			<img v-if="brandLogo" class="docs-header__brand-logo" :src="brandLogo" alt="">
+			{{ brandLabel }}
 		</RouterLink>
 		<div class="docs-header__search"><DocsSearch /></div>
 		<div class="docs-header__actions">
@@ -83,9 +94,12 @@ import DocsSearch from '../search';
 import ThemeToggler from '../theme-toggler';
 import ClientIcon from '../icon';
 import { getDocsConfig } from '../../utils/runtime';
-import { getRouteValue } from '../../utils/route';
+import { getRouteValue, localizePath } from '../../utils/route';
+import { isExternalLink } from '../../utils/link';
+import { getDefaultLanguage } from '../../utils/resolver';
+import { findLanguageValue } from '../../utils/sidebar';
 import { stashInlineRendererDocument } from '../../pages/renderer-editor/inline';
-import type { DocsRoute, DocsContent } from '../../types';
+import type { DocsRoute, DocsContent, DocsLocalized } from '../../types';
 
 const route = useRoute();
 const router = useRouter();
@@ -93,6 +107,24 @@ const config = getDocsConfig();
 const { t } = useLocale();
 const localeMenuVisible = ref(false);
 const lang = computed(() => String(route.params.lang));
+/**
+ * 按当前语言和站点默认语言选择 Header 配置。
+ * @param value 固定配置或语言映射。
+ * @returns 当前语言、站点默认语言或空值。
+ */
+function resolveLocalized<T>(value?: DocsLocalized<T>): T | undefined {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) return value as T | undefined;
+	return findLanguageValue(value as Record<string, T>, lang.value)
+		?? findLanguageValue(value as Record<string, T>, getDefaultLanguage(config));
+}
+const brandOptions = config.layout?.header?.brand;
+const brandLogo = computed(() => resolveLocalized(brandOptions?.logo) || '');
+const brandLabel = computed(() => (
+	resolveLocalized(brandOptions?.label) || config.namespace || t('client.header.brand')
+));
+const brandValue = computed(() => resolveLocalized(brandOptions?.value) || `/${lang.value}`);
+const brandExternal = computed(() => isExternalLink(brandValue.value));
+const brandPath = computed(() => localizePath(config, lang.value, brandValue.value));
 const databasePath = computed(() => `/${lang.value}/__docs/database`);
 const playgroundResourcePath = computed(() => `/${lang.value}/__docs/playground-resource`);
 const localeOptions = computed(() => Object.entries(config.locales).map(([value, item]) => ({
@@ -176,11 +208,19 @@ const handleEditor = async () => {
 	align-items: center;
 
 	@include element(brand) {
-		display: grid;
+		display: inline-flex;
+		gap: 8px;
 		height: 60px;
 		font-size: 16px;
 		font-weight: 600;
 		align-items: center;
+	}
+
+	@include element(brand-logo) {
+		display: block;
+		width: 28px;
+		height: 28px;
+		object-fit: contain;
 	}
 
 	@include element(locales) {
