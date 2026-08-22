@@ -155,6 +155,21 @@ export type DocsRouteConfig = DocsRoute
 	| string
 	| ((to: RouteLocationNormalizedGeneric) => string);
 
+export type DocsLocalized<T> = T | Record<string, T>;
+export type DocsFooterPoweredBy = 'default' | string | false;
+
+export interface DocsFooterOptions {
+	/** Footer 分组导航，结构与 Sidebar 保持一致。 */
+	groups?: DocsLocalized<SidebarItem[]>;
+	/** 默认文案、自定义文案或关闭底部提供方信息。 */
+	poweredBy?: DocsLocalized<DocsFooterPoweredBy>;
+}
+
+export interface DocsLayoutOptions {
+	/** 未配置或 `default` 使用内置内容，`false` 全局关闭。 */
+	footer?: 'default' | DocsFooterOptions | false;
+}
+
 export interface DocsConfig {
 	locales: Record<string, DocsLocaleEntry>;
 	/**
@@ -165,6 +180,8 @@ export interface DocsConfig {
 	 * 站点 public base，与 Vite `base` 对齐。
 	 */
 	base?: string;
+	/** 当前文档项目的 GitHub 仓库页面，用于生成默认 Footer 反馈链接。 */
+	repository?: string;
 	/**
 	 * Gateway 缓存与 IndexedDB 分区名。多站点同域时必须区分。
 	 */
@@ -187,6 +204,8 @@ export interface DocsConfig {
 	 */
 	theme?: boolean | DocsThemeOptions;
 	home?: DocsHomeOptions;
+	/** 内置页面布局配置。 */
+	layout?: DocsLayoutOptions;
 	/**
 	 * 业务侧注册的 Renderer 模块，启动时注入 Combo / Renderer。
 	 */

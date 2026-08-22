@@ -11,6 +11,23 @@ const zhCN = {
 			resourceRequestFailed: '资源请求失败',
 			yes: '是'
 		},
+		footer: {
+			resources: '资源',
+			vueComponents: '@deot/vc | Vue组件库',
+			http: '@deot/http | 网络库',
+			style: '@deot/style | 样式库',
+			helper: '@deot/helper | 工具库',
+			env: '@deot/env | Web脚手架',
+			uni: '@deot/uni | Uni脚手架',
+			community: '社区',
+			github: 'github.com',
+			feedback: '反馈',
+			reportIssue: '反馈问题',
+			requestFeature: '提交需求',
+			changelog: 'Changelog',
+			more: '更多',
+			moreResources: '更多资源'
+		},
 		header: {
 			brand: '@deot/docs',
 			database: '打开资源数据库',

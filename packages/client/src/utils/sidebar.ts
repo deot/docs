@@ -1,10 +1,10 @@
 import { getDefaultLanguage } from './resolver';
 import type { DocsConfig, DocsSidebar, SidebarItem } from '../types';
 
-const findLanguageItems = (
-	items: Record<string, SidebarItem[]>,
+export const findLanguageValue = <T>(
+	items: Record<string, T>,
 	language: string
-) => {
+): T | undefined => {
 	const normalized = language.replace(/_/g, '-').toLowerCase();
 	const key = Object.keys(items).find(candidate => (
 		candidate.replace(/_/g, '-').toLowerCase() === normalized
@@ -27,7 +27,7 @@ export const resolveInlineSidebar = (
 ): SidebarItem[] | null => {
 	if (Array.isArray(sidebar)) return sidebar;
 	if (!sidebar || typeof sidebar !== 'object') return null;
-	return findLanguageItems(sidebar, lang)
-		|| findLanguageItems(sidebar, getDefaultLanguage(config))
+	return findLanguageValue(sidebar, lang)
+		|| findLanguageValue(sidebar, getDefaultLanguage(config))
 		|| null;
 };

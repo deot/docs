@@ -11,6 +11,23 @@ const enUS = {
 			resourceRequestFailed: 'Resource request failed',
 			yes: 'Yes'
 		},
+		footer: {
+			resources: 'Resources',
+			vueComponents: '@deot/vc | Vue component library',
+			http: '@deot/http | HTTP library',
+			style: '@deot/style | Style library',
+			helper: '@deot/helper | Utilities',
+			env: '@deot/env | Web scaffold',
+			uni: '@deot/uni | Uni scaffold',
+			community: 'Community',
+			github: 'github.com',
+			feedback: 'Feedback',
+			reportIssue: 'Report an issue',
+			requestFeature: 'Request a feature',
+			changelog: 'Changelog',
+			more: 'More',
+			moreResources: 'More resources'
+		},
 		header: {
 			brand: '@deot/docs',
 			database: 'Open resource database',

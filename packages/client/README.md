@@ -68,10 +68,12 @@ const { app, router, disconnect } = await bootstrap(window.$docs);
 | `routes` | 去掉语言前缀后的路由配置。字符串和函数表示重定向。 |
 | `base` | production 资源的基准 URL。 |
 | `namespace` | IndexedDB 缓存隔离标识；未设置时使用规范化后的 `base`。 |
+| `repository` | 当前文档项目的 GitHub 仓库页面；内置 Footer 据此生成 Issues、需求与 Releases 链接。 |
 | `modules` | 站点级裸模块名到 URL 的映射，对所有 Playground（含 Markdown）生效；远程 SFC 仍可通过实例 `builtinImportMap` 覆盖。 |
 | `styles` | 站点级预览 CSS 默认地址；同名 key 覆盖内置样式表，也可追加。管理页 `/:lang/__docs/playground-resource` 与 `modules` 同一张表管理。 |
 | `prefetch` | 空闲预加载开关或 `{ batchSize, idleTimeout }` 配置，默认开启。 |
 | `theme` | 主题开关或 `{ default: 'system' \| 'light' \| 'dark' }`，默认跟随系统。 |
+| `layout.footer` | Footer 内容；未配置或 `default` 使用内置分组，`false` 全局隐藏，也可配置 `{ groups, poweredBy }`。两项均支持按语言代码配置，`groups` 复用 Sidebar 的 `{ label, value?, children? }` 结构。 |
 | `home` | 可选的 `{ locales }` 首页配置；语言值是 Renderer 文档或 `.page.json` 地址。未配置时首页为空。 |
 | `renderers` | 业务自定义 Renderer 模块注册项；type 必须使用非 `docs:` 的命名空间。 |
 | `resolve.markdown` | 根据 `lang`、`value` 和当前路由生成 Markdown 逻辑地址。 |

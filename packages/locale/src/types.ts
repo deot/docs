@@ -2,6 +2,7 @@ import type { ComputedRef, Ref } from 'vue';
 
 export interface ClientLocaleMessages {
 	common: Record<string, string>;
+	footer: Record<string, string>;
 	header: Record<string, string>;
 	home: Record<string, string>;
 	demos: Record<string, string>;

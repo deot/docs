@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
-import { defineComponent, reactive } from 'vue';
+import { defineComponent, reactive, ref } from 'vue';
 import type { PropType } from 'vue';
 import { provideLocale, resolveLocale } from '@deot/docs-locale';
 import App from '../src/app.vue';
@@ -57,6 +57,17 @@ vi.mock('@deot/vc', async () => {
 	return createVcStubs({ setScrollTop });
 });
 
+const mountFooter = (language = 'en-US') => {
+	const current = ref(resolveLocale(language, window.$docs.locales));
+	const Host = defineComponent({
+		setup() {
+			provideLocale(current);
+			return () => <DefaultFooter />;
+		}
+	});
+	return { current, wrapper: mount(Host) };
+};
+
 describe('client layout components', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -67,6 +78,7 @@ describe('client layout components', () => {
 		route.meta = {};
 		window.$docs = {
 			locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
+			repository: 'https://github.com/acme/widgets/',
 			routes: {}
 		};
 		sessionStorage.clear();
@@ -306,7 +318,124 @@ describe('client layout components', () => {
 		]);
 	});
 
-	it('renders the built-in footer', () => {
-		expect(mount(() => (<DefaultFooter />)).text()).toBe('Powered by @deot/docs');
+	it('renders the built-in footer groups and localized provider', () => {
+		const { wrapper } = mountFooter();
+		expect(wrapper.findAll('.docs-footer__group')).toHaveLength(4);
+		expect(wrapper.text()).toContain('Resources');
+		expect(wrapper.text()).toContain('@deot/vc | Vue component library');
+		expect(wrapper.text()).toContain('Powered by @deot/docs');
+		expect(wrapper.findAll('a').map(link => link.attributes('href'))).toContain(
+			'https://github.com/acme/widgets/releases'
+		);
+		const external = wrapper.find('a[href="https://deot.github.io/vc/"]');
+		expect(external.attributes()).toMatchObject({
+			target: '_blank',
+			rel: 'noopener noreferrer'
+		});
+	});
+
+	it('localizes the default footer and reacts to language changes', async () => {
+		const { current, wrapper } = mountFooter('zh-CN');
+		expect(wrapper.text()).toContain('资源');
+		expect(wrapper.text()).toContain('反馈问题');
+
+		current.value = resolveLocale('en-US', window.$docs.locales);
+		await flushPromises();
+		expect(wrapper.text()).toContain('Resources');
+		expect(wrapper.text()).toContain('Report an issue');
+		expect(wrapper.text()).not.toContain('反馈问题');
+	});
+
+	it('uses site locale overrides for default footer labels', () => {
+		window.$docs.locales['en-US'] = {
+			label: 'English',
+			client: { footer: { resources: 'Dependencies' } }
+		};
+		const { wrapper } = mountFooter();
+		expect(wrapper.text()).toContain('Dependencies');
+		expect(wrapper.text()).not.toContain('Resources');
+	});
+
+	it('omits feedback when the repository is missing or invalid', () => {
+		delete window.$docs.repository;
+		const missing = mountFooter('zh-CN').wrapper;
+		expect(missing.findAll('.docs-footer__group')).toHaveLength(3);
+		expect(missing.text()).not.toContain('反馈');
+
+		window.$docs.repository = 'https://gitlab.com/acme/widgets';
+		const invalid = mountFooter('zh-CN').wrapper;
+		expect(invalid.findAll('.docs-footer__group')).toHaveLength(3);
+		expect(invalid.text()).not.toContain('反馈');
+	});
+
+	it('uses external footer groups without merging defaults', () => {
+		window.$docs.layout = {
+			footer: {
+				groups: [{
+					label: 'Links',
+					children: [
+						{ label: 'Guide', value: '/guide' },
+						{ label: 'Community', value: 'https://example.com' }
+					]
+				}],
+				poweredBy: 'Built by Docs Team'
+			}
+		};
+		const { wrapper } = mountFooter();
+		expect(wrapper.findAll('.docs-footer__group')).toHaveLength(1);
+		expect(wrapper.text()).toContain('Built by Docs Team');
+		expect(wrapper.text()).not.toContain('@deot/vc');
+		expect(wrapper.findAll('a').map(link => link.attributes('href'))).toEqual([
+			'/zh-CN/guide',
+			'https://example.com'
+		]);
+	});
+
+	it('selects localized external groups and falls back to the default language', () => {
+		window.$docs.layout = {
+			footer: {
+				groups: {
+					'zh_CN': [{ label: '中文链接', children: [] }],
+					'en-US': [{ label: 'English links', children: [] }]
+				},
+				poweredBy: { 'zh-CN': '中文团队', 'en_US': 'English team' }
+			}
+		};
+		const english = mountFooter().wrapper;
+		expect(english.text()).toContain('English links');
+		expect(english.text()).toContain('English team');
+
+		window.$docs.layout = {
+			footer: { groups: { 'zh-CN': [{ label: '默认语言链接' }] } }
+		};
+		const fallback = mountFooter().wrapper;
+		expect(fallback.text()).toContain('默认语言链接');
+	});
+
+	it('keeps unmatched localized external footer values empty', () => {
+		window.$docs.layout = {
+			footer: {
+				groups: { 'de-DE': [{ label: 'Deutsch' }] },
+				poweredBy: { 'de-DE': 'Deutsches Team' }
+			}
+		};
+		const { wrapper } = mountFooter();
+		expect(wrapper.text()).toBe('');
+	});
+
+	it('supports default, omitted and hidden footer provider states', () => {
+		window.$docs.layout = { footer: { groups: [], poweredBy: 'default' } };
+		expect(mountFooter().wrapper.text()).toBe('Powered by @deot/docs');
+
+		window.$docs.layout = { footer: { groups: [] } };
+		expect(mountFooter().wrapper.text()).toBe('');
+
+		window.$docs.layout = { footer: { groups: [], poweredBy: false } };
+		expect(mountFooter().wrapper.text()).toBe('');
+	});
+
+	it('hides the built-in footer through the site layout configuration', () => {
+		window.$docs.layout = { footer: false };
+		expect(mountFooter().wrapper.find('.docs-footer').exists()).toBe(false);
 	});
 });
