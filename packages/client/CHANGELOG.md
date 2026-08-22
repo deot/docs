@@ -1,5 +1,17 @@
 # @deot/docs-client ChangeLog
 
+## v1.0.6
+
+_2026-08-22_
+
+### Bugfixes
+
+- fix(playground): wrap ESM Vue compiler without assigning readonly parse ([1c9111d](https://github.com/deot/docs/commit/1c9111d865071ad7d59f49ac9be12ccfd4fa47ad))
+
+### Features
+
+- feat: support configurable localized header brand ([e538c33](https://github.com/deot/docs/commit/e538c33da2638962a7a0d97aabbe472d4e3521b3))
+
 ## v1.0.5
 
 _2026-08-22_

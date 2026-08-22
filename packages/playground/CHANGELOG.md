@@ -1,5 +1,13 @@
 # @deot/docs-playground ChangeLog
 
+## v1.0.6
+
+_2026-08-22_
+
+### Bugfixes
+
+- fix: wrap ESM Vue compiler without assigning readonly parse ([1c9111d](https://github.com/deot/docs/commit/1c9111d865071ad7d59f49ac9be12ccfd4fa47ad))
+
 ## v1.0.5
 
 _2026-08-22_
