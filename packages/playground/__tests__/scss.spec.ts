@@ -296,6 +296,24 @@ $color: red
 		expect(String(failed.errors[0])).toContain('expected sass error');
 	});
 
+	it('wraps an esm compiler with a getter-only parse export', () => {
+		const compiler = Object.create(null);
+		Object.defineProperty(compiler, Symbol.toStringTag, { value: 'Module' });
+		Object.defineProperty(compiler, 'parse', {
+			enumerable: true,
+			get: () => parse
+		});
+		Object.preventExtensions(compiler);
+
+		const wrapped = wrapCompiler(compiler as never, () => ({}));
+
+		expect(wrapped).not.toBe(compiler);
+		expect(wrapped.parse('<template><div /></template>').errors).toEqual([]);
+		expect(() => {
+			wrapped.parse = parse as never;
+		}).not.toThrow();
+	});
+
 	it('reports a missing sass compiler from wrapped parse', () => {
 		setSassLoader();
 		const wrapped = wrapCompiler({ parse } as never, () => ({}));

@@ -233,7 +233,10 @@ export const wrapCompiler = (
 ): VueCompiler => {
 	if (wrappedCompilers.has(compiler as object)) return compiler;
 	const originalParse = compiler.parse.bind(compiler) as VueParse;
-	const wrapped = Object.create(compiler) as VueCompiler;
+	// Vue's browser compiler can be an ESM namespace whose exports are exposed
+	// through getter-only properties. Copy its exports into a plain object so the
+	// SCSS parse wrapper never assigns through an inherited read-only `parse`.
+	const wrapped = { ...compiler } as VueCompiler;
 	wrapped.parse = ((source, options) => {
 		const filename = options?.filename || 'anonymous.vue';
 		if (!vueSourceNeedsScss(source)) return originalParse(source, options);
