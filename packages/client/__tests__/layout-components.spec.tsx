@@ -164,22 +164,25 @@ describe('client layout components', () => {
 	it('keeps the active path when switching locale from the dropdown', async () => {
 		const wrapper = mount(() => (<DefaultHeader />));
 		expect(wrapper.findAll('a').map(link => link.attributes('href'))).toEqual([
-			'/zh-CN',
-			'/zh-CN/__docs/playground-resource',
-			'/zh-CN/__docs/database'
+			'/zh-CN'
 		]);
-		expect(wrapper.find('.docs-header__database').attributes('aria-label'))
-			.toBe('Open resource database');
-		expect(wrapper.find('.docs-header__playground-resource').attributes('aria-label'))
-			.toBe('Manage Playground resources');
+		expect(wrapper.find('.docs-header__tools-trigger').attributes('aria-label'))
+			.toBe('Tools');
+		expect(wrapper.findAll('.docs-header__tools-option').map(item => item.text())).toEqual([
+			'Customize this page',
+			'Manage Playground resources',
+			'Open resource database'
+		]);
+		expect(wrapper.find('[data-icon="more"]').exists()).toBe(true);
 		expect(wrapper.find('[data-icon="database"]').exists()).toBe(true);
 		expect(wrapper.find('[data-icon="playgroundResource"]').exists()).toBe(true);
+		expect(wrapper.find('[data-icon="editor"]').exists()).toBe(true);
 		expect(wrapper.find('[data-icon="language"]').exists()).toBe(true);
 		expect(wrapper.find('.docs-header__actions').element.lastElementChild?.classList)
-			.toContain('docs-header__database');
+			.toContain('docs-header__tools');
 		expect(wrapper.find('.docs-header__locale-trigger').attributes('aria-label'))
 			.toBe('Switch language');
-		const items = wrapper.findAllComponents({ name: 'DropdownItem' });
+		const items = wrapper.findAll('.docs-header__locale-option');
 		expect(items.map(item => item.text())).toEqual(['简体中文', 'English']);
 		expect(items[0].classes()).toContain('is-selected');
 		await items[1].trigger('click');
@@ -199,12 +202,14 @@ describe('client layout components', () => {
 		expect(mount(() => (<DefaultHeader />)).find('.docs-header__locales').exists()).toBe(false);
 	});
 
-	it('opens the resource database on the internal __docs route', () => {
+	it('opens the resource database on the internal __docs route', async () => {
 		const wrapper = mount(() => <DefaultHeader />);
-		expect(wrapper.find('.docs-header__database').attributes('href'))
-			.toBe('/zh-CN/__docs/database');
-		expect(wrapper.find('.docs-header__playground-resource').attributes('href'))
-			.toBe('/zh-CN/__docs/playground-resource');
+		const tools = wrapper.findAllComponents({ name: 'DropdownItem' })
+			.filter(item => item.classes().includes('docs-header__tools-option'));
+		await tools[1].trigger('click');
+		expect(push).toHaveBeenCalledWith('/zh-CN/__docs/playground-resource');
+		await tools[2].trigger('click');
+		expect(push).toHaveBeenCalledWith('/zh-CN/__docs/database');
 	});
 
 	it('uses the utility shell for playground import map pages', () => {
@@ -221,7 +226,9 @@ describe('client layout components', () => {
 			docsRoute: { content: 'default', value: 'components/button' }
 		};
 		const wrapper = mount(() => <DefaultHeader />);
-		await wrapper.find('.docs-header__editor').trigger('click');
+		await wrapper.findAllComponents({ name: 'DropdownItem' })
+			.find(item => item.props('value') === 'editor')!
+			.trigger('click');
 		await flushPromises();
 		expect(markdown).toHaveBeenCalled();
 		expect(push).toHaveBeenLastCalledWith({
@@ -238,7 +245,9 @@ describe('client layout components', () => {
 		window.$docs.home = { locales: { 'zh-CN': './pages/home.page.json' } };
 		route.meta = { docsHome: true };
 		const home = mount(() => <DefaultHeader />);
-		await home.find('.docs-header__editor').trigger('click');
+		await home.findAllComponents({ name: 'DropdownItem' })
+			.find(item => item.props('value') === 'editor')!
+			.trigger('click');
 		await flushPromises();
 		expect(push).toHaveBeenLastCalledWith(expect.objectContaining({
 			query: expect.objectContaining({ type: 'page', source: './pages/home.page.json' })
@@ -246,7 +255,9 @@ describe('client layout components', () => {
 
 		route.meta = { docsRoute: { content: './demo.vue' } };
 		const sfc = mount(() => <DefaultHeader />);
-		await sfc.find('.docs-header__editor').trigger('click');
+		await sfc.findAllComponents({ name: 'DropdownItem' })
+			.find(item => item.props('value') === 'editor')!
+			.trigger('click');
 		await flushPromises();
 		expect(push).toHaveBeenLastCalledWith(expect.objectContaining({
 			query: expect.objectContaining({ type: 'sfc', source: './demo.vue' })
@@ -265,7 +276,9 @@ describe('client layout components', () => {
 			}
 		};
 		const wrapper = mount(() => <DefaultHeader />);
-		await wrapper.find('.docs-header__editor').trigger('click');
+		await wrapper.findAllComponents({ name: 'DropdownItem' })
+			.find(item => item.props('value') === 'editor')!
+			.trigger('click');
 		await flushPromises();
 		expect(JSON.parse(sessionStorage.getItem('docs-renderer-inline-document') || '{}')).toMatchObject({
 			from: '/zh-CN/components/button?tab=api#props',

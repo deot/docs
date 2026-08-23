@@ -57,31 +57,46 @@
 					</template>
 				</Dropdown>
 			</nav>
-			<button
-				type="button"
-				class="docs-header__action docs-header__editor"
-				:title="t('client.header.editor')"
-				:aria-label="t('client.header.editor')"
-				@click="handleEditor"
-			>
-				<ClientIcon name="editor" />
-			</button>
-			<RouterLink
-				class="docs-header__action docs-header__playground-resource"
-				:to="playgroundResourcePath"
-				:title="t('client.header.playgroundResource')"
-				:aria-label="t('client.header.playgroundResource')"
-			>
-				<ClientIcon name="playgroundResource" />
-			</RouterLink>
-			<RouterLink
-				class="docs-header__action docs-header__database"
-				:to="databasePath"
-				:title="t('client.header.database')"
-				:aria-label="t('client.header.database')"
-			>
-				<ClientIcon name="database" />
-			</RouterLink>
+			<nav class="docs-header__tools">
+				<Dropdown
+					v-model="toolsMenuVisible"
+					class="docs-header__tools-dropdown"
+					portal-class="docs-header__tools-portal"
+					trigger="hover"
+					placement="bottom-right"
+				>
+					<button
+						type="button"
+						class="docs-header__action docs-header__tools-trigger"
+						:title="t('client.header.tools')"
+						:aria-label="t('client.header.tools')"
+						:aria-expanded="toolsMenuVisible"
+						aria-haspopup="menu"
+					>
+						<ClientIcon name="more" />
+					</button>
+					<template #content>
+						<DropdownMenu
+							class="docs-header__tools-options"
+							role="menu"
+							:aria-label="t('client.header.tools')"
+						>
+							<DropdownItem
+								v-for="item in toolsOptions"
+								:key="item.value"
+								class="docs-header__tools-option"
+								:value="item.value"
+								:selected="item.selected"
+								role="menuitem"
+								@click="handleTools"
+							>
+								<ClientIcon :name="item.icon" />
+								{{ item.label }}
+							</DropdownItem>
+						</DropdownMenu>
+					</template>
+				</Dropdown>
+			</nav>
 		</div>
 	</header>
 </template>
@@ -93,6 +108,7 @@ import { useLocale } from '@deot/docs-locale';
 import DocsSearch from '../search';
 import ThemeToggler from '../theme-toggler';
 import ClientIcon from '../icon';
+import type { ClientIconName } from '../icon';
 import { getDocsConfig } from '../../utils/runtime';
 import { getRouteValue, localizePath } from '../../utils/route';
 import { isExternalLink } from '../../utils/link';
@@ -101,11 +117,14 @@ import { findLanguageValue } from '../../utils/sidebar';
 import { stashInlineRendererDocument } from '../../pages/renderer-editor/inline';
 import type { DocsRoute, DocsContent, DocsLocalized } from '../../types';
 
+type HeaderTool = 'editor' | 'playgroundResource' | 'database';
+
 const route = useRoute();
 const router = useRouter();
 const config = getDocsConfig();
 const { t } = useLocale();
 const localeMenuVisible = ref(false);
+const toolsMenuVisible = ref(false);
 const lang = computed(() => String(route.params.lang));
 /**
  * 按当前语言和站点默认语言选择 Header 配置。
@@ -131,6 +150,34 @@ const localeOptions = computed(() => Object.entries(config.locales).map(([value,
 	label: item.label,
 	value
 })));
+const toolsOptions = computed(() => {
+	const items: Array<{
+		value: HeaderTool;
+		icon: ClientIconName;
+		label: string;
+		selected: boolean;
+	}> = [
+		{
+			value: 'editor',
+			icon: 'editor',
+			label: t('client.header.editor'),
+			selected: Boolean(route.meta.docsEditor)
+		},
+		{
+			value: 'playgroundResource',
+			icon: 'playgroundResource',
+			label: t('client.header.playgroundResource'),
+			selected: Boolean(route.meta.docsPlaygroundResource)
+		},
+		{
+			value: 'database',
+			icon: 'database',
+			label: t('client.header.database'),
+			selected: Boolean(route.meta.docsDatabase)
+		}
+	];
+	return items;
+});
 const localePath = (locale: string) => {
 	const segments = route.path.split('/').filter(Boolean);
 	segments[0] = locale;
@@ -192,6 +239,18 @@ const handleEditor = async () => {
 		}
 	});
 };
+const handleTools = (action: string | number) => {
+	toolsMenuVisible.value = false;
+	if (action === 'editor') {
+		void handleEditor();
+		return;
+	}
+	if (action === 'playgroundResource') {
+		void router.push(playgroundResourcePath.value);
+		return;
+	}
+	if (action === 'database') void router.push(databasePath.value);
+};
 </script>
 <style lang="scss">
 @use '../../styles/bem' as *;
@@ -229,6 +288,15 @@ const handleEditor = async () => {
 	}
 
 	@include element(locale-dropdown) {
+		display: inline-flex;
+	}
+
+	@include element(tools) {
+		display: inline-flex;
+		align-items: center;
+	}
+
+	@include element(tools-dropdown) {
 		display: inline-flex;
 	}
 
@@ -271,24 +339,10 @@ const handleEditor = async () => {
 		}
 	}
 
-	@include element(editor) {
+	@include element(tools-trigger) {
 		.docs-client-icon {
-			width: 22px;
-			height: 22px;
-		}
-	}
-
-	@include element(playground-resource) {
-		.docs-client-icon {
-			width: 22px;
-			height: 22px;
-		}
-	}
-
-	@include element(database) {
-		.docs-client-icon {
-			width: 21px;
-			height: 21px;
+			width: 20px;
+			height: 20px;
 		}
 	}
 
@@ -310,6 +364,31 @@ const handleEditor = async () => {
 		padding: 9px 18px;
 		font-size: 14px !important;
 		line-height: 22px;
+
+		&.is-selected {
+			color: var(--vc-color-primary);
+			background: var(--vc-color-primary-lighter);
+		}
+	}
+
+	@include element(tools-options) {
+		min-width: 220px;
+		padding: 6px 0;
+	}
+
+	@include element(tools-option) {
+		display: flex;
+		gap: 8px;
+		padding: 9px 18px;
+		font-size: 14px !important;
+		line-height: 22px;
+		align-items: center;
+
+		.docs-client-icon {
+			width: 16px;
+			height: 16px;
+			flex-shrink: 0;
+		}
 
 		&.is-selected {
 			color: var(--vc-color-primary);
@@ -341,13 +420,4 @@ const handleEditor = async () => {
 	}
 }
 
-@media screen and (width <= 480px) {
-	@include block(docs-header) {
-		@include element(editor) { display: none; }
-
-		@include element(playground-resource) { display: none; }
-
-		@include element(database) { display: none; }
-	}
-}
 </style>

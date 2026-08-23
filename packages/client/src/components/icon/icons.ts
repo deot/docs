@@ -43,6 +43,13 @@ export const CLIENT_ICON_DEFINITIONS = {
 			'a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z'
 		].join('')
 	},
+	more: {
+		filled: false,
+		path: [
+			'M4 4h6v6H4zm10 0h6v6h-6z',
+			'M4 14h6v6H4zm10 0h6v6h-6z'
+		].join('')
+	},
 	menu: {
 		filled: false,
 		path: 'M4 7h16M4 12h16M4 17h16'

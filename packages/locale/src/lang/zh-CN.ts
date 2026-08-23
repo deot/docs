@@ -20,7 +20,7 @@ const zhCN = {
 			env: '@deot/env | Web脚手架',
 			uni: '@deot/uni | Uni脚手架',
 			community: '社区',
-			github: 'github.com',
+			github: 'Github',
 			feedback: '反馈',
 			reportIssue: '反馈问题',
 			requestFeature: '提交需求',
@@ -35,6 +35,7 @@ const zhCN = {
 			database: '打开资源数据库',
 			playgroundResource: '管理 Playground 资源',
 			editor: '装修当前页面',
+			tools: '工具',
 			language: '切换语言',
 			switchToDark: '切换至深色主题',
 			switchToLight: '切换至浅色主题'

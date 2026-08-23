@@ -20,7 +20,7 @@ const enUS = {
 			env: '@deot/env | Web scaffold',
 			uni: '@deot/uni | Uni scaffold',
 			community: 'Community',
-			github: 'github.com',
+			github: 'Github',
 			feedback: 'Feedback',
 			reportIssue: 'Report an issue',
 			requestFeature: 'Request a feature',
@@ -35,6 +35,7 @@ const enUS = {
 			database: 'Open resource database',
 			playgroundResource: 'Manage Playground resources',
 			editor: 'Customize this page',
+			tools: 'Tools',
 			language: 'Switch language',
 			switchToDark: 'Switch to dark theme',
 			switchToLight: 'Switch to light theme'
