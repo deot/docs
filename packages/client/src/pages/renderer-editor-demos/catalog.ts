@@ -11,7 +11,7 @@ import { copy } from './helpers';
 
 /**
  * development 下 `/renderer-editor-demos?name=` 演示清单。
- * 工厂返回值可直接赋给 `$docs.home` 或路由 `content`。
+ * 工厂返回值可直接赋给 `routes['/'].content` 或其它路由 `content`。
  */
 export const RENDERER_EDITOR_DEMOS = [
 	'sortable',

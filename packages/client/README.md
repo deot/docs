@@ -113,7 +113,6 @@ const { app, router, disconnect } = await bootstrap(window.$docs);
 | `theme` | 主题开关或 `{ default: 'system' \| 'light' \| 'dark' }`，默认跟随系统。 |
 | `layout.header` | 内置 Header 配置；`brand.logo`、`brand.label` 和 `brand.value` 均支持固定值或按语言配置。文案未配置时回退到 `namespace` 和内置翻译，链接未配置时指向当前语言首页。站内链接自动补语言前缀，外链在新窗口打开。`nav` 是搜索后的横向导航，未配置时不渲染；条目复用 Sidebar 的 `{ label, value?, children? }` 结构，支持固定数组或按语言配置，有 `children` 的项以下拉展示。 |
 | `layout.footer` | Footer 内容；未配置或 `default` 使用内置分组，`false` 全局隐藏，也可配置 `{ nav, poweredBy }`。两项均支持按语言代码配置，`nav` 复用 Sidebar 的 `{ label, value?, children? }` 结构，按列分组渲染。 |
-| `home` | 可选的 `{ locales }` 首页配置；语言值是 Renderer 文档或 `.page.json` 地址。未配置时首页为空。 |
 | `renderers` | 业务自定义 Renderer 模块注册项；type 必须使用非 `docs:` 的命名空间。 |
 | `resolve.markdown` | 根据 `lang`、`value` 和当前路由生成 Markdown 逻辑地址。 |
 | `resolve.resource` | 将任意逻辑资源转换为最终 URL。 |
@@ -158,30 +157,32 @@ const sidebar = {
 
 ### 首页
 
-未配置 `routes['/']` 时，Client 渲染 `$docs.home`。首页文档必须由站点自己提供，Client 不内置示例页：
+未配置 `routes['/']` 时，Client 渲染空画布首页（默认 Header/Footer、无 Sidebar）。把首页文档写在 `routes['/'].content`：可以是 Renderer 文档、`.page.json` 地址，或按语言的映射（缺语言回退 `en-US`）。Client 不内置示例页：
 
 ```js
 window.$docs = {
-	home: {
-		locales: {
-			'zh-CN': './pages/home.page.json',
-			'en-US': {
-				schemaVersion: 2,
-				meta: { id: 'home-en', title: 'Home' },
-				layout: {
-					mode: 'sortable',
-					maxWidth: 1920,
-					minHeight: 600,
-					background: '#fff'
-				},
-				blocks: []
+	routes: {
+		'/': {
+			content: {
+				'zh-CN': './pages/home.page.json',
+				'en-US': {
+					schemaVersion: 2,
+					meta: { id: 'home-en', title: 'Home' },
+					layout: {
+						mode: 'sortable',
+						maxWidth: 1920,
+						minHeight: 600,
+						background: '#fff'
+					},
+					blocks: []
+				}
 			}
 		}
 	}
 };
 ```
 
-未配置 `home` 时首页画布为空，仍保留默认 Header/Footer、不展示 Sidebar。`routes['/']` 可以完全覆盖该首页路由。
+`content` 为 `'default'` / Markdown / SFC / `null` 时仍覆盖内置首页，走普通 ResourceSlot。其它路由上的 `content` 也可以写成语言映射，缺语言回退站点默认语言。
 
 首页入口链接由站点文档自己声明。业务 routes 和 Sidebar 只决定内容页怎么走：
 
@@ -194,7 +195,7 @@ window.$docs = {
 
 路由的 `content` 也可直接传入 Renderer 文档。`/:lang/__docs/renderer-editor` 在所有运行模式下都会注册；可从 Header 进入，编辑 Markdown、远程 SFC、内置模块和业务通过 `renderers` 声明的模块。development 下保存会 `PUT /__docs/page`，body 为 `{ lang, source, document }`，只写入工作区内带语言前缀的 `.page.json`；production 不开放该接口，仍可使用导入、导出和预览。Combo 草稿写入 IndexedDB 库 `deot-docs-renderer`，与 Gateway 的 `deot-docs` 分库。
 
-对照组合与短路径 `/:lang/renderer-editor-demos` 仅在 development 注入；目录页列出全部演示，`?name=landing` 进入对应 Combo。若站点占用了 `/renderer-editor-demos`，改从 `/:lang/__docs/renderer-editor-demos` 访问。production 不注册这些演示路由。工厂函数也可直接赋给 `$docs.home` 或路由 `content`：
+对照组合与短路径 `/:lang/renderer-editor-demos` 仅在 development 注入；目录页列出全部演示，`?name=landing` 进入对应 Combo。若站点占用了 `/renderer-editor-demos`，改从 `/:lang/__docs/renderer-editor-demos` 访问。production 不注册这些演示路由。工厂函数也可直接赋给 `routes['/'].content` 或其它路由 `content`：
 
 | 查询 | 内容 |
 |---|---|
@@ -212,9 +213,11 @@ window.$docs = {
 
 ```ts
 window.$docs = {
-	home: {
-		locales: {
-			'zh-CN': './home.page.json'
+	routes: {
+		'/': {
+			content: {
+				'zh-CN': './home.page.json'
+			}
 		}
 	}
 };

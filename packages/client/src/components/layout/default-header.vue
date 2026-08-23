@@ -193,6 +193,7 @@ import { getRouteValue, localizePath } from '../../utils/route';
 import { isExternalLink } from '../../utils/link';
 import { getDefaultLanguage } from '../../utils/resolver';
 import { findLanguageValue } from '../../utils/sidebar';
+import { isRendererDocument, resolveHomeContent, resolveRouteContent } from '../../utils/content';
 import { stashInlineRendererDocument } from '../../pages/renderer-editor/inline';
 import type { DocsRoute, DocsContent, DocsLocalized, SidebarItem } from '../../types';
 
@@ -316,20 +317,15 @@ const handleLocale = (locale: string | number) => {
 	const target = String(locale);
 	if (target !== lang.value) void router.push(localePath(target));
 };
-const isInlineRendererDocument = (value: DocsContent | undefined) => (
-	Boolean(value && typeof value === 'object' && 'schemaVersion' in value)
-);
+const isInlineRendererDocument = (value: DocsContent | undefined) => isRendererDocument(value);
 const handleEditor = async () => {
 	const routeConfig = route.meta.docsRoute as DocsRoute | undefined;
-	let source: DocsContent | undefined = routeConfig?.content;
+	let source: DocsContent | undefined = route.meta.docsHome
+		? resolveHomeContent(config, lang.value)
+		: resolveRouteContent(routeConfig?.content, lang.value, config);
 	let type = route.meta.docsHome ? 'home' : '';
-	if (route.meta.docsHome) {
-		const configured = config.home?.locales?.[lang.value]
-			|| config.home?.locales?.['en-US'];
-		if (typeof configured === 'string') {
-			source = configured;
-			type = 'page';
-		}
+	if (route.meta.docsHome && typeof source === 'string') {
+		type = 'page';
 	}
 	if (!route.meta.docsHome && isInlineRendererDocument(source)) {
 		stashInlineRendererDocument(route.fullPath, source);

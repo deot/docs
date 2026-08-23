@@ -60,7 +60,7 @@ describe('built-in home page', () => {
 				} }, appearance }
 			]
 		};
-		window.$docs.home = { locales: { 'zh-CN': page } };
+		window.$docs.routes['/'] = { content: { 'zh-CN': page } };
 		const Host = defineComponent({
 			setup() {
 				provideLocale(resolveLocale('zh-CN', {
@@ -77,7 +77,7 @@ describe('built-in home page', () => {
 		expect(routerPush).toHaveBeenCalledWith('/zh-CN/guide');
 		inline.unmount();
 
-		window.$docs.home = { locales: { 'zh-CN': './home.page.json' } };
+		window.$docs.routes['/'] = { content: { 'zh-CN': './home.page.json' } };
 		vi.spyOn(Gateway, 'subscribe').mockReturnValue(vi.fn());
 		vi.spyOn(Gateway, 'load').mockResolvedValue(createContentRecord({
 			content: JSON.stringify(page)
@@ -90,7 +90,7 @@ describe('built-in home page', () => {
 	});
 
 	it('applies valid cached updates and keeps the previous page after an invalid update', async () => {
-		window.$docs.home = { locales: { 'zh-CN': './home.page.json' } };
+		window.$docs.routes['/'] = { content: { 'zh-CN': './home.page.json' } };
 		let listener: Parameters<typeof Gateway.subscribe>[1] | undefined;
 		vi.spyOn(Gateway, 'subscribe').mockImplementation((_identity, callback) => {
 			listener = callback;
@@ -122,15 +122,15 @@ describe('built-in home page', () => {
 	});
 
 	it('reports an invalid inline document', async () => {
-		window.$docs.home = {
-			locales: { 'zh-CN': { schemaVersion: 2, meta: { id: '' }, layout, blocks: [] } }
+		window.$docs.routes['/'] = {
+			content: { 'zh-CN': { schemaVersion: 2, meta: { id: '' }, layout, blocks: [] } }
 		};
 		const wrapper = mount(HomePage);
 		await vi.waitFor(() => expect(wrapper.find('.docs-home__error').exists()).toBe(true));
 	});
 
 	it('reports a configured page failure without substituting a built-in document', async () => {
-		window.$docs.home = { locales: { 'zh-CN': './missing.page.json' } };
+		window.$docs.routes['/'] = { content: { 'zh-CN': './missing.page.json' } };
 		vi.spyOn(Gateway, 'subscribe').mockReturnValue(vi.fn());
 		vi.spyOn(Gateway, 'load').mockRejectedValue(new Error('Unavailable'));
 		const wrapper = mount(HomePage);

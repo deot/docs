@@ -121,8 +121,8 @@ describe('Renderer editor page', () => {
 		const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
 			source: './pages/home.page.json'
 		}), { status: 200 }));
-		window.$docs.home = {
-			locales: {
+		window.$docs.routes['/'] = {
+			content: {
 				'en-US': {
 					schemaVersion: 2,
 					meta: { id: 'inline-home', title: 'Inline home' },
@@ -134,14 +134,26 @@ describe('Renderer editor page', () => {
 		const wrapper = mount(EditorPage);
 		await vi.waitFor(() => expect(wrapper.find('.editor-title').text()).toBe('Inline home'));
 		expect(wrapper.find('.editor-draft').text()).toMatch(/^docs-editor:editor-page:en-US:home:/);
-		const locale = window.$docs.home.locales['en-US'];
-		if (typeof locale === 'string' || !locale) throw new Error('expected inline document');
+		const root = window.$docs.routes['/'];
+		if (!root || typeof root !== 'object') throw new Error('expected route object');
+		const localeMap = root.content;
+		if (!localeMap || typeof localeMap !== 'object' || 'schemaVersion' in localeMap) {
+			throw new Error('expected locale map');
+		}
+		const locale = localeMap['en-US'];
+		if (typeof locale === 'string' || !locale || !('meta' in locale)) {
+			throw new Error('expected inline document');
+		}
 		locale.meta.title = 'Mutated config';
 		await wrapper.find('.editor-save').trigger('click');
 		await flushPromises();
 		const body = JSON.parse(String(fetchMock.mock.calls.at(-1)?.[1]?.body || '{}'));
 		expect(body.document.meta.title).toBe('Inline home');
-		expect(window.$docs.home.locales['en-US']).toBe('./pages/home.page.json');
+		const saved = window.$docs.routes['/'];
+		if (!saved || typeof saved !== 'object' || !saved.content || typeof saved.content !== 'object') {
+			throw new Error('expected saved home content');
+		}
+		expect((saved.content as Record<string, unknown>)['en-US']).toBe('./pages/home.page.json');
 	});
 
 	it('loads an existing page resource through Gateway', async () => {
@@ -223,7 +235,7 @@ describe('Renderer editor page', () => {
 	});
 
 	it('loads a string home page through Gateway', async () => {
-		window.$docs.home = { locales: { 'en-US': './pages/home.page.json' } };
+		window.$docs.routes['/'] = { content: { 'en-US': './pages/home.page.json' } };
 		load.mockResolvedValue({
 			content: JSON.stringify({
 				schemaVersion: 2,

@@ -42,7 +42,8 @@ import { classifyResourceSource, createResourceIdentity, resolveResource } from 
 import { getRouteValue } from '../../utils/route';
 import { getDocsConfig } from '../../utils/runtime';
 import { resolveInlineSidebar } from '../../utils/sidebar';
-import type { DocsResourceType, DocsRoute, DocsSidebar, SidebarItem } from '../../types';
+import { resolveRouteContent } from '../../utils/content';
+import type { DocsContent, DocsLocalized, DocsResourceType, DocsRoute, DocsSidebar, SidebarItem } from '../../types';
 import { useRendererModules } from '../renderer';
 
 const props = defineProps<{ name: 'header' | 'sidebar' | 'content' | 'footer' | 'extra' }>();
@@ -283,6 +284,15 @@ const load = async () => {
 	const config = routeConfig.value;
 	let slot = config?.[props.name];
 	if (typeof slot === 'undefined') slot = props.name === 'content' ? 'default' : null;
+	if (props.name === 'content') {
+		slot = resolveRouteContent(
+			slot as DocsLocalized<DocsContent>,
+			lang.value,
+			docs,
+			route.meta.docsHome ? '/' : ''
+		);
+		if (typeof slot === 'undefined') slot = null;
+	}
 	if (slot === 'default' && props.name === 'sidebar') slot = './sidebar.json';
 	const isBuiltin = slot === 'default' && props.name !== 'content';
 	const isFixedSlot = ['header', 'sidebar', 'footer'].includes(props.name);

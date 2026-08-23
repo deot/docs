@@ -42,6 +42,7 @@ import {
 	resolveResource
 } from '../../utils/resolver';
 import { getDocsConfig, getDocsRuntime } from '../../utils/runtime';
+import { resolveHomeContent, writeHomeContent } from '../../utils/content';
 import { useRendererModules } from '../../components/renderer';
 import { takeInlineRendererDocument } from './inline';
 
@@ -58,9 +59,7 @@ let generation = 0;
 
 const lang = computed(() => String(route.params.lang || Object.keys(docs.locales)[0] || 'en-US'));
 const source = computed(() => String(route.query.source || ''));
-const configuredHome = () => (
-	docs.home?.locales?.[lang.value] || docs.home?.locales?.['en-US']
-);
+const configuredHome = () => resolveHomeContent(docs, lang.value);
 const hashValue = (value: unknown) => {
 	const text = JSON.stringify(value);
 	let hash = 2166136261;
@@ -239,8 +238,7 @@ const handleSave = async (value: RendererDocument) => {
 	try {
 		const result = await saveDocument(value);
 		if (String(route.query.type || '') === 'home') {
-			docs.home ||= { locales: {} };
-			docs.home.locales[lang.value] = result.source;
+			writeHomeContent(docs, lang.value, result.source);
 		}
 		handleSaved(result.source);
 		Message.success(t('renderer.common.saved'));

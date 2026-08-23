@@ -171,9 +171,9 @@ pnpm exec doc dev --workspace .
 
 ## 首页
 
-未配置 `routes['/']` 时，Client 渲染 `$docs.home` 中的页面文档。这份文档要写在站点的 `index.html` 里（内联 JSON 或 `.page.json` 地址），Client 不提供内置示例页。未配置时首页画布为空。页面协议、内置模块和 Combo 见 [`@deot/docs-renderer`](packages/renderer/README.md)；开发模式下保存会调用 `PUT /__docs/page`，由 [`@deot/docs-dever`](packages/dever/README.md) 写入语言目录下的 `.page.json`。
+未配置 `routes['/']` 时，Client 渲染空画布首页（默认 Header/Footer、无 Sidebar）。首页文档写在站点 `index.html` 的 `routes['/'].content` 里（内联 JSON、`.page.json` 地址，或按语言的映射）。Client 不提供内置示例页。页面协议、内置模块和 Combo 见 [`@deot/docs-renderer`](packages/renderer/README.md)；开发模式下保存会调用 `PUT /__docs/page`，由 [`@deot/docs-dever`](packages/dever/README.md) 写入语言目录下的 `.page.json`。
 
-`routes['/']` 可以完全覆盖该首页路由。内容页入口仍由业务 routes 和 Sidebar 决定：Client 先按 routes 声明顺序选择路由模式，再从 Sidebar 中按深度优先顺序取得该路由的第一个具体 value。
+`content` 为 `'default'` / Markdown / SFC / `null` 时覆盖内置首页，走普通内容路由。内容页入口仍由业务 routes 和 Sidebar 决定：Client 先按 routes 声明顺序选择路由模式，再从 Sidebar 中按深度优先顺序取得该路由的第一个具体 value。
 
 路由前缀、参数名称和参数数量均由业务决定：
 
@@ -199,7 +199,6 @@ const routes = {
 | `styles` | Playground 预览 CSS 的站点默认地址；同名 key 覆盖内置样式表。 |
 | `theme` | 主题开关或默认主题配置。 |
 | `prefetch` | 空闲预加载开关或批次配置。 |
-| `home` | 可选的多语言首页页面文档或 `.page.json` 地址；未配置时首页为空。 |
 | `renderers` | 业务自定义 Renderer 模块注册项。 |
 | `resolve.markdown` | 根据 `lang`、路由值和当前路由产生 Markdown 逻辑地址。 |
 | `resolve.resource` | 将任意逻辑资源转换为最终请求 URL。 |

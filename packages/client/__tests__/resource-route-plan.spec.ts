@@ -426,12 +426,11 @@ describe('ResourcePlan route resources', () => {
 		await expect(ResourcePlan.build({ config, prefetchResources: prefetch })).resolves.toBeDefined();
 	});
 
-	it('collects a built-in home page resource when routes do not own /', async () => {
+	it('collects a home page resource from routes[\'/\'].content', async () => {
 		const config: DocsConfig = {
 			namespace: 'builtin-home-page-tests',
 			locales: { 'zh-CN': { label: '简体中文' } },
-			routes: {},
-			home: { locales: { 'zh-CN': './pages/home.page.json' } }
+			routes: { '/': { content: { 'zh-CN': './pages/home.page.json' } } }
 		};
 		const resources = await ResourcePlan.collectRouteResources(config, []);
 		expect(resources.map(item => [item.identity.source, item.path, item.identity.type])).toEqual([

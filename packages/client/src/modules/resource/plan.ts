@@ -20,6 +20,7 @@ import {
 } from '../../utils/resource-graph';
 import { getDocsConfig } from '../../utils/runtime';
 import { resolveInlineSidebar } from '../../utils/sidebar';
+import { resolveRouteContent } from '../../utils/content';
 
 import type {
 	DocsConfig,
@@ -417,9 +418,10 @@ export class ResourcePlanner {
 	): Promise<ResourceIdentity | null> {
 		if (!routeMatch) return null;
 		const route = this.createRouteShape(lang, pathname, routeMatch.params);
-		const slot = typeof routeMatch.config.content === 'undefined'
+		const resolved = typeof routeMatch.config.content === 'undefined'
 			? 'default'
-			: routeMatch.config.content;
+			: resolveRouteContent(routeMatch.config.content, lang, config, pathname);
+		const slot = resolved === undefined ? null : resolved;
 		if (slot === null) return null;
 		if (slot !== 'default') {
 			if (typeof slot !== 'string') return null;
@@ -494,15 +496,6 @@ export class ResourcePlanner {
 					});
 				}
 			}
-		}
-		this.collectBuiltInHomePages(config, collector);
-	}
-
-	private collectBuiltInHomePages(config: DocsConfig, collector: ResourceCollector) {
-		if (Object.prototype.hasOwnProperty.call(config.routes, '/')) return;
-		for (const lang of this.getLanguages(config)) {
-			const home = config.home?.locales?.[lang] || config.home?.locales?.['en-US'];
-			if (typeof home === 'string') collector.add(lang, home, 'page');
 		}
 	}
 
@@ -697,17 +690,6 @@ export class ResourcePlanner {
 			.map(resourceIdentityKey));
 
 		for (const lang of this.getLanguages(config)) {
-			if (!Object.prototype.hasOwnProperty.call(config.routes, '/')) {
-				const home = config.home?.locales?.[lang] || config.home?.locales?.['en-US'];
-				if (typeof home === 'string') {
-					const identity = createResourceIdentity(config, lang, 'page', home);
-					const key = resourceIdentityKey(identity);
-					if (!resources.has(key)) resources.set(key, {
-						identity,
-						path: `/${lang}`
-					});
-				}
-			}
 			await add(lang, '/');
 			for (const [pathname, routeConfig] of Object.entries(config.routes)) {
 				if (!routeConfig || pathname === '*') continue;

@@ -208,14 +208,15 @@ describe('dever configuration', () => {
 			lang: 'en-US',
 			source: 'packages/index/README.md'
 		})).toBe('/en-US/packages/dever?tab=api#rules');
-		expect(config.home.locales['zh-CN'].blocks.map((item: { module: { type: string } }) => item.module.type))
+		const home = config.routes['/'].content;
+		expect(home['zh-CN'].blocks.map((item: { module: { type: string } }) => item.module.type))
 			.toEqual(['hero', 'features', 'steps', 'faq', 'cta']);
-		expect(config.home.locales['zh-CN'].blocks[0].appearance).toEqual(expect.objectContaining({
+		expect(home['zh-CN'].blocks[0].appearance).toEqual(expect.objectContaining({
 			fullWidth: true,
 			maxWidth: 1200
 		}));
-		expect(config.home.locales['zh-CN'].blocks[0].module.props.title).toBe('你好 @deot/docs');
-		expect(config.home.locales['en-US'].blocks[0].module.props.actions[0].to)
+		expect(home['zh-CN'].blocks[0].module.props.title).toBe('你好 @deot/docs');
+		expect(home['en-US'].blocks[0].module.props.actions[0].to)
 			.toBe('/en-US/packages/guide');
 		expect(config.resolve.link({
 			href: '../cli/README.md',
@@ -244,7 +245,12 @@ describe('dever configuration', () => {
 					])
 				}
 			]);
-		expect(config.routes['/']).toBeUndefined();
+		expect(config.routes['/']).toMatchObject({
+			content: expect.objectContaining({
+				'zh-CN': expect.objectContaining({ schemaVersion: 2 }),
+				'en-US': expect.objectContaining({ schemaVersion: 2 })
+			})
+		});
 		expect(config.routes['/packages/guide']).toMatchObject({ value: 'guide' });
 		expect(config.routes['/packages/guide'].sidebar['zh-CN'][0])
 			.toEqual({ label: '简介', value: '/packages/guide' });

@@ -4,7 +4,7 @@ import type { RendererDocument } from '@deot/docs-renderer';
 /**
  * 落地页模块链：Hero → Features → Steps → FAQ → CTA。
  * @param lang 当前文档语言。
- * @returns 可交给 Combo 或 `$docs.home` 的 V2 文档。
+ * @returns 可交给 Combo 或 `routes['/'].content` 的 V2 文档。
  */
 export const createLandingDemo = (lang: string): RendererDocument => sortableDocument(
 	copy(lang, '落地页组合', 'Landing composition'),
@@ -14,8 +14,8 @@ export const createLandingDemo = (lang: string): RendererDocument => sortableDoc
 			title: copy(lang, '用可复用模块拼出完整落地页', 'Compose a complete landing page from reusable modules'),
 			description: copy(
 				lang,
-				'Hero、特性、步骤、问答和行动条已经串好。把 landing 工厂赋给 `$docs.home` 或路由 `content`，再按品牌改文案。',
-				'Hero, features, steps, FAQ and CTA are already wired. Assign the landing factory to `$docs.home` or route `content`.'
+				'Hero、特性、步骤、问答和行动条已经串好。把 landing 工厂赋给 `routes[\'/\'].content` 或其它路由 `content`，再按品牌改文案。',
+				'Hero, features, steps, FAQ and CTA are already wired. Assign the landing factory to `routes[\'/\'].content` or another route `content`.'
 			),
 			align: 'left',
 			accent: '#873bf4',
@@ -154,8 +154,8 @@ export const createLandingDemo = (lang: string): RendererDocument => sortableDoc
 					question: copy(lang, '能直接当首页用吗？', 'Can I use this as the home page?'),
 					answer: copy(
 						lang,
-						'可以。把 `createRendererEditorDemoDocument(\'landing\', lang)` 赋给 `$docs.home.locales`，或把保存后的 `.page.json` 配到 `home.locales`。',
-						'Yes. Assign `createRendererEditorDemoDocument(\'landing\', lang)` to `$docs.home.locales`, or point `home.locales` at the saved `.page.json`.'
+						'可以。把 `createRendererEditorDemoDocument(\'landing\', lang)` 赋给 `routes[\'/\'].content`，或把保存后的 `.page.json` 配到对应语言。',
+						'Yes. Assign `createRendererEditorDemoDocument(\'landing\', lang)` to `routes[\'/\'].content`, or point the matching language at the saved `.page.json`.'
 					)
 				},
 				{

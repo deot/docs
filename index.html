@@ -268,13 +268,13 @@
 			repository: 'https://github.com/deot/docs',
 			theme: { default: 'system' },
 			locales,
-			home: {
-				locales: {
-					'zh-CN': createHomeDocument('zh-CN'),
-					'en-US': createHomeDocument('en-US')
-				}
-			},
 			routes: Object.fromEntries([
+				['/', {
+					content: {
+						'zh-CN': createHomeDocument('zh-CN'),
+						'en-US': createHomeDocument('en-US')
+					}
+				}],
 				...Object.keys(readmes).map(value => [`/packages/${value}`, {
 					value,
 					content: 'default',

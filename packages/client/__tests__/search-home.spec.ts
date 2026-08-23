@@ -21,22 +21,23 @@ describe('inline home search', () => {
 		window.$docs = {
 			namespace: 'docs-search-home',
 			locales: { 'zh-CN': { label: '简体中文' } },
-			routes: {},
-			home: {
-				locales: {
-					'zh-CN': {
-						schemaVersion: 2,
-						meta: { id: 'inline-home', title: 'Inline Home' },
-						layout: { mode: 'sortable', maxWidth: 1180, minHeight: 600, background: '#fff' },
-						blocks: [{
-							id: 'hero',
-							module: {
-								type: 'hero',
-								version: 1,
-								props: { title: 'Welcome', description: 'Searchable home canvas' }
-							},
-							appearance: { marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }
-						}]
+			routes: {
+				'/': {
+					content: {
+						'zh-CN': {
+							schemaVersion: 2,
+							meta: { id: 'inline-home', title: 'Inline Home' },
+							layout: { mode: 'sortable', maxWidth: 1180, minHeight: 600, background: '#fff' },
+							blocks: [{
+								id: 'hero',
+								module: {
+									type: 'hero',
+									version: 1,
+									props: { title: 'Welcome', description: 'Searchable home canvas' }
+								},
+								appearance: { marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }
+							}]
+						}
 					}
 				}
 			}

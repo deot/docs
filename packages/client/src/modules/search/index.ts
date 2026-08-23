@@ -6,6 +6,7 @@ import { Resource } from '../resource';
 import { IndexedDBSearchHistory, createSearchHistoryId } from './history';
 import { getDocsNamespace, resourceIdentityKey } from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
+import { isRendererDocument, resolveHomeContent } from '../../utils/content';
 import type { SearchHistoryRecord, SearchPreparedDocument, SearchResult, SearchSection } from './types';
 import { getRendererRuntime } from '../../components/renderer';
 import type { DocsConfig } from '../../types';
@@ -153,30 +154,28 @@ class SearchManager {
 			documents.push(document);
 		}
 
-		if (!Object.prototype.hasOwnProperty.call(config.routes, '/')) {
-			const home = config.home?.locales?.[lang] || config.home?.locales?.['en-US'];
-			if (home && typeof home !== 'string') {
-				const key = `${namespace}|${lang}|inline-home`;
-				try {
-					const parsed = await parseRendererSearch(config, JSON.stringify(home), lang);
-					documents.push({
-						key,
-						hash: 'inline-home',
-						namespace,
-						lang,
-						path: `/${lang}`,
-						source: 'home',
-						title: parsed.title || t('client.search.untitled'),
-						text: parsed.text,
-						sections: parsed.sections.map(section => ({
-							title: section.title,
-							anchor: section.anchor,
-							text: section.text
-						}))
-					});
-				} catch {
-					// 内联首页损坏时不阻断其他文档检索。
-				}
+		const home = resolveHomeContent(config, lang);
+		if (isRendererDocument(home)) {
+			const key = `${namespace}|${lang}|inline-home`;
+			try {
+				const parsed = await parseRendererSearch(config, JSON.stringify(home), lang);
+				documents.push({
+					key,
+					hash: 'inline-home',
+					namespace,
+					lang,
+					path: `/${lang}`,
+					source: 'home',
+					title: parsed.title || t('client.search.untitled'),
+					text: parsed.text,
+					sections: parsed.sections.map(section => ({
+						title: section.title,
+						anchor: section.anchor,
+						text: section.text
+					}))
+				});
+			} catch {
+				// 内联首页损坏时不阻断其他文档检索。
 			}
 		}
 

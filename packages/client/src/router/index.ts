@@ -11,6 +11,7 @@ import {
 	getDocsDeploymentBase
 } from '../utils/resolver';
 import { localizePath } from '../utils/route';
+import { isHomeLikeRoute } from '../utils/content';
 import type { DocsConfig, DocsRouteConfig } from '../types';
 
 export { getRouteValue, localizePath } from '../utils/route';
@@ -125,7 +126,6 @@ export const createDocsRouter = (
 	let currentLanguage = options.initialLanguage && hasConfiguredLanguage(config, options.initialLanguage)
 		? options.initialLanguage
 		: defaultLanguage;
-	const hasConfiguredRoot = Object.prototype.hasOwnProperty.call(config.routes, '/');
 	const hasConfiguredEditorRoute = Object.keys(config.routes).some(path => (
 		(path.startsWith('/') ? path : `/${path}`) === '/renderer-editor'
 	));
@@ -185,17 +185,25 @@ export const createDocsRouter = (
 		path: '/',
 		redirect: () => `/${currentLanguage}`
 	});
-	if (hasConfiguredRoot) {
+	const rootConfig = config.routes['/'];
+	if (rootConfig !== undefined && !isHomeLikeRoute(rootConfig)) {
 		routes.push(createRouteRecord(
 			config,
 			'/:lang',
-			config.routes['/'],
+			rootConfig,
 			{ localized: true, languageRoot: true }
 		));
 	} else {
+		const routeObject = typeof rootConfig === 'object' && rootConfig ? rootConfig : {};
 		routes.push({
 			path: '/:lang',
-			component: HomePage,
+			components: {
+				default: HomePage,
+				extra: ResourceSlot
+			},
+			props: {
+				extra: { name: 'extra' }
+			},
 			meta: {
 				docsHome: true,
 				docsLocalized: true,
@@ -205,7 +213,8 @@ export const createDocsRouter = (
 					sidebar: null,
 					header: 'default',
 					footer: 'default',
-					extra: null
+					extra: null,
+					...routeObject
 				}
 			}
 		});

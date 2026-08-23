@@ -176,9 +176,11 @@ describe('docs router', () => {
 			.toBe('/zh-CN?tab=api');
 	});
 
-	it('lets any explicit root configuration override the built-in home', async () => {
+	it('lets non-home root configuration override the built-in home', async () => {
 		const roots: DocsConfig['routes'][] = [
 			{ '/': { content: null } },
+			{ '/': { content: 'default' } },
+			{ '/': { content: './guide.md' } },
 			{ '/': '/guide', '/guide': { content: null } },
 			{ '/': () => '/guide', '/guide': { content: null } }
 		];
@@ -189,6 +191,29 @@ describe('docs router', () => {
 			});
 			await router.push('/');
 			expect(router.currentRoute.value.meta.docsHome).toBeUndefined();
+		}
+	});
+
+	it('keeps the built-in home for renderer documents, locale maps, and .page.json', async () => {
+		const homeDocument = {
+			schemaVersion: 2 as const,
+			meta: { id: 'home', title: 'Home' },
+			layout: { mode: 'sortable' as const, maxWidth: 1180, minHeight: 600, background: '#fff' },
+			blocks: []
+		};
+		const roots: DocsConfig['routes'][] = [
+			{ '/': { content: homeDocument } },
+			{ '/': { content: { 'en-US': homeDocument, 'zh-CN': homeDocument } } },
+			{ '/': { content: './pages/home.page.json' } },
+			{ '/': { content: { 'en-US': './pages/home.page.json' } } }
+		];
+		for (const routes of roots) {
+			const router = createDocsRouter({
+				locales: { 'en-US': { label: 'English' } },
+				routes
+			});
+			await router.push('/');
+			expect(router.currentRoute.value.meta.docsHome).toBe(true);
 		}
 	});
 

@@ -270,7 +270,7 @@ describe('client layout components', () => {
 	});
 
 	it('opens configured home pages and SFC routes with their concrete editor types', async () => {
-		window.$docs.home = { locales: { 'zh-CN': './pages/home.page.json' } };
+		window.$docs.routes['/'] = { content: { 'zh-CN': './pages/home.page.json' } };
 		route.meta = { docsHome: true };
 		const home = mount(() => <DefaultHeader />);
 		await home.findAllComponents({ name: 'DropdownItem' })

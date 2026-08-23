@@ -19,6 +19,7 @@ import {
 	resolveResource
 } from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
+import { resolveHomeContent } from '../../utils/content';
 import { useRendererModules } from '../../components/renderer';
 
 const route = useRoute();
@@ -72,9 +73,8 @@ const load = async () => {
 	loading.value = true;
 	document.value = undefined;
 	try {
-		const configured = config.home?.locales?.[lang.value]
-			|| config.home?.locales?.['en-US'];
-		if (!configured) return;
+		const configured = resolveHomeContent(config, lang.value);
+		if (!configured || configured === 'default') return;
 		if (typeof configured !== 'string') {
 			document.value = parseDocument(configured);
 			return;

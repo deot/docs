@@ -172,8 +172,8 @@ export const createComboDemo = (lang: string): RendererDocument => sortableDocum
 			title: copy(lang, '同一套模块表供给首页和内容页', 'One module table for home and content pages'),
 			description: copy(
 				lang,
-				'把这份文档交给 `$docs.home` 或路由 `content`。需要纯落地页时打开 landing，需要纯文档块时打开 docs。',
-				'Hand this document to `$docs.home` or a route `content`. Open landing for a pure marketing page, or docs for document blocks only.'
+				'把这份文档交给 `routes[\'/\'].content` 或其它路由 `content`。需要纯落地页时打开 landing，需要纯文档块时打开 docs。',
+				'Hand this document to `routes[\'/\'].content` or another route `content`. Open landing for a pure marketing page, or docs for document blocks only.'
 			),
 			align: 'center',
 			accent: '#873bf4',
