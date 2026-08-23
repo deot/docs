@@ -43,6 +43,7 @@ pnpm add -D @deot/docs-cli
 ```text
 site/
 ├── index.html
+├── 404.html                 # 静态托管深链：写入 @deot/docs:redirect 后跳转入口
 ├── en-US/
 │   ├── index.md
 │   ├── sidebar.json
@@ -81,6 +82,10 @@ site/
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-renderer/dist/index.style.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-markdown/dist/index.style.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-playground/dist/index.style.css">
 	<title>My Docs</title>
 </head>
 <body>
@@ -117,15 +122,7 @@ site/
 			styles: {}
 		};
 	</script>
-
-	<link
-		rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css"
-	>
-	<script
-		type="module"
-		src="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js"
-	></script>
+	<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js"></script>
 </body>
 </html>
 ```
@@ -136,6 +133,8 @@ site/
 - production：相对于 `$docs.base` 的 `{lang}/guide/installation.md`
 
 需要从仓库、CDN 或其他网关加载内容时，可以通过 `resolve.markdown`、`resolve.resource` 和 `resolve.link` 定义逻辑地址、最终 URL 与 Markdown 站内链接。
+
+静态托管若不能做 HTML history fallback，请在 workspace 根目录同时提供 `404.html`：把当前 URL 写入 `sessionStorage['@deot/docs:redirect']`，再跳转到站点入口。跳转地址应是部署目录本身（根站用 `'/'`，子路径部署用 `'/docs/'` 这类前缀）。约定与实现见 [`@deot/docs-client`](packages/client/README.md)。
 
 ### 4. 启动开发服务
 
@@ -210,7 +209,9 @@ const routes = {
 
 ## 本仓库开发
 
-上方「快速开始」面向**新建文档站点**的通用 `site/` 模板（含 `sidebar.json`、`index.md` 等）。本仓库自带的演示是 **README 聚合**：根目录 [`index.html`](index.html)（与 [`404.html`](404.html) 保持同步，供 GitHub Pages 深链回退）内联 Sidebar 与首页 Renderer 文档，开发模式下读取根目录与各子包 README；因此克隆后找不到 `site/zh-CN/index.md` 或 `sidebar.json` 是预期行为。未指定 `--workspace` 时 CLI 仍优先探测 `site/index.html`，本仓库没有 `site/` 时回退到根 `index.html`。
+上方「快速开始」面向**新建文档站点**的通用 `site/` 模板（含 `sidebar.json`、`index.md` 等）。本仓库自带的演示是 **README 聚合**：根目录 [`index.html`](index.html) 内联 Sidebar 与首页 Renderer 文档，开发模式下读取根目录与各子包 README；因此克隆后找不到 `site/zh-CN/index.md` 或 `sidebar.json` 是预期行为。未指定 `--workspace` 时 CLI 仍优先探测 `site/index.html`，本仓库没有 `site/` 时回退到根 `index.html`。
+
+静态托管若不能做 HTML history fallback，请同时托管 [`404.html`](404.html)。它会把当前 URL 写入 `sessionStorage['@deot/docs:redirect']` 再跳转入口，由 [`@deot/docs-client`](packages/client/README.md) 按约定还原深链。本仓库这份 `404.html` 跳转到 `/docs/`（当前演示的部署目录）；新建站点应改成自己的入口。`doc dev` 与 `doc preview` 已自带 history fallback，不必依赖该键。
 
 ```bash
 pnpm install
@@ -225,7 +226,7 @@ npm run dev
 npm run cli:preview
 
 # 本仓库演示不要用 cli:build 发布：根 workspace 会把 monorepo 源码复制进 dist。
-# 直接部署时托管根 index.html 与 404.html 即可。
+# 直接部署时托管根 index.html；需要深链回退时同时托管 404.html（写入 @deot/docs:redirect）。
 
 # 类型、测试与构建
 npm run typecheck

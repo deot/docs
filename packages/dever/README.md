@@ -51,7 +51,7 @@ development 和 preview 会保持服务运行；build 在 Vite 构建结束后�
 - 在 development 模式注入 `window.__DOCS_RUNTIME__`；
 - 为 workspace 资源提供安全的原始文本响应；`.page.json` 按页面文档（`page`）处理，其余 `.json` 按 sidebar 处理；
 - 在 development 模式开放 `/__docs/events`，以及 `PUT /__docs/page`（只写工作区内、带语言前缀的 `.page.json`）；
-- 为客户端路由提供 HTML history fallback；
+- 为客户端路由提供 HTML history fallback；静态托管若只能配置自定义 404 页，请改用 Client 的 [`@deot/docs:redirect`](../client/README.md) 约定。
 - 在 build 模式复制 Markdown、JSON（含 `.page.json`）、SFC 等静态内容资源；
 - 当当前仓库源码存在时，将 locale、renderer、markdown、playground、theme 包映射到本地入口。
 

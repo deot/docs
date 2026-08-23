@@ -50,7 +50,9 @@ pnpm exec doc build --workspace site --out-dir dist
 
 ### `doc preview`
 
-直接以 production runtime 预览 workspace，不生成新的构建产物。默认端口为 `4173`，不会注入开发 runtime，也不会启用 HMR 或 SSE。
+直接以 production runtime 预览 workspace，不生成新的构建产物。默认端口为 `4173`，不会注入开发 runtime，也不会启用 HMR 或 SSE。该模式已提供 HTML history fallback。
+
+若把站点部署到只能配置自定义 404 页的静态托管，请同时提供 `404.html`：把当前 URL 写入 `sessionStorage['@deot/docs:redirect']` 后跳转入口，由 [`@deot/docs-client`](../client/README.md) 还原深链。
 
 ```bash
 pnpm exec doc preview --workspace site

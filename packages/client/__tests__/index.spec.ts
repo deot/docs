@@ -36,7 +36,8 @@ const {
 		name: 'router',
 		currentRoute: { value: { params: { lang: 'zh-CN' } } },
 		isReady: vi.fn(async () => undefined),
-		afterEach: vi.fn(() => stopLanguagePersistence)
+		afterEach: vi.fn(() => stopLanguagePersistence),
+		push: vi.fn(async () => undefined)
 	}
 }));
 vi.mock('vue', async original => ({
@@ -80,6 +81,7 @@ describe('client entry', () => {
 
 	it('normalizes runtime and mounts the configured application', async () => {
 		document.body.innerHTML = '<div id="app"></div>';
+		sessionStorage.removeItem('@deot/docs:redirect');
 		window.$docs = createDocsConfig({ locales: { 'zh-CN': { label: '简体中文' } } });
 		window.__DOCS_RUNTIME__ = createDocsRuntime({ workspace: '/site/' });
 		const client = await import('../src');
@@ -101,16 +103,59 @@ describe('client entry', () => {
 		const explicit = createDocsConfig({ locales: { en: { label: 'English' } } });
 		router.currentRoute.value.params.lang = 'en';
 		const instance = await client.bootstrap(explicit);
-		await Promise.resolve();
 		expect(window.$docs).toBe(explicit);
 		expect(explicit.runtime).toEqual({ mode: 'development', workspace: '/site/' });
-		expect(startIdlePrefetch).toHaveBeenCalledWith(explicit);
+		await vi.waitFor(() => expect(startIdlePrefetch).toHaveBeenCalledWith(explicit));
 		expect(document.documentElement.lang).toBe('en-US');
+		expect(router.push).not.toHaveBeenCalled();
 		instance.disconnect();
 		instance.disconnect();
 		expect(disconnectEvents).toHaveBeenCalled();
 		expect(stopLanguagePersistence).toHaveBeenCalledOnce();
 		expect(stopPrefetch).toHaveBeenCalled();
+	});
+
+	it('consumes the @deot/docs:redirect session convention', async () => {
+		const previous = `${location.pathname}${location.search}${location.hash}`;
+		window.history.replaceState({}, '', '/docs/');
+		sessionStorage.setItem('@deot/docs:redirect', '/docs/zh-CN/guide?tab=api#install');
+		router.push.mockClear();
+		try {
+			const client = await import('../src');
+			const explicit = createDocsConfig({ locales: { 'zh-CN': { label: '简体中文' } } });
+			const instance = await client.bootstrap(explicit);
+			await vi.waitFor(() => expect(router.push).toHaveBeenCalledWith('/zh-CN/guide?tab=api#install'));
+			expect(sessionStorage.getItem('@deot/docs:redirect')).toBeNull();
+			instance.disconnect();
+		} finally {
+			sessionStorage.removeItem('@deot/docs:redirect');
+			window.history.replaceState({}, '', previous || '/');
+		}
+	});
+
+	it('ignores stored redirects that are not inside the deployment directory', async () => {
+		const previous = `${location.pathname}${location.search}${location.hash}`;
+		window.history.replaceState({}, '', '/docs/');
+		router.push.mockClear();
+		try {
+			const client = await import('../src');
+			const explicit = createDocsConfig({ locales: { 'zh-CN': { label: '简体中文' } } });
+			sessionStorage.setItem('@deot/docs:redirect', '//evil.example/docs/hijack');
+			let instance = await client.bootstrap(explicit);
+			await vi.waitFor(() => expect(startIdlePrefetch).toHaveBeenCalledWith(explicit));
+			expect(router.push).not.toHaveBeenCalled();
+			expect(sessionStorage.getItem('@deot/docs:redirect')).toBeNull();
+			instance.disconnect();
+
+			sessionStorage.setItem('@deot/docs:redirect', '/other/zh-CN/guide');
+			instance = await client.bootstrap(explicit);
+			await vi.waitFor(() => expect(sessionStorage.getItem('@deot/docs:redirect')).toBeNull());
+			expect(router.push).not.toHaveBeenCalled();
+			instance.disconnect();
+		} finally {
+			sessionStorage.removeItem('@deot/docs:redirect');
+			window.history.replaceState({}, '', previous || '/');
+		}
 	});
 
 	it('provides business renderer modules without a global registry', async () => {

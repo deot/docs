@@ -69,6 +69,21 @@ const { app, router, disconnect } = await bootstrap(window.$docs);
 
 `disconnect()` 用于关闭当前实例创建的 SSE、空闲预加载和联网恢复监听。
 
+## Redirect 约定
+
+`sessionStorage['@deot/docs:redirect']` 是文档站点的深链约定：把待还原的**同站绝对路径**交给 Client，启动后再导航到部署目录内的对应路由。
+
+静态托管通常只会把未知路径交给入口 HTML 或自定义 404 页，不会像 `doc dev` / `doc preview` 那样做 history fallback。任意入口（常见是与 `index.html` 配套的 `404.html`）写入该键后跳转到**站点入口**（部署目录，例如 `'/'` 或 `'/docs/'`）：
+
+```html
+<script>
+	sessionStorage['@deot/docs:redirect'] = location.pathname + location.search + location.hash;
+</script>
+<meta http-equiv="refresh" content="0;URL='/'" />
+```
+
+`bootstrap()` 在路由就绪后读取并清除该键。路径必须以 `/` 开头且不能是 `//`，且必须落在当前部署目录内；随后 `router.push` 去掉部署前缀后的路由。非法或越界值会被丢弃，但键仍会清除，避免下次启动误跳。仓库根目录 [`404.html`](../../404.html) 是一份可直接部署的实现，其中刷新地址是本仓库的 `/docs/`；其他站点应改成自己的入口。
+
 ## `$docs` 配置
 
 | 字段 | 说明 |

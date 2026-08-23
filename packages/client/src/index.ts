@@ -8,7 +8,7 @@ import { connectResourceEvents } from './events';
 import { Resource } from './modules/resource';
 import { Settings, ThemeRuntime } from './modules/settings';
 import { createDocsRouter } from './router';
-import { getDefaultLanguage } from './utils/resolver';
+import { getDocsDeploymentBase, getDefaultLanguage } from './utils/resolver';
 import { initializeDocsRuntime } from './utils/runtime';
 import type { DocsConfig } from './types';
 
@@ -49,6 +49,29 @@ export {
 } from './pages/renderer-editor-demos/catalog';
 export type { RendererEditorDemo } from './pages/renderer-editor-demos/catalog';
 
+const consumeStoredRedirect = async (
+	router: { push: (to: string) => unknown },
+	config: DocsConfig
+) => {
+	const REDIRECT_KEY = '@deot/docs:redirect';
+	let redirect: string | null;
+	try {
+		redirect = sessionStorage.getItem(REDIRECT_KEY);
+		sessionStorage.removeItem(REDIRECT_KEY);
+	} catch {
+		return;
+	}
+	if (!redirect || !redirect.startsWith('/') || redirect.startsWith('//')) return;
+	const base = new URL(getDocsDeploymentBase(config)).pathname;
+	if (redirect === `${location.pathname}${location.search}${location.hash}`) return;
+	if (base !== '/' && !redirect.startsWith(base)) return;
+	try {
+		await router.push(`/${redirect.slice(base.length)}`);
+	} catch {
+		// 导航失败时不再跳回原深链，避免与 404 入口互相刷新。
+	}
+};
+
 export const bootstrap = async (config?: DocsConfig) => {
 	config ||= window.$docs || { locales: {}, routes: {} };
 	initializeDocsRuntime(window, config);
@@ -78,6 +101,8 @@ export const bootstrap = async (config?: DocsConfig) => {
 	void (async () => {
 		try {
 			await router.isReady();
+			if (disconnected) return;
+			await consumeStoredRedirect(router, config);
 			if (!disconnected) stopPrefetch = Resource.prefetch.start(config);
 		} catch {
 			// Router 启动失败时应用本身会呈现错误，不再启动后台预加载。
