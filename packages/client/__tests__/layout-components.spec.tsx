@@ -164,8 +164,16 @@ describe('client layout components', () => {
 	it('keeps the active path when switching locale from the dropdown', async () => {
 		const wrapper = mount(() => (<DefaultHeader />));
 		expect(wrapper.findAll('a').map(link => link.attributes('href'))).toEqual([
-			'/zh-CN'
+			'/zh-CN',
+			'https://github.com/acme/widgets/'
 		]);
+		expect(wrapper.find('.docs-header__repository').attributes()).toMatchObject({
+			'href': 'https://github.com/acme/widgets/',
+			'target': '_blank',
+			'rel': 'noopener noreferrer',
+			'aria-label': 'Open repository'
+		});
+		expect(wrapper.find('[data-icon="github"]').exists()).toBe(true);
 		expect(wrapper.find('.docs-header__tools-trigger').attributes('aria-label'))
 			.toBe('Tools');
 		expect(wrapper.findAll('.docs-header__tools-option').map(item => item.text())).toEqual([
@@ -200,6 +208,26 @@ describe('client layout components', () => {
 			routes: {}
 		};
 		expect(mount(() => (<DefaultHeader />)).find('.docs-header__locales').exists()).toBe(false);
+	});
+
+	it('opens a non-GitHub repository with the generic icon', () => {
+		window.$docs.repository = 'https://gitlab.com/acme/widgets';
+		const link = mount(() => (<DefaultHeader />)).find('.docs-header__repository');
+		expect(link.attributes()).toMatchObject({
+			href: 'https://gitlab.com/acme/widgets',
+			target: '_blank',
+			rel: 'noopener noreferrer'
+		});
+		expect(link.find('[data-icon="repository"]').exists()).toBe(true);
+		expect(link.find('[data-icon="github"]').exists()).toBe(false);
+	});
+
+	it('hides the repository action when the address is missing or invalid', () => {
+		delete window.$docs.repository;
+		expect(mount(() => (<DefaultHeader />)).find('.docs-header__repository').exists()).toBe(false);
+
+		window.$docs.repository = 'javascript:alert(1)';
+		expect(mount(() => (<DefaultHeader />)).find('.docs-header__repository').exists()).toBe(false);
 	});
 
 	it('opens the resource database on the internal __docs route', async () => {
@@ -383,6 +411,14 @@ describe('client layout components', () => {
 			'fill': 'none',
 			'stroke': 'currentColor'
 		});
+	});
+
+	it('applies the size prop as pixel dimensions', () => {
+		const sized = mount(() => <ClientIcon name="github" size={24} />);
+		expect(sized.element.style.width).toBe('24px');
+		expect(sized.element.style.height).toBe('24px');
+		expect(mount(() => <ClientIcon name="more" />).element.getAttribute('style'))
+			.toBeNull();
 	});
 
 	it('renders recursive sidebar items and preserves external links', () => {

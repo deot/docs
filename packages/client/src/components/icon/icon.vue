@@ -3,6 +3,7 @@
 		class="docs-client-icon"
 		:data-icon="name"
 		viewBox="0 0 24 24"
+		:style="sizeStyle"
 		:fill="definition.filled ? 'currentColor' : 'none'"
 		:stroke="definition.filled ? 'none' : 'currentColor'"
 		stroke-width="1.8"
@@ -20,8 +21,14 @@ import type { ClientIconName } from './icons';
 
 const props = defineProps<{
 	name: ClientIconName;
+	size?: number | string;
 }>();
 const definition = computed(() => CLIENT_ICON_DEFINITIONS[props.name]);
+const sizeStyle = computed(() => {
+	if (props.size == null) return;
+	const value = typeof props.size === 'number' ? `${props.size}px` : props.size;
+	return { width: value, height: value };
+});
 </script>
 <style lang="scss">
 @use '../../styles/bem' as *;
@@ -30,5 +37,6 @@ const definition = computed(() => CLIENT_ICON_DEFINITIONS[props.name]);
 	display: block;
 	width: 18px;
 	height: 18px;
+	flex-shrink: 0;
 }
 </style>

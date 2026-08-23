@@ -37,6 +37,7 @@ const zhCN = {
 			editor: '装修当前页面',
 			tools: '工具',
 			language: '切换语言',
+			repository: '打开仓库',
 			switchToDark: '切换至深色主题',
 			switchToLight: '切换至浅色主题'
 		},

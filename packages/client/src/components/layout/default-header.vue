@@ -33,7 +33,7 @@
 						:aria-expanded="localeMenuVisible"
 						aria-haspopup="menu"
 					>
-						<ClientIcon name="language" />
+						<ClientIcon name="language" :size="22" />
 					</button>
 					<template #content>
 						<DropdownMenu
@@ -57,6 +57,17 @@
 					</template>
 				</Dropdown>
 			</nav>
+			<a
+				v-if="repositoryHref"
+				class="docs-header__action docs-header__repository"
+				:href="repositoryHref"
+				target="_blank"
+				rel="noopener noreferrer"
+				:title="t('client.header.repository')"
+				:aria-label="t('client.header.repository')"
+			>
+				<ClientIcon :name="repositoryIcon" :size="24" />
+			</a>
 			<nav class="docs-header__tools">
 				<Dropdown
 					v-model="toolsMenuVisible"
@@ -73,7 +84,7 @@
 						:aria-expanded="toolsMenuVisible"
 						aria-haspopup="menu"
 					>
-						<ClientIcon name="more" />
+						<ClientIcon name="more" :size="22" />
 					</button>
 					<template #content>
 						<DropdownMenu
@@ -90,7 +101,7 @@
 								role="menuitem"
 								@click="handleTools"
 							>
-								<ClientIcon :name="item.icon" />
+								<ClientIcon :name="item.icon" :size="16" />
 								{{ item.label }}
 							</DropdownItem>
 						</DropdownMenu>
@@ -150,6 +161,30 @@ const localeOptions = computed(() => Object.entries(config.locales).map(([value,
 	label: item.label,
 	value
 })));
+/**
+ * 校验站点仓库地址，仅允许在新窗口打开的 http(s) 链接。
+ * @param value `$docs.repository` 原始值。
+ * @returns 可打开的地址；非法值返回空字符串。
+ */
+function resolveRepositoryHref(value?: string) {
+	const href = value?.trim();
+	if (!href) return '';
+	try {
+		const url = new URL(href);
+		return ['http:', 'https:'].includes(url.protocol) ? href : '';
+	} catch {
+		return '';
+	}
+}
+const repositoryHref = computed(() => resolveRepositoryHref(config.repository));
+const repositoryIcon = computed((): ClientIconName => {
+	try {
+		const host = new URL(repositoryHref.value).hostname.toLowerCase();
+		return host === 'github.com' || host.endsWith('.github.com') ? 'github' : 'repository';
+	} catch {
+		return 'repository';
+	}
+});
 const toolsOptions = computed(() => {
 	const items: Array<{
 		value: HeaderTool;
@@ -332,20 +367,6 @@ const handleTools = (action: string | number) => {
 
 	}
 
-	@include element(locale-trigger) {
-		.docs-client-icon {
-			width: 24px;
-			height: 24px;
-		}
-	}
-
-	@include element(tools-trigger) {
-		.docs-client-icon {
-			width: 20px;
-			height: 20px;
-		}
-	}
-
 	@include element(search) {
 		display: grid;
 		min-width: 0;
@@ -383,12 +404,6 @@ const handleTools = (action: string | number) => {
 		font-size: 14px !important;
 		line-height: 22px;
 		align-items: center;
-
-		.docs-client-icon {
-			width: 16px;
-			height: 16px;
-			flex-shrink: 0;
-		}
 
 		&.is-selected {
 			color: var(--vc-color-primary);

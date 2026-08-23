@@ -37,6 +37,7 @@ const enUS = {
 			editor: 'Customize this page',
 			tools: 'Tools',
 			language: 'Switch language',
+			repository: 'Open repository',
 			switchToDark: 'Switch to dark theme',
 			switchToLight: 'Switch to light theme'
 		},

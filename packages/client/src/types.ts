@@ -196,7 +196,10 @@ export interface DocsConfig {
 	 * 站点 public base，与 Vite `base` 对齐。
 	 */
 	base?: string;
-	/** 当前文档项目的 GitHub 仓库页面，用于生成默认 Footer 反馈链接。 */
+	/**
+	 * 当前文档项目的远程仓库页面。Header 据此展示仓库入口；
+	 * GitHub 地址还会用于生成默认 Footer 反馈链接。
+	 */
 	repository?: string;
 	/**
 	 * Gateway 缓存与 IndexedDB 分区名。多站点同域时必须区分。

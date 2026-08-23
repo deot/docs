@@ -92,7 +92,7 @@ const { app, router, disconnect } = await bootstrap(window.$docs);
 | `routes` | 去掉语言前缀后的路由配置。字符串和函数表示重定向。 |
 | `base` | production 资源的基准 URL。 |
 | `namespace` | IndexedDB 缓存隔离标识；未设置时使用规范化后的 `base`。 |
-| `repository` | 当前文档项目的 GitHub 仓库页面；内置 Footer 据此生成 Issues、需求与 Releases 链接。 |
+| `repository` | 当前文档项目的远程仓库页面。Header 在语言与工具之间展示入口，并在新窗口打开；GitHub 地址还会用于生成默认 Footer 的 Issues、需求与 Releases 链接。 |
 | `modules` | 站点级裸模块名到 URL 的映射，对所有 Playground（含 Markdown）生效；远程 SFC 仍可通过实例 `builtinImportMap` 覆盖。 |
 | `styles` | 站点级预览 CSS 默认地址；同名 key 覆盖内置样式表，也可追加。管理页 `/:lang/__docs/playground-resource` 与 `modules` 同一张表管理。 |
 | `prefetch` | 空闲预加载开关或 `{ batchSize, idleTimeout }` 配置，默认开启。 |
