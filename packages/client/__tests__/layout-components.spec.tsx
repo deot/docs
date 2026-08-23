@@ -390,6 +390,105 @@ describe('client layout components', () => {
 		});
 	});
 
+	it('does not render header nav when it is not configured', () => {
+		expect(mount(() => <DefaultHeader />).find('.docs-header__nav').exists()).toBe(false);
+	});
+
+	it('renders header nav after search with localized and external links', () => {
+		window.$docs.layout = {
+			header: {
+				nav: [
+					{ label: 'Guide', value: '/guide' },
+					{ label: 'GitHub', value: 'https://github.com/deot/docs' },
+					{ label: 'Plain' }
+				]
+			}
+		};
+		const wrapper = mount(() => <DefaultHeader />);
+		const nav = wrapper.find('.docs-header__nav');
+		expect(wrapper.find('.docs-header__search').element.nextElementSibling).toBe(nav.element);
+		expect(nav.attributes('aria-label')).toBe('Navigation');
+		expect(nav.findAll('.docs-header__nav-item').map(item => item.text())).toEqual([
+			'Guide',
+			'GitHub',
+			'Plain'
+		]);
+		expect(nav.findAll('a').map(link => link.attributes('href'))).toEqual([
+			'/zh-CN/guide',
+			'https://github.com/deot/docs'
+		]);
+		expect(nav.find('a[href="https://github.com/deot/docs"]').attributes()).toMatchObject({
+			target: '_blank',
+			rel: 'noopener noreferrer'
+		});
+		expect(nav.find('span.docs-header__nav-item').text()).toBe('Plain');
+	});
+
+	it('selects localized header nav and falls back to the default language', () => {
+		window.$docs.layout = {
+			header: {
+				nav: {
+					'zh_CN': [{ label: '中文导航', value: '/guide' }],
+					'en-US': [{ label: 'English nav', value: '/guide' }]
+				}
+			}
+		};
+		expect(mount(() => <DefaultHeader />).find('.docs-header__nav-item').text())
+			.toBe('中文导航');
+
+		window.$docs.layout = {
+			header: { nav: { 'zh-CN': [{ label: '默认语言导航', value: '/guide' }] } }
+		};
+		route.params.lang = 'en-US';
+		expect(mount(() => <DefaultHeader />).find('.docs-header__nav-item').text())
+			.toBe('默认语言导航');
+	});
+
+	it('renders header nav children as a dropdown', () => {
+		window.$docs.layout = {
+			header: {
+				nav: [{
+					label: 'Ecosystem',
+					children: [
+						{ label: 'Guide', value: '/guide' },
+						{ label: 'GitHub', value: 'https://github.com/deot/docs' }
+					]
+				}]
+			}
+		};
+		const wrapper = mount(() => <DefaultHeader />);
+		expect(wrapper.find('.docs-header__nav-trigger').text()).toBe('Ecosystem');
+		expect(wrapper.findAll('.docs-header__nav-option a').map(link => link.attributes('href')))
+			.toEqual([
+				'/zh-CN/guide',
+				'https://github.com/deot/docs'
+			]);
+	});
+
+	it('marks the current header nav item as active', () => {
+		window.$docs.layout = {
+			header: {
+				nav: [
+					{ label: 'Guide', value: '/guide' },
+					{ label: 'Components', value: '/components' },
+					{
+						label: 'Ecosystem',
+						children: [{ label: 'Button', value: '/components/button' }]
+					}
+				]
+			}
+		};
+		const wrapper = mount(() => <DefaultHeader />);
+		expect(wrapper.findAll('.docs-header__nav-item').map(item => [
+			item.text(),
+			item.classes().includes('is-active')
+		])).toEqual([
+			['Guide', false],
+			['Components', true],
+			['Ecosystem', true]
+		]);
+	});
+
 	it('uses the complete theme toggler as the transition origin', async () => {
 		const toggle = vi.spyOn(Theme, 'toggle').mockResolvedValue();
 		const wrapper = mount(() => <ThemeToggler />);
@@ -492,7 +591,7 @@ describe('client layout components', () => {
 	it('uses external footer groups without merging defaults', () => {
 		window.$docs.layout = {
 			footer: {
-				groups: [{
+				nav: [{
 					label: 'Links',
 					children: [
 						{ label: 'Guide', value: '/guide' },
@@ -515,7 +614,7 @@ describe('client layout components', () => {
 	it('selects localized external groups and falls back to the default language', () => {
 		window.$docs.layout = {
 			footer: {
-				groups: {
+				nav: {
 					'zh_CN': [{ label: '中文链接', children: [] }],
 					'en-US': [{ label: 'English links', children: [] }]
 				},
@@ -527,7 +626,7 @@ describe('client layout components', () => {
 		expect(english.text()).toContain('English team');
 
 		window.$docs.layout = {
-			footer: { groups: { 'zh-CN': [{ label: '默认语言链接' }] } }
+			footer: { nav: { 'zh-CN': [{ label: '默认语言链接' }] } }
 		};
 		const fallback = mountFooter().wrapper;
 		expect(fallback.text()).toContain('默认语言链接');
@@ -536,7 +635,7 @@ describe('client layout components', () => {
 	it('keeps unmatched localized external footer values empty', () => {
 		window.$docs.layout = {
 			footer: {
-				groups: { 'de-DE': [{ label: 'Deutsch' }] },
+				nav: { 'de-DE': [{ label: 'Deutsch' }] },
 				poweredBy: { 'de-DE': 'Deutsches Team' }
 			}
 		};
@@ -545,13 +644,13 @@ describe('client layout components', () => {
 	});
 
 	it('supports default, omitted and hidden footer provider states', () => {
-		window.$docs.layout = { footer: { groups: [], poweredBy: 'default' } };
+		window.$docs.layout = { footer: { nav: [], poweredBy: 'default' } };
 		expect(mountFooter().wrapper.text()).toBe('Powered by @deot/docs');
 
-		window.$docs.layout = { footer: { groups: [] } };
+		window.$docs.layout = { footer: { nav: [] } };
 		expect(mountFooter().wrapper.text()).toBe('');
 
-		window.$docs.layout = { footer: { groups: [], poweredBy: false } };
+		window.$docs.layout = { footer: { nav: [], poweredBy: false } };
 		expect(mountFooter().wrapper.text()).toBe('');
 	});
 

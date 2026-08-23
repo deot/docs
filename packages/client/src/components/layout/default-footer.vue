@@ -103,7 +103,7 @@ function resolveLocalized<T>(value?: DocsLocalized<T>): T | undefined {
 		?? findLanguageValue(value as Record<string, T>, getDefaultLanguage(config));
 }
 const groups = computed(() => options.value
-	? resolveLocalized(options.value.groups) || []
+	? resolveLocalized(options.value.nav) || []
 	: createDefaultGroups()
 );
 const poweredBy = computed(() => {

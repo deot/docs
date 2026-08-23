@@ -30,6 +30,7 @@ const enUS = {
 		},
 		header: {
 			brand: '@deot/docs',
+			nav: 'Navigation',
 			openSidebar: 'Open sidebar',
 			closeSidebar: 'Close sidebar',
 			database: 'Open resource database',

@@ -159,8 +159,8 @@ export type DocsLocalized<T> = T | Record<string, T>;
 export type DocsFooterPoweredBy = 'default' | string | false;
 
 export interface DocsFooterOptions {
-	/** Footer 分组导航，结构与 Sidebar 保持一致。 */
-	groups?: DocsLocalized<SidebarItem[]>;
+	/** Footer 导航，结构与 Sidebar 保持一致。 */
+	nav?: DocsLocalized<SidebarItem[]>;
 	/** 默认文案、自定义文案或关闭底部提供方信息。 */
 	poweredBy?: DocsLocalized<DocsFooterPoweredBy>;
 }
@@ -177,6 +177,8 @@ export interface DocsHeaderBrandOptions {
 export interface DocsHeaderOptions {
 	/** 内置 Header 的品牌展示与跳转配置。 */
 	brand?: DocsHeaderBrandOptions;
+	/** Header 横向导航，结构与 Sidebar / Footer nav 保持一致。 */
+	nav?: DocsLocalized<SidebarItem[]>;
 }
 
 export interface DocsLayoutOptions {

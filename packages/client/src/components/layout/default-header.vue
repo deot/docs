@@ -15,6 +15,74 @@
 			{{ brandLabel }}
 		</RouterLink>
 		<div class="docs-header__search"><DocsSearch /></div>
+		<nav
+			v-if="navItems.length"
+			class="docs-header__nav"
+			:aria-label="t('client.header.nav')"
+		>
+			<template v-for="(item, index) in navItems" :key="`${item.label}:${item.value || ''}:${index}`">
+				<Dropdown
+					v-if="item.children?.length"
+					:model-value="Boolean(navMenuVisible[index])"
+					class="docs-header__nav-dropdown"
+					portal-class="docs-header__nav-portal"
+					trigger="hover"
+					placement="bottom"
+					@update:model-value="visible => navMenuVisible[index] = Boolean(visible)"
+				>
+					<button
+						type="button"
+						class="docs-header__nav-item docs-header__nav-trigger"
+						:class="{ 'is-active': isNavItemActive(item) }"
+						:aria-expanded="Boolean(navMenuVisible[index])"
+						aria-haspopup="menu"
+					>
+						{{ item.label }}
+					</button>
+					<template #content>
+						<DropdownMenu
+							class="docs-header__nav-options"
+							role="menu"
+							:aria-label="item.label"
+						>
+							<DropdownItem
+								v-for="child in item.children"
+								:key="`${child.label}:${child.value || ''}`"
+								class="docs-header__nav-option"
+								:value="child.value || child.label"
+								role="menuitem"
+							>
+								<a
+									v-if="child.value && isExternalLink(child.value)"
+									:href="child.value"
+									target="_blank"
+									rel="noopener noreferrer"
+								>{{ child.label }}</a>
+								<RouterLink
+									v-else-if="child.value"
+									:to="localizePath(config, lang, child.value)"
+								>{{ child.label }}</RouterLink>
+								<span v-else>{{ child.label }}</span>
+							</DropdownItem>
+						</DropdownMenu>
+					</template>
+				</Dropdown>
+				<a
+					v-else-if="item.value && isExternalLink(item.value)"
+					class="docs-header__nav-item"
+					:href="item.value"
+					target="_blank"
+					rel="noopener noreferrer"
+				>{{ item.label }}</a>
+				<RouterLink
+					v-else-if="item.value"
+					class="docs-header__nav-item"
+					:class="{ 'is-active': isNavItemActive(item) }"
+					:to="localizePath(config, lang, item.value)"
+				>{{ item.label }}</RouterLink>
+				<span v-else class="docs-header__nav-item">{{ item.label }}</span>
+			</template>
+		</nav>
 		<div class="docs-header__actions">
 			<ThemeToggler class="docs-header__theme" />
 			<nav v-if="localeOptions.length > 1" class="docs-header__locales">
@@ -126,7 +194,7 @@ import { isExternalLink } from '../../utils/link';
 import { getDefaultLanguage } from '../../utils/resolver';
 import { findLanguageValue } from '../../utils/sidebar';
 import { stashInlineRendererDocument } from '../../pages/renderer-editor/inline';
-import type { DocsRoute, DocsContent, DocsLocalized } from '../../types';
+import type { DocsRoute, DocsContent, DocsLocalized, SidebarItem } from '../../types';
 
 type HeaderTool = 'editor' | 'playgroundResource' | 'database';
 
@@ -148,6 +216,27 @@ function resolveLocalized<T>(value?: DocsLocalized<T>): T | undefined {
 		?? findLanguageValue(value as Record<string, T>, getDefaultLanguage(config));
 }
 const brandOptions = config.layout?.header?.brand;
+const navItems = computed(() => resolveLocalized(config.layout?.header?.nav) || []);
+const navMenuVisible = ref<Record<number, boolean>>({});
+/**
+ * 判断导航地址是否对应当前路由（含前缀匹配）。
+ * @param value 配置中的跳转地址。
+ * @returns 是否为当前导航项。
+ */
+function isNavPathActive(value?: string) {
+	if (!value || isExternalLink(value)) return false;
+	const target = localizePath(config, lang.value, value);
+	return route.path === target || route.path.startsWith(`${target}/`);
+}
+/**
+ * 顶层项或其子项命中当前路由时视为激活。
+ * @param item 一条 Header 导航。
+ * @returns 是否显示激活下划线。
+ */
+function isNavItemActive(item: SidebarItem) {
+	return isNavPathActive(item.value)
+		|| Boolean(item.children?.some(child => isNavPathActive(child.value)));
+}
 const brandLogo = computed(() => resolveLocalized(brandOptions?.logo) || '');
 const brandLabel = computed(() => (
 	resolveLocalized(brandOptions?.label) || config.namespace || t('client.header.brand')
@@ -294,6 +383,11 @@ const handleTools = (action: string | number) => {
 	display: grid;
 	grid-template-columns: minmax(160px, 1fr) minmax(180px, 320px) auto;
 	column-gap: 8px;
+
+	&:has(.docs-header__nav) {
+		grid-template-columns: minmax(160px, 1fr) minmax(180px, 320px) max-content auto;
+	}
+
 	width: 100%;
 	height: 60px;
 	padding: 0 30px;
@@ -373,6 +467,65 @@ const handleTools = (action: string | number) => {
 		justify-items: end;
 	}
 
+	@include element(nav) {
+		display: flex;
+		height: 60px;
+		min-width: 0;
+		align-items: stretch;
+		margin: 0 10px;
+	}
+
+	@include element(nav-dropdown) {
+		display: inline-flex;
+	}
+
+	@include element(nav-item) {
+		position: relative;
+		display: inline-flex;
+		height: 100%;
+		padding: 0 20px;
+		font: inherit;
+		font-size: 14px;
+		color: varfix(foreground-color);
+		white-space: nowrap;
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		align-items: center;
+
+		&:hover,
+		&:focus-visible {
+			color: varfix(primary-color);
+		}
+
+		&.router-link-active,
+		&.is-active {
+			&::before {
+				position: absolute;
+				right: 2px;
+				bottom: 0;
+				left: 2px;
+				height: 2px;
+				background: varfix(primary-color);
+				content: "";
+			}
+		}
+	}
+
+	@include element(nav-trigger) {
+		&::after {
+			display: inline-block;
+			width: 0;
+			height: 0;
+			margin-left: 6px;
+			border: 4px solid transparent;
+			border-bottom: 0;
+			border-top-color: currentcolor;
+			content: "";
+			translate: 0 1px;
+		}
+	}
+
 }
 
 @include block(docs-header) {
@@ -410,6 +563,24 @@ const handleTools = (action: string | number) => {
 			background: var(--vc-color-primary-lighter);
 		}
 	}
+
+	@include element(nav-options) {
+		min-width: 160px;
+		padding: 6px 0;
+	}
+
+	@include element(nav-option) {
+		padding: 9px 18px;
+		font-size: 14px !important;
+		line-height: 22px;
+
+		a,
+		span {
+			display: block;
+			color: inherit;
+			text-decoration: none;
+		}
+	}
 }
 
 @media screen and (width <= 768px) {
@@ -427,6 +598,10 @@ const handleTools = (action: string | number) => {
 		@include element(action) {
 			width: 32px;
 			height: 32px;
+		}
+
+		@include element(nav) {
+			display: none;
 		}
 	}
 

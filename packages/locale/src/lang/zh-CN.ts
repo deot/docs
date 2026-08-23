@@ -30,6 +30,7 @@ const zhCN = {
 		},
 		header: {
 			brand: '@deot/docs',
+			nav: '导航',
 			openSidebar: '打开侧边栏',
 			closeSidebar: '关闭侧边栏',
 			database: '打开资源数据库',
