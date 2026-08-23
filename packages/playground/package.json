@@ -1,6 +1,6 @@
 {
   "name": "@deot/docs-playground",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -18,7 +18,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@deot/docs-locale": "^1.0.5",
+    "@deot/docs-locale": "^1.0.6",
     "@deot/docs-theme": "^1.0.5",
     "@codemirror/lang-css": "^6.3.1",
     "@codemirror/lang-javascript": "^6.2.4",
