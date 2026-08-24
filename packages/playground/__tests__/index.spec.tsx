@@ -534,9 +534,9 @@ describe('Playground', () => {
 		});
 
 		expect(wrapper.find('.docs-playground__preview').attributes('style'))
-			.toContain('height: 687px');
+			.toContain('height: 667px');
 		expect(wrapper.find('.docs-playground__preview').attributes('style'))
-			.toContain('padding: 10px');
+			.toContain('padding: 0px');
 		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
 			.toContain('width: 375px');
 		expect(wrapper.findAll('.docs-playground__viewport-option').map(item => item.text()))
@@ -546,7 +546,7 @@ describe('Playground', () => {
 
 		await wrapper.setProps({ viewport: 768 });
 		expect(wrapper.find('.docs-playground__preview').attributes('style'))
-			.toContain('height: 44px');
+			.toContain('height: 24px');
 		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
 			.toContain('width: 768px');
 		await wrapper.setProps({ viewport: undefined });
@@ -734,7 +734,7 @@ describe('Playground', () => {
 		expect(runtime.find('.docs-playground-files').exists()).toBe(false);
 		expect(runtime.find('.docs-playground__views').exists()).toBe(false);
 		expect(runtime.find('.docs-playground__preview').attributes('style'))
-			.toContain('height: 44px');
+			.toContain('height: 24px');
 
 		const fixedRuntime = mount(Playground, {
 			attrs: { style: 'height: 200px' },
@@ -742,7 +742,7 @@ describe('Playground', () => {
 		});
 		expect(fixedRuntime.attributes('style')).toContain('height: 200px');
 		expect(fixedRuntime.find('.docs-playground__preview').attributes('style'))
-			.toContain('height: 44px');
+			.toContain('height: 24px');
 
 		const files = mount(Playground, {
 			props: {

@@ -102,7 +102,7 @@ const props = withDefaults(defineProps<{
 	entry: '',
 	views: () => ['runtime'],
 	styleless: false,
-	previewInset: 10,
+	previewInset: 0,
 	options: () => ({})
 });
 const inheritedLocale = useLocale();
@@ -271,9 +271,9 @@ watch(normalizedViewportOptions, (options) => {
 	width: 100%;
 	margin-bottom: 16px;
 	overflow: hidden;
-
-	/* box-shadow: rgb(229 229 229) 0 0 10px; */
+	background: var(--docs-background-color, var(--vc-background-color-light, #fff));
 	border-radius: 8px;
+	box-shadow: 0 1px 2px rgb(0 0 0 / 2%), 0 3px 10px rgb(0 0 0 / 3%);
 	box-sizing: border-box;
 	justify-content: center;
 	flex-direction: column;
@@ -283,7 +283,6 @@ watch(normalizedViewportOptions, (options) => {
 		min-height: 0;
 		overflow: hidden;
 		background: var(--docs-code-background, var(--vc-background-color, #f6f8fa));
-		box-shadow: none;
 	}
 
 	@include element(error) {

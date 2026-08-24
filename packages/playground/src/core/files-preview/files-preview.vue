@@ -93,7 +93,8 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 	@include element(toolbar) {
 		display: flex;
 		overflow: hidden;
-		box-shadow: inset 0 -1px var(--docs-border-color, var(--vc-color-light-deeper, #dedede));
+		background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa));
+		border-bottom: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e5e7eb));
 		box-sizing: border-box;
 		flex: 0 0 44px;
 	}
@@ -156,7 +157,7 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 				bottom: 0;
 				left: 8px;
 				height: 3px;
-				background: #5495f6;
+				background: var(--docs-primary-color, var(--vc-color-primary, #5495f6));
 				border-radius: 2px 2px 0 0;
 				content: '';
 			}
@@ -189,8 +190,10 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 	@include element(views) {
 		@include modifier(files) {
 			display: flex;
-			height: 44px;
-			padding: 0 12px;
+			height: 28px;
+			padding: 0 12px 0 8px;
+			margin-left: 4px;
+			border-left: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e5e7eb));
 			box-sizing: border-box;
 			gap: 4px;
 			align-items: center;
@@ -210,10 +213,26 @@ const handleView = (view: PlaygroundView) => emit('view-change', view);
 		border-radius: 8px;
 		justify-content: center;
 		align-items: center;
+		transition: color 0.15s ease, background-color 0.15s ease;
+
+		.docs-playground-icon {
+			width: 18px;
+			height: 18px;
+		}
+
+		&:hover {
+			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline-offset: 1px;
+		}
 
 		@include when(active) {
-			color: #fff;
-			background: #2563eb;
+			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
 		}
 	}
 }

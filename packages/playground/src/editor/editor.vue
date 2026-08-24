@@ -3,7 +3,7 @@
 		<TransitionFade @after-leave="handleHide">
 			<div v-show="isActive" ref="wrapper" class="docs-playground-editor__wrapper">
 				<div ref="bar" class="docs-playground-editor__header">
-					<span>&lt;/&gt;</span>
+					<PlaygroundIcon name="editor" :size="24" />
 					<span :title="t('playground.common.close')" style="cursor: pointer;" @click="handleHide">&#10005;</span>
 				</div>
 				<div class="docs-playground-editor__files">
@@ -98,6 +98,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { vue } from '@codemirror/lang-vue';
 import { highlightActiveLine } from '@codemirror/view';
 import { NEW_SFC_CODE } from '../constants';
+import PlaygroundIcon from '../icon';
 import type { PlaygroundFiles } from '../types';
 import type { EditorFilesChange, EditorFilesChangeAction } from './types';
 import { Drag } from './drag';
@@ -352,13 +353,17 @@ onBeforeUnmount(() => {
 		right: 10px;
 		bottom: 10px;
 		z-index: 1001;
+		display: flex;
 		width: 680px;
+		max-height: calc(100vh - 20px);
+		overflow: hidden;
 		font-size: 13px;
 		color: var(--docs-foreground-color-light, var(--vc-color-dark-lighter));
 		background: var(--docs-background-color, var(--vc-background-color-light));
 		border-radius: 8px;
 		opacity: 1;
 		box-shadow: 0 0 50px rgb(0 0 0 / 20%);
+		flex-direction: column;
 	}
 
 	@include element(header) {
@@ -492,16 +497,31 @@ onBeforeUnmount(() => {
 	}
 
 	@include element(error) {
+		max-height: min(160px, 25vh);
 		padding: 5px 10px;
+		overflow: auto;
 		color: var(--vc-color-error, #b91c1c);
 		white-space: pre-wrap;
+		overflow-wrap: anywhere;
 		background: var(--docs-error-background, #fef2f2);
+		box-sizing: border-box;
+		flex: 0 1 auto;
 	}
 
 	@include element(editor) {
 		min-height: 240px;
 		padding: 1px;
+		overflow: hidden;
 		background: var(--docs-code-background, var(--vc-background-color)) !important;
+		flex: 1 1 auto;
+
+		.cm-editor {
+			height: 100%;
+		}
+
+		.cm-scroller {
+			overflow: auto;
+		}
 	}
 }
 </style>

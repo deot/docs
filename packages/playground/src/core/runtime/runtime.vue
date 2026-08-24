@@ -411,7 +411,7 @@ watch(() => props.entry, (entry) => {
 		display: flex;
 		padding: 0 12px;
 		background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa)) !important;
-		box-shadow: inset 0 -1px var(--docs-border-color, var(--vc-color-light-deeper, #edeff1));
+		border-bottom: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e5e7eb));
 		box-sizing: border-box;
 		justify-content: flex-end;
 		align-items: center;
@@ -420,6 +420,9 @@ watch(() => props.entry, (entry) => {
 
 	@include element(views) {
 		display: flex;
+		padding-left: 8px;
+		margin-left: 4px;
+		border-left: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e5e7eb));
 		gap: 4px;
 	}
 
@@ -436,19 +439,30 @@ watch(() => props.entry, (entry) => {
 		border-radius: 8px;
 		justify-content: center;
 		align-items: center;
+		transition: color 0.15s ease, background-color 0.15s ease;
+
+		&:hover {
+			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline-offset: 1px;
+		}
 
 		@include when(active) {
-			color: var(--vc-color-light, #fff);
-			background: #2563eb;
+			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
 		}
 	}
 
 	@include element(tools) {
 		display: flex;
-		margin-right: 4px;
 		margin-left: auto;
 		font-size: 14px;
 		line-height: 20px;
+		gap: 2px;
 		align-items: center;
 	}
 
@@ -465,14 +479,25 @@ watch(() => props.entry, (entry) => {
 		border-radius: 8px;
 		justify-content: center;
 		align-items: center;
+		transition: color 0.15s ease, background-color 0.15s ease;
+
+		.docs-playground-icon {
+			width: 18px;
+			height: 18px;
+		}
 
 		&:hover {
-			color: #2563eb;
+			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
 			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
 		}
 
+		&:focus-visible {
+			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline-offset: 1px;
+		}
+
 		@include when(active) {
-			color: #2563eb;
+			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
 			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
 		}
 	}
@@ -483,8 +508,8 @@ watch(() => props.entry, (entry) => {
 
 	@include element(viewport-trigger) {
 		.docs-playground-icon {
-			width: 20px;
-			height: 20px;
+			width: 18px;
+			height: 18px;
 		}
 	}
 
@@ -498,8 +523,8 @@ watch(() => props.entry, (entry) => {
 
 	@include element(editor) {
 		.docs-playground-icon {
-			width: 22px;
-			height: 22px;
+			width: 18px;
+			height: 18px;
 		}
 	}
 
