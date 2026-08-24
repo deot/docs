@@ -30,6 +30,9 @@ export interface PlaygroundViewsProps {
  */
 export type PlaygroundViewport = 'auto' | number | [width: number, height: number];
 
+/** 预览区内边距。数字为统一像素值，元组依次为垂直、水平像素值。 */
+export type PlaygroundPreviewInset = number | [vertical: number, horizontal: number];
+
 export type PlaygroundOptions = Omit<Partial<StoreState>,
 	'builtinImportMap' | 'files' | 'activeFilename' | 'mainFile' | 'template'
 > & {

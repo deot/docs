@@ -1,6 +1,7 @@
 import type {
 	PlaygroundFiles,
 	PlaygroundOptions,
+	PlaygroundPreviewInset,
 	PlaygroundPreviewOptions,
 	PlaygroundView,
 	PlaygroundViewport
@@ -27,6 +28,7 @@ export interface MarkdownPlaygroundConfig {
 	 */
 	styleless?: boolean;
 	options?: PlaygroundOptions;
+	previewInset?: PlaygroundPreviewInset;
 	previewOptions?: PlaygroundPreviewOptions;
 }
 

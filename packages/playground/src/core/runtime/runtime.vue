@@ -130,6 +130,7 @@ import type {
 	PlaygroundFiles,
 	PlaygroundFilesProps,
 	PlaygroundOptions,
+	PlaygroundPreviewInset,
 	PlaygroundPreviewOptions,
 	PlaygroundView,
 	PlaygroundViewport,
@@ -161,12 +162,14 @@ import { whenSassReady } from '../scss';
 
 const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<PlaygroundViewsProps> & {
 	options: PlaygroundOptions;
+	previewInset?: PlaygroundPreviewInset;
 	previewOptions?: PlaygroundPreviewOptions;
 	styleless?: boolean;
 	viewport?: PlaygroundViewport;
 	viewportOptions?: PlaygroundViewport[];
 }>(), {
 	styleless: false,
+	previewInset: 10,
 	activeView: 'runtime',
 	views: () => ['runtime'],
 	viewport: 'auto',
@@ -241,7 +244,27 @@ const viewportLabel = computed(() => formatViewportLabel(
 	t('playground.runtime.auto')
 ));
 const desiredViewportHeight = computed(() => getViewportHeight(props.viewport) || runtimeHeight.value);
-const previewStyle = computed(() => ({ height: `${desiredViewportHeight.value + 20}px` }));
+const normalizedPreviewInset = computed<[vertical: number, horizontal: number]>(() => {
+	const value = props.previewInset;
+	if (typeof value === 'number') {
+		return Number.isFinite(value) && value >= 0 ? [value, value] : [10, 10];
+	}
+	if (Array.isArray(value)
+		&& value.length === 2
+		&& value.every(item => typeof item === 'number' && Number.isFinite(item) && item >= 0)) {
+		return [value[0], value[1]];
+	}
+	return [10, 10];
+});
+const previewStyle = computed(() => {
+	const [vertical, horizontal] = normalizedPreviewInset.value;
+	return {
+		height: `${desiredViewportHeight.value + vertical * 2}px`,
+		padding: vertical === horizontal
+			? `${vertical}px`
+			: `${vertical}px ${horizontal}px`
+	};
+});
 const stylelessStyle = computed(() => (errorText.value
 	? undefined
 	: { height: `${desiredViewportHeight.value}px` }));
@@ -373,6 +396,17 @@ watch(() => props.entry, (entry) => {
 }
 
 @include block(docs-playground) {
+	.iframe-container,
+	.iframe-container iframe {
+		width: 100%;
+		height: 100%;
+	}
+
+	.iframe-container iframe {
+		display: block;
+		border: 0;
+	}
+
 	@include element(header) {
 		display: flex;
 		padding: 0 12px;
@@ -471,7 +505,6 @@ watch(() => props.entry, (entry) => {
 
 	@include element(preview) {
 		min-height: 0;
-		padding: 10px;
 		overflow: hidden;
 		background: var(--docs-background-color, var(--vc-background-color-light, #fff));
 		box-sizing: border-box;

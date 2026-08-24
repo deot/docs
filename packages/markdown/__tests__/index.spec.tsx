@@ -143,7 +143,8 @@ vi.mock('@deot/docs-playground', async () => {
 				'entry',
 				'views',
 				'viewport',
-				'viewportOptions'
+				'viewportOptions',
+				'previewInset'
 			],
 			unmounted: playgroundUnmounted,
 			setup(props) {
@@ -155,7 +156,8 @@ vi.mock('@deot/docs-playground', async () => {
 						props.theme || '',
 						JSON.stringify(props.views || []),
 						JSON.stringify(props.viewport),
-						JSON.stringify(props.viewportOptions)
+						JSON.stringify(props.viewportOptions),
+						JSON.stringify(props.previewInset)
 					].join('-');
 					return (
 						<div class="playground">
@@ -763,6 +765,17 @@ describe('markdown', () => {
 		expect(text).toContain('["auto",375,[375,667],768]');
 	});
 
+	it('passes playground preview inset to Playground', async () => {
+		const source = runtimeWithConfig(
+			'{ previewInset: [8, 16] }',
+			'```vue\n<template />\n```'
+		);
+		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+
+		expect(wrapper.find('.playground').text()).toContain('[8,16]');
+	});
+
 	it('ignores inline playground props on the opening line', () => {
 		const html = MarkdownRenderer.render([
 			':::playground { "views": ["files"], "entry": "missing.js" }',
@@ -830,6 +843,19 @@ describe('markdown', () => {
 		expect(render('{ viewportOptions: [\'auto\', \'auto\'] }'))
 			.toContain('viewportOptions 不能重复声明 auto');
 		expect(render('{ viewportOptions: [] }')).toContain('data-playground');
+	});
+
+	it('reports invalid playground preview inset declarations', () => {
+		const render = (config: string) => MarkdownRenderer.render(
+			runtimeWithConfig(config, '```vue\n<template />\n```')
+		);
+		const error = 'previewInset 必须是非负数或 [垂直,水平] 非负数数组';
+
+		expect(render('{ previewInset: -1 }')).toContain(error);
+		expect(render('{ previewInset: Infinity }')).toContain(error);
+		expect(render('{ previewInset: [8] }')).toContain(error);
+		expect(render('{ previewInset: [8, -1] }')).toContain(error);
+		expect(render('{ previewInset: [8, "16"] }')).toContain(error);
 	});
 
 	it('supports empty input, malformed config and multiple markdown instances', async () => {

@@ -22,6 +22,7 @@ import {
 	setPlaygroundSiteStyles
 } from '../src/import-map';
 import Playground from '../src/playground.vue';
+import type { PlaygroundPreviewInset } from '../src/types';
 import type { PlaygroundStoreStub } from './fixtures';
 
 const { popup, store, setFiles } = vi.hoisted(() => {
@@ -534,6 +535,8 @@ describe('Playground', () => {
 
 		expect(wrapper.find('.docs-playground__preview').attributes('style'))
 			.toContain('height: 687px');
+		expect(wrapper.find('.docs-playground__preview').attributes('style'))
+			.toContain('padding: 10px');
 		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
 			.toContain('width: 375px');
 		expect(wrapper.findAll('.docs-playground__viewport-option').map(item => item.text()))
@@ -563,6 +566,32 @@ describe('Playground', () => {
 			.toContain('width: 100%');
 	});
 
+	it('configures preview inset and keeps the outer height in sync', async () => {
+		const wrapper = mount(Playground, {
+			props: {
+				modelValue: '<template>padding</template>',
+				viewport: [375, 667],
+				previewInset: 0
+			}
+		});
+		const previewStyle = () => wrapper.find('.docs-playground__preview').attributes('style');
+
+		expect(previewStyle()).toContain('height: 667px');
+		expect(previewStyle()).toContain('padding: 0px');
+
+		await wrapper.setProps({ previewInset: 16 });
+		expect(previewStyle()).toContain('height: 699px');
+		expect(previewStyle()).toContain('padding: 16px');
+
+		await wrapper.setProps({ previewInset: [8, 16] });
+		expect(previewStyle()).toContain('height: 683px');
+		expect(previewStyle()).toContain('padding: 8px 16px');
+
+		await wrapper.setProps({ previewInset: -1 as PlaygroundPreviewInset });
+		expect(previewStyle()).toContain('height: 687px');
+		expect(previewStyle()).toContain('padding: 10px');
+	});
+
 	it('filters invalid direct viewport options and applies viewport sizing to styleless mode', () => {
 		const normalized = mount(Playground, {
 			props: {
@@ -578,12 +607,14 @@ describe('Playground', () => {
 			props: {
 				modelValue: '<template>styleless</template>',
 				styleless: true,
+				previewInset: [20, 30],
 				viewport: [375, 667],
 				viewportOptions: []
 			}
 		});
 		expect(styleless.find('.docs-playground-runtime--styleless').attributes('style'))
 			.toContain('height: 667px');
+		expect(styleless.find('.docs-playground__preview').exists()).toBe(false);
 		expect(styleless.find('.docs-playground-runtime__viewport').attributes('style'))
 			.toContain('width: 375px');
 		expect(styleless.find('.docs-playground__viewport-menu').exists()).toBe(false);

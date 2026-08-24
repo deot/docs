@@ -5,6 +5,7 @@
 		:entry="currentEntry"
 		:options="options"
 		:preview-options="previewOptions"
+		:preview-inset="previewInset"
 		:styleless="true"
 		:viewport="activeViewport"
 		:viewport-options="selectableViewportOptions"
@@ -27,6 +28,7 @@
 			:entry="currentEntry"
 			:options="options"
 			:preview-options="previewOptions"
+			:preview-inset="previewInset"
 			:active-view="activeView"
 			:views="normalizedViews"
 			:viewport="activeViewport"
@@ -60,6 +62,7 @@ import type { EditorFilesChangeAction } from './editor';
 import type {
 	PlaygroundFiles,
 	PlaygroundOptions,
+	PlaygroundPreviewInset,
 	PlaygroundPreviewOptions,
 	PlaygroundView,
 	PlaygroundViewport
@@ -90,6 +93,7 @@ const props = withDefaults(defineProps<{
 	viewportOptions?: readonly unknown[];
 	styleless?: boolean;
 	options?: PlaygroundOptions;
+	previewInset?: PlaygroundPreviewInset;
 	previewOptions?: PlaygroundPreviewOptions;
 	locale?: Language;
 }>(), {
@@ -98,6 +102,7 @@ const props = withDefaults(defineProps<{
 	entry: '',
 	views: () => ['runtime'],
 	styleless: false,
+	previewInset: 10,
 	options: () => ({})
 });
 const inheritedLocale = useLocale();

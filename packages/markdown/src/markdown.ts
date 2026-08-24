@@ -97,6 +97,18 @@ const validateRuntimeViewport = (propsData: MarkdownPlaygroundConfig) => {
 	}
 	return '';
 };
+const isPreviewInsetValue = (value: unknown) => (
+	typeof value === 'number' && Number.isFinite(value) && value >= 0
+);
+const validatePreviewInset = (propsData: MarkdownPlaygroundConfig) => {
+	if (!('previewInset' in propsData)) return '';
+	const inset = propsData.previewInset;
+	if (isPreviewInsetValue(inset)) return '';
+	if (Array.isArray(inset)
+		&& inset.length === 2
+		&& inset.every(isPreviewInsetValue)) return '';
+	return 'previewInset 必须是非负数或 [垂直,水平] 非负数数组';
+};
 const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>): MarkdownPlaygroundConfig => {
 	for (const token of tokens) {
 		const sources: string[] = [];
@@ -141,7 +153,9 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 		const placeholder = new state.Token('html_block', '', 0);
 		placeholder.block = true;
 		const propsData = parseRuntimeProps(innerTokens);
-		const propsError = validateRuntimeViews(propsData) || validateRuntimeViewport(propsData);
+		const propsError = validateRuntimeViews(propsData)
+			|| validateRuntimeViewport(propsData)
+			|| validatePreviewInset(propsData);
 		const propsAttr = renderPlaygroundAttrs(propsData);
 
 		if (!fences.length) {
