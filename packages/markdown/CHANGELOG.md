@@ -1,5 +1,14 @@
 # @deot/docs-markdown ChangeLog
 
+## v1.0.8
+
+_2026-08-25_
+
+### Features
+
+- feat: add configurable playground preview inset ([de1ae54](https://github.com/deot/docs/commit/de1ae54f4156bf4e91b7624a3b9a66a19d9fd00d))
+- feat(playground): restyle chrome and constrain the floating editor ([78d3fe9](https://github.com/deot/docs/commit/78d3fe96d2b64c9037454c1b574519305a1d616d))
+
 ## v1.0.7
 
 _2026-08-23_

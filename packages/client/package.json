@@ -1,6 +1,6 @@
 {
   "name": "@deot/docs-client",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "type": "module",
   "main": "dist/index.js",
   "style": "dist/index.style.css",
@@ -22,8 +22,8 @@
   },
   "dependencies": {
     "@deot/docs-locale": "^1.0.6",
-    "@deot/docs-markdown": "^1.0.7",
-    "@deot/docs-playground": "^1.0.7",
+    "@deot/docs-markdown": "^1.0.8",
+    "@deot/docs-playground": "^1.0.8",
     "@deot/docs-renderer": "^1.0.6",
     "@deot/docs-theme": "^1.0.5",
     "@deot/helper-cache": "^1.1.10",
