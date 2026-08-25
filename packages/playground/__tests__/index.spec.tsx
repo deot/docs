@@ -731,6 +731,7 @@ describe('Playground', () => {
 	it('supports runtime-only and files-only views', async () => {
 		const runtime = mount(Playground, { props: { modelValue: '<template>runtime</template>' } });
 		expect(runtime.find('.sandbox').exists()).toBe(true);
+		expect(runtime.find('[data-action="refresh"]').attributes('aria-label')).toBe('Reload preview');
 		expect(runtime.find('.docs-playground-files').exists()).toBe(false);
 		expect(runtime.find('.docs-playground__views').exists()).toBe(false);
 		expect(runtime.find('.docs-playground__preview').attributes('style'))
@@ -766,6 +767,18 @@ describe('Playground', () => {
 		await files.find('[data-filename="util.ts"]').trigger('click');
 		expect(files.find('[data-filename="util.ts"]').classes()).toContain('is-active');
 		expect(files.find('code.hljs').text()).toContain('export const value');
+	});
+
+	it('reloads the runtime preview without recreating its store', async () => {
+		const wrapper = mount(Playground, { props: { modelValue: '<template>runtime</template>' } });
+		const sandbox = wrapper.find('.sandbox').element;
+		const runtimeStore = wrapper.findComponent({ name: 'Sandbox' }).props('store');
+
+		await wrapper.find('[data-action="refresh"]').trigger('click');
+
+		expect(wrapper.find('.sandbox').element).not.toBe(sandbox);
+		expect(wrapper.findComponent({ name: 'Sandbox' }).props('store')).toBe(runtimeStore);
+		expect(useStore).toHaveBeenCalledTimes(1);
 	});
 
 	it('orders views, lazily creates the sandbox and retains it after switching', async () => {

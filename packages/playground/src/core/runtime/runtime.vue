@@ -21,6 +21,16 @@
 	<div v-else class="docs-playground-runtime">
 		<div class="docs-playground__header">
 			<div class="docs-playground__tools">
+				<button
+					type="button"
+					class="docs-playground__tool docs-playground__refresh"
+					data-action="refresh"
+					:title="t('playground.runtime.refresh')"
+					:aria-label="t('playground.runtime.refresh')"
+					@click="handleRefresh"
+				>
+					<PlaygroundIcon name="refresh" />
+				</button>
 				<Dropdown
 					v-if="viewportOptions.length > 1"
 					v-model="viewportMenuVisible"
@@ -107,6 +117,7 @@
 			<div class="docs-playground-runtime__viewport-stage">
 				<div class="docs-playground-runtime__viewport" :style="viewportStyle">
 					<Sandbox
+						:key="sandboxKey"
 						ref="sandboxRef"
 						:store="store"
 						:auto-store-init="false"
@@ -212,6 +223,7 @@ const clearConsole = env.MODE !== 'development';
 const copyValue = computed(() => props.files[props.entry] || '');
 const store = createRuntimeStore(props.files, props.entry, props.options);
 const sandboxRef = ref<SandboxExposed | null>(null);
+const sandboxKey = ref(0);
 const runtimeHeight = useSandboxAutoHeight(sandboxRef);
 const runtimeError = useSandboxRuntimeErrorGuard(sandboxRef);
 useSandboxTheme(sandboxRef);
@@ -325,6 +337,10 @@ const handleEditor = () => {
 		onFilesChange: handleFilesChange,
 		onActiveChange: (filename: string) => store.setActive(toReplFilename(filename))
 	});
+};
+const handleRefresh = () => {
+	runtimeError.value = '';
+	sandboxKey.value++;
 };
 const handleView = (view: PlaygroundView) => emit('view-change', view);
 const handleViewport = (index: number) => {

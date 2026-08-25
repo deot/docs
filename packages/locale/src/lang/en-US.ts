@@ -197,6 +197,7 @@ const enUS = {
 			auto: 'Auto',
 			viewport: 'Viewport: {value}',
 			viewportMenu: 'Runtime viewport',
+			refresh: 'Reload preview',
 			editFiles: 'Edit files',
 			importMapTip: 'Check the import path, or add an Import Map entry for this dependency.'
 		},
