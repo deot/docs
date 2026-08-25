@@ -1,5 +1,17 @@
 # @deot/docs-client ChangeLog
 
+## v1.0.9
+
+_2026-08-25_
+
+### Features
+
+- feat(playground,locale): add a runtime preview reload button ([8ece9bd](https://github.com/deot/docs/commit/8ece9bdd04d48bc39a0d40e629a93817c9850157))
+
+### Updates
+
+- style(markdown): refresh article typography and add a format sample ([38b981d](https://github.com/deot/docs/commit/38b981db16edc37cdb7033b7996954b3d4137350))
+
 ## v1.0.8
 
 _2026-08-25_

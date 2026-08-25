@@ -1,5 +1,13 @@
 # @deot/docs-renderer ChangeLog
 
+## v1.0.7
+
+_2026-08-25_
+
+### Features
+
+- feat(playground,locale): add a runtime preview reload button ([8ece9bd](https://github.com/deot/docs/commit/8ece9bdd04d48bc39a0d40e629a93817c9850157))
+
 ## v1.0.6
 
 _2026-08-23_
