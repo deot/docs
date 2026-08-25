@@ -75,7 +75,10 @@ h6 .header-anchor {
 	float: left;
 	margin-right: 5px;
 	margin-left: -15px;
+	color: inherit;
+	text-decoration: none;
 	opacity: 0;
+	transition: opacity 0.2s ease;
 }
 
 h1:hover .header-anchor,
@@ -83,7 +86,8 @@ h2:hover .header-anchor,
 h3:hover .header-anchor,
 h4:hover .header-anchor,
 h5:hover .header-anchor,
-h6:hover .header-anchor {
+h6:hover .header-anchor,
+.header-anchor:focus-visible {
 	opacity: 1;
 }
 
@@ -104,10 +108,10 @@ $sign: md;
 		"Apple Color emoji",
 		"Segoe UI emoji",
 		"Segoe UI Symbol";
-	font-size: 12px; // em基于此放大
+	font-size: 13px;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
-	line-height: 1.5;
+	line-height: 1.65;
 	color: var(--docs-foreground-color-light, var(--vc-color-dark-lighter, #515a6e));
 	overflow-wrap: break-word;
 }
@@ -119,6 +123,14 @@ $sign: md;
 @include block(docs-markdown-reset) {
 	ol[#{$sign}], ul[#{$sign}], li[#{$sign}] {
 		list-style: unset;
+	}
+
+	ul[#{$sign}] {
+		list-style-type: disc;
+	}
+
+	ol[#{$sign}] {
+		list-style-type: decimal;
 	}
 
 	&::before {
@@ -154,6 +166,9 @@ $sign: md;
 		padding-right: 6px;
 		margin-left: -20px;
 		line-height: 1;
+		color: inherit;
+		opacity: 0;
+		transition: opacity 0.2s ease;
 	}
 
 	& .anchor i[#{$sign}] {
@@ -172,21 +187,24 @@ $sign: md;
 	& table[#{$sign}],
 	& pre[#{$sign}] {
 		margin-top: 0;
-		margin-bottom: 16px;
+		margin-bottom: 18px;
 	}
 
 	& hr[#{$sign}] {
-		height: 0.25em;
+		height: 1px;
 		padding: 0;
-		margin: 24px 0;
+		margin: 28px 0;
 		background-color: var(--docs-border-color, #e1e4e8);
 		border: 0;
 	}
 
 	& blockquote[#{$sign}] {
-		padding: 0 1em;
+		padding: 4px 0 4px 12px;
+		margin-right: 0;
+		margin-left: 0;
 		color: var(--docs-foreground-color-mute, #6a737d);
-		border-left: 0.25em solid var(--docs-border-color, #dfe2e5);
+		background-color: transparent;
+		border-left: 3px solid var(--docs-border-color, #dfe2e5);
 	}
 
 	& blockquote[#{$sign}]>:first-child {
@@ -217,10 +235,18 @@ $sign: md;
 	& h4[#{$sign}],
 	& h5[#{$sign}],
 	& h6[#{$sign}] {
-		margin-top: 24px;
-		margin-bottom: 16px;
-		font-weight: 600;
-		line-height: 1.25;
+		margin-top: 28px;
+		margin-bottom: 12px;
+		font-weight: 650;
+		line-height: 1.35;
+		color: var(--docs-foreground-color, var(--vc-foreground-color, #24292f));
+		scroll-margin-top: 80px;
+	}
+
+	& h1[#{$sign}],
+	& h2[#{$sign}],
+	& h3[#{$sign}] {
+		text-wrap: balance;
 	}
 
 	& h1 .octicon-link[#{$sign}],
@@ -241,6 +267,7 @@ $sign: md;
 	& h5:hover .anchor[#{$sign}],
 	& h6:hover .anchor[#{$sign}] {
 		text-decoration: none;
+		opacity: 1;
 	}
 
 	& h1:hover .anchor .octicon-link[#{$sign}],
@@ -269,37 +296,46 @@ $sign: md;
 	}
 
 	& h1[#{$sign}] {
-		padding-bottom: 0.3em;
-		font-size: 2em;
+		padding-bottom: 0.4em;
+		font-size: 2.05em;
 		border-bottom: 1px solid var(--docs-border-color, #eaecef);
 	}
 
 	& h2[#{$sign}] {
-		padding-bottom: 0.3em;
-		font-size: 1.5em;
+		padding-bottom: 0.4em;
+		font-size: 1.6em;
 		border-bottom: 1px solid var(--docs-border-color, #eaecef);
 	}
 
 	& h3[#{$sign}] {
-		font-size: 1.25em;
+		font-size: 1.3em;
 	}
 
 	& h4[#{$sign}] {
-		font-size: 1em;
+		font-size: 1.1em;
 	}
 
 	& h5[#{$sign}] {
-		font-size: 0.875em;
+		font-size: 1em;
 	}
 
 	& h6[#{$sign}] {
-		font-size: 0.85em;
+		font-size: 0.9em;
 		color: var(--docs-foreground-color-mute, #6a737d);
+	}
+
+	& strong[#{$sign}] {
+		font-weight: 650;
+		color: var(--docs-foreground-color, var(--vc-foreground-color, #24292f));
+	}
+
+	& del[#{$sign}] {
+		opacity: 0.72;
 	}
 
 	& ul[#{$sign}],
 	& ol[#{$sign}] {
-		padding-left: 2em;
+		padding-left: 1.75em;
 	}
 
 	& ul.no-list[#{$sign}],
@@ -317,7 +353,12 @@ $sign: md;
 	}
 
 	& li[#{$sign}] {
-		overflow-wrap: break-all;
+		overflow-wrap: break-word;
+	}
+
+	& li[#{$sign}]::marker {
+		font-weight: 600;
+		color: inherit;
 	}
 
 	& li>p[#{$sign}] {
@@ -347,29 +388,56 @@ $sign: md;
 
 	& table[#{$sign}] {
 		display: block;
-		width: 100%;
+		width: fit-content;
+		max-width: 100%;
 		overflow: auto;
-		border-collapse: collapse;
+		border: 1px solid var(--docs-border-color, #dfe2e5);
+		border-collapse: separate;
 		border-spacing: 0;
+		border-radius: 8px;
 	}
 
 	& table th[#{$sign}] {
 		font-weight: 600;
+		white-space: nowrap;
+		background-color: var(--docs-background-color-soft, #f7f8fa);
 	}
 
 	& table th[#{$sign}],
 	& table td[#{$sign}] {
-		padding: 6px 13px;
-		border: 1px solid var(--docs-border-color, #dfe2e5);
+		padding: 8px 12px;
+		vertical-align: top;
+		border-right: 1px solid var(--docs-border-color, #dfe2e5);
+		border-bottom: 1px solid var(--docs-border-color, #dfe2e5);
+	}
+
+	& table th[#{$sign}]:last-child,
+	& table td[#{$sign}]:last-child {
+		border-right: 0;
+	}
+
+	& table tbody tr:last-child td[#{$sign}] {
+		border-bottom: 0;
 	}
 
 	& table tr[#{$sign}] {
 		background-color: var(--docs-background-color, #fff);
-		border-top: 1px solid var(--docs-border-color, #c6cbd1);
 	}
 
 	& table tr[#{$sign}]:nth-child(2n) {
 		background-color: var(--docs-code-background, #f6f8fa);
+	}
+
+	& table tbody tr[#{$sign}] {
+		transition: background-color 0.15s ease;
+	}
+
+	& table tbody tr[#{$sign}]:hover {
+		background-color: color-mix(
+			in srgb,
+			var(--docs-primary-color, #873bf4) 7%,
+			var(--docs-background-color, #fff)
+		);
 	}
 
 	& table img[#{$sign}] {
@@ -379,6 +447,7 @@ $sign: md;
 	& img[#{$sign}] {
 		max-width: 100%;
 		background-color: var(--docs-background-color, #fff);
+		border-radius: 6px;
 		box-sizing: content-box;
 	}
 
@@ -515,8 +584,9 @@ $sign: md;
 	& code[#{$sign}],
 	& tt[#{$sign}] {
 		margin: 0;
-		font-size: 85%; // 文字大小缩放
-		border-radius: 3px; // 圆角
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+		font-size: 0.9em;
+		border-radius: 4px;
 	}
 
 	& code br[#{$sign}],
@@ -542,12 +612,13 @@ $sign: md;
 	}
 
 	& .highlight pre[#{$sign}] {
-		padding: 16px;
+		padding: 16px 18px;
 		overflow: auto;
-		font-size: 85%;
-		line-height: 1.45;
+		font-size: 0.9em;
+		line-height: 1.65;
 		background-color: var(--docs-code-background, #f6f8fa);
-		border-radius: 3px;
+		border: 1px solid var(--docs-border-color, #eaeefb);
+		border-radius: 6px;
 	}
 
 	& pre tt[#{$sign}] {
@@ -563,11 +634,11 @@ $sign: md;
 	}
 
 	& .tip[#{$sign}] {
-		padding: 8px 16px;
+		padding: 10px 14px;
 		margin: 20px 0;
 		background-color: var(--docs-tip-background, #f9f0ff);
-		border-left: 5px solid var(--docs-primary-color, #873bf4);
-		border-radius: 4px;
+		border-left: 4px solid var(--docs-primary-color, #873bf4);
+		border-radius: 6px;
 
 		p {
 			margin-bottom: 0;
@@ -575,11 +646,11 @@ $sign: md;
 	}
 
 	& .warning[#{$sign}] {
-		padding: 8px 16px;
+		padding: 10px 14px;
 		margin: 20px 0;
 		background-color: var(--docs-warning-background, #fff6f7);
-		border-left: 5px solid #fe6c6f;
-		border-radius: 4px;
+		border-left: 4px solid #fe6c6f;
+		border-radius: 6px;
 
 		p {
 			margin-bottom: 0;
@@ -587,10 +658,11 @@ $sign: md;
 	}
 
 	& code[#{$sign}]:not(.hljs)  {
-		padding: 0 4px;
+		padding: 0.15em 0.4em;
+		color: var(--docs-primary-color, #873bf4);
 		background-color: var(--docs-code-background, #f9fafc);
 		border: 1px solid var(--docs-border-color, #eaeefb);
-		border-radius: 2px;
+		border-radius: 4px;
 	}
 
 	& .tip[#{$sign}] {
@@ -604,8 +676,58 @@ $sign: md;
 		}
 	}
 
-	& p a[#{$sign}] {
+	& a[#{$sign}][href]:not(.header-anchor) {
 		color: var(--docs-link-color, #2d8cf0);
+		text-decoration: underline;
+		text-decoration-color: color-mix(in srgb, currentcolor 20%, transparent);
+		text-underline-offset: 0.2em;
+		transition: color 0.2s ease, text-decoration-color 0.2s ease;
+	}
+
+	& a[#{$sign}][href]:not(.header-anchor):hover {
+		color: var(
+			--docs-link-hover-color,
+			color-mix(in srgb, var(--docs-link-color, #2d8cf0) 82%, #000)
+		);
+		text-decoration-color: color-mix(in srgb, currentcolor 45%, transparent);
+	}
+
+	& a[#{$sign}][href]:not(.header-anchor):focus-visible {
+		border-radius: 2px;
+		outline: 2px solid color-mix(in srgb, var(--docs-link-color, #2d8cf0) 45%, transparent);
+		outline-offset: 2px;
+	}
+
+	&>details {
+		padding: 10px 14px;
+		margin-bottom: 18px;
+		background-color: var(--docs-background-color-soft, #f7f8fa);
+		border: 1px solid var(--docs-border-color, #e1e4e8);
+		border-radius: 6px;
+	}
+
+	&>details>summary {
+		font-weight: 600;
+		color: var(--docs-foreground-color, var(--vc-foreground-color, #24292f));
+		cursor: pointer;
+		transition: color 0.2s ease;
+		user-select: none;
+	}
+
+	&>details>summary:hover {
+		color: var(--docs-link-color, #2d8cf0);
+	}
+
+	&>details>summary::marker {
+		color: var(--docs-foreground-color-mute, #6a737d);
+	}
+
+	&>details[open]>summary {
+		margin-bottom: 12px;
+	}
+
+	&>details>:last-child {
+		margin-bottom: 0;
 	}
 }
 
@@ -622,6 +744,11 @@ $sign: md;
 		border-left-color: var(--docs-border-color, #3b4355);
 	}
 
+	&>details {
+		background-color: var(--docs-background-color-soft, #252b3a);
+		border-color: var(--docs-border-color, #3b4355);
+	}
+
 	kbd[md],
 	table tr[md],
 	img[md] {
@@ -632,6 +759,7 @@ $sign: md;
 
 	h1[md],
 	h2[md],
+	table[md],
 	table th[md],
 	table td[md],
 	span.frame > span[md] {
@@ -647,19 +775,47 @@ $sign: md;
 		color: var(--docs-foreground-color-light, #d9d9d9);
 		background-color: var(--docs-background-color-mute, #303748);
 	}
+
+	code[md]:not(.hljs) {
+		color: var(
+			--docs-code-foreground,
+			color-mix(in srgb, var(--docs-primary-color, #873bf4) 65%, #fff)
+		);
+	}
 }
 
 @media screen and (width <= 768px) {
 	@include block(docs-markdown-reset) {
-		font-size: 14px;
+		font-size: 13px;
 
-		& h1[#{$sign}] { font-size: 1.75em; }
+		& h1[#{$sign}] { font-size: 1.7em; }
 
-		& h2[#{$sign}] { font-size: 1.4em; }
+		& h2[#{$sign}] { font-size: 1.35em; }
 
+		& .header-anchor[#{$sign}],
 		& .anchor[#{$sign}] {
-			margin-left: -14px;
+			margin-left: -12px;
 		}
+
+		& table th[#{$sign}],
+		& table td[#{$sign}] {
+			padding: 7px 10px;
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	@include block(docs-markdown-reset) {
+		& .anchor[#{$sign}],
+		& a[#{$sign}][href],
+		& table tbody tr[#{$sign}],
+		&>details>summary {
+			transition: none;
+		}
+	}
+
+	.header-anchor {
+		transition: none;
 	}
 }
 </style>
