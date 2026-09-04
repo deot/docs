@@ -1,5 +1,13 @@
 # @deot/docs-locale ChangeLog
 
+## v1.0.8
+
+_2026-09-04_
+
+### Features
+
+- feat: add a near-fullscreen popup preview ([c458835](https://github.com/deot/docs/commit/c458835b690c2988d2bbddd49eeb6ee38f203984))
+
 ## v1.0.7
 
 _2026-08-25_

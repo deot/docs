@@ -1,5 +1,18 @@
 # @deot/docs ChangeLog
 
+## v1.0.10
+
+_2026-09-04_
+
+### Bugfixes
+
+- fix(playground): keep editor tabs visible when files are large ([6861663](https://github.com/deot/docs/commit/68616631a9fa5ebbdd90eae7f1408da2a2f4ae70))
+
+### Features
+
+- feat(playground,locale): add a near-fullscreen popup preview ([c458835](https://github.com/deot/docs/commit/c458835b690c2988d2bbddd49eeb6ee38f203984))
+- feat(playground,markdown): add opt-in preview height expand ([dcfbbb6](https://github.com/deot/docs/commit/dcfbbb65be763010766701914e35e7404751f352))
+
 ## v1.0.9
 
 _2026-08-25_
