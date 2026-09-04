@@ -36,6 +36,13 @@ const escapeHtmlAttr = (value: string) => value
 	.replace(/</gu, '&lt;')
 	.replace(/>/gu, '&gt;');
 
+/**
+ * runtime 画布色。`previewInset` 露出的 padding、iframe chrome 和 sandbox
+ * `html`/`body` 必须共用这一变量，暗色下 `--docs-background-color` 与
+ * `--vc-background-color-light` 不同，否则会出现色带割裂。
+ */
+export const PLAYGROUND_RUNTIME_CANVAS_BACKGROUND = 'var(--vc-background-color-light, var(--docs-background-color, #fff))';
+
 // 预览 head：内置 CSS → 站点 styles 内存 → 覆盖内存。
 export const createRuntimePreviewOptions = (
 	cdnURL = DEFAULT_CDN_URL
@@ -55,8 +62,8 @@ export const createRuntimePreviewOptions = (
 				`<link rel="stylesheet" href="${escapeHtmlAttr(href)}">`
 			)),
 			'<style>',
-			'html,body{height:auto;min-height:0}',
-			'body{color:var(--vc-foreground-color,#080f20);background:var(--vc-background-color-light,#fff)}',
+			`html,body{height:auto;min-height:0;background:${PLAYGROUND_RUNTIME_CANVAS_BACKGROUND}}`,
+			'body{color:var(--vc-foreground-color,#080f20)}',
 			'</style>'
 		].join('\n'),
 		customCode: {

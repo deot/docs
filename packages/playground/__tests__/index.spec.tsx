@@ -10,7 +10,8 @@ import {
 	normalizeCdnURL
 } from '../src/cdn';
 import {
-	createRuntimePreviewOptions
+	createRuntimePreviewOptions,
+	PLAYGROUND_RUNTIME_CANVAS_BACKGROUND
 } from '../src/core/store';
 import {
 	applyPlaygroundImportMapOverride,
@@ -23,6 +24,7 @@ import {
 } from '../src/import-map';
 import Playground from '../src/playground.vue';
 import type { PlaygroundPreviewInset } from '../src/types';
+import { PLAYGROUND_EXPAND_VIEWPORT_GAP } from '../src/core/runtime/expand';
 import type { PlaygroundStoreStub } from './fixtures';
 
 const { popup, store, setFiles } = vi.hoisted(() => {
@@ -181,6 +183,8 @@ describe('Playground', () => {
 			.toBe(`${DEFAULT_CDN_URL}/@deot/vc/dist/index.js`);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
 			.toContain('name="viewport"');
+		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML)
+			.toContain(`html,body{height:auto;min-height:0;background:${PLAYGROUND_RUNTIME_CANVAS_BACKGROUND}}`);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').customCode.useCode)
 			.toContain('app.component("DocsLink"');
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').customCode.useCode)
@@ -578,10 +582,12 @@ describe('Playground', () => {
 
 		expect(previewStyle()).toContain('height: 667px');
 		expect(previewStyle()).toContain('padding: 0px');
+		expect(previewStyle()).toContain(`background: ${PLAYGROUND_RUNTIME_CANVAS_BACKGROUND}`);
 
 		await wrapper.setProps({ previewInset: 16 });
 		expect(previewStyle()).toContain('height: 699px');
 		expect(previewStyle()).toContain('padding: 16px');
+		expect(previewStyle()).toContain(`background: ${PLAYGROUND_RUNTIME_CANVAS_BACKGROUND}`);
 
 		await wrapper.setProps({ previewInset: [8, 16] });
 		expect(previewStyle()).toContain('height: 683px');
@@ -590,6 +596,92 @@ describe('Playground', () => {
 		await wrapper.setProps({ previewInset: -1 as PlaygroundPreviewInset });
 		expect(previewStyle()).toContain('height: 687px');
 		expect(previewStyle()).toContain('padding: 10px');
+	});
+
+	it('keeps expand opt-in and freezes expanded height on first click', async () => {
+		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 900 });
+		const withoutExpand = mount(Playground, {
+			props: { modelValue: '<template>default</template>' }
+		});
+		expect(withoutExpand.find('[data-action="expand-preview"]').exists()).toBe(false);
+		expect(withoutExpand.find('.docs-playground__expand').exists()).toBe(false);
+		withoutExpand.unmount();
+
+		const wrapper = mount(Playground, {
+			attachTo: document.body,
+			props: { modelValue: '<template>expand</template>', expand: true }
+		});
+		const preview = wrapper.find('.docs-playground__preview');
+		const toggle = wrapper.find('[data-action="expand-preview"]');
+		Object.defineProperty(
+			wrapper.get('.docs-playground__header').element,
+			'offsetHeight',
+			{ configurable: true, value: 44 }
+		);
+
+		expect(preview.classes()).not.toContain('is-expanded');
+		expect(wrapper.find('.docs-playground__expand').exists()).toBe(true);
+		expect(preview.attributes('style')).toContain('height: 24px');
+		expect(toggle.attributes('aria-expanded')).toBe('false');
+		expect(toggle.attributes('aria-label')).toBe('Expand to full height');
+
+		await toggle.trigger('click');
+		const expandedViewport = 900 - 44 - PLAYGROUND_EXPAND_VIEWPORT_GAP;
+		expect(preview.classes()).toContain('is-expanded');
+		expect(preview.attributes('style')).toContain(`height: ${expandedViewport}px`);
+		expect(expandedViewport).toBeLessThan(900);
+		expect(toggle.attributes('aria-expanded')).toBe('true');
+		expect(toggle.attributes('aria-label')).toBe('Collapse to default height');
+
+		window.dispatchEvent(new Event('scroll'));
+		await nextTick();
+		expect(preview.attributes('style')).toContain(`height: ${expandedViewport}px`);
+
+		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1100 });
+		window.dispatchEvent(new Event('resize'));
+		await nextTick();
+		expect(preview.attributes('style'))
+			.toContain(`height: ${1100 - 44 - PLAYGROUND_EXPAND_VIEWPORT_GAP}px`);
+
+		await toggle.trigger('click');
+		expect(preview.classes()).not.toContain('is-expanded');
+		expect(preview.attributes('style')).toContain('height: 24px');
+		wrapper.unmount();
+
+		const cramped = mount(Playground, {
+			attachTo: document.body,
+			props: { modelValue: '<template>cramped</template>', expand: true }
+		});
+		Object.defineProperty(
+			cramped.get('.docs-playground__header').element,
+			'offsetHeight',
+			{ configurable: true, value: 44 }
+		);
+		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 900 });
+		await cramped.find('[data-action="expand-preview"]').trigger('click');
+		expect(cramped.find('.docs-playground__preview').attributes('style'))
+			.toContain(`height: ${900 - 44 - PLAYGROUND_EXPAND_VIEWPORT_GAP}px`);
+		cramped.unmount();
+
+		const fixed = mount(Playground, {
+			attachTo: document.body,
+			props: { modelValue: '<template>fixed expand</template>', expand: 480 }
+		});
+		expect(fixed.find('.docs-playground__expand').exists()).toBe(true);
+		await fixed.find('[data-action="expand-preview"]').trigger('click');
+		expect(fixed.find('.docs-playground__preview').attributes('style'))
+			.toContain('height: 480px');
+		await fixed.setProps({ expand: undefined });
+		await nextTick();
+		expect(fixed.find('[data-action="expand-preview"]').exists()).toBe(false);
+		expect(fixed.find('.docs-playground__preview').attributes('style'))
+			.toContain('height: 24px');
+		fixed.unmount();
+
+		const styleless = mount(Playground, {
+			props: { modelValue: '<template>styleless</template>', styleless: true, expand: true }
+		});
+		expect(styleless.find('[data-action="expand-preview"]').exists()).toBe(false);
 	});
 
 	it('filters invalid direct viewport options and applies viewport sizing to styleless mode', () => {

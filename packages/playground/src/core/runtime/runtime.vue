@@ -1,6 +1,7 @@
 <template>
 	<div
 		v-if="styleless"
+		ref="runtimeRoot"
 		class="docs-playground-runtime--styleless"
 		:style="stylelessStyle"
 	>
@@ -18,7 +19,7 @@
 			/>
 		</div>
 	</div>
-	<div v-else class="docs-playground-runtime">
+	<div v-else ref="runtimeRoot" class="docs-playground-runtime">
 		<div class="docs-playground__header">
 			<div class="docs-playground__tools">
 				<button
@@ -113,7 +114,11 @@
 			class="docs-playground__runtime-error"
 			role="alert"
 		>{{ errorText }}</pre>
-		<section class="docs-playground__preview" :style="previewStyle">
+		<section
+			class="docs-playground__preview"
+			:class="{ 'is-expanded': previewExpanded }"
+			:style="previewStyle"
+		>
 			<div class="docs-playground-runtime__viewport-stage">
 				<div class="docs-playground-runtime__viewport" :style="viewportStyle">
 					<Sandbox
@@ -126,11 +131,24 @@
 					/>
 				</div>
 			</div>
+			<button
+				v-if="canExpandPreview"
+				type="button"
+				class="docs-playground__expand"
+				data-action="expand-preview"
+				:class="{ 'is-expanded': previewExpanded }"
+				:aria-expanded="previewExpanded"
+				:title="expandLabel"
+				:aria-label="expandLabel"
+				@click="handleTogglePreviewExpand"
+			>
+				<PlaygroundIcon name="expand" />
+			</button>
 		</section>
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { Clipboard, Dropdown, DropdownItem, DropdownMenu } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import { Sandbox } from '@vue/repl';
@@ -138,6 +156,7 @@ import { Editor } from '../../editor';
 import type { EditorFilesChangeAction } from '../../editor';
 import PlaygroundIcon from '../../icon';
 import type {
+	PlaygroundExpand,
 	PlaygroundFiles,
 	PlaygroundFilesProps,
 	PlaygroundOptions,
@@ -150,6 +169,13 @@ import type {
 import { filesEqual, playgroundViewMessage } from '../../utils';
 import { resolveSandboxContainer, useSandboxAutoHeight } from './auto-height';
 import type { SandboxExposed } from './auto-height';
+import {
+	getVisibleViewportRect,
+	isPlaygroundExpandEnabled,
+	resolveExpandedPreviewHeight,
+	resolveRemainingPreviewHeight,
+	scrollPlaygroundToViewportStart
+} from './expand';
 import {
 	formatSandboxRuntimeError,
 	toErrorText,
@@ -167,6 +193,7 @@ import {
 	createReplFile,
 	createRuntimePreviewOptions,
 	createRuntimeStore,
+	PLAYGROUND_RUNTIME_CANVAS_BACKGROUND,
 	toReplFilename
 } from '../store';
 import { whenSassReady } from '../scss';
@@ -176,6 +203,7 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	previewInset?: PlaygroundPreviewInset;
 	previewOptions?: PlaygroundPreviewOptions;
 	styleless?: boolean;
+	expand?: PlaygroundExpand;
 	viewport?: PlaygroundViewport;
 	viewportOptions?: PlaygroundViewport[];
 }>(), {
@@ -248,14 +276,91 @@ const handleBridgeMessage = (event: MessageEvent) => {
 	) return;
 	emit('navigate', data.to);
 };
-if (typeof window !== 'undefined') window.addEventListener('message', handleBridgeMessage);
-onBeforeUnmount(() => window.removeEventListener('message', handleBridgeMessage));
+const runtimeRoot = ref<HTMLElement | null>(null);
+const previewExpanded = ref(false);
+/** `expand: true` 时在展开瞬间冻结，避免滚动重算高度造成抖动。 */
+const frozenExpandedHeight = ref(0);
+
+const measurePreviewChromeHeight = () => {
+	const root = runtimeRoot.value;
+	if (!root) return 0;
+	const header = root.querySelector('.docs-playground__header');
+	const error = root.querySelector('.docs-playground__runtime-error');
+	return (header instanceof HTMLElement ? header.offsetHeight : 0)
+		+ (error instanceof HTMLElement ? error.offsetHeight : 0);
+};
+
+const measureExpandedPreviewHeight = () => {
+	if (typeof window === 'undefined') return runtimeHeight.value;
+	const chromeHeight = measurePreviewChromeHeight();
+	const viewport = getVisibleViewportRect(runtimeRoot.value);
+	return resolveExpandedPreviewHeight(
+		true,
+		resolveRemainingPreviewHeight({
+			viewportHeight: viewport.height,
+			chromeHeight
+		})
+	);
+};
+
+const syncFrozenExpandedHeight = () => {
+	if (!previewExpanded.value || props.expand !== true) return;
+	frozenExpandedHeight.value = measureExpandedPreviewHeight();
+};
+
+if (typeof window !== 'undefined') {
+	window.addEventListener('message', handleBridgeMessage);
+	window.addEventListener('resize', syncFrozenExpandedHeight);
+}
+onBeforeUnmount(() => {
+	window.removeEventListener('message', handleBridgeMessage);
+	window.removeEventListener('resize', syncFrozenExpandedHeight);
+});
 const viewportMenuVisible = ref(false);
 const viewportLabel = computed(() => formatViewportLabel(
 	props.viewport,
 	t('playground.runtime.auto')
 ));
-const desiredViewportHeight = computed(() => getViewportHeight(props.viewport) || runtimeHeight.value);
+const canExpandPreview = computed(() => !props.styleless && isPlaygroundExpandEnabled(props.expand));
+const expandLabel = computed(() => t(previewExpanded.value
+	? 'playground.runtime.collapsePreview'
+	: 'playground.runtime.expandPreview'));
+const desiredViewportHeight = computed(() => {
+	if (previewExpanded.value && props.expand === true) {
+		return frozenExpandedHeight.value;
+	}
+	if (previewExpanded.value && isPlaygroundExpandEnabled(props.expand)) {
+		return resolveExpandedPreviewHeight(props.expand, 0);
+	}
+	const fixedHeight = getViewportHeight(props.viewport);
+	if (fixedHeight) return fixedHeight;
+	return runtimeHeight.value;
+});
+const scrollExpandedPreviewIntoView = () => {
+	scrollPlaygroundToViewportStart(runtimeRoot.value);
+};
+
+const handleTogglePreviewExpand = () => {
+	if (!canExpandPreview.value) return;
+	if (!previewExpanded.value) {
+		if (props.expand === true) {
+			frozenExpandedHeight.value = measureExpandedPreviewHeight();
+		} else {
+			frozenExpandedHeight.value = 0;
+		}
+		previewExpanded.value = true;
+		void nextTick(scrollExpandedPreviewIntoView);
+		return;
+	}
+	previewExpanded.value = false;
+	frozenExpandedHeight.value = 0;
+};
+watch(canExpandPreview, (enabled) => {
+	if (!enabled) {
+		previewExpanded.value = false;
+		frozenExpandedHeight.value = 0;
+	}
+});
 const normalizedPreviewInset = computed<[vertical: number, horizontal: number]>(() => {
 	const value = props.previewInset;
 	if (typeof value === 'number') {
@@ -274,7 +379,8 @@ const previewStyle = computed(() => {
 		height: `${desiredViewportHeight.value + vertical * 2}px`,
 		padding: vertical === horizontal
 			? `${vertical}px`
-			: `${vertical}px ${horizontal}px`
+			: `${vertical}px ${horizontal}px`,
+		background: PLAYGROUND_RUNTIME_CANVAS_BACKGROUND
 	};
 });
 const stylelessStyle = computed(() => (errorText.value
@@ -416,6 +522,9 @@ watch(() => props.entry, (entry) => {
 	.iframe-container iframe {
 		width: 100%;
 		height: 100%;
+
+		// 覆盖 @vue/repl 的 iframe `#fff` / `.dark` `#1e1e1e`，与 sandbox 画布对齐。
+		background: var(--vc-background-color-light, var(--docs-background-color, #fff)) !important;
 	}
 
 	.iframe-container iframe {
@@ -545,11 +654,57 @@ watch(() => props.entry, (entry) => {
 	}
 
 	@include element(preview) {
+		position: relative;
 		min-height: 0;
 		overflow: hidden;
-		background: var(--docs-background-color, var(--vc-background-color-light, #fff));
+		background: var(--vc-background-color-light, var(--docs-background-color, #fff));
 		box-sizing: border-box;
 		flex: 1 1 auto;
+	}
+
+	@include element(expand) {
+		position: absolute;
+		bottom: 2px;
+		left: 50%;
+		z-index: 2;
+		display: inline-flex;
+		width: 32px;
+		height: 24px;
+		min-width: 24px;
+		min-height: 24px;
+		padding: 0;
+		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
+		cursor: pointer;
+		background: var(--vc-background-color-light, var(--docs-background-color, #fff));
+		border: 0;
+		border-radius: 8px;
+		transform: translateX(-50%);
+		box-sizing: border-box;
+		transition: color 0.15s ease, background-color 0.15s ease;
+		justify-content: center;
+		align-items: center;
+
+		.docs-playground-icon {
+			width: 14px;
+			height: 14px;
+			transition: transform 0.15s ease;
+		}
+
+		&:hover {
+			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline-offset: 1px;
+		}
+
+		@include when(expanded) {
+			.docs-playground-icon {
+				transform: rotate(180deg);
+			}
+		}
 	}
 
 	@include element(runtime-error) {

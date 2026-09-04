@@ -333,3 +333,26 @@ defineProps({ label: String });
 	<strong>{{ label }}</strong>
 </template>
 ```
+
+:::playground
+<!--
+<config lang="json5">
+{
+	expand: true
+}
+</config>
+-->
+```vue
+<template>
+	<Button type="primary" @click="visible = true">Open Modal</Button>
+	<Modal v-model="visible" title="Demo">Modal content</Modal>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Button, Modal } from '@deot/vc';
+
+const visible = ref(false);
+</script>
+```
+:::
+

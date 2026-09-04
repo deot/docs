@@ -144,7 +144,8 @@ vi.mock('@deot/docs-playground', async () => {
 				'views',
 				'viewport',
 				'viewportOptions',
-				'previewInset'
+				'previewInset',
+				'expand'
 			],
 			unmounted: playgroundUnmounted,
 			setup(props) {
@@ -157,7 +158,8 @@ vi.mock('@deot/docs-playground', async () => {
 						JSON.stringify(props.views || []),
 						JSON.stringify(props.viewport),
 						JSON.stringify(props.viewportOptions),
-						JSON.stringify(props.previewInset)
+						JSON.stringify(props.previewInset),
+						JSON.stringify(props.expand)
 					].join('-');
 					return (
 						<div class="playground">
@@ -776,6 +778,28 @@ describe('markdown', () => {
 		expect(wrapper.find('.playground').text()).toContain('[8,16]');
 	});
 
+	it('passes playground expand to Playground', async () => {
+		const enabled = mount(Markdown, {
+			props: {
+				modelValue: runtimeWithConfig('{ expand: true }', '```vue\n<template />\n```')
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(enabled.find('.playground').exists()).toBe(true));
+		expect(enabled.find('.playground').text()).toContain('true');
+		enabled.unmount();
+
+		const fixed = mount(Markdown, {
+			props: {
+				modelValue: runtimeWithConfig('{ expand: 600 }', '```vue\n<template />\n```')
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(fixed.find('.playground').exists()).toBe(true));
+		expect(fixed.find('.playground').text()).toContain('600');
+		fixed.unmount();
+	});
+
 	it('ignores inline playground props on the opening line', () => {
 		const html = MarkdownRenderer.render([
 			':::playground { "views": ["files"], "entry": "missing.js" }',
@@ -856,6 +880,20 @@ describe('markdown', () => {
 		expect(render('{ previewInset: [8] }')).toContain(error);
 		expect(render('{ previewInset: [8, -1] }')).toContain(error);
 		expect(render('{ previewInset: [8, "16"] }')).toContain(error);
+	});
+
+	it('reports invalid playground expand declarations', () => {
+		const render = (config: string) => MarkdownRenderer.render(
+			runtimeWithConfig(config, '```vue\n<template />\n```')
+		);
+		const error = 'expand 必须是 true 或正数';
+
+		expect(render('{ expand: false }')).toContain(error);
+		expect(render('{ expand: 0 }')).toContain(error);
+		expect(render('{ expand: -1 }')).toContain(error);
+		expect(render('{ expand: \'auto\' }')).toContain(error);
+		expect(render('{ expand: true }')).toContain('data-playground');
+		expect(render('{ expand: 600 }')).toContain('data-playground');
 	});
 
 	it('supports empty input, malformed config and multiple markdown instances', async () => {

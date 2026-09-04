@@ -33,6 +33,12 @@ export type PlaygroundViewport = 'auto' | number | [width: number, height: numbe
 /** 预览区内边距。数字为统一像素值，元组依次为垂直、水平像素值。 */
 export type PlaygroundPreviewInset = number | [vertical: number, horizontal: number];
 
+/**
+ * 预览高度展开。
+ * `undefined` 不显示展开控件；`true` 展开到剩余视口；正数为展开目标高度（px）。
+ */
+export type PlaygroundExpand = true | number;
+
 export type PlaygroundOptions = Omit<Partial<StoreState>,
 	'builtinImportMap' | 'files' | 'activeFilename' | 'mainFile' | 'template'
 > & {

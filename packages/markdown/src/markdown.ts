@@ -109,6 +109,13 @@ const validatePreviewInset = (propsData: MarkdownPlaygroundConfig) => {
 		&& inset.every(isPreviewInsetValue)) return '';
 	return 'previewInset 必须是非负数或 [垂直,水平] 非负数数组';
 };
+const validateExpand = (propsData: MarkdownPlaygroundConfig) => {
+	if (!('expand' in propsData)) return '';
+	const expand = propsData.expand;
+	if (expand === true) return '';
+	if (typeof expand === 'number' && Number.isFinite(expand) && expand > 0) return '';
+	return 'expand 必须是 true 或正数';
+};
 const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>): MarkdownPlaygroundConfig => {
 	for (const token of tokens) {
 		const sources: string[] = [];
@@ -155,7 +162,8 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 		const propsData = parseRuntimeProps(innerTokens);
 		const propsError = validateRuntimeViews(propsData)
 			|| validateRuntimeViewport(propsData)
-			|| validatePreviewInset(propsData);
+			|| validatePreviewInset(propsData)
+			|| validateExpand(propsData);
 		const propsAttr = renderPlaygroundAttrs(propsData);
 
 		if (!fences.length) {

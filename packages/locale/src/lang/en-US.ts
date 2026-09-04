@@ -199,6 +199,8 @@ const enUS = {
 			viewportMenu: 'Runtime viewport',
 			refresh: 'Reload preview',
 			editFiles: 'Edit files',
+			expandPreview: 'Expand to full height',
+			collapsePreview: 'Collapse to default height',
 			importMapTip: 'Check the import path, or add an Import Map entry for this dependency.'
 		},
 		files: {

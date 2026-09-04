@@ -1,4 +1,5 @@
 import type {
+	PlaygroundExpand,
 	PlaygroundFiles,
 	PlaygroundOptions,
 	PlaygroundPreviewInset,
@@ -29,6 +30,10 @@ export interface MarkdownPlaygroundConfig {
 	styleless?: boolean;
 	options?: PlaygroundOptions;
 	previewInset?: PlaygroundPreviewInset;
+	/**
+	 * 预览高度展开。未传不显示控件；`true` 展开到剩余视口；正数为目标高度 px。
+	 */
+	expand?: PlaygroundExpand;
 	previewOptions?: PlaygroundPreviewOptions;
 }
 
