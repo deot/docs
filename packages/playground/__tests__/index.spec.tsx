@@ -25,6 +25,7 @@ import {
 import Playground from '../src/playground.vue';
 import type { PlaygroundPreviewInset } from '../src/types';
 import { PLAYGROUND_EXPAND_VIEWPORT_GAP } from '../src/core/runtime/expand';
+import { PLAYGROUND_POPUP_HEADER_HEIGHT, PLAYGROUND_POPUP_SCREEN_GAP } from '../src/core/runtime/alone/layout';
 import type { PlaygroundStoreStub } from './fixtures';
 
 const { popup, store, setFiles } = vi.hoisted(() => {
@@ -50,54 +51,90 @@ const { popup, store, setFiles } = vi.hoisted(() => {
 });
 
 vi.mock('../src/editor', () => ({ Editor: { popup } }));
-vi.mock('@deot/vc', () => ({
-	Clipboard: defineComponent({
-		name: 'Clipboard',
-		props: ['value'],
-		setup: (_, { slots }) => () => (
-			<button class="clipboard">{slots.default?.()}</button>
-		)
-	}),
-	Dropdown: defineComponent({
-		name: 'Dropdown',
-		props: ['modelValue'],
-		emits: ['update:modelValue'],
-		setup: (_, { slots }) => () => (
-			<div class="dropdown">
-				{slots.default?.()}
-				<div class="dropdown-content">{slots.content?.()}</div>
-			</div>
-		)
-	}),
-	DropdownMenu: defineComponent({
-		name: 'DropdownMenu',
-		setup: (_, { slots }) => () => (
-			<div class="dropdown-menu">{slots.default?.()}</div>
-		)
-	}),
-	DropdownItem: defineComponent({
-		name: 'DropdownItem',
-		props: ['value', 'selected'],
-		emits: ['click'],
-		setup: (props, { emit, slots }) => () => (
-			<button
-				class={{ 'dropdown-item': true, 'is-selected': props.selected }}
-				onClick={() => emit('click', props.value)}
-			>
-				{slots.default?.()}
-			</button>
-		)
-	}),
-	Scroller: defineComponent({
-		name: 'Scroller',
-		props: ['contentClass'],
-		setup: (props, { slots }) => () => (
-			<div class="scroller">
-				<div class={props.contentClass}>{slots.default?.()}</div>
-			</div>
-		)
-	})
-}));
+vi.mock('@deot/vc', async () => {
+	const vue = await import('vue');
+	class Portal {
+		component: unknown;
+
+		app?: { unmount: () => void };
+
+		container?: HTMLElement;
+
+		constructor(component: unknown) {
+			this.component = component;
+		}
+
+		popup(options: Record<string, unknown> = {}) {
+			this.destroy();
+			this.container = document.createElement('div');
+			document.body.appendChild(this.container);
+			this.app = vue.createApp({
+				render: () => vue.h(this.component as never, {
+					...options,
+					onPortalFulfilled: () => this.destroy()
+				})
+			});
+			this.app.mount(this.container);
+			return { destroy: () => this.destroy() };
+		}
+
+		destroy() {
+			this.app?.unmount();
+			this.container?.remove();
+			this.app = undefined;
+			this.container = undefined;
+		}
+	}
+	return {
+		Portal,
+		Clipboard: vue.defineComponent({
+			name: 'Clipboard',
+			props: ['value'],
+			setup: (_, { slots }) => () => (
+				<button class="clipboard">{slots.default?.()}</button>
+			)
+		}),
+		Dropdown: vue.defineComponent({
+			name: 'Dropdown',
+			props: ['modelValue'],
+			emits: ['update:modelValue'],
+			setup: (_, { slots }) => () => (
+				<div class="dropdown">
+					{slots.default?.()}
+					<div class="dropdown-content">{slots.content?.()}</div>
+				</div>
+			)
+		}),
+		DropdownMenu: vue.defineComponent({
+			name: 'DropdownMenu',
+			setup: (_, { slots }) => () => (
+				<div class="dropdown-menu">{slots.default?.()}</div>
+			)
+		}),
+		DropdownItem: vue.defineComponent({
+			name: 'DropdownItem',
+			props: ['value', 'selected'],
+			emits: ['click'],
+			setup: (props, { emit, slots }) => () => (
+				<button
+					class={{ 'dropdown-item': true, 'is-selected': props.selected }}
+					onClick={() => emit('click', props.value)}
+				>
+					{slots.default?.()}
+				</button>
+			)
+		}),
+		Scroller: vue.defineComponent({
+			name: 'Scroller',
+			props: ['contentClass'],
+			setup: (props, { slots }) => () => (
+				<div class="scroller">
+					<div class={props.contentClass}>{slots.default?.()}</div>
+				</div>
+			)
+		})
+	};
+});
 vi.mock('@vue/repl', () => ({
 	File: class {
 		constructor(public filename: string, public code = '') {}
@@ -871,6 +908,120 @@ describe('Playground', () => {
 		expect(wrapper.find('.sandbox').element).not.toBe(sandbox);
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('store')).toBe(runtimeStore);
 		expect(useStore).toHaveBeenCalledTimes(1);
+	});
+
+	it('opens a shared-store popup preview after the viewport control', async () => {
+		Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 });
+		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
+
+		const wrapper = mount(Playground, {
+			attachTo: document.body,
+			props: { modelValue: '<template>popup</template>' }
+		});
+		const tools = wrapper.find('.docs-playground__tools').element;
+		const toolActions = Array.from(tools.querySelectorAll('[data-action]'))
+			.map(item => (item as HTMLElement).dataset.action);
+		expect(toolActions).toEqual(['refresh', 'edit', 'open-popup']);
+		expect(wrapper.find('[data-action="open-popup"]').attributes('aria-label'))
+			.toBe('Open popup preview');
+		expect(document.body.querySelector('.docs-playground-popup')).toBeNull();
+
+		const inlineSandbox = wrapper.find('.sandbox').element;
+		await wrapper.find('[data-action="open-popup"]').trigger('click');
+		await nextTick();
+
+		const dialog = document.body.querySelector('.docs-playground-popup');
+		expect(dialog).toBeTruthy();
+		expect(dialog?.querySelector('.docs-playground-popup__shell')?.getAttribute('style'))
+			.toContain(`width: ${1200 - PLAYGROUND_POPUP_SCREEN_GAP}px`);
+		expect(dialog?.querySelector('.docs-playground-popup__shell')?.getAttribute('style'))
+			.toContain(`height: ${800 - PLAYGROUND_POPUP_SCREEN_GAP}px`);
+		expect(dialog?.querySelector('.docs-playground-popup__canvas')?.getAttribute('style'))
+			.toContain(`width: ${1200 - PLAYGROUND_POPUP_SCREEN_GAP}px`);
+		expect(dialog?.querySelector('.docs-playground-popup__canvas')?.getAttribute('style'))
+			.toContain(`height: ${800 - PLAYGROUND_POPUP_SCREEN_GAP - PLAYGROUND_POPUP_HEADER_HEIGHT}px`);
+		expect(dialog?.querySelector('.sandbox')).toBeTruthy();
+		expect(dialog?.querySelector('[data-action="edit"]')).toBeTruthy();
+		expect(dialog?.querySelector('[data-action="close-popup"]')).toBeTruthy();
+		expect(dialog?.querySelector('[data-action="open-popup"]')).toBeNull();
+		expect(wrapper.find('.sandbox').element).toBe(inlineSandbox);
+		expect(wrapper.findAllComponents({ name: 'Sandbox' })).toHaveLength(1);
+		expect(document.body.querySelectorAll('.sandbox')).toHaveLength(2);
+		expect(useStore).toHaveBeenCalledTimes(1);
+
+		dialog!.querySelector<HTMLButtonElement>('[data-action="refresh"]')!.click();
+		window.dispatchEvent(new Event('resize'));
+		await nextTick();
+
+		dialog!.querySelector<HTMLButtonElement>('[data-action="edit"]')!.click();
+		await nextTick();
+		expect(popup).toHaveBeenCalledTimes(1);
+
+		wrapper.unmount();
+	});
+
+	it('keeps the popup open on Escape while the editor is visible', async () => {
+		Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 });
+		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
+
+		const wrapper = mount(Playground, {
+			attachTo: document.body,
+			props: { modelValue: '<template>escape</template>' }
+		});
+		await wrapper.find('[data-action="open-popup"]').trigger('click');
+		await nextTick();
+		expect(document.body.querySelector('.docs-playground-popup')).toBeTruthy();
+
+		const editor = document.createElement('div');
+		editor.className = 'docs-playground-editor__wrapper';
+		Object.assign(editor.style, { position: 'fixed', width: '120px', height: '80px' });
+		document.body.appendChild(editor);
+		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+		await nextTick();
+		expect(document.body.querySelector('.docs-playground-popup')).toBeTruthy();
+
+		editor.remove();
+		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+		await nextTick();
+		expect(document.body.querySelector('.docs-playground-popup')).toBeNull();
+
+		wrapper.unmount();
+	});
+
+	it('sizes the popup canvas from a fixed viewport and hides the control in styleless mode', async () => {
+		Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 });
+		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
+
+		const wrapper = mount(Playground, {
+			attachTo: document.body,
+			props: {
+				modelValue: '<template>fixed popup</template>',
+				viewport: [375, 667]
+			}
+		});
+		await wrapper.find('[data-action="open-popup"]').trigger('click');
+		await nextTick();
+
+		const dialog = document.body.querySelector('.docs-playground-popup');
+		expect(dialog?.querySelector('.docs-playground-popup__shell')?.getAttribute('style'))
+			.toContain('width: 375px');
+		expect(dialog?.querySelector('.docs-playground-popup__shell')?.getAttribute('style'))
+			.toContain('height: 667px');
+		expect(dialog?.querySelector('.docs-playground-popup__canvas')?.getAttribute('style'))
+			.toContain('width: 375px');
+		expect(dialog?.querySelector('.docs-playground-popup__canvas')?.getAttribute('style'))
+			.toContain('height: 667px');
+
+		dialog!.querySelector<HTMLButtonElement>('[data-action="close-popup"]')!.click();
+		await nextTick();
+		expect(document.body.querySelector('.docs-playground-popup')).toBeNull();
+
+		const styleless = mount(Playground, {
+			props: { modelValue: '<template>styleless</template>', styleless: true }
+		});
+		expect(styleless.find('[data-action="open-popup"]').exists()).toBe(false);
+		styleless.unmount();
+		wrapper.unmount();
 	});
 
 	it('orders views, lazily creates the sandbox and retains it after switching', async () => {

@@ -14,14 +14,15 @@
 		right: 12px;
 		z-index: 1;
 		display: inline-flex;
-		width: 28px;
 		height: 28px;
-		overflow: hidden;
+		min-width: 28px;
+		padding: 0 8px;
 		font-size: 12px;
 		line-height: 18px;
 		color: var(--docs-foreground-color-mute, var(--vc-color-dark-extralight, #71717a));
-		text-overflow: ellipsis;
 		white-space: nowrap;
+		box-sizing: border-box;
+		transition: opacity 0.15s ease;
 		justify-content: center;
 		align-items: center;
 	}
@@ -56,7 +57,12 @@
 		}
 	}
 
-	&:hover {
+	&:hover,
+	&:has(.docs-code-preview__copy:focus-visible) {
+		@include element(language) {
+			opacity: 0;
+		}
+
 		@include element(copy) {
 			pointer-events: auto;
 			opacity: 1;
@@ -73,7 +79,7 @@
 
 		code.hljs {
 			min-height: 100%;
-			padding: 12px 56px 12px 24px;
+			padding: 12px 96px 12px 24px;
 			background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa));
 			box-sizing: border-box;
 		}

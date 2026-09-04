@@ -198,6 +198,8 @@ const zhCN = {
 			viewportMenu: '运行时视口',
 			refresh: '重新加载预览',
 			editFiles: '编辑文件',
+			openPopup: '弹窗预览',
+			closePopup: '关闭弹窗预览',
 			expandPreview: '展开全部高度',
 			collapsePreview: '收起为默认高度',
 			importMapTip: '请检查导入路径，或为该依赖补充 Import Map。'

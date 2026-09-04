@@ -1,155 +1,94 @@
 <template>
-	<div
-		v-if="styleless"
-		ref="runtimeRoot"
-		class="docs-playground-runtime--styleless"
-		:style="stylelessStyle"
-	>
-		<pre
-			v-if="errorText"
-			class="docs-playground__runtime-error"
-			role="alert"
-		>{{ errorText }}</pre>
-		<div class="docs-playground-runtime__viewport" :style="viewportStyle">
-			<Sandbox
-				ref="sandboxRef"
-				:store="store"
-				:auto-store-init="false"
-				:preview-options="mergedPreviewOptions"
-			/>
-		</div>
-	</div>
-	<div v-else ref="runtimeRoot" class="docs-playground-runtime">
-		<div class="docs-playground__header">
-			<div class="docs-playground__tools">
-				<button
-					type="button"
-					class="docs-playground__tool docs-playground__refresh"
-					data-action="refresh"
-					:title="t('playground.runtime.refresh')"
-					:aria-label="t('playground.runtime.refresh')"
-					@click="handleRefresh"
-				>
-					<PlaygroundIcon name="refresh" />
-				</button>
-				<Dropdown
-					v-if="viewportOptions.length > 1"
-					v-model="viewportMenuVisible"
-					class="docs-playground__viewport-menu"
-					:portal="true"
-					trigger="click"
-					placement="bottom-right"
-				>
-					<button
-						type="button"
-						class="docs-playground__tool docs-playground__viewport-trigger"
-						:class="{ 'is-active': viewport !== 'auto' }"
-						:title="t('playground.runtime.viewport', { value: viewportLabel })"
-						:aria-label="t('playground.runtime.viewport', { value: viewportLabel })"
-						:aria-expanded="viewportMenuVisible"
-						aria-haspopup="menu"
-					>
-						<PlaygroundIcon name="viewport" />
-					</button>
-					<template #content>
-						<DropdownMenu
-							class="docs-playground__viewport-options"
-							role="menu"
-							:aria-label="t('playground.runtime.viewportMenu')"
-						>
-							<DropdownItem
-								v-for="(item, index) in viewportOptions"
-								:key="getViewportKey(item)"
-								class="docs-playground__viewport-option"
-								:value="index"
-								:selected="viewportEquals(item, viewport)"
-								role="menuitemradio"
-								:aria-checked="viewportEquals(item, viewport)"
-								@click="handleViewport(index)"
-							>
-								{{ formatViewportLabel(item, t('playground.runtime.auto')) }}
-							</DropdownItem>
-						</DropdownMenu>
-					</template>
-				</Dropdown>
-				<Clipboard
-					class="docs-playground__tool"
-					:value="copyValue"
-					tag="button"
-					type="button"
-					:title="t('playground.common.copy')"
-					:aria-label="t('playground.common.copy')"
-				>
-					<PlaygroundIcon name="copy" />
-				</Clipboard>
-				<button
-					type="button"
-					class="docs-playground__tool docs-playground__editor"
-					data-action="edit"
-					:title="t('playground.runtime.editFiles')"
-					:aria-label="t('playground.runtime.editFiles')"
-					@click="handleEditor"
-				>
-					<PlaygroundIcon name="editor" />
-				</button>
-			</div>
-			<div v-if="views.length > 1" class="docs-playground__views">
-				<button
-					v-for="item in views"
-					:key="item"
-					type="button"
-					class="docs-playground__view"
-					:class="{ 'is-active': item === activeView }"
-					:title="getViewText(item)"
-					:aria-label="getViewText(item)"
-					:aria-pressed="item === activeView"
-					@click="handleView(item)"
-				>
-					<PlaygroundIcon :name="item" />
-				</button>
-			</div>
-		</div>
-		<pre
-			v-if="errorText"
-			class="docs-playground__runtime-error"
-			role="alert"
-		>{{ errorText }}</pre>
-		<section
-			class="docs-playground__preview"
-			:class="{ 'is-expanded': previewExpanded }"
-			:style="previewStyle"
+	<div class="docs-playground-runtime-host">
+		<div
+			v-if="styleless"
+			ref="runtimeRoot"
+			class="docs-playground-runtime--styleless"
+			:style="stylelessStyle"
 		>
-			<div class="docs-playground-runtime__viewport-stage">
-				<div class="docs-playground-runtime__viewport" :style="viewportStyle">
-					<Sandbox
-						:key="sandboxKey"
-						ref="sandboxRef"
-						:store="store"
-						:auto-store-init="false"
-						:clear-console="clearConsole"
-						:preview-options="mergedPreviewOptions"
-					/>
+			<pre
+				v-if="errorText"
+				class="docs-playground__runtime-error"
+				role="alert"
+			>{{ errorText }}</pre>
+			<div class="docs-playground-runtime__viewport" :style="viewportStyle">
+				<Sandbox
+					ref="sandboxRef"
+					:store="store"
+					:auto-store-init="false"
+					:preview-options="mergedPreviewOptions"
+				/>
+			</div>
+		</div>
+		<div v-else ref="runtimeRoot" class="docs-playground-runtime">
+			<div class="docs-playground__header">
+				<RuntimeToolbar
+					:copy-value="copyValue"
+					:viewport="viewport"
+					:viewport-options="viewportOptions"
+					:show-open-popup="true"
+					@refresh="handleInlineRefresh"
+					@edit="handleEditor"
+					@open-popup="handleOpenPopup"
+					@viewport-change="handleViewportChange"
+				/>
+				<div v-if="views.length > 1" class="docs-playground__views">
+					<button
+						v-for="item in views"
+						:key="item"
+						type="button"
+						class="docs-playground__view"
+						:class="{ 'is-active': item === activeView }"
+						:title="getViewText(item)"
+						:aria-label="getViewText(item)"
+						:aria-pressed="item === activeView"
+						@click="handleView(item)"
+					>
+						<PlaygroundIcon :name="item" />
+					</button>
 				</div>
 			</div>
-			<button
-				v-if="canExpandPreview"
-				type="button"
-				class="docs-playground__expand"
-				data-action="expand-preview"
+			<pre
+				v-if="errorText"
+				class="docs-playground__runtime-error"
+				role="alert"
+			>{{ errorText }}</pre>
+			<section
+				class="docs-playground__preview"
 				:class="{ 'is-expanded': previewExpanded }"
-				:aria-expanded="previewExpanded"
-				:title="expandLabel"
-				:aria-label="expandLabel"
-				@click="handleTogglePreviewExpand"
+				:style="previewStyle"
 			>
-				<PlaygroundIcon name="expand" />
-			</button>
-		</section>
+				<div class="docs-playground-runtime__viewport-stage">
+					<div class="docs-playground-runtime__viewport" :style="viewportStyle">
+						<Sandbox
+							:key="sandboxKey"
+							ref="sandboxRef"
+							:store="store"
+							:auto-store-init="false"
+							:clear-console="clearConsole"
+							:preview-options="mergedPreviewOptions"
+						/>
+					</div>
+				</div>
+				<button
+					v-if="canExpandPreview"
+					type="button"
+					class="docs-playground__expand"
+					data-action="expand-preview"
+					:class="{ 'is-expanded': previewExpanded }"
+					:aria-expanded="previewExpanded"
+					:title="expandLabel"
+					:aria-label="expandLabel"
+					@click="handleTogglePreviewExpand"
+				>
+					<PlaygroundIcon name="expand" />
+				</button>
+			</section>
+		</div>
 	</div>
 </template>
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
-import { Clipboard, Dropdown, DropdownItem, DropdownMenu } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import { Sandbox } from '@vue/repl';
 import { Editor } from '../../editor';
@@ -181,13 +120,12 @@ import {
 	toErrorText,
 	useSandboxRuntimeErrorGuard
 } from './error-guard';
+import { Alone } from './alone';
 import { useSandboxTheme } from './theme';
+import RuntimeToolbar from './toolbar.vue';
 import {
-	formatViewportLabel,
 	getViewportHeight,
-	getViewportKey,
-	getViewportWidth,
-	viewportEquals
+	getViewportWidth
 } from './viewport';
 import {
 	createReplFile,
@@ -224,14 +162,17 @@ const emit = defineEmits<{
 }>();
 
 const joinCode = (...values: Array<string | undefined>) => values.filter(Boolean).join('\n');
-const mergedPreviewOptions = computed(() => {
+const mergePreviewOptions = (
+	extraHeadHTML?: string
+): NonNullable<PlaygroundPreviewOptions> => {
 	const runtimePreviewOptions = createRuntimePreviewOptions(props.options.cdnURL);
 	return {
 		...runtimePreviewOptions,
 		...props.previewOptions,
 		headHTML: [
 			runtimePreviewOptions.headHTML,
-			props.previewOptions?.headHTML
+			props.previewOptions?.headHTML,
+			extraHeadHTML
 		].filter(Boolean).join('\n'),
 		customCode: {
 			importCode: joinCode(
@@ -244,7 +185,11 @@ const mergedPreviewOptions = computed(() => {
 			)
 		}
 	};
-});
+};
+const mergedPreviewOptions = computed(() => mergePreviewOptions());
+const popupPreviewOptions = computed(() => mergePreviewOptions(
+	'<style>html,body{height:100%;min-height:100%}</style>'
+));
 
 const env = (import.meta as ImportMeta & { env: { MODE?: string } }).env;
 const clearConsole = env.MODE !== 'development';
@@ -312,15 +257,6 @@ if (typeof window !== 'undefined') {
 	window.addEventListener('message', handleBridgeMessage);
 	window.addEventListener('resize', syncFrozenExpandedHeight);
 }
-onBeforeUnmount(() => {
-	window.removeEventListener('message', handleBridgeMessage);
-	window.removeEventListener('resize', syncFrozenExpandedHeight);
-});
-const viewportMenuVisible = ref(false);
-const viewportLabel = computed(() => formatViewportLabel(
-	props.viewport,
-	t('playground.runtime.auto')
-));
 const canExpandPreview = computed(() => !props.styleless && isPlaygroundExpandEnabled(props.expand));
 const expandLabel = computed(() => t(previewExpanded.value
 	? 'playground.runtime.collapsePreview'
@@ -444,21 +380,30 @@ const handleEditor = () => {
 		onActiveChange: (filename: string) => store.setActive(toReplFilename(filename))
 	});
 };
-const handleRefresh = () => {
+const handleInlineRefresh = () => {
 	runtimeError.value = '';
 	sandboxKey.value++;
 };
-const handleView = (view: PlaygroundView) => emit('view-change', view);
-const handleViewport = (index: number) => {
-	const viewport = props.viewportOptions[index];
-	if (viewport && !viewportEquals(viewport, props.viewport)) {
-		emit('viewport-change', viewport);
-	}
+const handleClosePopup = () => {
+	Alone.destroy();
 };
-
-watch(() => props.viewportOptions.length, (length) => {
-	if (length <= 1) viewportMenuVisible.value = false;
-});
+const handleOpenPopup = () => {
+	Alone.popup({
+		store,
+		copyValue: copyValue.value,
+		viewport: props.viewport,
+		viewportOptions: props.viewportOptions,
+		previewOptions: popupPreviewOptions.value,
+		clearConsole,
+		onEdit: handleEditor,
+		onViewportChange: handleViewportChange,
+		onNavigate: (to: string) => emit('navigate', to)
+	});
+};
+const handleView = (view: PlaygroundView) => emit('view-change', view);
+const handleViewportChange = (viewport: PlaygroundViewport) => {
+	emit('viewport-change', viewport);
+};
 
 watch(() => props.files, (files) => {
 	if (filesEqual(files, syncedFiles)) return;
@@ -474,9 +419,28 @@ watch(() => props.entry, (entry) => {
 	store.mainFile = toReplFilename(entry);
 	store.setActive(toReplFilename(entry));
 });
+
+watch(() => props.activeView, (view) => {
+	if (view !== 'runtime') handleClosePopup();
+});
+
+onBeforeUnmount(() => {
+	window.removeEventListener('message', handleBridgeMessage);
+	window.removeEventListener('resize', syncFrozenExpandedHeight);
+	handleClosePopup();
+});
 </script>
 <style lang="scss">
 @use '../../style' as *;
+
+@include block(docs-playground-runtime-host) {
+	display: flex;
+	width: 100%;
+	min-height: 0;
+	overflow: hidden;
+	flex: 1 1 auto;
+	flex-direction: column;
+}
 
 @include block(docs-playground-runtime) {
 	display: flex;
@@ -651,6 +615,11 @@ watch(() => props.entry, (entry) => {
 			width: 18px;
 			height: 18px;
 		}
+	}
+
+	@include element(popup-close-mark) {
+		font-size: 16px;
+		line-height: 1;
 	}
 
 	@include element(preview) {

@@ -26,7 +26,11 @@ export const PLAYGROUND_ICONS = {
 		'c-.64 0-1.17.53-1.17 1.19v10.75c0 .66.53 1.19 1.17 1.19h5.21c.65 0 1.18-.53 1.18-1.19V9.6',
 		'a1.16 1.16 0 0 0-1.17-1.19M8.1 20.36H2.94V9.64h5.15z'
 	].join('')),
-	expand: strokeIcon('M6 9l6 6 6-6')
+	expand: strokeIcon('M6 9l6 6 6-6'),
+	popup: strokeIcon([
+		'M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3',
+		'M3 16v3a2 2 0 0 0 2 2h3'
+	].join(''))
 } as const;
 
 export type PlaygroundIconName = keyof typeof PLAYGROUND_ICONS;

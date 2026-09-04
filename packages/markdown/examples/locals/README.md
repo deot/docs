@@ -91,6 +91,12 @@ const user: User = {
 };
 ```
 
+```markdown
+# Heading
+
+Paragraph with **bold** and `inline code`.
+```
+
 ## HTML 内容
 
 <details>
