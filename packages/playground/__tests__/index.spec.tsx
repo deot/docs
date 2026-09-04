@@ -56,7 +56,10 @@ vi.mock('@deot/vc', async () => {
 	class Portal {
 		component: unknown;
 
-		app?: { unmount: () => void };
+		app?: {
+			mount: (el: Element) => unknown;
+			unmount: () => void;
+		};
 
 		container?: HTMLElement;
 
@@ -66,15 +69,16 @@ vi.mock('@deot/vc', async () => {
 
 		popup(options: Record<string, unknown> = {}) {
 			this.destroy();
-			this.container = document.createElement('div');
-			document.body.appendChild(this.container);
+			const container = document.createElement('div');
+			this.container = container;
+			document.body.appendChild(container);
 			this.app = vue.createApp({
 				render: () => vue.h(this.component as never, {
 					...options,
 					onPortalFulfilled: () => this.destroy()
 				})
 			});
-			this.app.mount(this.container);
+			this.app.mount(container);
 			return { destroy: () => this.destroy() };
 		}
 

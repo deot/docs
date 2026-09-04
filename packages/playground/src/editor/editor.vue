@@ -81,7 +81,17 @@
 				<div v-if="codeErrorText" class="docs-playground-editor__error">
 					{{ codeErrorText }}
 				</div>
-				<div ref="textarea" class="docs-playground-editor__editor"></div>
+				<Scroller
+					ref="editorScroller"
+					class="docs-playground-editor__body"
+					:auto-resize="true"
+					:native="false"
+					:show-bar="true"
+					:always="true"
+					:max-height="EDITOR_SCROLLER_MAX_HEIGHT"
+				>
+					<div ref="textarea" class="docs-playground-editor__editor"></div>
+				</Scroller>
 			</div>
 		</TransitionFade>
 	</div>
@@ -90,6 +100,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { ComponentPublicInstance } from 'vue';
 import { Message, Popconfirm, Scroller, TransitionFade } from '@deot/vc';
+import type { ScrollerExposed } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import type { Language } from '@deot/docs-locale';
 import { EditorView, basicSetup } from 'codemirror';
@@ -104,6 +115,8 @@ import type { EditorFilesChange, EditorFilesChangeAction } from './types';
 import { Drag } from './drag';
 
 const SUPPORTED_FILE_RE = /\.(vue|js|ts|jsx|tsx|css|s[ac]ss|json|html)$/i;
+/** 浮层留白 20px + 标题栏 44px + 文件栏 46px，避免大文件把标签栏挤扁。 */
+const EDITOR_SCROLLER_MAX_HEIGHT = 'calc(100vh - 110px)';
 
 const props = withDefaults(defineProps<{
 	value?: string;
@@ -139,10 +152,8 @@ const activeFilename = ref(currentEntry.value);
 const isActive = ref(false);
 const textarea = ref<HTMLDivElement | null>(null);
 const filenameInput = ref<HTMLInputElement | null>(null);
-const scroller = ref<{
-	refresh: () => Promise<void> | void;
-	setScrollLeft: (value: number) => void;
-} | null>(null);
+const scroller = ref<ScrollerExposed | null>(null);
+const editorScroller = ref<ScrollerExposed | null>(null);
 const editor = ref<EditorView | null>(null);
 const bar = ref<HTMLDivElement | null>(null);
 const wrapper = ref<HTMLDivElement | null>(null);
@@ -152,6 +163,11 @@ const filenameDraft = ref('');
 const codeErrorText = computed(() => props.getCodeErrors()
 	.map(item => item instanceof Error ? item.message : item)
 	.join('\n'));
+let editorResize: ResizeObserver | undefined;
+
+const refreshEditorScroller = () => {
+	editorScroller.value?.refresh();
+};
 
 const setFilenameInput = (el: Element | ComponentPublicInstance | null) => {
 	filenameInput.value = el instanceof HTMLInputElement ? el : null;
@@ -193,11 +209,13 @@ const createEditor = () => {
 					filename
 				});
 				if (filename === currentEntry.value) props.onChange(code);
+				nextTick(refreshEditorScroller);
 			})
 		],
 		parent: textarea.value
 	});
 	editor.value.focus();
+	nextTick(refreshEditorScroller);
 };
 
 const handleActive = (filename: string) => {
@@ -322,9 +340,14 @@ onMounted(async () => {
 		wrapper: wrapper.value,
 		container: window
 	});
+	if (typeof ResizeObserver !== 'undefined') {
+		editorResize = new ResizeObserver(refreshEditorScroller);
+		editorResize.observe(textarea.value);
+	}
 });
 
 onBeforeUnmount(() => {
+	editorResize?.disconnect();
 	drag.value?.off();
 	editor.value?.destroy();
 });
@@ -375,6 +398,7 @@ onBeforeUnmount(() => {
 		background: var(--docs-background-color-soft, var(--vc-background-color)) !important;
 		justify-content: space-between;
 		align-items: center;
+		flex: 0 0 auto;
 	}
 
 	@include element(files) {
@@ -389,6 +413,7 @@ onBeforeUnmount(() => {
 		box-sizing: border-box;
 		gap: 8px;
 		justify-content: space-between;
+		flex: 0 0 auto;
 	}
 
 	@include element(actions) {
@@ -505,22 +530,31 @@ onBeforeUnmount(() => {
 		overflow-wrap: anywhere;
 		background: var(--docs-error-background, #fef2f2);
 		box-sizing: border-box;
+		flex: 0 0 auto;
+	}
+
+	@include element(body) {
+		min-width: 0;
+		min-height: 240px;
+		overflow: hidden;
 		flex: 0 1 auto;
+
+		.vc-scroller__wrapper {
+			min-height: 240px;
+		}
 	}
 
 	@include element(editor) {
 		min-height: 240px;
 		padding: 1px;
-		overflow: hidden;
 		background: var(--docs-code-background, var(--vc-background-color)) !important;
-		flex: 1 1 auto;
 
 		.cm-editor {
-			height: 100%;
+			height: auto;
 		}
 
 		.cm-scroller {
-			overflow: auto;
+			overflow: visible !important;
 		}
 	}
 }

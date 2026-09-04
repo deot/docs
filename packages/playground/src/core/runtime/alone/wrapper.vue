@@ -65,6 +65,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { Scroller } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import { Sandbox } from '@vue/repl';
+import type { Store } from '@vue/repl';
 import type { PlaygroundPreviewOptions, PlaygroundViewport } from '../../../types';
 import { resolveSandboxContainer, type SandboxExposed } from '../auto-height';
 import {
@@ -78,7 +79,7 @@ import RuntimeToolbar from '../toolbar.vue';
 import { PLAYGROUND_RUNTIME_CANVAS_BACKGROUND } from '../../store';
 
 const props = withDefaults(defineProps<{
-	store: object;
+	store: Store;
 	copyValue: string;
 	viewport?: PlaygroundViewport;
 	viewportOptions?: PlaygroundViewport[];
@@ -105,10 +106,10 @@ const layoutTick = ref(0);
 const runtimeError = useSandboxRuntimeErrorGuard(sandboxRef);
 useSandboxTheme(sandboxRef);
 
-const storeErrors = computed(() => {
-	const errors = (props.store as { errors?: unknown[] }).errors || [];
-	return errors.map(toErrorText).filter(Boolean).join('\n');
-});
+const storeErrors = computed(() => (props.store.errors || [])
+	.map(toErrorText)
+	.filter(Boolean)
+	.join('\n'));
 const errorText = computed(() => {
 	const runtime = runtimeError.value
 		? formatSandboxRuntimeError(runtimeError.value, t('playground.runtime.importMapTip'))
