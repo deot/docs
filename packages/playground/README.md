@@ -49,7 +49,7 @@ const files = ref({
 | `viewport` | `'auto' \| number \| [number, number]` | `'auto'` | 运行时宽度，或固定宽高。 |
 | `viewportOptions` | `PlaygroundViewport[]` | `['auto', 375]` | 可切换的视口列表。 |
 | `styleless` | `boolean` | `false` | 只渲染无工具栏的运行时预览。 |
-| `title` | `string` | `''` | 运行时顶栏标题；空串或不传不渲染。files / styleless 视图不展示。带标题时生成锚点（`#` 链接），规则对齐 markdown-it-anchor。 |
+| `title` | `string` | `''` | 顶栏标题；空串或不传不渲染标题文本。runtime / 双视图始终保留顶栏；files-only 仅在有标题时显示顶栏。带标题时生成锚点（`#` 链接），规则对齐 markdown-it-anchor。 |
 | `id` | `string` | `''` | 标题锚点 id；未传时从 `title` 自动生成。仅挂在内联 runtime 标题上，弹窗不重复。 |
 | `expandable` | `true \| number` | `undefined` | 开启预览高度展开；未传不显示控件；`true` 展开到剩余视口；正数为目标高度（px）。 |
 | `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项；`cdnURL` 会同时作用于预览样式和默认 import map。 |
@@ -114,3 +114,27 @@ npm run build -- --package-name playground
 ## 许可证
 
 MIT
+
+:::playground
+<!--
+<config lang="json5">
+{
+	expand: true,
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<Button type="primary" @click="visible = true">Open Modal</Button>
+	<Modal v-model="visible" title="Demo">Modal content</Modal>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Button, Modal } from '@deot/vc';
+
+const visible = ref(false);
+</script>
+```
+:::
+

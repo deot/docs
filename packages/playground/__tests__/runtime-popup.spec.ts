@@ -16,15 +16,15 @@ describe('runtime popup layout', () => {
 			height: window.innerHeight
 		});
 		expect(resolvePopupRequestedSize('auto', { width: 1200, height: 800 })).toEqual({
-			width: 1160,
+			width: 1120,
 			height: 760,
-			maxWidth: 1160,
+			maxWidth: 1120,
 			maxHeight: 760
 		});
 		expect(resolvePopupRequestedSize('auto', { width: 1200, height: 800 }, 24)).toEqual({
-			width: 1176,
+			width: 1152,
 			height: 776,
-			maxWidth: 1176,
+			maxWidth: 1152,
 			maxHeight: 776
 		});
 	});
@@ -33,13 +33,13 @@ describe('runtime popup layout', () => {
 		expect(resolvePopupRequestedSize(375, { width: 1200, height: 800 })).toEqual({
 			width: 375,
 			height: 760,
-			maxWidth: 1160,
+			maxWidth: 1120,
 			maxHeight: 760
 		});
 		expect(resolvePopupRequestedSize([375, 667], { width: 1200, height: 800 })).toEqual({
 			width: 375,
 			height: 667,
-			maxWidth: 1160,
+			maxWidth: 1120,
 			maxHeight: 760
 		});
 	});
@@ -47,7 +47,7 @@ describe('runtime popup layout', () => {
 	it('caps the shell and keeps an oversized canvas for scrolling', () => {
 		const layout = resolvePopupLayout([1400, 900], { width: 1000, height: 700 });
 		expect(layout).toEqual({
-			shellWidth: 960,
+			shellWidth: 920,
 			shellHeight: 660,
 			bodyHeight: 660 - PLAYGROUND_POPUP_HEADER_HEIGHT,
 			canvasWidth: 1400,
@@ -59,9 +59,9 @@ describe('runtime popup layout', () => {
 
 	it('fills the popup body when viewport size is unset', () => {
 		const layout = resolvePopupLayout('auto', { width: 1200, height: 800 });
-		expect(layout.shellWidth).toBe(1160);
+		expect(layout.shellWidth).toBe(1120);
 		expect(layout.shellHeight).toBe(760);
-		expect(layout.canvasWidth).toBe(1160);
+		expect(layout.canvasWidth).toBe(1120);
 		expect(layout.canvasHeight).toBe(760 - PLAYGROUND_POPUP_HEADER_HEIGHT);
 		expect(layout.needsScrollX).toBe(false);
 		expect(layout.needsScrollY).toBe(false);

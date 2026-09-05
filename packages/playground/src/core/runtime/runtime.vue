@@ -21,7 +21,10 @@
 			</div>
 		</div>
 		<div v-else ref="runtimeRoot" class="docs-playground-runtime">
-			<div class="docs-playground__header">
+			<div
+				v-if="!hideChrome"
+				class="docs-playground__header"
+			>
 				<span
 					v-if="displayTitle"
 					ref="titleEl"
@@ -46,21 +49,6 @@
 					@open-popup="handleOpenPopup"
 					@viewport-change="handleViewportChange"
 				/>
-				<div v-if="views.length > 1" class="docs-playground__views">
-					<button
-						v-for="item in views"
-						:key="item"
-						type="button"
-						class="docs-playground__view"
-						:class="{ 'is-active': item === activeView }"
-						:title="getViewText(item)"
-						:aria-label="getViewText(item)"
-						:aria-pressed="item === activeView"
-						@click="handleView(item)"
-					>
-						<PlaygroundIcon :name="item" />
-					</button>
-				</div>
 			</div>
 			<pre
 				v-if="errorText"
@@ -119,7 +107,7 @@ import type {
 	PlaygroundViewport,
 	PlaygroundViewsProps
 } from '../../types';
-import { filesEqual, playgroundViewMessage, resolvePlaygroundTitleId } from '../../utils';
+import { filesEqual, resolvePlaygroundTitleId } from '../../utils';
 import { resolveSandboxContainer, useSandboxAutoHeight } from './auto-height';
 import type { SandboxExposed } from './auto-height';
 import {
@@ -155,6 +143,10 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	previewInset?: PlaygroundPreviewInset;
 	previewOptions?: PlaygroundPreviewOptions;
 	styleless?: boolean;
+	/**
+	 * 由外层 Playground 渲染共享顶栏时隐藏内联 header。
+	 */
+	hideChrome?: boolean;
 	expandable?: PlaygroundExpandable;
 	title?: string;
 	id?: string;
@@ -162,6 +154,7 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	viewportOptions?: PlaygroundViewport[];
 }>(), {
 	styleless: false,
+	hideChrome: false,
 	previewInset: 10,
 	title: '',
 	id: '',
@@ -171,7 +164,6 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	viewportOptions: () => ['auto', 375]
 });
 const { locale, t } = useLocale();
-const getViewText = (view: PlaygroundView) => t(playgroundViewMessage(view));
 const displayTitle = computed(() => props.title.trim());
 const titleEl = ref<HTMLElement | null>(null);
 const titleId = computed(() => resolvePlaygroundTitleId(
@@ -258,7 +250,8 @@ const frozenExpandedHeight = ref(0);
 const measurePreviewChromeHeight = () => {
 	const root = runtimeRoot.value;
 	if (!root) return 0;
-	const header = root.querySelector('.docs-playground__header');
+	const host = root.closest('.docs-playground') ?? root;
+	const header = host.querySelector('.docs-playground__header');
 	const error = root.querySelector('.docs-playground__runtime-error');
 	return (header instanceof HTMLElement ? header.offsetHeight : 0)
 		+ (error instanceof HTMLElement ? error.offsetHeight : 0);
@@ -430,7 +423,6 @@ const handleOpenPopup = () => {
 		onNavigate: (to: string) => emit('navigate', to)
 	});
 };
-const handleView = (view: PlaygroundView) => emit('view-change', view);
 const handleViewportChange = (viewport: PlaygroundViewport) => {
 	emit('viewport-change', viewport);
 };
@@ -458,6 +450,12 @@ onBeforeUnmount(() => {
 	window.removeEventListener('message', handleBridgeMessage);
 	window.removeEventListener('resize', syncFrozenExpandedHeight);
 	handleClosePopup();
+});
+
+defineExpose({
+	refresh: handleInlineRefresh,
+	edit: handleEditor,
+	openPopup: handleOpenPopup
 });
 </script>
 <style lang="scss">
@@ -526,182 +524,13 @@ onBeforeUnmount(() => {
 		border: 0;
 	}
 
-	@include element(header) {
-		display: flex;
-		padding: 0 12px;
-		background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa)) !important;
-		border-bottom: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e5e7eb));
-		box-sizing: border-box;
-		justify-content: flex-end;
-		align-items: center;
-		flex: 0 0 44px;
-	}
-
-	@include element(title) {
-		display: inline-flex;
-		min-width: 0;
-		padding-right: 12px;
-		padding-left: 14px;
-		overflow: hidden;
-		font-size: 16px;
-		font-weight: 500;
-		line-height: 20px;
-		color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
-		flex: 1 1 auto;
-		align-items: center;
-	}
-
-	@include element(title-anchor) {
-		width: 14px;
-		margin-left: -14px;
-		font-size: 12px;
-		line-height: 1;
-		color: inherit;
-		text-align: center;
-		text-decoration: none;
-		opacity: 0;
-		flex: 0 0 14px;
-		transition: opacity 0.2s ease;
-
-		&:focus-visible {
-			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
-			outline-offset: 1px;
-			opacity: 1;
-		}
-	}
-
-	@include element(title-text) {
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.docs-playground__title:hover .docs-playground__title-anchor {
-		opacity: 1;
-	}
-
-	@include element(views) {
-		display: flex;
-		padding-left: 8px;
-		margin-left: 4px;
-		border-left: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e5e7eb));
-		gap: 4px;
-	}
-
-	@include element(view) {
-		display: inline-flex;
-		width: 28px;
-		height: 28px;
-		padding: 0;
-		font: inherit;
-		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
-		cursor: pointer;
-		background: transparent;
-		border: 0;
-		border-radius: 8px;
-		justify-content: center;
-		align-items: center;
-		transition: color 0.15s ease, background-color 0.15s ease;
-
-		&:hover {
-			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
-			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
-			outline-offset: 1px;
-		}
-
-		@include when(active) {
-			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
-			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
-		}
-	}
-
-	@include element(tools) {
-		display: flex;
-		margin-left: auto;
-		font-size: 14px;
-		line-height: 20px;
-		gap: 2px;
-		align-items: center;
-		flex: 0 0 auto;
-	}
-
-	@include element(tool) {
-		display: inline-flex;
-		width: 28px;
-		height: 28px;
-		padding: 0;
-		font: inherit;
-		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
-		cursor: pointer;
-		background: transparent;
-		border: 0;
-		border-radius: 8px;
-		justify-content: center;
-		align-items: center;
-		transition: color 0.15s ease, background-color 0.15s ease;
-
-		.docs-playground-icon {
-			width: 18px;
-			height: 18px;
-		}
-
-		&:hover {
-			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
-			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
-			outline-offset: 1px;
-		}
-
-		@include when(active) {
-			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
-			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
-		}
-	}
-
-	@include element(viewport-menu) {
-		display: inline-flex;
-	}
-
-	@include element(viewport-trigger) {
-		.docs-playground-icon {
-			width: 18px;
-			height: 18px;
-		}
-	}
-
-	@include element(viewport-options) {
-		min-width: 136px;
-	}
-
-	@include element(viewport-option) {
-		white-space: nowrap;
-	}
-
-	@include element(editor) {
-		.docs-playground-icon {
-			width: 18px;
-			height: 18px;
-		}
-	}
-
-	@include element(popup-close-mark) {
-		font-size: 16px;
-		line-height: 1;
-	}
-
 	@include element(preview) {
 		position: relative;
 		min-height: 0;
 		overflow: hidden;
 		background: var(--vc-background-color-light, var(--docs-background-color, #fff));
+		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e2e8f0));
+		border-radius: 12px;
 		box-sizing: border-box;
 		flex: 1 1 auto;
 	}
@@ -735,8 +564,7 @@ onBeforeUnmount(() => {
 		}
 
 		&:hover {
-			color: var(--docs-primary-color, var(--vc-color-primary, #2563eb));
-			background: var(--docs-primary-color-light, var(--vc-color-primary-lighter, #e8eef8));
+			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
 		}
 
 		&:focus-visible {
@@ -754,7 +582,7 @@ onBeforeUnmount(() => {
 	@include element(runtime-error) {
 		max-height: 240px;
 		padding: 12px 16px;
-		margin: 0;
+		margin: 0 0 8px;
 		overflow: auto;
 		font: inherit;
 		font-size: 13px;
@@ -762,7 +590,8 @@ onBeforeUnmount(() => {
 		color: var(--vc-color-error, #b91c1c);
 		white-space: pre-wrap;
 		background: var(--docs-error-background, #fef2f2);
-		border-top: 1px solid #f5c2c2;
+		border: 1px solid #f5c2c2;
+		border-radius: 12px;
 		box-sizing: border-box;
 		overflow-wrap: anywhere;
 	}

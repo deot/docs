@@ -199,7 +199,7 @@ onBeforeUnmount(() => {
 	inset: 0;
 	z-index: 1000;
 	display: flex;
-	padding: 20px;
+	padding: 20px 40px;
 	box-sizing: border-box;
 	justify-content: center;
 	align-items: center;
@@ -217,8 +217,8 @@ onBeforeUnmount(() => {
 		max-width: 100%;
 		max-height: 100%;
 		overflow: hidden;
-		background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa));
-		border-radius: 8px;
+		background: var(--docs-background-color, var(--vc-background-color-light, #fff));
+		border-radius: 12px;
 		box-sizing: border-box;
 	}
 
@@ -235,12 +235,12 @@ onBeforeUnmount(() => {
 
 	@include element(header) {
 		display: flex;
-		padding: 0 12px;
-		background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa)) !important;
-		border-bottom: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e5e7eb));
+		padding: 0 4px 0 0;
+		background: transparent;
 		box-sizing: border-box;
-		justify-content: flex-end;
+		justify-content: space-between;
 		align-items: center;
+		gap: 12px;
 		flex: 0 0 44px;
 	}
 

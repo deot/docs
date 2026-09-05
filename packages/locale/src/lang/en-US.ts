@@ -194,6 +194,9 @@ const enUS = {
 		runtime: {
 			preview: 'Runtime preview',
 			files: 'File preview',
+			previewLabel: 'Preview',
+			codeLabel: 'Code',
+			views: 'Preview views',
 			auto: 'Auto',
 			viewport: 'Viewport: {value}',
 			viewportMenu: 'Runtime viewport',

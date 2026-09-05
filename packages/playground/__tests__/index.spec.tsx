@@ -802,17 +802,58 @@ describe('Playground', () => {
 		expect(wrapper.emitted('update:entry')).toEqual([['bootstrap.js']]);
 
 		options.onFilesChange(
-			{ 'bootstrap.js': 'second', 'App.vue': '<template />' },
+			{ 'bootstrap.js': 'second', 'App.vue': '<template />', 'helpers.ts': '' },
 			'bootstrap.js',
-			{ type: 'delete', filename: 'util.ts' }
+			{ type: 'rename', previousFilename: 'util.ts', filename: 'helpers.ts' }
 		);
 		await nextTick();
-		expect(store.files['src/util.ts']).toBeUndefined();
+		expect(wrapper.find('[data-filename="helpers.ts"]').classes()).toContain('is-active');
+
+		options.onFilesChange(
+			{ 'bootstrap.js': 'second', 'App.vue': '<template />' },
+			'bootstrap.js',
+			{ type: 'delete', filename: 'helpers.ts' }
+		);
+		await nextTick();
+		expect(store.files['src/helpers.ts']).toBeUndefined();
 		expect(wrapper.find('[data-filename="bootstrap.js"]').classes()).toContain('is-active');
 		expect(wrapper.emitted('update:files')?.at(-1)?.[0]).toEqual({
 			'bootstrap.js': 'second',
 			'App.vue': '<template />'
 		});
+	});
+
+	it('refreshes locale validation and closes the viewport menu on Code', async () => {
+		const wrapper = mount(Playground, {
+			props: {
+				files: { 'App.vue': '<template>app</template>' },
+				entry: 'missing.js',
+				locale: zhCN,
+				views: ['runtime', 'files'],
+				viewportOptions: ['auto', 375]
+			}
+		});
+		expect(wrapper.find('.docs-playground__error').text()).toContain('missing.js');
+		await wrapper.setProps({ locale: undefined });
+		await nextTick();
+		expect(wrapper.find('.docs-playground__error').text()).toContain('missing.js');
+		wrapper.unmount();
+
+		const dual = mount(Playground, {
+			props: {
+				files: { 'App.vue': '<template>app</template>' },
+				entry: 'App.vue',
+				views: ['runtime', 'files'],
+				viewportOptions: ['auto', 375]
+			}
+		});
+		dual.findComponent({ name: 'Dropdown' }).vm.$emit('update:modelValue', true);
+		await nextTick();
+		expect(dual.find('.docs-playground__viewport-trigger').attributes('aria-expanded'))
+			.toBe('true');
+		await dual.findAll('.docs-playground__view')[1].trigger('click');
+		expect(dual.find('.docs-playground__viewport-trigger').exists()).toBe(false);
+		expect(dual.find('[data-action="refresh"]').exists()).toBe(false);
 	});
 
 	it('changes entry and accepts external file updates', async () => {
@@ -861,7 +902,7 @@ describe('Playground', () => {
 		expect(store.options.template.value.welcomeSFC).toContain('<slot />');
 	});
 
-	it('shows a runtime title in the header and popup, but not in styleless or files views', async () => {
+	it('shows a runtime title in the header and popup; files-only only with a title', async () => {
 		const runtime = mount(Playground, {
 			attachTo: document.body,
 			props: { modelValue: '<template>titled</template>', title: 'Demo Title' }
@@ -906,6 +947,7 @@ describe('Playground', () => {
 			props: { modelValue: '<template>empty</template>', title: '' }
 		});
 		expect(emptyTitle.find('.docs-playground__title').exists()).toBe(false);
+		expect(emptyTitle.find('.docs-playground__header').exists()).toBe(true);
 		emptyTitle.unmount();
 
 		const styleless = mount(Playground, {
@@ -914,7 +956,7 @@ describe('Playground', () => {
 		expect(styleless.find('.docs-playground__title').exists()).toBe(false);
 		styleless.unmount();
 
-		const files = mount(Playground, {
+		const filesTitled = mount(Playground, {
 			props: {
 				files: { 'App.vue': '<template>files</template>' },
 				entry: 'App.vue',
@@ -922,9 +964,22 @@ describe('Playground', () => {
 				title: 'Files Title'
 			}
 		});
-		expect(files.find('.docs-playground__title').exists()).toBe(false);
-		expect(files.find('.docs-playground__header').exists()).toBe(false);
-		files.unmount();
+		expect(filesTitled.find('.docs-playground__title').text()).toContain('Files Title');
+		expect(filesTitled.find('.docs-playground__header').exists()).toBe(true);
+		expect(filesTitled.find('.docs-playground__tools').exists()).toBe(false);
+		expect(filesTitled.find('[data-action="edit"]').exists()).toBe(false);
+		expect(filesTitled.find('.docs-playground__views').exists()).toBe(false);
+		filesTitled.unmount();
+
+		const filesUntitled = mount(Playground, {
+			props: {
+				files: { 'App.vue': '<template>files</template>' },
+				entry: 'App.vue',
+				views: ['files']
+			}
+		});
+		expect(filesUntitled.find('.docs-playground__header').exists()).toBe(false);
+		filesUntitled.unmount();
 	});
 
 	it('supports runtime-only and files-only views', async () => {
@@ -959,6 +1014,8 @@ describe('Playground', () => {
 		expect(files.find('.docs-playground-files').exists()).toBe(true);
 		expect(files.find('.docs-playground__header').exists()).toBe(false);
 		expect(files.find('.docs-playground__tools').exists()).toBe(false);
+		expect(files.find('[data-action="refresh"]').exists()).toBe(false);
+		expect(files.find('[data-action="edit"]').exists()).toBe(false);
 		expect(files.find('.docs-code-preview__copy').attributes('aria-label')).toBe('Copy current file');
 		expect(files.find('code.hljs').html()).toContain('hljs-tag');
 		expect(files.find('code.hljs').html()).not.toContain('<strong>files</strong>');
@@ -966,6 +1023,36 @@ describe('Playground', () => {
 		await files.find('[data-filename="util.ts"]').trigger('click');
 		expect(files.find('[data-filename="util.ts"]').classes()).toContain('is-active');
 		expect(files.find('code.hljs').text()).toContain('export const value');
+	});
+
+	it('keeps dual-view chrome and drops runtime actions on Code', async () => {
+		const wrapper = mount(Playground, {
+			props: {
+				files: { 'App.vue': '<template>dual</template>' },
+				entry: 'App.vue',
+				views: ['runtime', 'files']
+			}
+		});
+		expect(wrapper.find('.docs-playground__header').exists()).toBe(true);
+		expect(wrapper.findAll('.docs-playground__view').map(item => item.text())).toEqual(['Preview', 'Code']);
+		expect(wrapper.findAll('.docs-playground__view').map(item => item.attributes('aria-label')))
+			.toEqual(['Runtime preview', 'File preview']);
+		expect(wrapper.find('.docs-playground__header .docs-playground__views').exists()).toBe(true);
+		expect(wrapper.find('[data-action="refresh"]').exists()).toBe(true);
+		expect(wrapper.find('[data-action="edit"]').exists()).toBe(true);
+
+		await wrapper.findAll('.docs-playground__view')[1].trigger('click');
+		expect(wrapper.find('.docs-playground__header').exists()).toBe(true);
+		expect(wrapper.find('[data-action="refresh"]').exists()).toBe(false);
+		expect(wrapper.find('[data-action="edit"]').exists()).toBe(false);
+		expect(wrapper.find('[data-action="open-popup"]').exists()).toBe(false);
+		expect(wrapper.find('.docs-playground__viewport-menu').exists()).toBe(false);
+		expect(wrapper.find('.docs-playground-files__actions').exists()).toBe(false);
+		expect(wrapper.find('.docs-code-preview__copy').exists()).toBe(true);
+
+		await wrapper.findAll('.docs-playground__view')[0].trigger('click');
+		expect(wrapper.find('[data-action="refresh"]').exists()).toBe(true);
+		expect(wrapper.find('[data-action="edit"]').exists()).toBe(true);
 	});
 
 	it('reloads the runtime preview without recreating its store', async () => {
@@ -1003,17 +1090,21 @@ describe('Playground', () => {
 		const dialog = document.body.querySelector('.docs-playground-popup');
 		expect(dialog).toBeTruthy();
 		expect(dialog?.querySelector('.docs-playground-popup__shell')?.getAttribute('style'))
-			.toContain(`width: ${1200 - PLAYGROUND_POPUP_SCREEN_GAP}px`);
+			.toContain(`width: ${1200 - PLAYGROUND_POPUP_SCREEN_GAP * 2}px`);
 		expect(dialog?.querySelector('.docs-playground-popup__shell')?.getAttribute('style'))
 			.toContain(`height: ${800 - PLAYGROUND_POPUP_SCREEN_GAP}px`);
 		expect(dialog?.querySelector('.docs-playground-popup__canvas')?.getAttribute('style'))
-			.toContain(`width: ${1200 - PLAYGROUND_POPUP_SCREEN_GAP}px`);
+			.toContain(`width: ${1200 - PLAYGROUND_POPUP_SCREEN_GAP * 2}px`);
 		expect(dialog?.querySelector('.docs-playground-popup__canvas')?.getAttribute('style'))
 			.toContain(`height: ${800 - PLAYGROUND_POPUP_SCREEN_GAP - PLAYGROUND_POPUP_HEADER_HEIGHT}px`);
 		expect(dialog?.querySelector('.sandbox')).toBeTruthy();
 		expect(dialog?.querySelector('[data-action="edit"]')).toBeTruthy();
 		expect(dialog?.querySelector('[data-action="close-popup"]')).toBeTruthy();
 		expect(dialog?.querySelector('[data-action="open-popup"]')).toBeNull();
+		const popupActions = Array.from(
+			dialog!.querySelectorAll('.docs-playground__tools [data-action]')
+		).map(item => (item as HTMLElement).dataset.action);
+		expect(popupActions.at(-1)).toBe('close-popup');
 		expect(wrapper.find('.sandbox').element).toBe(inlineSandbox);
 		expect(wrapper.findAllComponents({ name: 'Sandbox' })).toHaveLength(1);
 		expect(document.body.querySelectorAll('.sandbox')).toHaveLength(2);
@@ -1104,21 +1195,25 @@ describe('Playground', () => {
 		});
 		expect(useStore).not.toHaveBeenCalled();
 		const buttons = wrapper.findAll('.docs-playground__view');
-		expect(buttons.map(item => item.attributes('aria-label'))).toEqual(['File preview', 'Runtime preview']);
-		expect(buttons[0].classes()).toContain('is-active');
+		expect(buttons.map(item => item.attributes('aria-label'))).toEqual(['Runtime preview', 'File preview']);
+		expect(buttons.map(item => item.text())).toEqual(['Preview', 'Code']);
+		expect(buttons[1].classes()).toContain('is-active');
 		expect(wrapper.find('.sandbox').exists()).toBe(false);
-		expect(wrapper.find('.docs-playground__header').exists()).toBe(false);
-		expect(wrapper.find('.docs-playground-files__actions').exists()).toBe(true);
+		expect(wrapper.find('.docs-playground__header').exists()).toBe(true);
+		expect(wrapper.find('.docs-playground-files__actions').exists()).toBe(false);
+		expect(wrapper.find('[data-action="refresh"]').exists()).toBe(false);
+		expect(wrapper.find('.docs-playground__header .docs-playground__views').exists()).toBe(true);
 
-		await buttons[1].trigger('click');
+		await buttons[0].trigger('click');
 		expect(useStore).toHaveBeenCalledTimes(1);
 		expect(wrapper.find('.sandbox').exists()).toBe(true);
 		expect(wrapper.find('.docs-playground__header').exists()).toBe(true);
-		expect(wrapper.find('.docs-playground__header').element.lastElementChild?.classList)
-			.toContain('docs-playground__views');
-		await buttons[0].trigger('click');
+		expect(wrapper.find('[data-action="refresh"]').exists()).toBe(true);
+		expect(wrapper.find('.docs-playground__header .docs-playground__views').exists()).toBe(true);
+		await buttons[1].trigger('click');
 		expect(wrapper.find('.sandbox').exists()).toBe(true);
 		expect(wrapper.find('.docs-playground__preview').isVisible()).toBe(false);
+		expect(wrapper.find('[data-action="edit"]').exists()).toBe(false);
 	});
 
 	it('normalizes and reacts to external views', async () => {
@@ -1151,7 +1246,7 @@ describe('Playground', () => {
 
 		await wrapper.setProps({ views: ['files', 'runtime'] });
 		expect(wrapper.find('.sandbox').exists()).toBe(false);
-		await wrapper.findAll('.docs-playground__view')[1].trigger('click');
+		await wrapper.findAll('.docs-playground__view')[0].trigger('click');
 		expect(wrapper.find('.sandbox').exists()).toBe(true);
 	});
 

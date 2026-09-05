@@ -193,6 +193,9 @@ const zhCN = {
 		runtime: {
 			preview: '运行时预览',
 			files: '文件预览',
+			previewLabel: '预览',
+			codeLabel: '代码',
+			views: '预览视图',
 			auto: '自适应',
 			viewport: '视口：{value}',
 			viewportMenu: '运行时视口',

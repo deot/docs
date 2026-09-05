@@ -1,11 +1,19 @@
 import type { PlaygroundViewport } from '../../../types';
 import { getViewportHeight, getViewportWidth } from '../viewport';
 
-/** 弹窗相对屏幕边缘的留白，便于视觉协调；后续可调。 */
+/** 弹窗相对屏幕边缘的上下留白；左右为该值的 2 倍。 */
 export const PLAYGROUND_POPUP_SCREEN_GAP = 40;
 
 /** 弹窗工具栏高度，画布铺满时从壳层高度中扣除。 */
 export const PLAYGROUND_POPUP_HEADER_HEIGHT = 44;
+
+const resolvePopupScreenInset = (gap = PLAYGROUND_POPUP_SCREEN_GAP) => {
+	const safeGap = Number.isFinite(gap) ? Math.max(0, gap) : PLAYGROUND_POPUP_SCREEN_GAP;
+	return {
+		x: safeGap * 2,
+		y: safeGap
+	};
+};
 
 export const getWindowInnerSize = () => {
 	if (typeof window === 'undefined') {
@@ -22,12 +30,12 @@ export const resolvePopupRequestedSize = (
 	screen = getWindowInnerSize(),
 	gap = PLAYGROUND_POPUP_SCREEN_GAP
 ) => {
-	const safeGap = Number.isFinite(gap) ? Math.max(0, gap) : PLAYGROUND_POPUP_SCREEN_GAP;
+	const inset = resolvePopupScreenInset(gap);
 	const maxWidth = Math.max(0, Math.round(
-		(Number.isFinite(screen.width) ? screen.width : 0) - safeGap
+		(Number.isFinite(screen.width) ? screen.width : 0) - inset.x
 	));
 	const maxHeight = Math.max(0, Math.round(
-		(Number.isFinite(screen.height) ? screen.height : 0) - safeGap
+		(Number.isFinite(screen.height) ? screen.height : 0) - inset.y
 	));
 	const viewportWidth = getViewportWidth(viewport);
 	const viewportHeight = getViewportHeight(viewport);
@@ -40,11 +48,11 @@ export const resolvePopupRequestedSize = (
 };
 
 /**
- * 壳层封顶到 `screen - gap`。未设 viewport 边时，画布铺满工具栏以下区域；
- * 请求尺寸大于可用区域时由 Scroller 处理溢出。
+ * 壳层封顶到 `screen.width - gap * 2`、`screen.height - gap`。
+ * 未设 viewport 边时，画布铺满工具栏以下区域；请求尺寸大于可用区域时由 Scroller 处理溢出。
  * @param viewport 当前 playground 视口配置。
- * @param screen 屏幕可用宽高，默认取 `window.inner*`.
- * @param gap 相对屏幕边缘的留白。
+ * @param screen 屏幕可用宽高，默认取 `window.inner*`。
+ * @param gap 相对屏幕上下边缘的留白；左右为该值的 2 倍。
  * @returns 壳层、内容区与画布尺寸，以及是否需要滚动。
  */
 export const resolvePopupLayout = (

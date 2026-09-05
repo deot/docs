@@ -24,37 +24,73 @@
 		<div v-if="error" class="docs-playground__error">
 			{{ error }}
 		</div>
-		<RuntimePreview
-			v-if="runtimeActivated && normalizedViews.includes('runtime')"
-			v-show="!error && activeView === 'runtime'"
-			:files="sourceFiles"
-			:entry="currentEntry"
-			:options="options"
-			:preview-options="previewOptions"
-			:preview-inset="previewInset"
-			:expandable="expandable"
-			:title="title"
-			:id="id"
-			:active-view="activeView"
-			:views="normalizedViews"
-			:viewport="activeViewport"
-			:viewport-options="selectableViewportOptions"
-			@files-change="handleFilesChange"
-			@navigate="emit('navigate', $event)"
-			@view-change="handleView"
-			@viewport-change="handleViewport"
-		/>
-		<FilesPreview
-			v-if="normalizedViews.includes('files')"
-			v-show="!error && activeView === 'files'"
-			:files="sourceFiles"
-			:entry="currentEntry"
-			:active-filename="fileActiveFilename"
-			:active-view="activeView"
-			:views="normalizedViews"
-			@active-change="handleFileActive"
-			@view-change="handleView"
-		/>
+		<template v-else>
+			<div
+				v-if="showHeader"
+				class="docs-playground__header"
+			>
+				<span
+					v-if="displayTitle"
+					ref="titleEl"
+					class="docs-playground__title"
+					:id="titleId"
+					tabindex="-1"
+					:title="displayTitle"
+				>
+					<a
+						class="docs-playground__title-anchor"
+						:href="`#${titleId}`"
+					>#</a>
+					<span class="docs-playground__title-text">{{ displayTitle }}</span>
+				</span>
+				<RuntimeToolbar
+					v-if="showToolbar"
+					:copy-value="copyValue"
+					:viewport="activeViewport"
+					:viewport-options="selectableViewportOptions"
+					:views="normalizedViews"
+					:active-view="activeView"
+					:show-runtime-actions="showRuntimeActions"
+					:show-open-popup="hasRuntimeView"
+					@refresh="handleRefresh"
+					@edit="handleEdit"
+					@open-popup="handleOpenPopup"
+					@viewport-change="handleViewport"
+					@view-change="handleView"
+				/>
+			</div>
+			<RuntimePreview
+				v-if="runtimeActivated && hasRuntimeView"
+				ref="runtimeRef"
+				v-show="activeView === 'runtime'"
+				:files="sourceFiles"
+				:entry="currentEntry"
+				:options="options"
+				:preview-options="previewOptions"
+				:preview-inset="previewInset"
+				:expandable="expandable"
+				:hide-chrome="true"
+				:title="title"
+				:id="id"
+				:active-view="activeView"
+				:views="normalizedViews"
+				:viewport="activeViewport"
+				:viewport-options="selectableViewportOptions"
+				@files-change="handleFilesChange"
+				@navigate="emit('navigate', $event)"
+				@viewport-change="handleViewport"
+			/>
+			<FilesPreview
+				v-if="hasFilesView"
+				v-show="activeView === 'files'"
+				:files="sourceFiles"
+				:entry="currentEntry"
+				:active-filename="fileActiveFilename"
+				:active-view="activeView"
+				:views="normalizedViews"
+				@active-change="handleFileActive"
+			/>
+		</template>
 	</div>
 </template>
 <script setup lang="ts">
@@ -62,8 +98,9 @@ import { computed, ref, watch } from 'vue';
 import { provideLocale, useLocale } from '@deot/docs-locale';
 import type { Language } from '@deot/docs-locale';
 import { DEFAULT_ENTRY, NEW_SFC_CODE } from './constants';
-import { filesEqual } from './utils';
+import { filesEqual, resolvePlaygroundTitleId } from './utils';
 import { FilesPreview, RuntimePreview } from './core';
+import RuntimeToolbar from './core/runtime/toolbar.vue';
 import type { EditorFilesChangeAction } from './editor';
 import type {
 	PlaygroundExpandable,
@@ -106,7 +143,8 @@ const props = withDefaults(defineProps<{
 	 */
 	expandable?: PlaygroundExpandable;
 	/**
-	 * 运行时顶栏标题。空串或不传不渲染；files / styleless 视图不展示。
+	 * 顶栏标题。空串或不传不渲染标题文本。
+	 * runtime / 双视图始终保留顶栏；files-only 仅在有标题时渲染顶栏。
 	 */
 	title?: string;
 	/**
@@ -140,6 +178,12 @@ const initialEntry = props.entry && initialFiles[props.entry] !== undefined
 const sourceFiles = ref<PlaygroundFiles>(initialFiles);
 const currentEntry = ref(initialEntry);
 const fileActiveFilename = ref(initialEntry);
+const runtimeRef = ref<{
+	refresh: () => void;
+	edit: () => void;
+	openPopup: () => void;
+} | null>(null);
+const titleEl = ref<HTMLElement | null>(null);
 
 const normalizeViews = (views: readonly unknown[]) => {
 	const normalized: PlaygroundView[] = [];
@@ -151,6 +195,8 @@ const normalizeViews = (views: readonly unknown[]) => {
 	return normalized.length ? normalized : ['runtime'] satisfies PlaygroundView[];
 };
 const normalizedViews = computed(() => normalizeViews(props.views));
+const hasRuntimeView = computed(() => normalizedViews.value.includes('runtime'));
+const hasFilesView = computed(() => normalizedViews.value.includes('files'));
 const activeView = ref<PlaygroundView>(normalizedViews.value[0]);
 const runtimeActivated = ref(props.styleless || activeView.value === 'runtime');
 const normalizedViewportOptions = computed(() => normalizeViewportOptions(props.viewportOptions));
@@ -165,6 +211,23 @@ const selectableViewportOptions = computed(() => includeActiveViewport(
 const error = ref(props.entry && initialFiles[props.entry] === undefined
 	? t('playground.validation.entryMissing', { filename: props.entry })
 	: '');
+const displayTitle = computed(() => props.title.trim());
+const titleId = computed(() => resolvePlaygroundTitleId(
+	displayTitle.value,
+	props.id,
+	(candidate) => {
+		if (typeof document === 'undefined') return false;
+		const existing = document.getElementById(candidate);
+		return !!existing && existing !== titleEl.value;
+	}
+));
+const copyValue = computed(() => sourceFiles.value[currentEntry.value] || '');
+/** runtime / 双视图始终有顶栏；files-only 仅有标题时渲染。 */
+const showHeader = computed(() => (
+	hasRuntimeView.value || !!displayTitle.value
+));
+const showToolbar = computed(() => hasRuntimeView.value);
+const showRuntimeActions = computed(() => activeView.value === 'runtime');
 
 watch(locale, () => {
 	if (props.entry && sourceFiles.value[props.entry] === undefined) {
@@ -183,6 +246,16 @@ const handleViewport = (viewport: PlaygroundViewport) => {
 	if (!isValidViewport(viewport) || viewportEquals(activeViewport.value, viewport)) return;
 	activeViewport.value = cloneViewport(viewport);
 	emit('update:viewport', cloneViewport(viewport));
+};
+
+const handleRefresh = () => {
+	runtimeRef.value?.refresh();
+};
+const handleEdit = () => {
+	runtimeRef.value?.edit();
+};
+const handleOpenPopup = () => {
+	runtimeRef.value?.openPopup();
 };
 
 const handleFileActive = (filename: string) => {
@@ -292,18 +365,16 @@ watch(normalizedViewportOptions, (options) => {
 	width: 100%;
 	margin-bottom: 16px;
 	overflow: hidden;
-	background: var(--docs-background-color, var(--vc-background-color-light, #fff));
-	border-radius: 8px;
-	box-shadow: 0 1px 2px rgb(0 0 0 / 2%), 0 3px 10px rgb(0 0 0 / 3%);
+	background: transparent;
 	box-sizing: border-box;
 	justify-content: center;
 	flex-direction: column;
+	gap: 8px;
 
 	@include modifier(files) {
 		height: 100%;
 		min-height: 0;
 		overflow: hidden;
-		background: var(--docs-code-background, var(--vc-background-color, #f6f8fa));
 	}
 
 	@include element(error) {
@@ -312,6 +383,199 @@ watch(normalizedViewportOptions, (options) => {
 		box-sizing: border-box;
 		justify-content: center;
 		align-items: center;
+	}
+
+	@include element(header) {
+		display: flex;
+		padding: 0 4px 0 0;
+		background: transparent;
+		box-sizing: border-box;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+		flex: 0 0 44px;
+	}
+
+	@include element(title) {
+		position: relative;
+		display: inline-flex;
+		min-width: 0;
+		padding-right: 12px;
+		overflow: hidden;
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 20px;
+		color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
+		flex: 1 1 auto;
+		align-items: center;
+	}
+
+	@include element(title-anchor) {
+		position: absolute;
+		top: 50%;
+		right: 100%;
+		width: 14px;
+		font-size: 12px;
+		line-height: 1;
+		color: inherit;
+		text-align: center;
+		text-decoration: none;
+		opacity: 0;
+		transform: translateY(-50%);
+		transition: opacity 0.2s ease;
+
+		&:focus-visible {
+			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline-offset: 1px;
+			opacity: 1;
+		}
+	}
+
+	@include element(title-text) {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.docs-playground__title:hover .docs-playground__title-anchor {
+		opacity: 1;
+	}
+
+	@include element(tools) {
+		display: flex;
+		margin-left: auto;
+		font-size: 13px;
+		line-height: 20px;
+		gap: 8px;
+		align-items: center;
+		flex: 0 0 auto;
+	}
+
+	@include element(tool-group) {
+		display: inline-flex;
+		padding: 2px;
+		background: var(--docs-background-color-soft, var(--vc-background-color, #f1f5f9));
+		border-radius: 999px;
+		gap: 0;
+		align-items: center;
+	}
+
+	@include element(tool-divider) {
+		display: inline-block;
+		width: 1px;
+		height: 16px;
+		background: var(--docs-border-color, var(--vc-color-light-deeper, #e2e8f0));
+		flex: 0 0 1px;
+	}
+
+	@include element(views) {
+		display: inline-flex;
+		padding: 2px;
+		background: var(--docs-background-color-soft, var(--vc-background-color, #f1f5f9));
+		border-radius: 999px;
+		gap: 0;
+		align-items: center;
+	}
+
+	@include element(view) {
+		display: inline-flex;
+		height: 28px;
+		padding: 0 12px;
+		font: inherit;
+		font-size: 13px;
+		font-weight: 500;
+		line-height: 20px;
+		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		border-radius: 999px;
+		justify-content: center;
+		align-items: center;
+		transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+
+		&:hover {
+			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline-offset: 1px;
+		}
+
+		@include when(active) {
+			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
+			background: var(--docs-background-color, var(--vc-background-color-light, #fff));
+			box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+		}
+	}
+
+	@include element(tool) {
+		display: inline-flex;
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		font: inherit;
+		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		border-radius: 999px;
+		justify-content: center;
+		align-items: center;
+		transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+
+		.docs-playground-icon {
+			width: 16px;
+			height: 16px;
+		}
+
+		&:hover {
+			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline-offset: 1px;
+		}
+
+		@include when(active) {
+			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
+			background: var(--docs-background-color, var(--vc-background-color-light, #fff));
+			box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+		}
+	}
+
+	@include element(viewport-menu) {
+		display: inline-flex;
+	}
+
+	@include element(viewport-trigger) {
+		.docs-playground-icon {
+			width: 16px;
+			height: 16px;
+		}
+	}
+
+	@include element(viewport-options) {
+		min-width: 136px;
+	}
+
+	@include element(viewport-option) {
+		white-space: nowrap;
+	}
+
+	@include element(editor) {
+		.docs-playground-icon {
+			width: 16px;
+			height: 16px;
+		}
+	}
+
+	@include element(popup-close-mark) {
+		font-size: 16px;
+		line-height: 1;
 	}
 }
 </style>
