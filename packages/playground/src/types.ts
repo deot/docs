@@ -34,10 +34,10 @@ export type PlaygroundViewport = 'auto' | number | [width: number, height: numbe
 export type PlaygroundPreviewInset = number | [vertical: number, horizontal: number];
 
 /**
- * 预览高度展开。
+ * 预览高度是否可展开。
  * `undefined` 不显示展开控件；`true` 展开到剩余视口；正数为展开目标高度（px）。
  */
-export type PlaygroundExpand = true | number;
+export type PlaygroundExpandable = true | number;
 
 export type PlaygroundOptions = Omit<Partial<StoreState>,
 	'builtinImportMap' | 'files' | 'activeFilename' | 'mainFile' | 'template'

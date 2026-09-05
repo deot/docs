@@ -344,7 +344,7 @@ defineProps({ label: String });
 <!--
 <config lang="json5">
 {
-	expand: true
+	expandable: true
 }
 </config>
 -->

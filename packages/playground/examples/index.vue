@@ -29,6 +29,7 @@
 		<Playground
 			v-model:files="vueFiles"
 			v-model:entry="vueEntry"
+			expandable
 			:views="['runtime', 'files']"
 		/>
 

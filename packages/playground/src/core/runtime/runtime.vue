@@ -95,7 +95,7 @@ import { Editor } from '../../editor';
 import type { EditorFilesChangeAction } from '../../editor';
 import PlaygroundIcon from '../../icon';
 import type {
-	PlaygroundExpand,
+	PlaygroundExpandable,
 	PlaygroundFiles,
 	PlaygroundFilesProps,
 	PlaygroundOptions,
@@ -110,7 +110,7 @@ import { resolveSandboxContainer, useSandboxAutoHeight } from './auto-height';
 import type { SandboxExposed } from './auto-height';
 import {
 	getVisibleViewportRect,
-	isPlaygroundExpandEnabled,
+	isPlaygroundExpandable,
 	resolveExpandedPreviewHeight,
 	resolveRemainingPreviewHeight,
 	scrollPlaygroundToViewportStart
@@ -141,7 +141,7 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	previewInset?: PlaygroundPreviewInset;
 	previewOptions?: PlaygroundPreviewOptions;
 	styleless?: boolean;
-	expand?: PlaygroundExpand;
+	expandable?: PlaygroundExpandable;
 	viewport?: PlaygroundViewport;
 	viewportOptions?: PlaygroundViewport[];
 }>(), {
@@ -223,7 +223,7 @@ const handleBridgeMessage = (event: MessageEvent) => {
 };
 const runtimeRoot = ref<HTMLElement | null>(null);
 const previewExpanded = ref(false);
-/** `expand: true` 时在展开瞬间冻结，避免滚动重算高度造成抖动。 */
+/** `expandable: true` 时在展开瞬间冻结，避免滚动重算高度造成抖动。 */
 const frozenExpandedHeight = ref(0);
 
 const measurePreviewChromeHeight = () => {
@@ -249,7 +249,7 @@ const measureExpandedPreviewHeight = () => {
 };
 
 const syncFrozenExpandedHeight = () => {
-	if (!previewExpanded.value || props.expand !== true) return;
+	if (!previewExpanded.value || props.expandable !== true) return;
 	frozenExpandedHeight.value = measureExpandedPreviewHeight();
 };
 
@@ -257,16 +257,16 @@ if (typeof window !== 'undefined') {
 	window.addEventListener('message', handleBridgeMessage);
 	window.addEventListener('resize', syncFrozenExpandedHeight);
 }
-const canExpandPreview = computed(() => !props.styleless && isPlaygroundExpandEnabled(props.expand));
+const canExpandPreview = computed(() => !props.styleless && isPlaygroundExpandable(props.expandable));
 const expandLabel = computed(() => t(previewExpanded.value
 	? 'playground.runtime.collapsePreview'
 	: 'playground.runtime.expandPreview'));
 const desiredViewportHeight = computed(() => {
-	if (previewExpanded.value && props.expand === true) {
+	if (previewExpanded.value && props.expandable === true) {
 		return frozenExpandedHeight.value;
 	}
-	if (previewExpanded.value && isPlaygroundExpandEnabled(props.expand)) {
-		return resolveExpandedPreviewHeight(props.expand, 0);
+	if (previewExpanded.value && isPlaygroundExpandable(props.expandable)) {
+		return resolveExpandedPreviewHeight(props.expandable, 0);
 	}
 	const fixedHeight = getViewportHeight(props.viewport);
 	if (fixedHeight) return fixedHeight;
@@ -279,7 +279,7 @@ const scrollExpandedPreviewIntoView = () => {
 const handleTogglePreviewExpand = () => {
 	if (!canExpandPreview.value) return;
 	if (!previewExpanded.value) {
-		if (props.expand === true) {
+		if (props.expandable === true) {
 			frozenExpandedHeight.value = measureExpandedPreviewHeight();
 		} else {
 			frozenExpandedHeight.value = 0;

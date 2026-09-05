@@ -639,7 +639,7 @@ describe('Playground', () => {
 		expect(previewStyle()).toContain('padding: 10px');
 	});
 
-	it('keeps expand opt-in and freezes expanded height on first click', async () => {
+	it('keeps expandable opt-in and freezes expanded height on first click', async () => {
 		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 900 });
 		const withoutExpand = mount(Playground, {
 			props: { modelValue: '<template>default</template>' }
@@ -650,7 +650,7 @@ describe('Playground', () => {
 
 		const wrapper = mount(Playground, {
 			attachTo: document.body,
-			props: { modelValue: '<template>expand</template>', expand: true }
+			props: { modelValue: '<template>expand</template>', expandable: true }
 		});
 		const preview = wrapper.find('.docs-playground__preview');
 		const toggle = wrapper.find('[data-action="expand-preview"]');
@@ -691,7 +691,7 @@ describe('Playground', () => {
 
 		const cramped = mount(Playground, {
 			attachTo: document.body,
-			props: { modelValue: '<template>cramped</template>', expand: true }
+			props: { modelValue: '<template>cramped</template>', expandable: true }
 		});
 		Object.defineProperty(
 			cramped.get('.docs-playground__header').element,
@@ -706,13 +706,13 @@ describe('Playground', () => {
 
 		const fixed = mount(Playground, {
 			attachTo: document.body,
-			props: { modelValue: '<template>fixed expand</template>', expand: 480 }
+			props: { modelValue: '<template>fixed expand</template>', expandable: 480 }
 		});
 		expect(fixed.find('.docs-playground__expand').exists()).toBe(true);
 		await fixed.find('[data-action="expand-preview"]').trigger('click');
 		expect(fixed.find('.docs-playground__preview').attributes('style'))
 			.toContain('height: 480px');
-		await fixed.setProps({ expand: undefined });
+		await fixed.setProps({ expandable: undefined });
 		await nextTick();
 		expect(fixed.find('[data-action="expand-preview"]').exists()).toBe(false);
 		expect(fixed.find('.docs-playground__preview').attributes('style'))
@@ -720,7 +720,7 @@ describe('Playground', () => {
 		fixed.unmount();
 
 		const styleless = mount(Playground, {
-			props: { modelValue: '<template>styleless</template>', styleless: true, expand: true }
+			props: { modelValue: '<template>styleless</template>', styleless: true, expandable: true }
 		});
 		expect(styleless.find('[data-action="expand-preview"]').exists()).toBe(false);
 	});

@@ -145,7 +145,7 @@ vi.mock('@deot/docs-playground', async () => {
 				'viewport',
 				'viewportOptions',
 				'previewInset',
-				'expand'
+				'expandable'
 			],
 			unmounted: playgroundUnmounted,
 			setup(props) {
@@ -159,7 +159,7 @@ vi.mock('@deot/docs-playground', async () => {
 						JSON.stringify(props.viewport),
 						JSON.stringify(props.viewportOptions),
 						JSON.stringify(props.previewInset),
-						JSON.stringify(props.expand)
+						JSON.stringify(props.expandable)
 					].join('-');
 					return (
 						<div class="playground">
@@ -778,10 +778,10 @@ describe('markdown', () => {
 		expect(wrapper.find('.playground').text()).toContain('[8,16]');
 	});
 
-	it('passes playground expand to Playground', async () => {
+	it('passes playground expandable to Playground', async () => {
 		const enabled = mount(Markdown, {
 			props: {
-				modelValue: runtimeWithConfig('{ expand: true }', '```vue\n<template />\n```')
+				modelValue: runtimeWithConfig('{ expandable: true }', '```vue\n<template />\n```')
 			},
 			attachTo: document.body
 		});
@@ -791,7 +791,7 @@ describe('markdown', () => {
 
 		const fixed = mount(Markdown, {
 			props: {
-				modelValue: runtimeWithConfig('{ expand: 600 }', '```vue\n<template />\n```')
+				modelValue: runtimeWithConfig('{ expandable: 600 }', '```vue\n<template />\n```')
 			},
 			attachTo: document.body
 		});
@@ -882,18 +882,18 @@ describe('markdown', () => {
 		expect(render('{ previewInset: [8, "16"] }')).toContain(error);
 	});
 
-	it('reports invalid playground expand declarations', () => {
+	it('reports invalid playground expandable declarations', () => {
 		const render = (config: string) => MarkdownRenderer.render(
 			runtimeWithConfig(config, '```vue\n<template />\n```')
 		);
-		const error = 'expand 必须是 true 或正数';
+		const error = 'expandable 必须是 true 或正数';
 
-		expect(render('{ expand: false }')).toContain(error);
-		expect(render('{ expand: 0 }')).toContain(error);
-		expect(render('{ expand: -1 }')).toContain(error);
-		expect(render('{ expand: \'auto\' }')).toContain(error);
-		expect(render('{ expand: true }')).toContain('data-playground');
-		expect(render('{ expand: 600 }')).toContain('data-playground');
+		expect(render('{ expandable: false }')).toContain(error);
+		expect(render('{ expandable: 0 }')).toContain(error);
+		expect(render('{ expandable: -1 }')).toContain(error);
+		expect(render('{ expandable: \'auto\' }')).toContain(error);
+		expect(render('{ expandable: true }')).toContain('data-playground');
+		expect(render('{ expandable: 600 }')).toContain('data-playground');
 	});
 
 	it('supports empty input, malformed config and multiple markdown instances', async () => {

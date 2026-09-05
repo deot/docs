@@ -1,5 +1,5 @@
 import { MIN_RUNTIME_HEIGHT } from './auto-height';
-import type { PlaygroundExpand } from '../../types';
+import type { PlaygroundExpandable } from '../../types';
 
 /** 展开后预留底部空隙，避免贴死视口边缘。 */
 export const PLAYGROUND_EXPAND_VIEWPORT_GAP = 16;
@@ -14,9 +14,9 @@ const getPlaygroundHost = (el: Element | null) => (
 );
 
 // `true` 或正数才开启展开控件；`false` / `undefined` / 非法值关闭。
-export const isPlaygroundExpandEnabled = (expand: unknown): expand is PlaygroundExpand => {
-	if (expand === true) return true;
-	return typeof expand === 'number' && Number.isFinite(expand) && expand > 0;
+export const isPlaygroundExpandable = (value: unknown): value is PlaygroundExpandable => {
+	if (value === true) return true;
+	return typeof value === 'number' && Number.isFinite(value) && value > 0;
 };
 
 export const resolveRemainingPreviewHeight = ({
@@ -38,16 +38,16 @@ export const resolveRemainingPreviewHeight = ({
 
 // `true`：封顶到可见滚动区域（扣工具栏 / 空隙），不超出视口。正数按给定像素。
 export const resolveExpandedPreviewHeight = (
-	expand: PlaygroundExpand,
+	expandable: PlaygroundExpandable,
 	availableHeight: number
 ) => {
-	if (expand === true) {
+	if (expandable === true) {
 		return Math.max(
 			MIN_RUNTIME_HEIGHT,
 			Math.round(Number.isFinite(availableHeight) ? availableHeight : 0)
 		);
 	}
-	return Math.max(MIN_RUNTIME_HEIGHT, Math.round(expand));
+	return Math.max(MIN_RUNTIME_HEIGHT, Math.round(expandable));
 };
 
 // 文档站正文在内部 scroller 里，不能用 window.innerHeight。

@@ -49,7 +49,7 @@ const files = ref({
 | `viewport` | `'auto' \| number \| [number, number]` | `'auto'` | 运行时宽度，或固定宽高。 |
 | `viewportOptions` | `PlaygroundViewport[]` | `['auto', 375]` | 可切换的视口列表。 |
 | `styleless` | `boolean` | `false` | 只渲染无工具栏的运行时预览。 |
-| `expand` | `true \| number` | `undefined` | 开启预览高度展开；未传不显示控件；`true` 展开到剩余视口；正数为目标高度（px）。 |
+| `expandable` | `true \| number` | `undefined` | 开启预览高度展开；未传不显示控件；`true` 展开到剩余视口；正数为目标高度（px）。 |
 | `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项；`cdnURL` 会同时作用于预览样式和默认 import map。 |
 | `previewOptions` | `SandboxProps['previewOptions']` | `undefined` | 传给当前 iframe 的 preview 选项。 |
 | `locale` | `Language` | `en-US` | 界面语言；未传入时使用上层 Locale Provider。 |

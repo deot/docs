@@ -6,7 +6,7 @@
 		:options="options"
 		:preview-options="previewOptions"
 		:preview-inset="previewInset"
-		:expand="expand"
+		:expandable="expandable"
 		:styleless="true"
 		:viewport="activeViewport"
 		:viewport-options="selectableViewportOptions"
@@ -30,7 +30,7 @@
 			:options="options"
 			:preview-options="previewOptions"
 			:preview-inset="previewInset"
-			:expand="expand"
+			:expandable="expandable"
 			:active-view="activeView"
 			:views="normalizedViews"
 			:viewport="activeViewport"
@@ -62,7 +62,7 @@ import { filesEqual } from './utils';
 import { FilesPreview, RuntimePreview } from './core';
 import type { EditorFilesChangeAction } from './editor';
 import type {
-	PlaygroundExpand,
+	PlaygroundExpandable,
 	PlaygroundFiles,
 	PlaygroundOptions,
 	PlaygroundPreviewInset,
@@ -98,9 +98,9 @@ const props = withDefaults(defineProps<{
 	options?: PlaygroundOptions;
 	previewInset?: PlaygroundPreviewInset;
 	/**
-	 * 预览高度展开。未传不显示控件；`true` 展开到剩余视口；正数为目标高度 px。
+	 * 预览高度是否可展开。未传不显示控件；`true` 展开到剩余视口；正数为目标高度 px。
 	 */
-	expand?: PlaygroundExpand;
+	expandable?: PlaygroundExpandable;
 	previewOptions?: PlaygroundPreviewOptions;
 	locale?: Language;
 }>(), {

@@ -6,7 +6,7 @@ import {
 	findScrollableAncestor,
 	getVisibleViewportRect,
 	getWindowInnerHeight,
-	isPlaygroundExpandEnabled,
+	isPlaygroundExpandable,
 	resolveExpandedPreviewHeight,
 	resolveRemainingPreviewHeight,
 	scrollPlaygroundToViewportStart
@@ -26,13 +26,13 @@ const mockRect = (top: number, height: number): DOMRect => ({
 
 describe('runtime preview expand', () => {
 	it('enables expand only for true or a positive number', () => {
-		expect(isPlaygroundExpandEnabled(undefined)).toBe(false);
-		expect(isPlaygroundExpandEnabled(false)).toBe(false);
-		expect(isPlaygroundExpandEnabled(0)).toBe(false);
-		expect(isPlaygroundExpandEnabled(-1)).toBe(false);
-		expect(isPlaygroundExpandEnabled('auto')).toBe(false);
-		expect(isPlaygroundExpandEnabled(true)).toBe(true);
-		expect(isPlaygroundExpandEnabled(600)).toBe(true);
+		expect(isPlaygroundExpandable(undefined)).toBe(false);
+		expect(isPlaygroundExpandable(false)).toBe(false);
+		expect(isPlaygroundExpandable(0)).toBe(false);
+		expect(isPlaygroundExpandable(-1)).toBe(false);
+		expect(isPlaygroundExpandable('auto')).toBe(false);
+		expect(isPlaygroundExpandable(true)).toBe(true);
+		expect(isPlaygroundExpandable(600)).toBe(true);
 	});
 
 	it('resolves remaining viewport height and expanded targets', () => {
@@ -58,7 +58,7 @@ describe('runtime preview expand', () => {
 		expect(resolveExpandedPreviewHeight(10, 400)).toBe(MIN_RUNTIME_HEIGHT);
 	});
 
-	it('caps expand:true to the available viewport instead of content height', () => {
+	it('caps expandable:true to the available viewport instead of content height', () => {
 		expect(resolveExpandedPreviewHeight(true, 960)).toBe(960);
 	});
 
