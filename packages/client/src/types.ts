@@ -296,6 +296,10 @@ export interface DocsConfig {
 	 */
 	theme?: boolean | DocsThemeOptions;
 	/**
+	 * Markdown 排版皮肤，与 `theme`（light/dark）正交。缺省 `default`。
+	 */
+	markdownTheme?: 'default' | 'traditional';
+	/**
 	 * 内置页面布局配置。
 	 */
 	layout?: DocsLayoutOptions;

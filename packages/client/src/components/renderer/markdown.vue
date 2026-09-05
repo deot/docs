@@ -7,6 +7,7 @@
 			:value="content"
 			:indicator="indicator"
 			:locale="context.locale"
+			:theme="markdownTheme"
 		/>
 	</div>
 </template>
@@ -21,7 +22,8 @@ import { getDocsConfig } from '../../utils/runtime';
 import {
 	docsMarkdownIndicator,
 	docsMarkdownInlineContent,
-	normalizeDocsMarkdownProps
+	normalizeDocsMarkdownProps,
+	resolveDocsMarkdownTheme
 } from './markdown-props';
 
 const props = defineProps<RendererModuleViewerProps>();
@@ -32,6 +34,7 @@ const error = ref('');
 const loading = ref(false);
 const markdownProps = computed(() => normalizeDocsMarkdownProps(props.node.module.props));
 const indicator = computed(() => docsMarkdownIndicator(markdownProps.value.options));
+const markdownTheme = computed(() => resolveDocsMarkdownTheme(docs.markdownTheme));
 let controller: AbortController | undefined;
 let unsubscribe: (() => void) | undefined;
 let generation = 0;

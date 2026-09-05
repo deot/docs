@@ -19,6 +19,7 @@
 		<Markdown
 			v-else-if="resourceType === 'markdown'"
 			:value="content"
+			:theme="markdownTheme"
 			@click="handleMarkdownClick"
 		/>
 		<div v-else-if="builtin" class="docs-resource-slot__builtin" :data-builtin="builtin"></div>
@@ -45,6 +46,7 @@ import { resolveInlineSidebar } from '../../utils/sidebar';
 import { resolveRouteContent } from '../../utils/content';
 import type { DocsContent, DocsLocalized, DocsResourceType, DocsRoute, DocsSidebar, SidebarItem } from '../../types';
 import { useRendererModules } from '../renderer';
+import { resolveDocsMarkdownTheme } from '../renderer/markdown-props';
 
 const props = defineProps<{ name: 'header' | 'sidebar' | 'content' | 'footer' | 'extra' }>();
 const route = useRoute();
@@ -52,6 +54,7 @@ const router = useRouter();
 const docs = getDocsConfig();
 const { locale, t } = useLocale();
 const rendererModules = useRendererModules();
+const markdownTheme = computed(() => resolveDocsMarkdownTheme(docs.markdownTheme));
 const content = ref('');
 const error = ref('');
 const loading = ref(false);

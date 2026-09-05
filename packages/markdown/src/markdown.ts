@@ -10,6 +10,42 @@ const HTML_MD_SIGN = 'md';
 const PLAYGROUND = 'playground';
 const TIP = 'tip';
 const WARNING = 'warning';
+const CALLOUT_FILLED_RE = /(^|\s)filled(\s|$)/;
+const CALLOUT_INFO_ICON = [
+	'<svg width="22" height="28" viewBox="0 0 22 28" fill="none" aria-hidden="true">',
+	'<circle class="docs-markdown-callout-icon__fill" cx="11" cy="14" r="11"></circle>',
+	'<circle class="docs-markdown-callout-icon__ring" cx="11" cy="14" r="10.5"></circle>',
+	'<path class="docs-markdown-callout-icon__mark"',
+	' d="m12.5 19-1.011.337a1 1 0 0 1-1.253-1.3l1.528-4.074a1 1 0 0 0-1.253-1.3L9.5 13"',
+	' stroke-width="1.5" stroke-linecap="round"></path>',
+	'<path class="docs-markdown-callout-icon__mark" d="M12 9a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0Z" stroke-width="1.5"></path>',
+	'</svg>'
+].join('');
+const CALLOUT_WARNING_ICON = [
+	'<svg width="22" height="28" viewBox="0 0 22 28" fill="none" aria-hidden="true">',
+	'<circle class="docs-markdown-callout-icon__fill" cx="11" cy="14" r="11"></circle>',
+	'<circle class="docs-markdown-callout-icon__ring" cx="11" cy="14" r="10.5"></circle>',
+	'<path class="docs-markdown-callout-icon__mark" d="M11 10v5.5" stroke-width="1.5" stroke-linecap="round"></path>',
+	'<path class="docs-markdown-callout-icon__mark" d="M11.5 18.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0Z" stroke-width="1.5"></path>',
+	'</svg>'
+].join('');
+const renderCallout = (name: string, icon: string) => (
+	tokens: { info: string; nesting: number }[],
+	idx: number
+) => {
+	if (tokens[idx].nesting === 1) {
+		const className = CALLOUT_FILLED_RE.test(tokens[idx].info)
+			? `${name} ${name}--filled`
+			: name;
+		return [
+			`<div class="${className}" md>`,
+			'<span class="docs-markdown-callout-icon" aria-hidden="true">',
+			icon,
+			'</span><div class="docs-markdown-callout-body">\n'
+		].join('');
+	}
+	return '</div></div>\n';
+};
 const config = new Config();
 
 config
@@ -37,8 +73,12 @@ config
 			}
 		});
 
-		$md.use(mdContainer, TIP);
-		$md.use(mdContainer, WARNING);
+		$md.use(mdContainer, TIP, {
+			render: renderCallout(TIP, CALLOUT_INFO_ICON)
+		});
+		$md.use(mdContainer, WARNING, {
+			render: renderCallout(WARNING, CALLOUT_WARNING_ICON)
+		});
 	})
 	.end();
 

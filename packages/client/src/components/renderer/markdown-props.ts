@@ -1,6 +1,8 @@
 import type { MarkdownIndicatorConfig, MarkdownIndicatorOptions } from '@deot/docs-markdown';
 import type { RendererIssue } from '@deot/docs-renderer';
 
+export type DocsMarkdownTheme = 'default' | 'traditional';
+
 export interface DocsMarkdownOptions {
 	/**
 	 * 文档指示器。`false` 关闭；`true` 或对象开启，对象可配位置、预览等。
@@ -120,4 +122,13 @@ export const docsMarkdownIndicator = (options?: DocsMarkdownOptions): MarkdownIn
  */
 export const docsMarkdownInlineContent = (props: Pick<DocsMarkdownProps, 'content'>) => (
 	typeof props.content === 'string' ? props.content : undefined
+);
+
+/**
+ * 归一化站点 Markdown 排版皮肤；非法值回退 `default`。
+ * @param value `DocsConfig.markdownTheme`。
+ * @returns `'default'` 或 `'traditional'`。
+ */
+export const resolveDocsMarkdownTheme = (value: unknown): DocsMarkdownTheme => (
+	value === 'traditional' ? 'traditional' : 'default'
 );

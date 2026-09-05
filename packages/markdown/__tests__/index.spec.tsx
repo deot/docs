@@ -256,8 +256,42 @@ describe('markdown', () => {
 		expect(html).not.toMatch(/<\/[^> ]+\s+md=/);
 		expect(html).toContain('href="https://example.com"');
 		expect(html).toContain('class="tip"');
+		expect(html).toContain('docs-markdown-callout-icon');
 		expect(html).toContain('md=""');
 		expect(html).toContain('<code class="language-ts">');
+	});
+
+	it('renders filled tip and warning callouts', () => {
+		const html = MarkdownRenderer.render([
+			':::tip filled',
+			'help',
+			':::',
+			'',
+			':::warning filled',
+			'careful',
+			':::'
+		].join('\n'));
+
+		expect(html).toContain('class="tip tip--filled"');
+		expect(html).toContain('class="warning warning--filled"');
+		expect(html).toContain('docs-markdown-callout-icon');
+	});
+
+	it('applies docs-markdown theme modifiers', () => {
+		const defaults = mount(Markdown, { props: { modelValue: '# Hello' } });
+		expect(defaults.find('.docs-markdown').classes()).toContain('docs-markdown--default');
+		expect(defaults.find('.docs-markdown').classes()).not.toContain('docs-markdown--traditional');
+
+		const traditional = mount(Markdown, {
+			props: { modelValue: '# Hello', theme: 'traditional' }
+		});
+		expect(traditional.find('.docs-markdown').classes()).toContain('docs-markdown--traditional');
+		expect(traditional.find('.docs-markdown').classes()).not.toContain('docs-markdown--default');
+
+		const fallback = mount(Markdown, {
+			props: { modelValue: '# Hello', theme: 'unknown' as 'default' }
+		});
+		expect(fallback.find('.docs-markdown').classes()).toContain('docs-markdown--default');
 	});
 
 	it('keeps an unnamed single-file playground block', () => {

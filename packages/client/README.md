@@ -238,7 +238,9 @@ window.$docs = {
 	// 其他配置
 	theme: {
 		default: 'system'
-	}
+	},
+	// Markdown 排版皮肤：'default' | 'traditional'，与上面的 light/dark 正交
+	markdownTheme: 'default'
 };
 ```
 

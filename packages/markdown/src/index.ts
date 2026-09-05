@@ -7,5 +7,6 @@ export type {
 	MarkdownIndicatorConfig,
 	MarkdownIndicatorOptions,
 	MarkdownPlaygroundConfig,
-	MarkdownPlaygroundMountProps
+	MarkdownPlaygroundMountProps,
+	MarkdownTheme
 } from './types';

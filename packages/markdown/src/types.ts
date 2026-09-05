@@ -91,3 +91,8 @@ export interface MarkdownIndicatorOptions {
 }
 
 export type MarkdownIndicatorConfig = boolean | MarkdownIndicatorOptions;
+
+/**
+ * Markdown 排版皮肤。与站点 light/dark（`data-doc-theme`）正交。
+ */
+export type MarkdownTheme = 'default' | 'traditional';

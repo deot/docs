@@ -1,20 +1,32 @@
 # Markdown 格式示例
 
-这是一份用于预览 Markdown 渲染效果的示例文档，可作为后续调整主题样式时的视觉回归基准。
+这是一份用于预览 Markdown 渲染效果的示例文档，可作为后续调整主题样式时的视觉回归基准。页标题是文档里唯一的 H1，紧跟的这一段是 16px 导语。
 
-## 标题层级
+## 概览
 
-# 一级标题
+H2 默认是章节标题（18px / 字重 600 / 上边距 80px）。当 H2 后面紧跟 H3 时，H2 会变成 12px 大写等宽眉题，紧跟的 H3 上边距收成 24px，成为实际小节标题。
 
-## 二级标题
+## Examples
 
-### 三级标题
+### 基础示例
 
-#### 四级标题
+上面的 Examples 是眉题，这一节是 H3。标题下第一段上边距 24px。
+
+#### 四级标题与 `code`
+
+H4 为 14px / 字重 600，上边距 48px；标题内 `` `code` `` 字重应为 600。
 
 ##### 五级标题
 
+H5 为 14px，上边距 40px；标题下第一段上边距 24px。
+
 ###### 六级标题
+
+H6 为 14px / 字重 500，上边距 32px；标题下第一段上边距 24px。
+
+### 连续小节
+
+当前面不是 H2 时，H3 上边距是 64px。
 
 ## 段落与行内格式
 
@@ -24,6 +36,8 @@
 这段文字会显示在上一行的下方。
 
 Markdown 也会自动识别链接：https://example.com。
+
+按 <kbd>⌘</kbd> + <kbd>K</kbd> 打开搜索。
 
 ## 引用
 
@@ -47,7 +61,7 @@ Markdown 也会自动识别链接：https://example.com。
 
 1. 第一步
 2. 第二步
-   1. 子步骤一
+   1. 子步骤一（嵌套仍应显示为 `1.` / `2.`，不要变成 `i.` / `a.`）
    2. 子步骤二
 3. 第三步
 
@@ -67,13 +81,28 @@ Markdown 也会自动识别链接：https://example.com。
 | 文本 | `code` | 100 |
 | **粗体** | [链接](https://example.com) | 200 |
 
+表内 `` `code` `` 字号应为 13px，比正文行内代码略小。
+
+## 图片
+
+<figure>
+<img src="https://dummyimage.com/672x378/d1d5dc/364153.png&text=Figure" alt="示例配图" />
+<figcaption>居中斜体图注：dummyimage.com 动态生成的示例图</figcaption>
+</figure>
+
+独立 Markdown 图片（`![]()`）同样居中：
+
+![Markdown 图片](https://dummyimage.com/480x270/d1d5dc/364153.png&text=Markdown)
+
 ## 分隔线
 
 上方内容
 
 ---
 
-下方内容
+## After the break
+
+分隔线是 5% 发丝线，上下间距 64px；后面紧跟的 H2 上边距也是 64px，而不是默认的 80px。
 
 ## 代码
 
@@ -100,20 +129,46 @@ Paragraph with **bold** and `inline code`.
 ## HTML 内容
 
 <details>
-<summary>点击展开详细内容</summary>
+<summary>与传统 CSS 相比有什么不同？</summary>
 
-这里是折叠区域中的 **Markdown 内容**。
+传统写法里，同一个 class 会随状态做不同的事。
+
+展开后内容与 summary 间距 24px，容器是 12px 圆角细边框、无底色。
 
 </details>
 
 ## Tip / Warning
 
+空心描边（默认）：
+
 :::tip
 这是一条提示信息，适合补充说明或使用建议。
+
+- 可嵌套列表与 `行内代码`
+- 也可放 [普通链接](https://example.com)
 :::
 
 :::warning
 这是一条警告信息，适合提醒风险或易错点。
+
+1. 先核对配置里的 `token`
+2. 再确认环境变量是否已注入
+:::
+
+品牌色块（`:::tip filled` / `:::warning filled`）：
+
+:::tip filled
+这是一条提示信息，适合补充说明或使用建议。
+
+- 可嵌套列表与 `行内代码`
+- 也可放 [普通链接](https://example.com)
+:::
+
+:::warning filled
+这是一条警告信息，适合提醒风险或易错点。
+
+1. 先核对配置里的 `token`
+2. 再确认环境变量是否已注入
 :::
 
 ## Playground 基础示例
