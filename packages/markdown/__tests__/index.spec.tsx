@@ -145,7 +145,9 @@ vi.mock('@deot/docs-playground', async () => {
 				'viewport',
 				'viewportOptions',
 				'previewInset',
-				'expandable'
+				'expandable',
+				'title',
+				'id'
 			],
 			unmounted: playgroundUnmounted,
 			setup(props) {
@@ -159,7 +161,9 @@ vi.mock('@deot/docs-playground', async () => {
 						JSON.stringify(props.viewport),
 						JSON.stringify(props.viewportOptions),
 						JSON.stringify(props.previewInset),
-						JSON.stringify(props.expandable)
+						JSON.stringify(props.expandable),
+						props.title || '',
+						props.id || ''
 					].join('-');
 					return (
 						<div class="playground">
@@ -894,6 +898,43 @@ describe('markdown', () => {
 		expect(render('{ expandable: \'auto\' }')).toContain(error);
 		expect(render('{ expandable: true }')).toContain('data-playground');
 		expect(render('{ expandable: 600 }')).toContain('data-playground');
+	});
+
+	it('passes playground title to Playground', async () => {
+		const source = runtimeWithConfig(
+			'{ title: \'Demo Title\', id: \'demo-anchor\' }',
+			'```vue\n<template />\n```'
+		);
+		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		expect(wrapper.find('.playground').text()).toContain('Demo Title');
+		expect(wrapper.find('.playground').text()).toContain('demo-anchor');
+	});
+
+	it('reports invalid playground title declarations', () => {
+		const render = (config: string) => MarkdownRenderer.render(
+			runtimeWithConfig(config, '```vue\n<template />\n```')
+		);
+		const error = 'title 必须是字符串';
+
+		expect(render('{ title: 1 }')).toContain(error);
+		expect(render('{ title: true }')).toContain(error);
+		expect(render('{ title: [] }')).toContain(error);
+		expect(render('{ title: \'\' }')).toContain('data-playground');
+		expect(render('{ title: \'ok\' }')).toContain('data-playground');
+	});
+
+	it('reports invalid playground title id declarations', () => {
+		const render = (config: string) => MarkdownRenderer.render(
+			runtimeWithConfig(config, '```vue\n<template />\n```')
+		);
+		const error = 'id 必须是字符串';
+
+		expect(render('{ id: 1 }')).toContain(error);
+		expect(render('{ id: true }')).toContain(error);
+		expect(render('{ id: [] }')).toContain(error);
+		expect(render('{ id: \'\' }')).toContain('data-playground');
+		expect(render('{ id: \'ok\' }')).toContain('data-playground');
 	});
 
 	it('supports empty input, malformed config and multiple markdown instances', async () => {

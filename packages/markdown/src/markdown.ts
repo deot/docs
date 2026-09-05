@@ -116,6 +116,16 @@ const validateExpandable = (propsData: MarkdownPlaygroundConfig) => {
 	if (typeof expandable === 'number' && Number.isFinite(expandable) && expandable > 0) return '';
 	return 'expandable 必须是 true 或正数';
 };
+const validateTitle = (propsData: MarkdownPlaygroundConfig) => {
+	if (!('title' in propsData)) return '';
+	if (typeof propsData.title === 'string') return '';
+	return 'title 必须是字符串';
+};
+const validateTitleId = (propsData: MarkdownPlaygroundConfig) => {
+	if (!('id' in propsData)) return '';
+	if (typeof propsData.id === 'string') return '';
+	return 'id 必须是字符串';
+};
 const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>): MarkdownPlaygroundConfig => {
 	for (const token of tokens) {
 		const sources: string[] = [];
@@ -163,7 +173,9 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 		const propsError = validateRuntimeViews(propsData)
 			|| validateRuntimeViewport(propsData)
 			|| validatePreviewInset(propsData)
-			|| validateExpandable(propsData);
+			|| validateExpandable(propsData)
+			|| validateTitle(propsData)
+			|| validateTitleId(propsData);
 		const propsAttr = renderPlaygroundAttrs(propsData);
 
 		if (!fences.length) {

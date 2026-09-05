@@ -123,6 +123,7 @@ Paragraph with **bold** and `inline code`.
 <config lang="json5">
 {
 	views: ['runtime'],
+	title: '基础示例',
 }
 </config>
 -->

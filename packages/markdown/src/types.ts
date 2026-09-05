@@ -18,6 +18,14 @@ export interface MarkdownPlaygroundConfig {
 	 * 多文件模式下的入口文件名，对应 playground `entry`。
 	 */
 	entry?: string;
+	/**
+	 * 运行时顶栏标题，对应 playground `title`。
+	 */
+	title?: string;
+	/**
+	 * 标题锚点 id，对应 playground `id`；未传时由 title 按 markdown heading 规则生成。
+	 */
+	id?: string;
 	views?: PlaygroundView[];
 	viewport?: PlaygroundViewport;
 	/**

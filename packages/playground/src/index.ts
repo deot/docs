@@ -34,3 +34,7 @@ export {
 	resolveHighlightLanguage,
 	vueHighlight
 } from './highlight';
+export {
+	resolvePlaygroundTitleId,
+	slugifyPlaygroundTitle
+} from './utils';

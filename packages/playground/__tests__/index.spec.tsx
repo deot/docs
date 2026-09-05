@@ -861,6 +861,72 @@ describe('Playground', () => {
 		expect(store.options.template.value.welcomeSFC).toContain('<slot />');
 	});
 
+	it('shows a runtime title in the header and popup, but not in styleless or files views', async () => {
+		const runtime = mount(Playground, {
+			attachTo: document.body,
+			props: { modelValue: '<template>titled</template>', title: 'Demo Title' }
+		});
+		const title = runtime.find('.docs-playground__title');
+		expect(title.find('.docs-playground__title-text').text()).toBe('Demo Title');
+		expect(title.attributes('title')).toBe('Demo Title');
+		expect(title.attributes('id')).toBe('demo-title');
+		expect(title.attributes('tabindex')).toBe('-1');
+		expect(title.find('.docs-playground__title-anchor').attributes('href')).toBe('#demo-title');
+
+		await runtime.find('[data-action="open-popup"]').trigger('click');
+		await nextTick();
+		const dialog = document.body.querySelector('.docs-playground-popup');
+		expect(dialog?.querySelector('.docs-playground__title-text')?.textContent).toBe('Demo Title');
+		expect(dialog?.querySelector('.docs-playground__title')?.id).toBe('');
+		expect(dialog?.querySelector('.docs-playground__title-anchor')).toBeNull();
+		(dialog?.querySelector('[data-action="close-popup"]') as HTMLButtonElement | null)?.click();
+		await nextTick();
+		runtime.unmount();
+
+		const customId = mount(Playground, {
+			attachTo: document.body,
+			props: { modelValue: '<template>custom</template>', title: 'Demo Title', id: 'custom-anchor' }
+		});
+		expect(customId.find('.docs-playground__title').attributes('id')).toBe('custom-anchor');
+		expect(customId.find('.docs-playground__title-anchor').attributes('href')).toBe('#custom-anchor');
+		customId.unmount();
+
+		const occupied = document.createElement('div');
+		occupied.id = 'shared-title';
+		document.body.appendChild(occupied);
+		const unique = mount(Playground, {
+			attachTo: document.body,
+			props: { modelValue: '<template>unique</template>', title: 'Shared Title' }
+		});
+		expect(unique.find('.docs-playground__title').attributes('id')).toBe('shared-title-1');
+		unique.unmount();
+		occupied.remove();
+
+		const emptyTitle = mount(Playground, {
+			props: { modelValue: '<template>empty</template>', title: '' }
+		});
+		expect(emptyTitle.find('.docs-playground__title').exists()).toBe(false);
+		emptyTitle.unmount();
+
+		const styleless = mount(Playground, {
+			props: { modelValue: '<template>styleless</template>', styleless: true, title: 'Hidden' }
+		});
+		expect(styleless.find('.docs-playground__title').exists()).toBe(false);
+		styleless.unmount();
+
+		const files = mount(Playground, {
+			props: {
+				files: { 'App.vue': '<template>files</template>' },
+				entry: 'App.vue',
+				views: ['files'],
+				title: 'Files Title'
+			}
+		});
+		expect(files.find('.docs-playground__title').exists()).toBe(false);
+		expect(files.find('.docs-playground__header').exists()).toBe(false);
+		files.unmount();
+	});
+
 	it('supports runtime-only and files-only views', async () => {
 		const runtime = mount(Playground, { props: { modelValue: '<template>runtime</template>' } });
 		expect(runtime.find('.sandbox').exists()).toBe(true);

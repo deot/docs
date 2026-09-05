@@ -1,7 +1,7 @@
 <template>
 	<div class="playground-examples">
 		<h2>仅运行时预览</h2>
-		<Playground v-model="source" :views="['runtime']" />
+		<Playground v-model="source" title="基础运行时" :views="['runtime']" />
 
 		<h2>响应式运行时尺寸</h2>
 		<Playground
@@ -29,6 +29,7 @@
 		<Playground
 			v-model:files="vueFiles"
 			v-model:entry="vueEntry"
+			title="基础运行时"
 			expandable
 			:views="['runtime', 'files']"
 		/>

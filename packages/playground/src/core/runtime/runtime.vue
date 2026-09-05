@@ -22,6 +22,20 @@
 		</div>
 		<div v-else ref="runtimeRoot" class="docs-playground-runtime">
 			<div class="docs-playground__header">
+				<span
+					v-if="displayTitle"
+					ref="titleEl"
+					class="docs-playground__title"
+					:id="titleId"
+					tabindex="-1"
+					:title="displayTitle"
+				>
+					<a
+						class="docs-playground__title-anchor"
+						:href="`#${titleId}`"
+					>#</a>
+					<span class="docs-playground__title-text">{{ displayTitle }}</span>
+				</span>
 				<RuntimeToolbar
 					:copy-value="copyValue"
 					:viewport="viewport"
@@ -105,7 +119,7 @@ import type {
 	PlaygroundViewport,
 	PlaygroundViewsProps
 } from '../../types';
-import { filesEqual, playgroundViewMessage } from '../../utils';
+import { filesEqual, playgroundViewMessage, resolvePlaygroundTitleId } from '../../utils';
 import { resolveSandboxContainer, useSandboxAutoHeight } from './auto-height';
 import type { SandboxExposed } from './auto-height';
 import {
@@ -142,11 +156,15 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	previewOptions?: PlaygroundPreviewOptions;
 	styleless?: boolean;
 	expandable?: PlaygroundExpandable;
+	title?: string;
+	id?: string;
 	viewport?: PlaygroundViewport;
 	viewportOptions?: PlaygroundViewport[];
 }>(), {
 	styleless: false,
 	previewInset: 10,
+	title: '',
+	id: '',
 	activeView: 'runtime',
 	views: () => ['runtime'],
 	viewport: 'auto',
@@ -154,6 +172,17 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 });
 const { locale, t } = useLocale();
 const getViewText = (view: PlaygroundView) => t(playgroundViewMessage(view));
+const displayTitle = computed(() => props.title.trim());
+const titleEl = ref<HTMLElement | null>(null);
+const titleId = computed(() => resolvePlaygroundTitleId(
+	displayTitle.value,
+	props.id,
+	(candidate) => {
+		if (typeof document === 'undefined') return false;
+		const existing = document.getElementById(candidate);
+		return !!existing && existing !== titleEl.value;
+	}
+));
 const emit = defineEmits<{
 	'files-change': [files: PlaygroundFiles, entry: string, action: EditorFilesChangeAction];
 	'view-change': [view: PlaygroundView];
@@ -391,6 +420,7 @@ const handleOpenPopup = () => {
 	Alone.popup({
 		store,
 		copyValue: copyValue.value,
+		title: props.title,
 		viewport: props.viewport,
 		viewportOptions: props.viewportOptions,
 		previewOptions: popupPreviewOptions.value,
@@ -507,6 +537,50 @@ onBeforeUnmount(() => {
 		flex: 0 0 44px;
 	}
 
+	@include element(title) {
+		display: inline-flex;
+		min-width: 0;
+		padding-right: 12px;
+		padding-left: 14px;
+		overflow: hidden;
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 20px;
+		color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
+		flex: 1 1 auto;
+		align-items: center;
+	}
+
+	@include element(title-anchor) {
+		width: 14px;
+		margin-left: -14px;
+		font-size: 12px;
+		line-height: 1;
+		color: inherit;
+		text-align: center;
+		text-decoration: none;
+		opacity: 0;
+		flex: 0 0 14px;
+		transition: opacity 0.2s ease;
+
+		&:focus-visible {
+			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline-offset: 1px;
+			opacity: 1;
+		}
+	}
+
+	@include element(title-text) {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.docs-playground__title:hover .docs-playground__title-anchor {
+		opacity: 1;
+	}
+
 	@include element(views) {
 		display: flex;
 		padding-left: 8px;
@@ -553,6 +627,7 @@ onBeforeUnmount(() => {
 		line-height: 20px;
 		gap: 2px;
 		align-items: center;
+		flex: 0 0 auto;
 	}
 
 	@include element(tool) {

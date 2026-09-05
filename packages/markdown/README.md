@@ -90,6 +90,7 @@ const source = ref('# Hello @deot/docs');
 <config lang="json5">
 {
 	entry: 'main.js',
+	title: '多文件示例',
 	views: ['runtime', 'files'],
 	viewport: 375,
 	viewportOptions: ['auto', 375, [375, 667]]
@@ -111,6 +112,7 @@ createApp(App).mount('#app');
 ````
 
 支持的 `views` 值为 `runtime` 和 `files`。`viewport` 可为 `auto`、正数宽度或 `[width, height]`。
+`title` 为可选字符串，显示在运行时顶栏左侧；空串或不传不渲染。有标题时会生成锚点 id（可用 `#...` 跳转），规则与 markdown heading 一致；也可用 `id` 显式覆盖。
 `expandable` 为可选：`true` 展开到剩余视口，正数为展开目标高度（px）；未配置时不显示展开控件。
 
 Playground 会在浏览器里编译 Vue SFC 的 `<style lang="scss">` 以及独立 `.scss` / `.sass` 文件。下划线 partial（如 `_variables.scss`）只作为 `@use` 依赖，不会单独注入预览。

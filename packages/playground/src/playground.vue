@@ -8,6 +8,8 @@
 		:preview-inset="previewInset"
 		:expandable="expandable"
 		:styleless="true"
+		:title="title"
+		:id="id"
 		:viewport="activeViewport"
 		:viewport-options="selectableViewportOptions"
 		@files-change="handleFilesChange"
@@ -31,6 +33,8 @@
 			:preview-options="previewOptions"
 			:preview-inset="previewInset"
 			:expandable="expandable"
+			:title="title"
+			:id="id"
 			:active-view="activeView"
 			:views="normalizedViews"
 			:viewport="activeViewport"
@@ -101,6 +105,14 @@ const props = withDefaults(defineProps<{
 	 * 预览高度是否可展开。未传不显示控件；`true` 展开到剩余视口；正数为目标高度 px。
 	 */
 	expandable?: PlaygroundExpandable;
+	/**
+	 * 运行时顶栏标题。空串或不传不渲染；files / styleless 视图不展示。
+	 */
+	title?: string;
+	/**
+	 * 标题锚点 id。未传时按 markdown-it-anchor 规则从 `title` 生成。
+	 */
+	id?: string;
 	previewOptions?: PlaygroundPreviewOptions;
 	locale?: Language;
 }>(), {
@@ -110,6 +122,8 @@ const props = withDefaults(defineProps<{
 	views: () => ['runtime'],
 	styleless: false,
 	previewInset: 0,
+	title: '',
+	id: '',
 	options: () => ({})
 });
 const inheritedLocale = useLocale();

@@ -21,3 +21,34 @@ export const filesEqual = (left: PlaygroundFiles, right: PlaygroundFiles) => {
 export const playgroundViewMessage = (view: PlaygroundView) => (
 	view === 'runtime' ? 'playground.runtime.preview' : 'playground.runtime.files'
 );
+
+/**
+ * 与 markdown-it-anchor 默认 `slugify` 对齐，用于标题锚点 id。
+ * @param title 标题文本。
+ * @returns 可用作元素 id / hash 的字符串；空标题返回空串。
+ */
+export const slugifyPlaygroundTitle = (title: string) => {
+	const normalized = String(title).trim().toLowerCase().replace(/\s+/g, '-');
+	return normalized ? encodeURIComponent(normalized) : '';
+};
+
+/**
+ * 解析标题锚点 id：显式 id 优先，否则从标题 slugify；必要时避开已占用 id。
+ * @param title 标题文本。
+ * @param explicitId 可选显式 id。
+ * @param isOccupied 返回该 id 是否已被其他元素占用。
+ * @returns 锚点 id；无标题时为空串。
+ */
+export const resolvePlaygroundTitleId = (
+	title: string,
+	explicitId = '',
+	isOccupied?: (id: string) => boolean
+) => {
+	if (!String(title).trim()) return '';
+	const base = String(explicitId).trim() || slugifyPlaygroundTitle(title);
+	if (!base) return '';
+	if (!isOccupied || !isOccupied(base)) return base;
+	let index = 1;
+	while (isOccupied(`${base}-${index}`)) index += 1;
+	return `${base}-${index}`;
+};

@@ -16,6 +16,13 @@
 		>
 			<div class="docs-playground-popup__frame">
 				<div class="docs-playground-popup__header">
+					<span
+						v-if="title.trim()"
+						class="docs-playground__title"
+						:title="title.trim()"
+					>
+						<span class="docs-playground__title-text">{{ title.trim() }}</span>
+					</span>
 					<RuntimeToolbar
 						:copy-value="copyValue"
 						:viewport="currentViewport"
@@ -81,11 +88,13 @@ import { PLAYGROUND_RUNTIME_CANVAS_BACKGROUND } from '../../store';
 const props = withDefaults(defineProps<{
 	store: Store;
 	copyValue: string;
+	title?: string;
 	viewport?: PlaygroundViewport;
 	viewportOptions?: PlaygroundViewport[];
 	previewOptions?: PlaygroundPreviewOptions;
 	clearConsole?: boolean;
 }>(), {
+	title: '',
 	viewport: 'auto',
 	viewportOptions: () => ['auto', 375],
 	clearConsole: true

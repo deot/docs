@@ -49,6 +49,8 @@ const files = ref({
 | `viewport` | `'auto' \| number \| [number, number]` | `'auto'` | 运行时宽度，或固定宽高。 |
 | `viewportOptions` | `PlaygroundViewport[]` | `['auto', 375]` | 可切换的视口列表。 |
 | `styleless` | `boolean` | `false` | 只渲染无工具栏的运行时预览。 |
+| `title` | `string` | `''` | 运行时顶栏标题；空串或不传不渲染。files / styleless 视图不展示。带标题时生成锚点（`#` 链接），规则对齐 markdown-it-anchor。 |
+| `id` | `string` | `''` | 标题锚点 id；未传时从 `title` 自动生成。仅挂在内联 runtime 标题上，弹窗不重复。 |
 | `expandable` | `true \| number` | `undefined` | 开启预览高度展开；未传不显示控件；`true` 展开到剩余视口；正数为目标高度（px）。 |
 | `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项；`cdnURL` 会同时作用于预览样式和默认 import map。 |
 | `previewOptions` | `SandboxProps['previewOptions']` | `undefined` | 传给当前 iframe 的 preview 选项。 |
@@ -78,6 +80,7 @@ Playground 只接受来自自身 iframe 的导航消息。宿主应用应监听 
 | `resolveHighlightLanguage(filename)` | 将常见扩展名映射为 highlight.js 语言。 |
 | `registerVueHighlight(api?)` | 向 highlight.js 注册 Vue SFC 语法。 |
 | `vueHighlight` | Vue SFC 的 highlight.js 语言定义。 |
+| `slugifyPlaygroundTitle(title)` / `resolvePlaygroundTitleId(title, id?)` | 标题锚点 id，规则对齐 markdown-it-anchor。 |
 | `DEFAULT_CDN_URL` | 默认 CDN 根地址（jsDelivr）。 |
 | `createBuiltinImports(cdnURL?)` / `createBuiltinStyles(cdnURL?)` | 按 CDN 生成内置 import map 与预览样式表 URL。 |
 | `normalizeCdnURL(value?)` | 规范化 CDN 根地址。 |
