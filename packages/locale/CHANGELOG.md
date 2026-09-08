@@ -1,5 +1,14 @@
 # @deot/docs-locale ChangeLog
 
+## v1.1.0
+
+_2026-09-08_
+
+### Features
+
+- feat: add page outline, layout chrome, and a document minimap ([da9d2ab](https://github.com/deot/docs/commit/da9d2ab07bc8620f3ba038939898748bbb5035e2))
+- feat: restyle playground toolbar and preview cards ([22bfedf](https://github.com/deot/docs/commit/22bfedf72eb7f0f3b9e7e1c5b893154ffabc4be5))
+
 ## Unreleased
 
 ### Features

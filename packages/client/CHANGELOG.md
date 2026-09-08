@@ -1,5 +1,20 @@
 # @deot/docs-client ChangeLog
 
+## v1.1.0
+
+_2026-09-08_
+
+### Features
+
+- feat: add page outline, layout chrome, and a document minimap ([da9d2ab](https://github.com/deot/docs/commit/da9d2ab07bc8620f3ba038939898748bbb5035e2))
+- feat: add default and traditional typography themes ([0db9826](https://github.com/deot/docs/commit/0db982685c12b2698fa94588bcec88694bcd7fcd))
+- feat(playground,locale): restyle playground toolbar and preview cards ([22bfedf](https://github.com/deot/docs/commit/22bfedf72eb7f0f3b9e7e1c5b893154ffabc4be5))
+- feat(playground,markdown): add runtime title with heading-style anchors ([830b294](https://github.com/deot/docs/commit/830b2943437dc6159d4544e551c521f9b02043a5))
+
+### Updates
+
+- refactor(playground,markdown): rename expand to expandable ([753e7e5](https://github.com/deot/docs/commit/753e7e57b6f903e73507eacb8cbb17fa0544ba6f))
+
 ## Unreleased
 
 ### Features
