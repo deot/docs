@@ -19,6 +19,7 @@ const {
 	restoreLanguage,
 	persistLanguage,
 	stopTheme,
+	stopContentWidth,
 	stopLanguagePersistence
 } = vi.hoisted(() => ({
 	use: vi.fn(),
@@ -31,6 +32,7 @@ const {
 	restoreLanguage: vi.fn(async () => undefined),
 	persistLanguage: vi.fn(async () => undefined),
 	stopTheme: vi.fn(),
+	stopContentWidth: vi.fn(),
 	stopLanguagePersistence: vi.fn(),
 	router: {
 		name: 'router',
@@ -67,7 +69,8 @@ vi.mock('../src/modules/settings', () => ({
 			persist: persistLanguage
 		}
 	},
-	ThemeRuntime: { start: vi.fn(() => stopTheme) }
+	ThemeRuntime: { start: vi.fn(() => stopTheme) },
+	ContentWidthRuntime: { start: vi.fn(() => stopContentWidth) }
 }));
 
 describe('client entry', () => {

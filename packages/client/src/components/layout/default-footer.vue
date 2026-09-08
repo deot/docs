@@ -1,25 +1,49 @@
 <template>
-	<footer v-if="footer !== false" class="docs-footer">
-		<div v-if="groups.length" class="docs-footer__content">
-			<section v-for="group in groups" :key="group.label" class="docs-footer__group">
-				<h2 class="docs-footer__title">{{ group.label }}</h2>
-				<ul v-if="group.children?.length" class="docs-footer__links">
-					<li v-for="item in group.children" :key="`${item.label}:${item.value || ''}`">
-						<a
-							v-if="item.value && isExternal(item.value)"
-							:href="item.value"
-							target="_blank"
-							rel="noopener noreferrer"
-						>{{ item.label }}</a>
-						<RouterLink v-else-if="item.value" :to="toPath(item.value)">
-							{{ item.label }}
-						</RouterLink>
-						<span v-else>{{ item.label }}</span>
-					</li>
-				</ul>
-			</section>
+	<footer
+		v-if="footer !== false"
+		class="docs-footer"
+		:data-content-width="contentWidth"
+	>
+		<div v-if="groups.length" class="docs-footer__inner">
+			<div class="docs-footer__content">
+				<section v-for="group in groups" :key="group.label" class="docs-footer__group">
+					<h2 class="docs-footer__title">{{ group.label }}</h2>
+					<ul v-if="group.children?.length" class="docs-footer__links">
+						<li v-for="item in group.children" :key="`${item.label}:${item.value || ''}`">
+							<a
+								v-if="item.value && isExternal(item.value)"
+								:href="item.value"
+								target="_blank"
+								rel="noopener noreferrer"
+							>{{ item.label }}</a>
+							<RouterLink v-else-if="item.value" :to="toPath(item.value)">
+								{{ item.label }}
+							</RouterLink>
+							<span v-else>{{ item.label }}</span>
+						</li>
+					</ul>
+				</section>
+			</div>
 		</div>
-		<div v-if="poweredBy" class="docs-footer__powered-by">{{ poweredBy }}</div>
+		<div class="docs-footer__bar">
+			<div class="docs-footer__bar-inner">
+				<a
+					v-if="brandExternal"
+					class="docs-footer__brand"
+					:href="brandValue"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					<img v-if="brandLogo" class="docs-footer__brand-logo" :src="brandLogo" alt="">
+					{{ brandLabel }}
+				</a>
+				<RouterLink v-else class="docs-footer__brand" :to="brandPath">
+					<img v-if="brandLogo" class="docs-footer__brand-logo" :src="brandLogo" alt="">
+					{{ brandLabel }}
+				</RouterLink>
+				<div v-if="poweredBy" class="docs-footer__powered-by">{{ poweredBy }}</div>
+			</div>
+		</div>
 	</footer>
 </template>
 <script setup lang="ts">
@@ -29,6 +53,10 @@ import { useLocale } from '@deot/docs-locale';
 import { getDocsConfig } from '../../utils/runtime';
 import { getDefaultLanguage } from '../../utils/resolver';
 import { findLanguageValue } from '../../utils/sidebar';
+import { localizePath } from '../../utils/route';
+import { isExternalLink } from '../../utils/link';
+import { ContentWidth } from '../../modules/settings';
+import { sidebarItems } from '../../modules/sidebar';
 import type {
 	DocsFooterOptions,
 	DocsFooterPoweredBy,
@@ -40,6 +68,11 @@ const { lang, t } = useLocale();
 const route = useRoute();
 const config = getDocsConfig();
 const footer = config.layout?.footer;
+const brandOptions = config.layout?.header?.brand;
+/** Home / no-sidebar pages stay on the wide column; docs with a sidebar follow the toggle. */
+const contentWidth = computed(() => (
+	sidebarItems.value?.length ? ContentWidth.current.value : 'wide'
+));
 
 const normalizeRepository = (value?: string) => {
 	if (!value) return;
@@ -115,6 +148,13 @@ const poweredBy = computed(() => {
 	}
 	return value || '';
 });
+const brandLogo = computed(() => resolveLocalized(brandOptions?.logo) || '');
+const brandLabel = computed(() => (
+	resolveLocalized(brandOptions?.label) || config.namespace || t('client.header.brand')
+));
+const brandValue = computed(() => resolveLocalized(brandOptions?.value) || `/${lang.value}`);
+const brandExternal = computed(() => isExternalLink(brandValue.value));
+const brandPath = computed(() => localizePath(config, lang.value, brandValue.value));
 const isExternal = (value: string) => (
 	/^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith('//')
 );
@@ -129,96 +169,138 @@ const toPath = (value: string) => {
 @include block(docs-footer) {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
+	align-items: stretch;
+	width: 100%;
 	font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 	font-size: 14px;
-	line-height: 1.5;
-	color: #fff;
-	background: varfix(footer-background);
+	line-height: 28px;
+	color: varfix(foreground-color);
+	background: transparent;
+
+	&:has(.docs-footer__content) {
+		border-top: 1px solid varfix(pattern-fg);
+	}
+
+	@include element(inner) {
+		width: 100%;
+		max-width: 1020px;
+		margin: 0 auto;
+		border-right: 1px solid varfix(pattern-fg);
+		border-left: 1px solid varfix(pattern-fg);
+		box-sizing: border-box;
+	}
 
 	@include element(content) {
-		display: flex;
-		flex-wrap: wrap;
+		display: grid;
 		width: 100%;
-		max-width: 1180px;
-		padding: 100px 50px 70px;
+		box-sizing: border-box;
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	@include element(group) {
-		flex: 2 1 0;
+		padding: 32px 24px;
 		margin: 0;
+		box-sizing: border-box;
 	}
 
 	@include element(title) {
-		margin: 15px 0 0;
-		font-size: 16px;
-		font-weight: 400;
-		opacity: .5;
+		margin: 0;
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 28px;
+		color: varfix(foreground-color);
 	}
 
 	@include element(links) {
 		display: grid;
+		gap: 16px;
 		padding: 0;
-		margin: 30px 0 0;
+		margin: 16px 0 0;
 		list-style: none;
 
 		li {
-			width: 200px;
-			margin: 6px 0;
+			margin: 0;
 		}
 
-		a {
-			color: inherit;
+		a,
+		span {
+			color: varfix(foreground-color);
 			text-decoration: none;
-
-			&:hover { color: varfix(link-color); }
 		}
+
+		a:hover {
+			text-decoration: underline;
+		}
+	}
+
+	@include element(bar) {
+		width: 100%;
+		border-top: 1px solid varfix(pattern-fg);
+	}
+
+	@include element(bar-inner) {
+		display: flex;
+		width: 100%;
+		max-width: 1020px;
+		padding: 40px 8px 96px;
+		margin: 0 auto;
+		font-size: 14px;
+		line-height: 24px;
+		box-sizing: border-box;
+		flex-wrap: wrap;
+		gap: 12px 24px;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	&[data-content-width='wide'],
+	&[data-content-width='full'] {
+		.docs-footer__inner,
+		.docs-footer__bar-inner {
+			max-width: 1200px;
+		}
+	}
+
+	@include element(brand) {
+		display: inline-flex;
+		gap: 8px;
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 24px;
+		color: varfix(foreground-color);
+		text-decoration: none;
+		align-items: center;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+
+	@include element(brand-logo) {
+		display: block;
+		width: 20px;
+		height: 20px;
+		object-fit: contain;
 	}
 
 	@include element(powered-by) {
-		width: calc(100% - 100px);
-		padding: 16px 40px;
-		color: varfix(footer-foreground);
-		text-align: center;
-		border-top: 1px solid #666;
+		color: varfix(foreground-color-light);
+		text-align: right;
 	}
 }
 
-@media screen and (width <= 768px) {
+@media screen and (width >= 768px) {
 	@include block(docs-footer) {
 		@include element(content) {
-			gap: 32px 24px;
-			padding: 48px 24px 36px;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
 		}
 
-		@include element(group) { flex: 1 1 140px; }
+		@include element(group) {
+			padding: 40px 8px;
 
-		@include element(links) {
-			li { width: auto; }
-		}
-
-		@include element(powered-by) {
-			width: calc(100% - 48px);
-			padding: 16px 0;
-		}
-	}
-}
-
-@media screen and (width <= 480px) {
-	@include block(docs-footer) {
-		@include element(content) {
-			display: grid;
-			grid-template-columns: minmax(0, 1fr);
-			gap: 24px;
-			padding: 36px 20px 28px;
-		}
-
-		@include element(title) { margin-top: 0; }
-
-		@include element(links) { margin-top: 16px; }
-
-		@include element(powered-by) {
-			width: calc(100% - 40px);
+			& + .docs-footer__group {
+				border-left: 1px solid varfix(pattern-fg);
+			}
 		}
 	}
 }

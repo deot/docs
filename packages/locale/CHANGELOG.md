@@ -1,5 +1,13 @@
 # @deot/docs-locale ChangeLog
 
+## Unreleased
+
+### Features
+
+- feat(locale): add markdown page footer navigation copy
+- feat(locale): add markdown content-width toggle copy
+- feat(locale): add markdown page outline copy
+
 ## v1.0.8
 
 _2026-09-04_

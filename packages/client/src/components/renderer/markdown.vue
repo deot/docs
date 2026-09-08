@@ -8,6 +8,7 @@
 			:indicator="indicator"
 			:locale="context.locale"
 			:theme="markdownTheme"
+			:playground="playgroundDefaults"
 		/>
 	</div>
 </template>
@@ -17,13 +18,16 @@ import { Markdown } from '@deot/docs-markdown';
 import { useLocale } from '@deot/docs-locale';
 import type { RendererModuleViewerProps } from '@deot/docs-renderer';
 import { Gateway } from '../../modules/gateway';
+import {
+	resolveDocsMarkdownComponent,
+	resolveDocsPlaygroundComponent
+} from '../../utils/components';
 import { createResourceIdentity, resolveResource } from '../../utils/resolver';
 import { getDocsConfig } from '../../utils/runtime';
 import {
 	docsMarkdownIndicator,
 	docsMarkdownInlineContent,
-	normalizeDocsMarkdownProps,
-	resolveDocsMarkdownTheme
+	normalizeDocsMarkdownProps
 } from './markdown-props';
 
 const props = defineProps<RendererModuleViewerProps>();
@@ -33,8 +37,15 @@ const content = ref('');
 const error = ref('');
 const loading = ref(false);
 const markdownProps = computed(() => normalizeDocsMarkdownProps(props.node.module.props));
-const indicator = computed(() => docsMarkdownIndicator(markdownProps.value.options));
-const markdownTheme = computed(() => resolveDocsMarkdownTheme(docs.markdownTheme));
+const markdownDefaults = computed(() => resolveDocsMarkdownComponent(docs));
+const markdownTheme = computed(() => markdownDefaults.value.theme);
+const indicator = computed(() => {
+	const moduleIndicator = markdownProps.value.options?.indicator;
+	if (typeof moduleIndicator !== 'undefined') return docsMarkdownIndicator(markdownProps.value.options);
+	if (typeof markdownDefaults.value.indicator !== 'undefined') return markdownDefaults.value.indicator;
+	return true;
+});
+const playgroundDefaults = computed(() => resolveDocsPlaygroundComponent(docs));
 let controller: AbortController | undefined;
 let unsubscribe: (() => void) | undefined;
 let generation = 0;

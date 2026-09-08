@@ -236,7 +236,14 @@ describe('dever configuration', () => {
 		const sidebar = config.routes['/packages/guide'].sidebar['en-US'];
 		expect(sidebar)
 			.toEqual([
-				{ label: 'Introduction', value: '/packages/guide' },
+				{
+					label: 'Introduction',
+					icon: 'file',
+					children: [
+						{ label: 'Getting Started', value: '/packages/guide' },
+						{ label: 'Markdown', value: '/guide/markdown' }
+					]
+				},
 				{
 					label: 'Packages',
 					children: expect.arrayContaining([
@@ -253,7 +260,14 @@ describe('dever configuration', () => {
 		});
 		expect(config.routes['/packages/guide']).toMatchObject({ value: 'guide' });
 		expect(config.routes['/packages/guide'].sidebar['zh-CN'][0])
-			.toEqual({ label: '简介', value: '/packages/guide' });
+			.toEqual({
+				label: '简介',
+				icon: 'file',
+				children: [
+					{ label: '开始使用', value: '/packages/guide' },
+					{ label: 'Markdown', value: '/guide/markdown' }
+				]
+			});
 	});
 
 	it('exports run and creates isolated development, build and preview configs', () => {

@@ -1,9 +1,34 @@
 <template>
 	<ul class="docs-sidebar" :class="{ 'docs-sidebar--nested': nested }">
-		<li v-for="item in items" :key="`${item.label}:${item.value || ''}`">
-			<a v-if="item.value && isExternal(item.value)" :href="item.value">{{ item.label }}</a>
-			<RouterLink v-else-if="item.value" :to="toPath(item.value)">{{ item.label }}</RouterLink>
-			<span v-else class="docs-sidebar__label">{{ item.label }}</span>
+		<li
+			v-for="item in items"
+			:key="`${item.label}:${item.value || ''}`"
+			class="docs-sidebar__item"
+		>
+			<a
+				v-if="item.value && isExternal(item.value)"
+				class="docs-sidebar__link"
+				:href="item.value"
+			>
+				<SidebarGlyph :item="item" />
+				<span class="docs-sidebar__text">{{ item.label }}</span>
+				<span v-if="item.tag" class="docs-sidebar__tag">{{ item.tag }}</span>
+			</a>
+			<RouterLink
+				v-else-if="item.value"
+				class="docs-sidebar__link"
+				:class="{ 'is-active': isItemActive(item.value) }"
+				:to="toPath(item.value)"
+			>
+				<SidebarGlyph :item="item" :selected="isItemActive(item.value)" />
+				<span class="docs-sidebar__text">{{ item.label }}</span>
+				<span v-if="item.tag" class="docs-sidebar__tag">{{ item.tag }}</span>
+			</RouterLink>
+			<span v-else class="docs-sidebar__label">
+				<SidebarGlyph :item="item" />
+				<span class="docs-sidebar__text">{{ item.label }}</span>
+				<span v-if="item.tag" class="docs-sidebar__tag">{{ item.tag }}</span>
+			</span>
 			<DefaultSidebar v-if="item.children?.length" :items="item.children" nested />
 		</li>
 	</ul>
@@ -11,6 +36,7 @@
 <script setup lang="ts">
 import { RouterLink, useRoute } from 'vue-router';
 import type { SidebarItem } from '../../types';
+import SidebarGlyph from './sidebar-glyph.vue';
 
 defineOptions({ name: 'DefaultSidebar' });
 defineProps<{ items: SidebarItem[]; nested?: boolean }>();
@@ -22,91 +48,204 @@ const toPath = (value: string) => {
 	const lang = String(route.params.lang || '');
 	return `/${lang}/${value.replace(/^\/+/, '')}`;
 };
+const isItemActive = (value: string) => {
+	const target = toPath(value);
+	return route.path === target || route.path.startsWith(`${target}/`);
+};
 </script>
 <style lang="scss">
 @use '../../styles/bem' as *;
 
 @include block(docs-sidebar) {
-	display: grid;
-	grid-auto-rows: max-content;
-	width: 260px;
-	padding: 29px 0 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 100%;
+	padding: 24px;
 	margin: 0;
 	list-style: none;
-	align-content: start;
 
 	@include modifier(nested) {
-		width: 100%;
+		gap: 8px;
 		padding: 0;
+		margin: 0;
+		border-left: 1px solid color-mix(in srgb, varfix(foreground-color) 10%, transparent);
 	}
 
-	li {
+	@include element(item) {
 		padding: 0;
 		margin: 0;
 		list-style: none;
+	}
 
-		a {
-			display: grid;
-			height: 36px;
-			padding-left: 54px;
-			font-size: 14px;
-			font-weight: 400;
-			color: varfix(foreground-color-light);
-			cursor: pointer;
-			border-right: 3px solid transparent;
-			align-items: center;
+	@include element(link) {
+		display: inline-flex;
+		gap: 12px;
+		max-width: 100%;
+		padding: 0;
+		font-size: 14px;
+		font-weight: 400;
+		line-height: 28px;
+		color: varfix(foreground-color-light);
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+		border-radius: 0;
+		align-items: center;
 
-			&:hover {
-				color: varfix(link-color);
-				background: varfix(background-color-soft);
-			}
+		&:hover {
+			color: varfix(foreground-color);
+			background: transparent;
+		}
 
-			&.router-link-active {
-				color: varfix(primary-color);
-				background: varfix(primary-color-light);
-				border-right-color: varfix(primary-color);
-			}
+		&.is-active,
+		&.router-link-active {
+			font-weight: 600;
+			color: varfix(foreground-color);
+			background: transparent;
 		}
 	}
 
 	@include element(label) {
-		display: grid;
-		height: 40px;
-		padding-left: 42px;
-		font-size: 14px;
-		font-weight: 600;
-		color: varfix(foreground-color);
+		display: flex;
+		padding: 0;
+		margin: 24px 0 12px;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 24px;
+		letter-spacing: 0.1em;
+		color: varfix(foreground-color-mute);
+		text-transform: uppercase;
+		gap: 8px;
 		align-items: center;
 	}
 
-	&--nested &__label {
-		height: 36px;
-		padding: 10px 0 0 54px;
-		font-size: 12px;
-		font-weight: 400;
-		color: varfix(foreground-color-mute);
-		align-items: end;
+	> .docs-sidebar__item:first-child > .docs-sidebar__label {
+		margin-top: 0;
 	}
-}
 
-@media screen and (width <= 768px) {
-	@include block(docs-sidebar) {
-		width: 100%;
-		padding-top: 12px;
+	@include modifier(nested) {
+		@include element(link) {
+			display: flex;
+			width: 100%;
+			padding: 0 0 0 16px;
+			margin-left: -1px;
+			font-size: 14px;
+			line-height: 24px;
+			border-left: 1px solid transparent;
 
-		li a {
-			height: 44px;
-			padding-left: 32px;
+			&:hover {
+				border-left-color: color-mix(in srgb, varfix(foreground-color) 25%, transparent);
+			}
+
+			&.is-active,
+			&.router-link-active {
+				border-left-color: varfix(foreground-color);
+			}
 		}
 
 		@include element(label) {
-			height: 44px;
-			padding-left: 24px;
+			padding-left: 16px;
+			margin: 16px 0 12px;
+		}
+	}
+
+	@include element(icon) {
+		display: inline-flex;
+		width: 16px;
+		height: 16px;
+		font-size: 16px;
+		color: inherit;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+
+		.vc-icon {
+			font-size: 16px;
+			color: inherit;
 		}
 
-		&--nested &__label {
-			height: 40px;
-			padding-left: 32px;
+		svg {
+			display: block;
+			width: 16px;
+			height: 16px;
+		}
+	}
+
+	@include element(media) {
+		display: block;
+		width: 16px;
+		height: 16px;
+		object-fit: contain;
+	}
+
+	@include element(glyph) {
+		display: block;
+		width: 16px;
+		height: 16px;
+		font-size: 16px;
+	}
+
+	@include element(text) {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		flex: 1 1 auto;
+	}
+
+	@include element(tag) {
+		position: relative;
+		display: inline-flex;
+		padding: 0 6px;
+		margin-left: auto;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+		font-size: 10px;
+		font-weight: 500;
+		line-height: 18px;
+		letter-spacing: 0.04em;
+		color: varfix(link-color);
+		white-space: nowrap;
+		background: color-mix(in srgb, varfix(link-color) 12%, transparent);
+		border: 1px dashed color-mix(in srgb, varfix(link-color) 48%, transparent);
+		flex-shrink: 0;
+		align-items: center;
+
+		&::before {
+			position: absolute;
+			color: color-mix(in srgb, varfix(link-color) 55%, white);
+			pointer-events: none;
+			background-image:
+				linear-gradient(currentcolor, currentcolor),
+				linear-gradient(currentcolor, currentcolor),
+				linear-gradient(currentcolor, currentcolor),
+				linear-gradient(currentcolor, currentcolor),
+				linear-gradient(currentcolor, currentcolor),
+				linear-gradient(currentcolor, currentcolor),
+				linear-gradient(currentcolor, currentcolor),
+				linear-gradient(currentcolor, currentcolor);
+			background-position:
+				0 2px,
+				2px 0,
+				100% 2px,
+				calc(100% - 2px) 0,
+				0 calc(100% - 2px),
+				2px 100%,
+				100% calc(100% - 2px),
+				calc(100% - 2px) 100%;
+			background-repeat: no-repeat;
+			background-size:
+				5px 1px,
+				1px 5px,
+				5px 1px,
+				1px 5px,
+				5px 1px,
+				1px 5px,
+				5px 1px,
+				1px 5px;
+			content: "";
+			inset: -2.5px;
 		}
 	}
 }

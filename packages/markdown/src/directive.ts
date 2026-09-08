@@ -27,7 +27,15 @@ const resolveBlockLanguage = (block: Element) => {
 interface MarkdownDirectiveValue {
 	source?: string;
 	locale: Language;
+	/**
+	 * 站点级 Playground 默认 props；块级 JSON5 会覆盖。
+	 */
+	playground?: MarkdownPlaygroundConfig;
 }
+
+const serializePlaygroundDefaults = (value?: MarkdownPlaygroundConfig) => (
+	JSON.stringify(value || {})
+);
 
 const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirectiveValue>) => {
 	cleanup(el);
@@ -59,6 +67,9 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirecti
 		apps.push(app);
 	});
 
+	const sitePlaygroundDefaults = binding.value.playground && typeof binding.value.playground === 'object'
+		? binding.value.playground
+		: {};
 	playgrounds.forEach((item) => {
 		const code = item.dataset.code;
 		let files: PlaygroundFiles | undefined;
@@ -73,6 +84,7 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirecti
 			? { files, entry: item.dataset.entry }
 			: { modelValue: code };
 		const app = createApp(() => h(DocsPlayground.Playground, {
+			...sitePlaygroundDefaults,
 			...(typeof propsData === 'object' ? propsData : {}),
 			...runtimeProps,
 			locale: binding.value.locale
@@ -86,7 +98,12 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirecti
 
 const update = (el: HTMLElement, binding: DirectiveBinding<MarkdownDirectiveValue>) => {
 	if (binding.value.source !== binding.oldValue?.source
-		|| binding.value.locale !== binding.oldValue?.locale) void render(el, binding);
+		|| binding.value.locale !== binding.oldValue?.locale
+		|| serializePlaygroundDefaults(binding.value.playground)
+		!== serializePlaygroundDefaults(binding.oldValue?.playground)
+	) {
+		void render(el, binding);
+	}
 };
 
 export const vMarkdown = {

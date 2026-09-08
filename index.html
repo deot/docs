@@ -39,18 +39,17 @@
 			{ label: '@deot/docs-renderer', value: 'renderer' },
 			{ label: '@deot/docs-theme', value: 'theme' }
 		];
-		const packageReadmes = Object.fromEntries(packages.map(item => [
-			item.value,
-			`packages/${item.value}/README.md`
-		]));
-		const readmes = {
-			guide: 'README.md',
-			...packageReadmes
-		};
-		const readmeRoutes = Object.fromEntries(Object.entries(readmes).map(([value, source]) => [
-			source,
-			`/packages/${value}`
-		]));
+		const documents = [
+			{ value: 'guide', source: 'README.md', route: '/packages/guide' },
+			{ value: 'markdown-sample', source: 'docs/markdown.md', route: '/guide/markdown' },
+			...packages.map(item => ({
+				value: item.value,
+				source: `packages/${item.value}/README.md`,
+				route: `/packages/${item.value}`
+			}))
+		];
+		const readmes = Object.fromEntries(documents.map(item => [item.value, item.source]));
+		const readmeRoutes = Object.fromEntries(documents.map(item => [item.source, item.route]));
 		const localeReadmes = Object.fromEntries(Object.keys(locales).map(lang => [
 			lang,
 			readmes
@@ -60,13 +59,24 @@
 			[
 				{
 					label: lang === 'zh-CN' ? '简介' : 'Introduction',
-					value: '/packages/guide'
+					icon: 'file',
+					children: [
+						{
+							label: lang === 'zh-CN' ? '开始使用' : 'Getting Started',
+							value: '/packages/guide'
+						},
+						{
+							label: 'Markdown',
+							value: '/guide/markdown'
+						}
+					]
 				},
 				{
-					label: lang === 'zh-CN' ? '包' : 'Packages',
+					label: 'Packages',
 					children: packages.map(item => ({
 						label: item.label,
-						value: `/packages/${item.value}`
+						value: `/packages/${item.value}`,
+						...(item.value === 'playground' ? { tag: 'v1.1.0' } : {})
 					}))
 				}
 			]
@@ -275,8 +285,8 @@
 						'en-US': createHomeDocument('en-US')
 					}
 				}],
-				...Object.keys(readmes).map(value => [`/packages/${value}`, {
-					value,
+				...documents.map(item => [item.route, {
+					value: item.value,
 					content: 'default',
 					sidebar: sidebars,
 					header: 'default',
@@ -286,7 +296,7 @@
 				['*', '/packages/guide']
 			]),
 			resolve: {
-				// 两种语言暂时共用仓库内的 README，后续可只替换对应语言的映射。
+				// 两种语言暂时共用仓库内的 Markdown，后续可只替换对应语言的映射。
 				markdown: ({ lang, value }) => (
 					localeReadmes[lang] || localeReadmes['en-US']
 				)[value],
@@ -297,6 +307,11 @@
 							: new URL(source, repository).href;
 					}
 					if (/^packages\/[^/]+\/README\.md$/.test(source)) {
+						return runtime.mode === 'development'
+							? `/${source}`
+							: new URL(source, repository).href;
+					}
+					if (/^docs\/[^/]+\.md$/.test(source)) {
 						return runtime.mode === 'development'
 							? `/${source}`
 							: new URL(source, repository).href;

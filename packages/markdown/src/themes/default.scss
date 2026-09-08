@@ -439,6 +439,7 @@ $sign: md;
 				font-weight: 600;
 				line-height: 28px;
 				color: #030712;
+				text-align: left;
 				white-space: normal;
 				vertical-align: middle;
 				background-color: transparent;
@@ -465,8 +466,19 @@ $sign: md;
 			& table[#{$sign}] td {
 				padding: 10px 8px;
 				line-height: 28px;
+				text-align: left;
 				vertical-align: middle;
 				background-color: transparent;
+			}
+
+			& table[#{$sign}] th[align='center'],
+			& table[#{$sign}] td[align='center'] {
+				text-align: center;
+			}
+
+			& table[#{$sign}] th[align='right'],
+			& table[#{$sign}] td[align='right'] {
+				text-align: right;
 			}
 
 			& table[#{$sign}] code[#{$sign}]:not(.hljs),

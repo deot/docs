@@ -1,7 +1,7 @@
 <template>
 	<div class="docs-markdown" :class="`docs-markdown--${resolvedTheme}`">
 		<MarkdownIndicator
-			v-if="indicatorOptions"
+			v-if="indicatorOptions && content"
 			:target="content"
 			:options="indicatorOptions"
 		/>
@@ -14,7 +14,11 @@ import { provideLocale, useLocale } from '@deot/docs-locale';
 import type { Language } from '@deot/docs-locale';
 import { vMarkdown } from './directive';
 import MarkdownIndicator from './indicator.vue';
-import type { MarkdownIndicatorConfig, MarkdownTheme } from './types';
+import type {
+	MarkdownIndicatorConfig,
+	MarkdownPlaygroundConfig,
+	MarkdownTheme
+} from './types';
 
 // 后续再处理内容变更。
 defineEmits<{
@@ -28,11 +32,16 @@ const props = withDefaults(defineProps<{
 	 * 排版皮肤。与站点 light/dark（`data-doc-theme`）正交。
 	 */
 	theme?: MarkdownTheme;
+	/**
+	 * Playground 站点默认 props。`:::playground` 块配置会浅合并覆盖。
+	 */
+	playground?: MarkdownPlaygroundConfig;
 	modelValue?: string;
 	value?: string;
 }>(), {
 	indicator: true,
-	theme: 'default'
+	theme: 'default',
+	playground: () => ({})
 });
 
 const content = ref<HTMLElement>();
@@ -51,7 +60,11 @@ const resolvedTheme = computed<MarkdownTheme>(() => (
 const source = computed(() => typeof props.modelValue === 'string'
 	? props.modelValue
 	: props.value);
-const markdownBinding = computed(() => ({ source: source.value, locale: locale.value }));
+const markdownBinding = computed(() => ({
+	source: source.value,
+	locale: locale.value,
+	playground: props.playground
+}));
 </script>
 <style lang="scss">
 @use '@deot/style/src/mixins/bem' as *;

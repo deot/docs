@@ -1,5 +1,15 @@
 # @deot/docs-client ChangeLog
 
+## Unreleased
+
+### Features
+
+- feat: add a markdown page outline beside the article
+- feat: default markdown pages to the wide content width
+- feat: keep the site footer inner width aligned with markdown content width
+- fix: cap the site footer at the wide column when content width is full
+- fix: lock the site footer to the wide column on pages without a sidebar
+
 ## v1.0.10
 
 _2026-09-04_

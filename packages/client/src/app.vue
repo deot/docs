@@ -62,10 +62,12 @@
 				content-class="docs-layout__content"
 				wrapper-style="overflow-x: hidden;"
 			>
+				<div class="docs-layout__rail docs-layout__rail--start" aria-hidden="true"></div>
 				<main class="docs-layout__main">
 					<RouterView />
 					<RouterView name="extra" />
 				</main>
+				<div class="docs-layout__rail docs-layout__rail--end" aria-hidden="true"></div>
 				<div class="docs-layout__footer"><ResourceSlot name="footer" /></div>
 			</Scroller>
 		</div>
@@ -196,21 +198,10 @@ a {
 	display: grid;
 	grid-area: body;
 	grid-template-areas: "sidebar main";
-	grid-template-columns: 260px minmax(0, 1fr);
+	grid-template-columns: 288px minmax(0, 1fr);
 	min-width: 0;
 	min-height: 0;
 	overflow: hidden;
-
-	&::after {
-		position: absolute;
-		top: -1px;
-		left: 0;
-		width: 100%;
-		height: 1px;
-		pointer-events: none;
-		content: "";
-		box-shadow: 0 2px 8px varfix(border-color-light);
-	}
 
 	&:not(:has(.docs-sidebar)) {
 		grid-template-areas: "main";
@@ -219,16 +210,11 @@ a {
 		@include element(sidebar) {
 			display: none;
 		}
-
 	}
 
 	@include modifier(database) {
 		grid-template-areas: "main";
 		grid-template-columns: minmax(0, 1fr);
-
-		&::after {
-			display: none;
-		}
 
 		@include element(sidebar) {
 			display: none;
@@ -241,25 +227,35 @@ a {
 		@include element(footer) {
 			display: none;
 		}
+
+		@include element(rail) {
+			display: none;
+		}
+
+		@include element(content) {
+			grid-template-areas:
+				"main"
+				"footer";
+			grid-template-columns: minmax(0, 1fr);
+		}
 	}
 
 	@include modifier(editor) {
 		grid-template-areas: "main";
 		grid-template-columns: minmax(0, 1fr);
 
-		&::after { display: none; }
-
 		@include element(sidebar) { display: none; }
 
 		@include element(footer) { display: none; }
 
+		@include element(rail) { display: none; }
+
 		@include element(main-scroller) { overflow: hidden; }
 
 		@include element(content) {
-			grid-template-areas: "main";
-			grid-template-rows: minmax(0, 1fr);
 			height: 100%;
 			min-height: 0;
+			grid-template: "main" minmax(0, 1fr) / minmax(0, 1fr);
 		}
 
 		@include element(main) {
@@ -274,6 +270,21 @@ a {
 		@include element(main) {
 			padding: 0;
 		}
+
+		@include element(rail) {
+			display: none;
+		}
+
+		@include element(sidebar) {
+			border-right: 1px solid varfix(pattern-fg);
+		}
+
+		@include element(content) {
+			grid-template-areas:
+				"main"
+				"footer";
+			grid-template-columns: minmax(0, 1fr);
+		}
 	}
 
 	@include element(sidebar) {
@@ -282,7 +293,6 @@ a {
 		min-height: 0;
 		overflow: hidden;
 		background: varfix(background-color);
-		border-right: 1px solid varfix(border-color);
 	}
 
 	@include element(sidebar-scroller) {
@@ -303,12 +313,37 @@ a {
 
 	@include element(content) {
 		display: grid;
-		grid-template-areas:
-			"main"
-			"footer";
-		grid-template-rows: minmax(min-content, 1fr) auto;
 		min-height: 100%;
 		overflow-anchor: none;
+		grid-template:
+			"rail-start main rail-end" minmax(min-content, 1fr)
+			"rail-start footer rail-end" auto
+			/ 40px minmax(0, 1fr) 40px;
+	}
+
+	@include element(rail) {
+		width: 40px;
+		min-width: 40px;
+		pointer-events: none;
+		background-attachment: fixed;
+		background-image: repeating-linear-gradient(
+			315deg,
+			varfix(pattern-fg) 0,
+			varfix(pattern-fg) 1px,
+			transparent 0,
+			transparent 50%
+		);
+		background-size: 10px 10px;
+		border-right: 1px solid varfix(pattern-fg);
+		border-left: 1px solid varfix(pattern-fg);
+
+		@include modifier(start) {
+			grid-area: rail-start;
+		}
+
+		@include modifier(end) {
+			grid-area: rail-end;
+		}
 	}
 
 	@include element(main) {
@@ -335,6 +370,25 @@ a {
 	@include element(footer) {
 		grid-area: footer;
 		min-width: 0;
+	}
+}
+
+@media screen and (width <= 1024px) {
+	@include block(docs-layout) {
+		@include element(rail) {
+			display: none;
+		}
+
+		@include element(sidebar) {
+			border-right: 1px solid varfix(pattern-fg);
+		}
+
+		@include element(content) {
+			grid-template-areas:
+				"main"
+				"footer";
+			grid-template-columns: minmax(0, 1fr);
+		}
 	}
 }
 

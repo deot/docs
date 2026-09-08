@@ -317,14 +317,24 @@ export const createVcStubs = (options: VcStubOptions = {}) => ({
 			/>
 		)
 	}),
+	Icon: defineComponent({
+		name: 'Icon',
+		props: { type: String },
+		setup: props => () => (
+			<span class="vc-icon" data-type={props.type} />
+		)
+	}),
 	Scroller: defineComponent({
+
 		name: 'Scroller',
 		props: { contentClass: String },
 		setup: (props, { expose, slots }) => {
-			expose({ setScrollTop: options.setScrollTop });
+			expose({ setScrollTop: options.setScrollTop || (() => undefined) });
 			return () => (
 				<div class="test-scroller">
-					<div class={props.contentClass}>{slots.default?.()}</div>
+					<div class="vc-scroller__wrapper">
+						<div class={props.contentClass}>{slots.default?.()}</div>
+					</div>
 				</div>
 			);
 		}

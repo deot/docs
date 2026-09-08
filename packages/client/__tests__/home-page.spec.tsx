@@ -89,6 +89,30 @@ describe('built-in home page', () => {
 		}));
 	});
 
+	it('forwards site renderer fit to the published canvas', async () => {
+		const page: RendererDocument = {
+			schemaVersion: 2,
+			meta: { id: 'fit-home', title: 'Fit' },
+			layout,
+			blocks: [
+				{ id: 'title', module: { type: 'title', version: 1, props: { text: 'Fit home' } }, appearance }
+			]
+		};
+		window.$docs.routes['/'] = { content: { 'zh-CN': page } };
+		window.$docs.components = { renderer: { fit: 'contain' } };
+		const Host = defineComponent({
+			setup() {
+				provideLocale(resolveLocale('zh-CN', {
+					'zh-CN': { label: '简体中文' }
+				}));
+				return () => <HomePage />;
+			}
+		});
+		const wrapper = mount(Host);
+		await vi.waitFor(() => expect(wrapper.text()).toContain('Fit home'));
+		expect(wrapper.findComponent(Renderer).props('fit')).toBe('contain');
+	});
+
 	it('applies valid cached updates and keeps the previous page after an invalid update', async () => {
 		window.$docs.routes['/'] = { content: { 'zh-CN': './home.page.json' } };
 		let listener: Parameters<typeof Gateway.subscribe>[1] | undefined;

@@ -4,6 +4,7 @@ export interface ClientLocaleMessages {
 	common: Record<string, string>;
 	footer: Record<string, string>;
 	header: Record<string, string>;
+	page: Record<string, string>;
 	home: Record<string, string>;
 	demos: Record<string, string>;
 	search: Record<string, string>;

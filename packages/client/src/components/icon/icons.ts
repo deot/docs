@@ -88,6 +88,30 @@ export const CLIENT_ICON_DEFINITIONS = {
 			'M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z',
 			'M10 9.5 8 12l2 2.5M14 9.5 16 12l-2 2.5'
 		].join('')
+	},
+	widthRegular: {
+		filled: false,
+		path: [
+			'M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z',
+			'M7 8h10'
+		].join('')
+	},
+	widthWide: {
+		filled: false,
+		path: [
+			'M3 3h18a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z',
+			'M3 8h18',
+			'M12 8v13'
+		].join('')
+	},
+	widthFull: {
+		filled: false,
+		path: [
+			'M15 3h6v6',
+			'M9 21H3v-6',
+			'M21 3l-7 7',
+			'M3 21l7-7'
+		].join('')
 	}
 } as const;
 

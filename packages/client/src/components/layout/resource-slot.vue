@@ -4,6 +4,7 @@
 		class="docs-resource-slot"
 		:data-slot="name"
 		:data-resource-type="resourceType || undefined"
+		:data-content-width="name === 'content' && resourceType === 'markdown' ? contentWidth : undefined"
 		:style="{ minHeight: transitionMinHeight }"
 	>
 		<DefaultHeader v-if="builtin === 'header'" />
@@ -12,21 +13,45 @@
 		<RemoteSfc v-else-if="resourceType === 'sfc' && source" :source="source" :lang="lang" />
 		<div v-else-if="pageDocument" class="docs-resource-slot__page">
 			<div v-if="error" class="docs-resource-slot__error">{{ error }}</div>
-			<Renderer :document="pageDocument" :modules="rendererModules" :context="rendererContext" />
+			<Renderer
+				:document="pageDocument"
+				:modules="rendererModules"
+				:context="rendererContext"
+				:fit="rendererFit"
+			/>
 		</div>
 		<div v-else-if="error" class="docs-resource-slot__error">{{ error }}</div>
 		<div v-else-if="loading" class="docs-resource-slot__loading">{{ t('client.common.loading') }}</div>
+		<template v-else-if="resourceType === 'markdown' && name === 'content'">
+			<div class="docs-resource-slot__body">
+				<div :ref="bindArticle" class="docs-resource-slot__article">
+					<PageHeader />
+					<Markdown
+						:value="content"
+						:theme="markdownTheme"
+						:indicator="markdownIndicator"
+						:playground="playgroundDefaults"
+						@click="handleMarkdownClick"
+					/>
+					<PageFooter />
+				</div>
+				<PageOutline :target="article" />
+			</div>
+		</template>
 		<Markdown
 			v-else-if="resourceType === 'markdown'"
 			:value="content"
 			:theme="markdownTheme"
+			:indicator="markdownIndicator"
+			:playground="playgroundDefaults"
 			@click="handleMarkdownClick"
 		/>
 		<div v-else-if="builtin" class="docs-resource-slot__builtin" :data-builtin="builtin"></div>
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, provide, ref, watch } from 'vue';
+import type { ComponentPublicInstance } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Markdown } from '@deot/docs-markdown';
 import { Renderer, validateRendererDocument } from '@deot/docs-renderer';
@@ -35,18 +60,27 @@ import { useLocale } from '@deot/docs-locale';
 import DefaultFooter from './default-footer.vue';
 import DefaultHeader from './default-header.vue';
 import DefaultSidebar from './default-sidebar.vue';
+import PageHeader from './page-header.vue';
+import PageFooter from './page-footer.vue';
+import PageOutline from './page-outline.vue';
 import RemoteSfc from '../remote-sfc';
 import { Gateway } from '../../modules/gateway';
-import { Theme } from '../../modules/settings';
+import { ContentWidth, Theme } from '../../modules/settings';
+import { setSidebarItems } from '../../modules/sidebar';
 import { isExternalLink, isPlainNavigationClick } from '../../utils/link';
 import { classifyResourceSource, createResourceIdentity, resolveResource } from '../../utils/resolver';
 import { getRouteValue } from '../../utils/route';
+import {
+	resolveDocsMarkdownComponent,
+	resolveDocsPlaygroundComponent,
+	resolveDocsRendererComponent
+} from '../../utils/components';
 import { getDocsConfig } from '../../utils/runtime';
 import { resolveInlineSidebar } from '../../utils/sidebar';
+import { markdownArticleKey } from '../../utils/outline';
 import { resolveRouteContent } from '../../utils/content';
 import type { DocsContent, DocsLocalized, DocsResourceType, DocsRoute, DocsSidebar, SidebarItem } from '../../types';
 import { useRendererModules } from '../renderer';
-import { resolveDocsMarkdownTheme } from '../renderer/markdown-props';
 
 const props = defineProps<{ name: 'header' | 'sidebar' | 'content' | 'footer' | 'extra' }>();
 const route = useRoute();
@@ -54,7 +88,14 @@ const router = useRouter();
 const docs = getDocsConfig();
 const { locale, t } = useLocale();
 const rendererModules = useRendererModules();
-const markdownTheme = computed(() => resolveDocsMarkdownTheme(docs.markdownTheme));
+const markdownDefaults = computed(() => resolveDocsMarkdownComponent(docs));
+const markdownTheme = computed(() => markdownDefaults.value.theme);
+const markdownIndicator = computed(() => (
+	typeof markdownDefaults.value.indicator === 'undefined' ? true : markdownDefaults.value.indicator
+));
+const playgroundDefaults = computed(() => resolveDocsPlaygroundComponent(docs));
+const rendererFit = computed(() => resolveDocsRendererComponent(docs).fit);
+const contentWidth = ContentWidth.current;
 const content = ref('');
 const error = ref('');
 const loading = ref(false);
@@ -63,7 +104,12 @@ const resourceType = ref<DocsResourceType | ''>('');
 const builtin = ref('');
 const sidebarItems = ref<SidebarItem[] | null>(null);
 const root = ref<HTMLElement>();
+const article = ref<HTMLElement>();
 const transitionMinHeight = ref('');
+const bindArticle = (el: Element | ComponentPublicInstance | null) => {
+	article.value = el instanceof HTMLElement ? el : undefined;
+};
+provide(markdownArticleKey, article);
 const pageDocument = ref<RendererDocument>();
 let unsubscribe: (() => void) | undefined;
 let controller: AbortController | undefined;
@@ -431,9 +477,21 @@ watch(
 	},
 	{ flush: 'post' }
 );
+watch(
+	[content, resourceType, loading, () => props.name],
+	async () => {
+		await nextTick();
+		article.value = root.value?.querySelector('.docs-resource-slot__article') || undefined;
+	},
+	{ flush: 'post', immediate: true }
+);
+watch(sidebarItems, (value) => {
+	if (props.name === 'sidebar') setSidebarItems(value);
+});
 onBeforeUnmount(() => {
 	generation += 1;
 	clear();
+	if (props.name === 'sidebar') setSidebarItems(null);
 });
 </script>
 <style lang="scss">
@@ -441,6 +499,45 @@ onBeforeUnmount(() => {
 
 @include block(docs-resource-slot) {
 	min-width: 0;
+
+	&[data-slot='content'][data-resource-type='markdown'] {
+		width: 100%;
+		max-width: 1020px;
+		margin-inline: auto;
+
+		&[data-content-width='wide'] {
+			max-width: 1200px;
+		}
+
+		&[data-content-width='full'] {
+			max-width: none;
+		}
+	}
+
+	@include element(body) {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		width: 100%;
+		min-width: 0;
+		align-items: start;
+
+		&:has(.docs-page-outline) {
+			grid-template-columns: minmax(0, 1fr) 288px;
+		}
+	}
+
+	@media screen and (width <= 1024px) {
+		@include element(body) {
+			&,
+			&:has(.docs-page-outline) {
+				grid-template-columns: minmax(0, 1fr);
+			}
+		}
+	}
+
+	@include element(article) {
+		min-width: 0;
+	}
 
 	@include element(page) {
 		min-width: 0;

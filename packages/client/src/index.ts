@@ -6,7 +6,7 @@ import App from './app.vue';
 import { provideRendererModules } from './components/renderer';
 import { connectResourceEvents } from './events';
 import { Resource } from './modules/resource';
-import { Settings, ThemeRuntime } from './modules/settings';
+import { Settings, ThemeRuntime, ContentWidthRuntime } from './modules/settings';
 import { createDocsRouter } from './router';
 import { getDocsDeploymentBase, getDefaultLanguage } from './utils/resolver';
 import { initializeDocsRuntime } from './utils/runtime';
@@ -76,6 +76,7 @@ export const bootstrap = async (config?: DocsConfig) => {
 	config ||= window.$docs || { locales: {}, routes: {} };
 	initializeDocsRuntime(window, config);
 	const stopTheme = ThemeRuntime.start(config);
+	const stopContentWidth = ContentWidthRuntime.start(config);
 	const stopPlaygroundResource = await Resource.playground.start(config);
 	const initialLanguage = await Settings.language.restore(config);
 	const router = createDocsRouter(config, { initialLanguage });
@@ -116,6 +117,7 @@ export const bootstrap = async (config?: DocsConfig) => {
 		stopPrefetch();
 		stopDocumentLanguage();
 		stopPlaygroundResource();
+		stopContentWidth();
 		stopTheme();
 	};
 	return { app, router, disconnect };

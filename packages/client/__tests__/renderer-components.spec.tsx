@@ -31,11 +31,19 @@ vi.mock('../src/modules/gateway', () => ({
 }));
 vi.mock('@deot/docs-markdown', () => ({
 	Markdown: defineComponent({
-		props: { indicator: { type: [Boolean, Object], default: true }, locale: Object, value: String },
+		props: {
+			indicator: { type: [Boolean, Object], default: true },
+			locale: Object,
+			value: String,
+			theme: { type: String, default: 'default' },
+			playground: { type: Object, default: () => ({}) }
+		},
 		setup: props => () => (
 			<article
 				class="markdown-output"
 				data-indicator={JSON.stringify(props.indicator ?? true)}
+				data-theme={props.theme || 'default'}
+				data-playground={JSON.stringify(props.playground || {})}
 			>
 				{props.value}
 			</article>
@@ -185,6 +193,26 @@ describe('client Renderer integrations', () => {
 		await wrapper.setProps({ node: node({}) });
 		await flushPromises();
 		expect(wrapper.text()).toBe('');
+	});
+
+	it('applies site markdown and playground component defaults', async () => {
+		window.$docs.components = {
+			markdown: { theme: 'traditional', indicator: { position: 'left' } },
+			playground: { previewInset: 16 }
+		};
+		const wrapper = mount(MarkdownRenderer, {
+			props: { node: node({ content: '# Site defaults' }), context }
+		});
+		await flushPromises();
+		expect(wrapper.get('.markdown-output').attributes('data-theme')).toBe('traditional');
+		expect(wrapper.get('.markdown-output').attributes('data-indicator')).toBe(JSON.stringify({ position: 'left' }));
+		expect(wrapper.get('.markdown-output').attributes('data-playground')).toBe(JSON.stringify({ previewInset: 16 }));
+		await wrapper.setProps({
+			node: node({ content: '# Override', options: { indicator: false } })
+		});
+		await flushPromises();
+		expect(wrapper.get('.markdown-output').attributes('data-indicator')).toBe('false');
+		expect(wrapper.get('.markdown-output').attributes('data-theme')).toBe('traditional');
 	});
 
 	it('loads site Markdown and remote https sources', async () => {

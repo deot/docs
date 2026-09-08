@@ -40,7 +40,18 @@ vi.mock('@deot/docs-renderer', async original => ({
 				h('button', {
 					class: 'editor-save',
 					onClick: () => emit('save', props.modelValue)
-				}, 'Save')
+				}, 'Save'),
+				h('button', {
+					class: 'editor-navigate',
+					onClick: () => props.context.services?.navigate?.('/en-US/next')
+				}, 'Navigate'),
+				h('button', {
+					class: 'editor-resolve',
+					onClick: () => {
+						props.context.services?.resolveLink?.('/en-US/guide');
+						void props.context.services?.resolveAsset?.('./asset.png', './pages/home.page.json');
+					}
+				}, 'Resolve')
 			]);
 		}
 	})
@@ -130,5 +141,30 @@ describe('renderer demos page', () => {
 			lang: 'en-US',
 			source: './pages/renderer-promo.page.json'
 		});
+		await wrapper.find('.editor-navigate').trigger('click');
+		expect(routerPush).toHaveBeenCalledWith('/en-US/next');
+		await wrapper.find('.editor-resolve').trigger('click');
+	});
+
+	it('skips saving demo files outside development and reports failed writes', async () => {
+		window.$docs.runtime = { mode: 'production', workspace: '/site/' };
+		const fetchMock = vi.spyOn(globalThis, 'fetch');
+		route.query = { name: 'promo' };
+		const production = mount(EditorDemosPage);
+		await vi.waitFor(() => expect(production.find('.editor-save').exists()).toBe(true));
+		await production.find('.editor-save').trigger('click');
+		await flushPromises();
+		expect(fetchMock).not.toHaveBeenCalled();
+		production.unmount();
+
+		window.$docs.runtime = { mode: 'development', workspace: '/site/' };
+		fetchMock.mockResolvedValue(new Response('denied', { status: 500 }));
+		const failed = mount(EditorDemosPage);
+		await vi.waitFor(() => expect(failed.find('.editor-save').exists()).toBe(true));
+		await failed.find('.editor-save').trigger('click');
+		await flushPromises();
+		fetchMock.mockRejectedValue('offline');
+		await failed.find('.editor-save').trigger('click');
+		await flushPromises();
 	});
 });

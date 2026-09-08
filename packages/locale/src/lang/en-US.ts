@@ -42,6 +42,16 @@ const enUS = {
 			switchToDark: 'Switch to dark theme',
 			switchToLight: 'Switch to light theme'
 		},
+		page: {
+			navigation: 'Page navigation',
+			previous: 'Previous page: {label}',
+			next: 'Next page: {label}',
+			outline: 'On this page',
+			width: 'Content width',
+			widthRegular: 'Regular',
+			widthWide: 'Wide',
+			widthFull: 'Full'
+		},
 		home: {},
 		demos: {
 			title: 'Renderer demos',

@@ -124,11 +124,4 @@ export const docsMarkdownInlineContent = (props: Pick<DocsMarkdownProps, 'conten
 	typeof props.content === 'string' ? props.content : undefined
 );
 
-/**
- * 归一化站点 Markdown 排版皮肤；非法值回退 `default`。
- * @param value `DocsConfig.markdownTheme`。
- * @returns `'default'` 或 `'traditional'`。
- */
-export const resolveDocsMarkdownTheme = (value: unknown): DocsMarkdownTheme => (
-	value === 'traditional' ? 'traditional' : 'default'
-);
+export { resolveDocsMarkdownTheme } from '../../utils/components';

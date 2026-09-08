@@ -114,27 +114,3 @@ npm run build -- --package-name playground
 ## 许可证
 
 MIT
-
-:::playground
-<!--
-<config lang="json5">
-{
-	expand: true,
-	previewInset: 16
-}
-</config>
--->
-```vue
-<template>
-	<Button type="primary" @click="visible = true">Open Modal</Button>
-	<Modal v-model="visible" title="Demo">Modal content</Modal>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Button, Modal } from '@deot/vc';
-
-const visible = ref(false);
-</script>
-```
-:::
-

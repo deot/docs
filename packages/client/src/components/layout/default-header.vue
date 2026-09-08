@@ -389,6 +389,7 @@ const handleTools = (action: string | number) => {
 	padding: 0 30px;
 	color: varfix(foreground-color-light);
 	background: varfix(background-color);
+	border-bottom: 1px solid varfix(pattern-fg);
 	align-items: center;
 
 	@include element(brand) {

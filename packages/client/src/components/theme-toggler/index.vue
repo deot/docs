@@ -16,7 +16,7 @@
 			checked-value="dark"
 			unchecked-value="light"
 			:width="40"
-			:height="20"
+			:height="24"
 			:border-width="1"
 		/>
 		<ClientIcon
@@ -50,7 +50,7 @@ const handleKeyboard = () => Theme.toggle(togglerRef.value);
 	position: relative;
 	display: inline-flex;
 	height: 24px;
-	padding: 0 4px;
+	padding: 0;
 	border-radius: 12px;
 	align-items: center;
 
@@ -81,12 +81,12 @@ const handleKeyboard = () => Theme.toggle(togglerRef.value);
 		transition: left 0.2s ease;
 
 		@include when(light) {
-			left: 8px;
+			left: 6px;
 			color: varfix(foreground-color-mute);
 		}
 
 		@include when(dark) {
-			left: 28px;
+			left: 22px;
 			color: varfix(foreground-color-light);
 		}
 

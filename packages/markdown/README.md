@@ -27,19 +27,24 @@ const source = ref('# Hello @deot/docs');
 
 组件接受 `modelValue` 或 `value` 字符串。当前组件负责渲染，不会修改传入的 Markdown 内容。
 `locale` 可显式传入 `Language`；未传入时优先使用上层 `provideLocale()`，否则回退到 `en-US`。
+`theme` 控制排版皮肤（`'default' | 'traditional'`），与站点 light/dark 正交。
+`playground` 可传入站点级 Playground 默认 props；`:::playground` 块内 JSON5 配置会浅合并覆盖这些默认值。
 
 ## 文档指示器
 
-指示器默认开启。它会把标题、段落、列表、代码块等文档块压缩成纵向刻度，支持悬停预览、点击定位和拖动浏览：
+指示器默认开启。它是贴在正文一侧的**小地图**（空间 scrubber），不是第二份目录：刻度与文档壳大纲使用同一份标题（有章节标题时不含页面 h1），按标题在正文中的纵向比例铺在固定高度条上，并用可视窗口标出当前主滚动范围。支持悬停预览、点击定位和拖动浏览，**只滚动、不改 hash**。章节名称导航仍由文档壳右侧大纲负责。
+
+定位与文档壳大纲一致：`sticky` 贴顶，高度按正文与主滚动可视区域封顶，轨道上下 padding 为 `40px / 96px`。
 
 ```vue
 <Markdown
 	:value="source"
 	:indicator="{
-		position: 'right',
+		position: 'left',
 		preview: true,
 		draggable: true,
-		height: 'min(72vh, 600px)'
+		top: 0,
+		height: 480
 	}"
 />
 ```
@@ -49,10 +54,10 @@ const source = ref('# Hello @deot/docs');
 | 参数 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | `preview` | `boolean` | `true` | 是否展示悬停摘要。 |
-| `draggable` | `boolean` | `true` | 是否允许拖动快速浏览。 |
-| `position` | `'left' \| 'right'` | `'right'` | 指示器所在侧。 |
-| `top` | `number \| string` | `0` | 相对滚动容器垂直中心的偏移，默认上下居中。 |
-| `height` | `number \| string` | `min(72vh, 600px)` | 指示器的可视高度。 |
+| `draggable` | `boolean` | `true` | 是否允许拖动快速浏览。关闭后仍可点击轨道定位。 |
+| `position` | `'left' \| 'right'` | `'left'` | 指示器所在侧。文档壳中有斜纹轨时靠近 `rail--start` 右侧或 `rail--end` 左侧，并留 8px 间距。 |
+| `top` | `number \| string` | `0` | sticky 贴顶偏移，数字按 px 处理。 |
+| `height` | `number \| string` | 按正文/视口封顶 | 小地图总高度（含上下 padding）。数字会与封顶值取较小值；未配置时使用封顶后的 px。 |
 
 ## Markdown 扩展
 

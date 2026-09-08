@@ -6,11 +6,7 @@
 			:is="PlaygroundComponent"
 			v-else-if="PlaygroundComponent"
 			:key="revision"
-			:files="files"
-			:entry="entry"
-			:options="playgroundOptions"
-			:locale="locale"
-			:styleless="true"
+			v-bind="playgroundProps"
 			@navigate="handleNavigate"
 		/>
 	</div>
@@ -21,6 +17,7 @@ import type { Component } from 'vue';
 import { useLocale } from '@deot/docs-locale';
 import { useRouter } from 'vue-router';
 import { Gateway } from '../../modules/gateway';
+import { resolveDocsPlaygroundComponent } from '../../utils/components';
 import { createResourceIdentity, resolveResource, resourceIdentityKey } from '../../utils/resolver';
 import {
 	collectResourceImports,
@@ -46,9 +43,34 @@ const subscriptions: Array<() => void> = [];
 let controller: AbortController | undefined;
 let generation = 0;
 
-const playgroundOptions = computed(() => ({
-	builtinImportMap: { imports: { ...config.modules } }
-}));
+const playgroundDefaults = computed(() => resolveDocsPlaygroundComponent(config));
+const playgroundProps = computed(() => {
+	const site = playgroundDefaults.value;
+	const siteOptions = site.options && typeof site.options === 'object' ? site.options : {};
+	const siteImportMap = siteOptions.builtinImportMap && typeof siteOptions.builtinImportMap === 'object'
+		? siteOptions.builtinImportMap
+		: {};
+	const siteImports = 'imports' in siteImportMap && siteImportMap.imports && typeof siteImportMap.imports === 'object'
+		? siteImportMap.imports
+		: {};
+	return {
+		...site,
+		files: files.value,
+		entry: entry.value,
+		locale: locale.value,
+		styleless: true,
+		options: {
+			...siteOptions,
+			builtinImportMap: {
+				...siteImportMap,
+				imports: {
+					...siteImports,
+					...config.modules
+				}
+			}
+		}
+	};
+});
 
 const clearSubscriptions = () => {
 	while (subscriptions.length) subscriptions.pop()?.();

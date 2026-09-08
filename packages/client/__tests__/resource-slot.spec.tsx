@@ -6,6 +6,8 @@ import { Renderer } from '@deot/docs-renderer';
 import ResourceSlot from '../src/components/layout/resource-slot.vue';
 import { isPlainNavigationClick } from '../src/utils/link';
 import type { DocsRoute } from '../src/types';
+import { ContentWidth } from '../src/modules/settings';
+import { setSidebarItems } from '../src/modules/sidebar';
 import { htmlElementOf } from './fixtures/docs';
 
 const {
@@ -68,7 +70,12 @@ vi.mock('../src/modules/gateway', () => ({
 		}
 	}
 }));
-vi.mock('../src/modules/settings', () => ({
+vi.mock('@deot/vc', async () => {
+	const { createVcStubs } = await import('./fixtures/vc');
+	return createVcStubs();
+});
+vi.mock('../src/modules/settings', async original => ({
+	...await original<typeof import('../src/modules/settings')>(),
 	Theme: {
 		current: { value: 'dark' },
 		enabled: { value: true },
@@ -79,9 +86,18 @@ vi.mock('../src/modules/settings', () => ({
 }));
 vi.mock('@deot/docs-markdown', async () => ({
 	Markdown: (await import('vue')).defineComponent({
-		props: { value: String },
+		props: {
+			value: String,
+			theme: { type: String, default: 'default' },
+			indicator: { type: [Boolean, Object], default: true },
+			playground: { type: Object, default: () => ({}) }
+		},
 		setup: props => () => (
-			<div class="markdown">
+			<div
+				class="markdown"
+				data-theme={props.theme || 'default'}
+				data-playground={JSON.stringify(props.playground || {})}
+			>
 				<h2 id="%E5%9F%BA%E6%9C%AC">
 					<a class="header-anchor" href="#%E5%9F%BA%E6%9C%AC">#</a>
 					{props.value}
@@ -131,6 +147,8 @@ describe('ResourceSlot', () => {
 		load.mockResolvedValue({
 			content: '[{"label":"Install","value":"/installation"}]'
 		});
+		void ContentWidth.set('regular');
+		setSidebarItems(null);
 		routerResolve.mockImplementation((target: string) => ({
 			href: `/docs${target}`,
 			fullPath: target
@@ -223,7 +241,10 @@ describe('ResourceSlot', () => {
 	});
 
 	it('renders builtin layout slots without a resource request', async () => {
-		const wrapper = mount(ResourceSlot, { props: { name: 'footer' } });
+		const wrapper = mount(ResourceSlot, {
+			props: { name: 'footer' },
+			global: { stubs: { RouterLink: RouterLinkStub } }
+		});
 		await vi.waitFor(() => expect(wrapper.text()).toContain('Powered by'));
 		expect(load).not.toHaveBeenCalled();
 	});
@@ -250,6 +271,43 @@ describe('ResourceSlot', () => {
 		wrapper.unmount();
 		expect(options?.signal?.aborted).toBe(true);
 		expect(unsubscribe).toHaveBeenCalled();
+	});
+
+	it('forwards site markdown and playground component defaults', async () => {
+		load.mockResolvedValueOnce({ content: '# Themed' });
+		window.$docs.components = {
+			markdown: { theme: 'traditional' },
+			playground: { previewInset: 16 }
+		};
+		const wrapper = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(wrapper.text()).toContain('# Themed'));
+		expect(wrapper.find('.markdown').attributes('data-theme')).toBe('traditional');
+		expect(wrapper.find('.markdown').attributes('data-playground')).toBe(JSON.stringify({ previewInset: 16 }));
+	});
+
+	it('renders a page header above markdown from the current sidebar section', async () => {
+		setSidebarItems([{
+			label: 'Components',
+			children: [
+				{ label: 'Install', value: '/components/installation' },
+				{ label: 'Button', value: '/components/button' }
+			]
+		}]);
+		load.mockResolvedValueOnce({ content: '# Initial' });
+		const wrapper = mount(ResourceSlot, {
+			props: { name: 'content' },
+			global: { stubs: { RouterLink: RouterLinkStub } }
+		});
+		await vi.waitFor(() => expect(wrapper.find('.docs-page-header__eyebrow').text()).toBe('Components'));
+		expect(wrapper.find('.docs-page-footer__link--next').text()).toBe('Button');
+		expect(wrapper.attributes('data-resource-type')).toBe('markdown');
+		expect(wrapper.attributes('data-content-width')).toBe('regular');
+		await vi.waitFor(() => expect(wrapper.find('.docs-page-outline').exists()).toBe(true));
+		expect(wrapper.find('.docs-page-outline__title').text()).toBe('On this page');
+		expect(wrapper.findAll('.docs-page-outline__link').map(link => link.attributes('href')))
+			.toEqual(['#%E5%9F%BA%E6%9C%AC', '#details']);
+		await wrapper.findAll('.docs-content-width__option')[2]!.trigger('click');
+		expect(wrapper.attributes('data-content-width')).toBe('full');
 	});
 
 	it('rewrites resolved Markdown links and preserves native link gestures', async () => {

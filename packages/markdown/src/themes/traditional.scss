@@ -358,9 +358,20 @@ $sign: md;
 			& table th[#{$sign}],
 			& table td[#{$sign}] {
 				padding: 8px 12px;
+				text-align: left;
 				vertical-align: top;
 				border-right: 1px solid var(--docs-border-color, #dfe2e5);
 				border-bottom: 1px solid var(--docs-border-color, #dfe2e5);
+			}
+
+			& table th[align='center'][#{$sign}],
+			& table td[align='center'][#{$sign}] {
+				text-align: center;
+			}
+
+			& table th[align='right'][#{$sign}],
+			& table td[align='right'][#{$sign}] {
+				text-align: right;
 			}
 
 			& table th[#{$sign}]:last-child,

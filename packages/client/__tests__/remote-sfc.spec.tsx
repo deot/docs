@@ -27,7 +27,7 @@ vi.mock('../src/modules/gateway', () => ({
 vi.mock('@deot/docs-playground', async () => ({
 	Playground: (await import('vue')).defineComponent({
 		name: 'Playground',
-		props: ['files', 'entry', 'options', 'styleless'],
+		props: ['files', 'entry', 'options', 'styleless', 'previewInset', 'expandable'],
 		emits: ['navigate'],
 		setup: props => () => <div class="playground">{props.entry}</div>
 	})
@@ -101,6 +101,36 @@ describe('RemoteSfc', () => {
 		expect(push).toHaveBeenCalledWith('/en-US/guide');
 		wrapper.unmount();
 		expect(signals[0].aborted).toBe(true);
+	});
+
+	it('forwards site playground defaults while keeping remote sfc styleless', async () => {
+		window.$docs.components = {
+			playground: {
+				previewInset: 16,
+				expandable: true,
+				options: {
+					builtinImportMap: {
+						imports: { vue: 'https://cdn.example.com/vue.js' }
+					}
+				}
+			}
+		};
+		const wrapper = mount(() => (
+			<RemoteSfc source="./components/index.vue" lang="zh-CN" />
+		));
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		const playground = wrapper.findComponent({ name: 'Playground' });
+		expect(playground.props('previewInset')).toBe(16);
+		expect(playground.props('expandable')).toBe(true);
+		expect(playground.props('styleless')).toBe(true);
+		expect(playground.props('options')).toEqual({
+			builtinImportMap: {
+				imports: {
+					vue: 'https://cdn.example.com/vue.js',
+					lodash: 'https://esm.sh/lodash'
+				}
+			}
+		});
 	});
 
 	it('resolves recursive imports when development URLs are root-relative', async () => {

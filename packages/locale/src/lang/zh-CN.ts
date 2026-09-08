@@ -42,6 +42,16 @@ const zhCN = {
 			switchToDark: '切换至深色主题',
 			switchToLight: '切换至浅色主题'
 		},
+		page: {
+			navigation: '文档翻页',
+			previous: '上一页：{label}',
+			next: '下一页：{label}',
+			outline: '大纲',
+			width: '内容宽度',
+			widthRegular: '常规',
+			widthWide: '超宽',
+			widthFull: '全宽'
+		},
 		home: {},
 		demos: {
 			title: 'Renderer 演示',

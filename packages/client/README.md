@@ -112,7 +112,7 @@ const { app, router, disconnect } = await bootstrap(window.$docs);
 | `prefetch` | 空闲预加载开关或 `{ batchSize, idleTimeout }` 配置，默认开启。 |
 | `theme` | 主题开关或 `{ default: 'system' \| 'light' \| 'dark' }`，默认跟随系统。 |
 | `layout.header` | 内置 Header 配置；`brand.logo`、`brand.label` 和 `brand.value` 均支持固定值或按语言配置。文案未配置时回退到 `namespace` 和内置翻译，链接未配置时指向当前语言首页。站内链接自动补语言前缀，外链在新窗口打开。`nav` 是搜索后的横向导航，未配置时不渲染；条目复用 Sidebar 的 `{ label, value?, children? }` 结构，支持固定数组或按语言配置，有 `children` 的项以下拉展示。 |
-| `layout.footer` | Footer 内容；未配置或 `default` 使用内置分组，`false` 全局隐藏，也可配置 `{ nav, poweredBy }`。两项均支持按语言代码配置，`nav` 复用 Sidebar 的 `{ label, value?, children? }` 结构，按列分组渲染。 |
+| `layout.footer` | Footer 内容；未配置或 `default` 使用内置分组，`false` 全局隐藏，也可配置 `{ nav, poweredBy }`。两项均支持按语言代码配置，`nav` 复用 Sidebar 的 `{ label, value?, children? }` 结构，按四等分列渲染。底部左侧复用 Header 品牌，右侧为 `poweredBy`；主题切换仍在 Header。 Markdown content 页眉右侧可切换常规（1020px）/ 超宽（1200px）/ 全宽，默认超宽，站点 Footer 内栏同步该宽度；选择按站点 namespace 写入 `deot-docs-settings` IndexedDB。有标题时在正文右侧显示「大纲 / On this page」。文档指示器是贴轨小地图（密度 + 可视窗口），不占宽度，只滚动不改 hash。 |
 | `renderers` | 业务自定义 Renderer 模块注册项；type 必须使用非 `docs:` 的命名空间。 |
 | `resolve.markdown` | 根据 `lang`、`value` 和当前路由生成 Markdown 逻辑地址。 |
 | `resolve.resource` | 将任意逻辑资源转换为最终 URL。 |
@@ -127,18 +127,30 @@ const { app, router, disconnect } = await bootstrap(window.$docs);
 - `.vue`：通过独立 Playground iframe 渲染远程 SFC。
 - `.page.json`：使用 `@deot/docs-renderer` 渲染模块化页面，并订阅 Gateway 内容更新。
 
-Sidebar 使用递归的 `{ label, value?, children? }` 结构。原有 JSON/Gateway
+Sidebar 使用递归的 `{ label, value?, children?, icon?, tag? }` 结构。原有 JSON/Gateway
 加载方式保持不变，也可以直接传入 JavaScript 数组：
+
+- `icon`：字符串可为图片 url、base64，或 `@deot/vc` Icon 的 `type`；也可传 `[normal, selected]`，路由激活时用第二项。
+- `tag`：行尾小标签文案，如 `NEW`（仅侧栏渲染；Header / Footer 的 `nav` 忽略）。
 
 ```js
 const routes = {
 	'/components/:name': {
 		sidebar: [
-			{ label: '开始使用', value: '/components/installation' },
+			{
+				label: '开始使用',
+				value: '/components/installation',
+				icon: 'home',
+				tag: 'NEW'
+			},
 			{
 				label: '组件',
 				children: [
-					{ label: 'Button', value: '/components/button' }
+					{
+						label: 'Button',
+						value: '/components/button',
+						icon: ['circle', 'circle-fill']
+					}
 				]
 			}
 		]
@@ -239,10 +251,16 @@ window.$docs = {
 	theme: {
 		default: 'system'
 	},
-	// Markdown 排版皮肤：'default' | 'traditional'，与上面的 light/dark 正交
-	markdownTheme: 'default'
+	// Markdown / Playground / Renderer 组件的站点默认 props（与 light/dark 正交）
+	components: {
+		markdown: { theme: 'default' },
+		playground: { previewInset: 16 },
+		renderer: { fit: 'width' }
+	}
 };
 ```
+
+`components.markdown.theme` 为排版皮肤（`'default' | 'traditional'`）。`components.playground` 会作为 Markdown 内嵌 Playground 与远程 SFC 的默认 props；`:::playground` 块内 JSON5 配置会覆盖站点默认。`components.renderer.fit` 作用于发布页 Renderer（Combo 编辑器不读该配置）。
 
 设置 `theme: false` 可关闭内置主题控制。自定义 Header 可以从 `@deot/docs-client` 导入共享的 `Theme`，读取 `current/enabled/ready`，或调用 `Theme.set()`、`Theme.toggle()`；传入触发元素时，支持 View Transition 的浏览器会以该元素为圆心切换。
 
@@ -355,7 +373,7 @@ const unsubscribe = Gateway.subscribe(identity, () => undefined);
 - Resolver：`getDocsBase`、`getDocsDeploymentBase`、`getDefaultLanguage`、`getDocsNamespace`、`resolveResource`、`createResourceIdentity`、`resourceIdentityKey`。
 - Playground 资源：`PlaygroundResource`、`PlaygroundResourceCache`。
 - 演示文档：`createRendererEditorDemoDocument`、`RENDERER_EDITOR_DEMOS`、`listRendererEditorDemos`、`isRendererEditorDemo`、`rendererEditorDemoPath`。
-- 类型：`DocsConfig`、`DocsPrefetchOptions`、`DocsRoute`、`DocsRuntime`、`DocsLinkContext`、`DocsResourceType`、`ResourceIdentity`、`ResourceRecord`、`ResourceContentRecord`、`ResourceLoadOptions`、`ResourcePrefetchOptions`、`PlaygroundResourceRecord` 等。
+- 类型：`DocsConfig`、`DocsComponentsOptions`、`DocsPrefetchOptions`、`DocsRoute`、`DocsRuntime`、`DocsLinkContext`、`DocsResourceType`、`ResourceIdentity`、`ResourceRecord`、`ResourceContentRecord`、`ResourceLoadOptions`、`ResourcePrefetchOptions`、`PlaygroundResourceRecord` 等。
 
 ## 仓库内验证
 

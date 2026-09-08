@@ -96,7 +96,7 @@ const resultItems = [{
 	score: 600
 }];
 
-const dispatch = (element: Element, event: Event) => element.dispatchEvent(event);
+const dispatch = (target: EventTarget, event: Event) => target.dispatchEvent(event);
 const openSearch = async (wrapper: ReturnType<typeof mount>) => {
 	await wrapper.get('.docs-search-trigger').trigger('click');
 	await flushPromises();
@@ -125,6 +125,19 @@ describe('DocsSearch', () => {
 	afterEach(() => {
 		vi.useRealTimers();
 		document.body.innerHTML = '';
+	});
+
+	it('opens from the command palette shortcut without remounting an open dialog', async () => {
+		mount(DocsSearch, { attachTo: document.body });
+		dispatch(window, new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', metaKey: true, bubbles: true }));
+		await flushPromises();
+
+		expect(document.querySelector('.docs-search')).not.toBeNull();
+		expect(document.activeElement).toBe(document.querySelector('.docs-search__input'));
+
+		dispatch(window, new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', ctrlKey: true, bubbles: true }));
+		await flushPromises();
+		expect(document.querySelectorAll('.docs-search')).toHaveLength(1);
 	});
 
 	it('opens with history and supports pin and remove without navigation', async () => {

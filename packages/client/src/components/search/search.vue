@@ -39,7 +39,7 @@
 						:aria-label="t('client.search.close')"
 						@click="handleClose"
 					>
-						<span class="docs-search__close-icon" aria-hidden="true"></span>
+						esc
 					</button>
 				</div>
 			</header>
@@ -89,7 +89,7 @@
 										<HighlightText :text="item.excerpt" :keyword="keyword" />
 									</span>
 								</span>
-								<span v-if="index === selectedIndex" class="docs-search__enter" aria-hidden="true">↵</span>
+								<span class="docs-search__enter" aria-hidden="true">↵</span>
 							</button>
 							<div v-if="!results.length" class="docs-search__state">
 								{{ preparedCount ? t('client.search.noResults') : t('client.search.noCachedDocuments') }}
@@ -347,6 +347,8 @@ onBeforeUnmount(() => {
 <style lang="scss">
 @use '../../styles/bem' as *;
 
+$search-active: #0ea5e9;
+
 @include block(docs-search-mask) {
 	position: fixed;
 	z-index: 1000;
@@ -363,39 +365,41 @@ onBeforeUnmount(() => {
 	grid-template-rows: 56px minmax(0, 1fr) 44px;
 	width: min(800px, 100%);
 	height: min(646px, calc(100vh - 86px));
-	margin-top: 2px;
+	margin-top: 12px;
 	overflow: hidden;
 	background: varfix(background-color);
-	border-radius: 3px;
-	box-shadow: 0 10px 30px varfix(shadow-color);
+	border-radius: 16px;
+	box-shadow: 0 25px 50px -12px varfix(shadow-color);
 
 	@include element(header) {
 		display: grid;
 		grid-template-columns: 24px minmax(0, 1fr) max-content;
-		gap: 10px;
-		padding: 0 12px 0 18px;
-		background: varfix(background-color-soft);
-		border-bottom: 1px solid varfix(border-color);
+		gap: 12px;
+		padding: 0 16px 0 20px;
+		background: varfix(background-color);
+		border-bottom: 1px solid varfix(pattern-fg);
 		align-items: center;
 	}
 
 	@include element(icon) {
 		position: relative;
-		width: 18px;
-		height: 18px;
+		width: 14px;
+		height: 14px;
 		color: varfix(foreground-color-light);
 		border: 1.5px solid currentcolor;
 		border-radius: 50%;
+		opacity: 0.85;
 
 		&::after {
 			position: absolute;
-			right: -5px;
-			bottom: -2px;
-			width: 7px;
+			right: -3px;
+			bottom: -1px;
+			width: 5px;
 			height: 1.5px;
 			background: currentcolor;
 			content: "";
 			transform: rotate(45deg);
+			transform-origin: left center;
 		}
 	}
 
@@ -404,8 +408,8 @@ onBeforeUnmount(() => {
 		height: 100%;
 		padding: 0;
 		font: inherit;
-		font-size: 18px;
-		color: varfix(foreground-color-light);
+		font-size: 16px;
+		color: varfix(foreground-color);
 		background: transparent;
 		border: 0;
 		outline: 0;
@@ -414,12 +418,17 @@ onBeforeUnmount(() => {
 		&::-webkit-search-cancel-button {
 			display: none;
 		}
+
+		&::placeholder {
+			color: varfix(foreground-color-mute);
+		}
 	}
 
 	@include element(clear) {
-		padding: 5px 8px;
+		padding: 4px 6px;
 		font: inherit;
-		color: varfix(link-color);
+		font-size: 12px;
+		color: varfix(foreground-color-mute);
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -429,62 +438,36 @@ onBeforeUnmount(() => {
 		display: grid;
 		grid-auto-columns: max-content;
 		grid-auto-flow: column;
-		gap: 2px;
+		gap: 8px;
 		align-items: center;
 	}
 
 	@include element(close) {
 		display: grid;
-		width: 28px;
-		height: 28px;
-		padding: 0;
+		width: auto;
+		height: 22px;
+		padding: 0 6px;
 		font: inherit;
-		color: varfix(foreground-color-light);
+		font-size: 12px;
+		line-height: 1;
+		color: varfix(foreground-color-mute);
 		cursor: pointer;
 		background: transparent;
-		border: 0;
-		border-radius: 50%;
+		border: 1px solid varfix(border-color);
+		border-radius: 6px;
 		place-items: center;
-		transition: color 0.2s ease, background-color 0.2s ease;
 
 		&:hover,
 		&:focus-visible {
-			color: var(--vc-color-light);
-			background: varfix(primary-color);
+			color: varfix(foreground-color);
+			background: varfix(background-color-soft);
 			outline: none;
-		}
-	}
-
-	@include element(close-icon) {
-		position: relative;
-		display: block;
-		width: 10px;
-		height: 10px;
-
-		&::before,
-		&::after {
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			width: 10px;
-			height: 1px;
-			background: currentcolor;
-			border-radius: 1px;
-			content: "";
-		}
-
-		&::before {
-			transform: translate(-50%, -50%) rotate(45deg);
-		}
-
-		&::after {
-			transform: translate(-50%, -50%) rotate(-45deg);
 		}
 	}
 
 	@include element(body) {
 		min-height: 0;
-		background: varfix(background-color-soft);
+		background: varfix(background-color);
 	}
 
 	@include element(scroller) {
@@ -493,120 +476,154 @@ onBeforeUnmount(() => {
 	}
 
 	@include element(content) {
-		padding: 14px 12px 22px;
+		padding: 16px 12px 22px;
 	}
 
 	@include element(group-title) {
-		padding: 0 0 10px;
-		font-weight: 600;
-		color: varfix(foreground-color-light);
+		padding: 4px 8px 10px;
+		font-size: 14px;
+		font-weight: 700;
+		color: varfix(foreground-color);
 	}
 
 	@include element(result) {
 		display: grid;
 		width: 100%;
 		min-height: 56px;
-		padding: 9px 14px;
+		padding: 10px 14px;
 		font: inherit;
-		color: varfix(foreground-color-light);
+		color: varfix(foreground-color);
 		text-align: left;
 		cursor: pointer;
-		background: varfix(background-color);
+		background: varfix(background-color-soft);
 		border: 0;
-		border-radius: 4px;
-		grid-template-columns: 24px minmax(0, 1fr) 24px;
-		gap: 10px;
+		border-radius: 8px;
+		grid-template-columns: 24px minmax(0, 1fr) 16px;
+		gap: 12px;
 		align-items: center;
 
 		& + & {
-			margin-top: 4px;
+			margin-top: 8px;
 		}
 
 		@include modifier(active) {
-			color: varfix(link-color);
-			background: varfix(primary-color-light);
+			color: #fff;
+			background: $search-active;
+
+			.docs-search__result-icon,
+			.docs-search__result-parent,
+			.docs-search__result-excerpt,
+			.docs-search__enter {
+				color: #fff;
+				border-color: rgb(255 255 255 / 45%);
+			}
+
+			.docs-search-highlight {
+				text-decoration-color: rgb(255 255 255 / 85%);
+			}
 		}
 
 		@include modifier(section) {
-			position: relative;
-			width: calc(100% - 18px);
-			margin-left: 18px;
+			position: static;
+			width: 100%;
+			margin-left: 0;
 
 			&::before {
-				position: absolute;
-				top: 0;
-				left: 0;
-				width: 10px;
-				height: 24px;
-				border-bottom: 1px solid varfix(border-color);
-				border-left: 1px solid varfix(border-color);
-				content: "";
+				content: none;
 			}
 		}
 	}
 
 	@include element(result-icon) {
-		font-size: 17px;
-		color: varfix(foreground-color-light);
+		display: grid;
+		width: 24px;
+		height: 24px;
+		font-size: 12px;
+		font-weight: 500;
+		color: varfix(foreground-color-mute);
 		text-align: center;
+		border: 1px solid varfix(border-color);
+		border-radius: 6px;
+		place-items: center;
 	}
 
 	@include element(result-content) {
 		display: grid;
-		gap: 3px;
+		gap: 2px;
 		min-width: 0;
 	}
 
 	@include element(result-title) {
 		overflow: hidden;
 		font-size: 14px;
+		font-weight: 600;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
 	@include element(result-parent) {
 		font-size: 12px;
+		font-weight: 400;
 		color: varfix(foreground-color-light);
 	}
 
 	@include element(result-excerpt) {
 		overflow: hidden;
 		font-size: 12px;
+		font-weight: 400;
 		color: varfix(foreground-color-mute);
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
 	@include element(enter) {
-		font-size: 20px;
-		color: varfix(link-color);
-		text-align: center;
+		width: 7px;
+		height: 7px;
+		justify-self: end;
+		font-size: 0;
+		color: varfix(foreground-color-mute);
+		border-right: 1.5px solid currentcolor;
+		border-bottom: 1.5px solid currentcolor;
+		transform: rotate(-45deg);
 	}
 
 	@include element(history) {
 		display: grid;
 		grid-template-columns: 24px minmax(0, 1fr) 30px 30px;
-		gap: 10px;
+		gap: 12px;
 		min-height: 56px;
-		padding: 9px 10px 9px 14px;
+		padding: 10px 10px 10px 14px;
+		color: varfix(foreground-color);
 		cursor: pointer;
-		background: varfix(background-color);
-		border-radius: 4px;
+		background: varfix(background-color-soft);
+		border-radius: 8px;
 		align-items: center;
 
 		& + & {
-			margin-top: 4px;
+			margin-top: 8px;
 		}
 
 		@include modifier(active) {
-			color: varfix(link-color);
-			background: varfix(primary-color-light);
+			color: #fff;
+			background: $search-active;
+
+			.docs-search__history-icon,
+			.docs-search__result-parent,
+			.docs-search__history-action {
+				color: #fff;
+			}
 		}
 	}
 
 	@include element(history-icon) {
-		font-size: 22px;
-		color: varfix(foreground-color-light);
+		display: grid;
+		width: 24px;
+		height: 24px;
+		font-size: 14px;
+		color: varfix(foreground-color-mute);
+		border: 1px solid varfix(border-color);
+		border-radius: 6px;
+		place-items: center;
 	}
 
 	@include element(history-action) {

@@ -24,7 +24,10 @@ const parts = computed(() => {
 
 .docs-search-highlight {
 	padding: 0;
-	color: varfix(link-color);
+	color: inherit;
+	text-decoration: underline;
 	background: transparent;
+	text-decoration-color: varfix(link-color);
+	text-underline-offset: 2px;
 }
 </style>

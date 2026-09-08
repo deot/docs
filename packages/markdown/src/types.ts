@@ -66,11 +66,14 @@ export type MarkdownPlaygroundMountProps
 export interface MarkdownIndicatorOptions {
 	/**
 	 * 是否允许按住指示器拖动浏览文档，默认开启。
+	 * 关闭后仍可点击轨道按比例定位，只是不再跟手拖动。
 	 */
 	draggable?: boolean;
 
 	/**
 	 * 指示器高度，数字按 px 处理，也支持任意 CSS 长度。
+	 * 未配置时按正文与滚动容器可视高度封顶（与大纲一致）；数字配置也不会超过该封顶。
+	 * 小地图为固定高度条，不再内部滚动。
 	 */
 	height?: number | string;
 
@@ -80,12 +83,12 @@ export interface MarkdownIndicatorOptions {
 	preview?: boolean;
 
 	/**
-	 * 指示器所在侧，默认位于正文右侧。
+	 * 指示器所在侧，默认位于正文左侧。
 	 */
 	position?: 'left' | 'right';
 
 	/**
-	 * 指示器相对滚动容器垂直中心的偏移，数字按 px 处理，默认居中。
+	 * 相对滚动容器顶部的 sticky 偏移，数字按 px 处理，默认贴顶。
 	 */
 	top?: number | string;
 }

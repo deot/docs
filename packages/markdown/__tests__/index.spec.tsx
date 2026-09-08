@@ -5,6 +5,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { zhCN } from '@deot/docs-locale';
 import { Markdown as MarkdownRenderer } from '../src/markdown';
 import { Markdown, parseMarkdownSearchSections } from '../src';
+import { INDICATOR_RAIL_GAP } from '../src/indicator-anchor';
 
 const htmlElementOf = (
 	value: { readonly element: EventTarget | Node | null }
@@ -361,7 +362,7 @@ describe('markdown', () => {
 		expect(wrapper.find('.playground .docs-code-preview').exists()).toBe(false);
 	});
 
-	it('builds a configurable document indicator from rendered blocks', async () => {
+	it('builds a configurable document minimap from rendered blocks', async () => {
 		const frames = mockAnimationFrames();
 		const scrollTo = vi.fn();
 		vi.stubGlobal('scrollTo', scrollTo);
@@ -392,45 +393,54 @@ describe('markdown', () => {
 			attachTo: document.body
 		});
 		await vi.waitFor(() => {
-			expect(wrapper.findAll('.docs-markdown-indicator__marker')).toHaveLength(6);
+			expect(wrapper.findAll('.docs-markdown-indicator__marker')).toHaveLength(1);
 		});
 
 		const indicator = wrapper.get('.docs-markdown-indicator');
+		const viewport = htmlElementOf(wrapper.get('.docs-markdown-indicator__viewport'));
 		expect(indicator.classes()).toContain('is-left');
-		const markerLabels = wrapper.findAll('.docs-markdown-indicator__marker')
-			.map(marker => marker.attributes('aria-label'));
-		expect(markerLabels).toEqual([
-			'Alpha: Intro paragraph',
-			'Alpha: Intro paragraph',
-			'Beta: One',
-			'Beta: One',
-			'Beta: Two',
-			'Beta: Tip paragraph'
-		]);
+		expect(viewport.getAttribute('role')).toBe('slider');
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')
+			.map(marker => marker.attributes('aria-label')))
+			.toEqual([undefined]);
+		expect(wrapper.findAll('.docs-markdown-indicator__marker.is-heading')).toHaveLength(1);
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[0].attributes('style'))
+			.toContain('top:');
 		expect(indicator.attributes('style')).toContain('--docs-markdown-indicator-height: 480px');
 		expect(indicator.attributes('style')).toContain('--docs-markdown-indicator-top: 12px');
-		expect(wrapper.findAll('.docs-markdown-indicator__marker')[0].attributes('style'))
-			.toContain('width: 8px');
-		expect(wrapper.findAll('.docs-markdown-indicator__marker')[1].attributes('style'))
-			.toContain('width: 8px');
+		expect(indicator.attributes('style')).not.toContain('--docs-markdown-indicator-inset');
+		expect(wrapper.find('.docs-markdown-indicator__window').exists()).toBe(true);
+		expect(wrapper.find('.docs-markdown-indicator__scroller').exists()).toBe(false);
 
-		await wrapper.findAll('.docs-markdown-indicator__marker')[1].trigger('click');
-		expect(scrollTo).toHaveBeenCalledWith({ behavior: 'smooth', top: -24 });
+		vi.spyOn(htmlElementOf(wrapper.get('.docs-markdown-indicator__rail')), 'getBoundingClientRect')
+			.mockReturnValue({
+				left: 0,
+				top: 100,
+				right: 40,
+				bottom: 500,
+				width: 40,
+				height: 400,
+				x: 0,
+				y: 100,
+				toJSON: () => ({})
+			});
+		Object.defineProperty(document.documentElement, 'scrollHeight', { configurable: true, value: 2000 });
+		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
+		dispatchPointer(viewport, 'pointerdown', { clientY: 300 });
+		expect(scrollTo).toHaveBeenCalledWith({ behavior: 'auto', top: 600 });
 
 		await wrapper.setProps({ modelValue: '# Updated\n\nOnly one paragraph' });
 		await flushPromises();
 		frames.flush();
 		await vi.waitFor(() => {
-			expect(wrapper.findAll('.docs-markdown-indicator__marker')).toHaveLength(2);
+			expect(wrapper.findAll('.docs-markdown-indicator__marker')).toHaveLength(1);
 		});
-		expect(wrapper.findAll('.docs-markdown-indicator__marker')[0].attributes('aria-label'))
-			.toBe('Updated: Only one paragraph');
 
 		await wrapper.setProps({ indicator: false });
 		expect(wrapper.find('.docs-markdown-indicator').exists()).toBe(false);
 	});
 
-	it('centers the document indicator in the scroll host', async () => {
+	it('pins the document indicator to the top and caps height like the page outline', async () => {
 		const host = document.createElement('div');
 		host.style.overflow = 'auto';
 		document.body.appendChild(host);
@@ -440,7 +450,6 @@ describe('markdown', () => {
 		try {
 			const wrapper = mount(Markdown, {
 				props: {
-					indicator: { height: 200 },
 					modelValue: '# First\n\nParagraph\n\n## Second\n\nLast paragraph'
 				},
 				attachTo: host
@@ -449,24 +458,64 @@ describe('markdown', () => {
 				expect(wrapper.find('.docs-markdown-indicator').exists()).toBe(true);
 			});
 			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
-				.toContain('--docs-markdown-indicator-inset: 300px');
-
-			await wrapper.setProps({ indicator: { height: 400 } });
+				.not.toContain('--docs-markdown-indicator-inset');
+			const content = htmlElementOf(wrapper.get('.docs-markdown-reset'));
+			Object.defineProperty(content, 'offsetHeight', { configurable: true, value: 500 });
+			resizeObservers.forEach(observer => observer.callback());
 			await flushPromises();
 			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
-				.toContain('--docs-markdown-indicator-inset: 200px');
+				.toContain('--docs-markdown-indicator-height: 500px');
+			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
+				.toContain('--docs-markdown-indicator-track-height: 364px');
 
+			Object.defineProperty(content, 'offsetHeight', { configurable: true, value: 1200 });
 			Object.defineProperty(host, 'clientHeight', { configurable: true, value: 900 });
 			resizeObservers.forEach(observer => observer.callback());
 			await flushPromises();
 			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
-				.toContain('--docs-markdown-indicator-inset: 250px');
+				.toContain('--docs-markdown-indicator-height: 900px');
+			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
+				.toContain('--docs-markdown-indicator-track-height: 764px');
 
-			Object.defineProperty(host, 'clientHeight', { configurable: true, value: 0 });
+			await wrapper.setProps({ indicator: { height: 200 } });
+			await flushPromises();
+			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
+				.toContain('--docs-markdown-indicator-height: 200px');
+
+			await wrapper.setProps({ indicator: { height: 2000 } });
+			await flushPromises();
+			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
+				.toContain('--docs-markdown-indicator-height: 900px');
+
+			const indicator = htmlElementOf(wrapper.get('.docs-markdown-indicator'));
+			const markdown = indicator.parentElement as HTMLElement;
+			vi.spyOn(indicator, 'getBoundingClientRect').mockReturnValue({
+				left: 0,
+				top: 80,
+				right: 40,
+				bottom: 80,
+				width: 40,
+				height: 0,
+				x: 0,
+				y: 80,
+				toJSON: () => ({})
+			});
+			vi.spyOn(markdown, 'getBoundingClientRect').mockReturnValue({
+				left: 0,
+				top: -400,
+				right: 800,
+				bottom: 360,
+				width: 800,
+				height: 760,
+				x: 0,
+				y: -400,
+				toJSON: () => ({})
+			});
+			host.dispatchEvent(new Event('scroll'));
 			resizeObservers.forEach(observer => observer.callback());
 			await flushPromises();
 			expect(wrapper.get('.docs-markdown-indicator').attributes('style'))
-				.toContain('--docs-markdown-indicator-inset: 0px');
+				.toContain('--docs-markdown-indicator-height: 280px');
 
 			await wrapper.setProps({ locale: zhCN });
 			await flushPromises();
@@ -521,7 +570,49 @@ describe('markdown', () => {
 		expect(off).toHaveBeenCalledTimes(1);
 	});
 
-	it('previews, scrolls and drags through a Scroller document map', async () => {
+	it('pins the document indicator beside layout rails with a gap', async () => {
+		const layout = document.createElement('div');
+		layout.className = 'docs-layout';
+		const start = document.createElement('div');
+		start.className = 'docs-layout__rail docs-layout__rail--start';
+		const host = document.createElement('div');
+		layout.append(start, host);
+		document.body.appendChild(layout);
+		const box = (
+			left: number,
+			right: number,
+			width: number,
+			height: number
+		): DOMRect => ({
+			left,
+			right,
+			width,
+			height,
+			top: 0,
+			bottom: height,
+			x: left,
+			y: 0,
+			toJSON: () => ({})
+		});
+		vi.spyOn(start, 'getBoundingClientRect').mockReturnValue(box(40, 80, 40, 800));
+		const wrapper = mount(Markdown, {
+			props: { modelValue: '# First\n\nParagraph\n\n## Second\n\nLast paragraph' },
+			attachTo: host
+		});
+		await vi.waitFor(() => {
+			expect(wrapper.find('.docs-markdown-indicator').exists()).toBe(true);
+		});
+		vi.spyOn(wrapper.get('.docs-markdown-indicator').element as HTMLElement, 'getBoundingClientRect')
+			.mockReturnValue(box(200, 800, 600, 0));
+		window.dispatchEvent(new Event('resize'));
+		await flushPromises();
+		expect(htmlElementOf(wrapper.get('.docs-markdown-indicator__viewport')).style.left)
+			.toBe(`${80 - 200 + INDICATOR_RAIL_GAP}px`);
+		wrapper.unmount();
+		layout.remove();
+	});
+
+	it('previews and scrubs through a document minimap', async () => {
 		const frames = mockAnimationFrames();
 		const host = document.createElement('div');
 		host.className = 'vc-scroller__wrapper';
@@ -550,29 +641,47 @@ describe('markdown', () => {
 			attachTo: host
 		});
 		await vi.waitFor(() => {
-			expect(wrapper.findAll('.docs-markdown-indicator__marker')).toHaveLength(4);
+			expect(wrapper.findAll('.docs-markdown-indicator__marker')).toHaveLength(1);
 		});
-		expect(wrapper.get('.docs-markdown-indicator').classes()).toContain('is-right');
+		expect(wrapper.get('.docs-markdown-indicator').classes()).toContain('is-left');
+		expect(wrapper.find('.docs-markdown-indicator__scroller').exists()).toBe(false);
 
-		const blocks = wrapper.find('.docs-markdown-reset').element.querySelectorAll<HTMLElement>('h1,p,h2');
-		[40, 100, 220, 360].forEach((top, index) => {
-			vi.spyOn(blocks[index], 'getBoundingClientRect').mockReturnValue({
-				left: 100,
-				top,
-				right: 700,
-				bottom: top + 40,
-				width: 600,
-				height: 40,
-				x: 100,
-				y: top,
-				toJSON: () => ({})
-			});
+		const content = htmlElementOf(wrapper.get('.docs-markdown-reset'));
+		Object.defineProperty(content, 'offsetHeight', { configurable: true, value: 400 });
+		vi.spyOn(content, 'getBoundingClientRect').mockReturnValue({
+			left: 100,
+			top: 20,
+			right: 700,
+			bottom: 420,
+			width: 600,
+			height: 400,
+			x: 100,
+			y: 20,
+			toJSON: () => ({})
 		});
+		const heading = content.querySelector<HTMLElement>('h2');
+		if (!heading) throw new Error('expected h2');
+		vi.spyOn(heading, 'getBoundingClientRect').mockReturnValue({
+			left: 100,
+			top: 220,
+			right: 700,
+			bottom: 260,
+			width: 600,
+			height: 40,
+			x: 100,
+			y: 220,
+			toJSON: () => ({})
+		});
+		resizeObservers.forEach(observer => observer.callback());
+		await flushPromises();
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[0].attributes('style'))
+			.toContain('top: 50%');
+		expect(wrapper.find('.docs-markdown-indicator__window').attributes('style'))
+			.toContain('top: 4.166');
+
 		const indicatorRoot = htmlElementOf(wrapper.get('.docs-markdown-indicator'));
 		const viewport = htmlElementOf(wrapper.get('.docs-markdown-indicator__viewport'));
-		const indicatorWrapper = htmlElementOf(wrapper.get(
-			'.docs-markdown-indicator__scroller .vc-scroller__wrapper'
-		));
+		const rail = htmlElementOf(wrapper.get('.docs-markdown-indicator__rail'));
 		vi.spyOn(indicatorRoot, 'getBoundingClientRect').mockReturnValue({
 			left: 40,
 			top: 100,
@@ -595,31 +704,16 @@ describe('markdown', () => {
 			y: 100,
 			toJSON: () => ({})
 		});
-		vi.spyOn(indicatorWrapper, 'getBoundingClientRect').mockReturnValue({
+		vi.spyOn(rail, 'getBoundingClientRect').mockReturnValue({
 			left: 40,
-			top: 100,
+			top: 140,
 			right: 80,
-			bottom: 110,
+			bottom: 404,
 			width: 40,
-			height: 10,
+			height: 264,
 			x: 40,
-			y: 100,
+			y: 140,
 			toJSON: () => ({})
-		});
-		const markerElements = wrapper.findAll('.docs-markdown-indicator__marker')
-			.map(marker => htmlElementOf(marker));
-		[100, 108, 116, 124].forEach((top, index) => {
-			vi.spyOn(markerElements[index], 'getBoundingClientRect').mockReturnValue({
-				left: 40,
-				top,
-				right: 44,
-				bottom: top + 2,
-				width: 4,
-				height: 2,
-				x: 40,
-				y: top,
-				toJSON: () => ({})
-			});
 		});
 		const setPointerCapture = vi.fn();
 		const releasePointerCapture = vi.fn();
@@ -632,60 +726,62 @@ describe('markdown', () => {
 		expect(frames.request).toHaveBeenCalledTimes(1);
 		frames.flush();
 		await flushPromises();
-		expect(wrapper.findAll('.docs-markdown-indicator__marker')[1].classes())
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[0].classes())
 			.toContain('is-active');
-		expect(indicatorWrapper.scrollTop).toBeGreaterThan(0);
+		expect(wrapper.findAll('.docs-markdown-indicator__marker.is-in-view').length)
+			.toBeGreaterThan(0);
+		expect(wrapper.get('.docs-markdown-indicator__viewport').attributes('aria-valuenow'))
+			.toBe('4');
 
 		host.scrollTop = 600;
 		host.dispatchEvent(new Event('scroll'));
 		frames.flush();
 		await flushPromises();
-		expect(wrapper.findAll('.docs-markdown-indicator__marker')[3].classes())
+		expect(wrapper.find('.docs-markdown-indicator__window').attributes('style'))
+			.toContain('top: 50%');
+		expect(wrapper.findAll('.docs-markdown-indicator__marker')[0].classes())
 			.toContain('is-active');
+		expect(wrapper.get('.docs-markdown-indicator__viewport').attributes('aria-valuenow'))
+			.toBe('50');
 		host.scrollTop = 50;
 		host.dispatchEvent(new Event('scroll'));
 		frames.flush();
 		await flushPromises();
 
-		const markerTops = markerElements.map(marker => marker.getBoundingClientRect().top);
-		dispatchPointer(viewport, 'pointermove', { clientY: 100 });
+		dispatchPointer(viewport, 'pointermove', { clientY: 272 });
 		await flushPromises();
-		expect(wrapper.get('.docs-markdown-indicator__preview-title').text()).toBe('First');
-		expect(wrapper.get('.docs-markdown-indicator__preview-content').text()).toBe('Paragraph');
+		expect(wrapper.get('.docs-markdown-indicator__preview-title').text()).toBe('Second');
+		expect(wrapper.get('.docs-markdown-indicator__preview-content').text()).toBe('Last paragraph');
 		expect(wrapper.findAll('.docs-markdown-indicator__marker')[0].attributes('style'))
-			.toContain('width: 28px');
-		expect(wrapper.findAll('.docs-markdown-indicator__marker')[1].attributes('style'))
-			.toContain('width: 22px');
-		expect(wrapper.findAll('.docs-markdown-indicator__marker')[2].attributes('style'))
-			.toContain('width: 16px');
-		expect(wrapper.findAll('.docs-markdown-indicator__marker')[3].attributes('style'))
-			.toContain('width: 10px');
-		expect(markerElements.map(marker => marker.getBoundingClientRect().top)).toEqual(markerTops);
-		expect(markerElements.every(marker => !marker.style.top)).toBe(true);
+			.toContain('width: 18px');
+		expect(wrapper.findAll('.docs-markdown-indicator__marker.is-heading')).toHaveLength(1);
 
-		dispatchPointer(viewport, 'pointerdown', { clientY: 124, pointerId: 7 });
+		dispatchPointer(viewport, 'pointerdown', { clientY: 272, pointerId: 7 });
 		expect(setPointerCapture).toHaveBeenCalledWith(7);
-		expect(scrollTo).toHaveBeenLastCalledWith({ behavior: 'auto', top: 366 });
-		dispatchPointer(viewport, 'pointermove', { clientY: 108 });
-		expect(scrollTo).toHaveBeenLastCalledWith({ behavior: 'auto', top: 106 });
-		dispatchPointer(viewport, 'pointerleave');
+		expect(scrollTo).toHaveBeenLastCalledWith({ behavior: 'auto', top: 300 });
 		await flushPromises();
-		expect(wrapper.find('.docs-markdown-indicator__preview').exists()).toBe(true);
+		expect(wrapper.find('.docs-markdown-indicator__preview').exists()).toBe(false);
+		dispatchPointer(viewport, 'pointermove', { clientY: 404 });
+		expect(scrollTo).toHaveBeenLastCalledWith({ behavior: 'auto', top: 600 });
+		expect(wrapper.find('.docs-markdown-indicator__preview').exists()).toBe(false);
 		dispatchPointer(viewport, 'pointerup', { pointerId: 7 });
 		expect(releasePointerCapture).toHaveBeenCalledWith(7);
+		await flushPromises();
+		expect(wrapper.find('.docs-markdown-indicator__preview').exists()).toBe(true);
 		dispatchPointer(viewport, 'pointerleave');
 		await flushPromises();
 		expect(wrapper.find('.docs-markdown-indicator__preview').exists()).toBe(false);
 
 		await wrapper.setProps({ indicator: { draggable: false, preview: false } });
 		scrollTo.mockClear();
-		dispatchPointer(viewport, 'pointerdown', { clientY: 116 });
-		dispatchPointer(viewport, 'pointermove', { clientY: 124 });
-		await flushPromises();
+		dispatchPointer(viewport, 'pointerdown', { clientY: 140 });
+		expect(scrollTo).toHaveBeenCalledTimes(1);
+		scrollTo.mockClear();
+		dispatchPointer(viewport, 'pointermove', { clientY: 404 });
 		expect(scrollTo).not.toHaveBeenCalled();
 		expect(wrapper.find('.docs-markdown-indicator__preview').exists()).toBe(false);
 
-		dispatchPointer(viewport, 'pointerdown', { button: 2, clientY: 116 });
+		dispatchPointer(viewport, 'pointerdown', { button: 2, clientY: 272 });
 		host.dispatchEvent(new Event('scroll'));
 		wrapper.unmount();
 		expect(frames.cancel).toHaveBeenCalled();
@@ -814,6 +910,32 @@ describe('markdown', () => {
 		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
 
 		expect(wrapper.find('.playground').text()).toContain('[8,16]');
+	});
+
+	it('applies playground prop defaults and lets block config override them', async () => {
+		const defaults = mount(Markdown, {
+			props: {
+				modelValue: ':::playground\n```vue\n<template />\n```\n:::',
+				playground: { previewInset: 16 }
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(defaults.find('.playground').exists()).toBe(true));
+		expect(defaults.find('.playground').text()).toContain('16');
+		defaults.unmount();
+
+		const overridden = mount(Markdown, {
+			props: {
+				modelValue: runtimeWithConfig('{ previewInset: [8, 16] }', '```vue\n<template />\n```'),
+				playground: { previewInset: 16, expandable: true }
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(overridden.find('.playground').exists()).toBe(true));
+		const text = overridden.find('.playground').text();
+		expect(text).toContain('[8,16]');
+		expect(text).toContain('true');
+		overridden.unmount();
 	});
 
 	it('passes playground expandable to Playground', async () => {

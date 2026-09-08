@@ -1,4 +1,5 @@
 import { IndexedDBStore } from '@deot/helper-cache';
+import { ContentWidthSettingsManager } from './content-width';
 import { LanguageSettingsManager } from './language';
 import { ThemeSettingsManager } from './theme';
 
@@ -23,6 +24,7 @@ class SettingsManager {
 
 	readonly language = new LanguageSettingsManager(this);
 	readonly theme = new ThemeSettingsManager(this);
+	readonly contentWidth = new ContentWidthSettingsManager(this);
 
 	private createId(namespace: string, key: string) {
 		return [namespace, key].map(encodeURIComponent).join('|');
@@ -73,3 +75,19 @@ export const Theme = Settings.theme;
  * Client 启动流程使用同一实例初始化主题会话。
  */
 export const ThemeRuntime = Settings.theme;
+
+/**
+ * Markdown 正文宽度切换器与启动流程共用的控制器。
+ */
+export const ContentWidth = Settings.contentWidth;
+
+/**
+ * Client 启动流程使用同一实例恢复并持久化正文宽度。
+ */
+export const ContentWidthRuntime = Settings.contentWidth;
+
+export {
+	CONTENT_WIDTHS,
+	isDocsContentWidth
+} from './content-width';
+export type { DocsContentWidth } from './content-width';

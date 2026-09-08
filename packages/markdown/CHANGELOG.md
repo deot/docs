@@ -1,5 +1,13 @@
 # @deot/docs-markdown ChangeLog
 
+## Unreleased
+
+### Features
+
+- feat: default the document indicator to the left side
+- feat: pin the document indicator to the layout rails
+- feat: turn the document indicator into a minimap scrubber
+
 ## v1.0.10
 
 _2026-09-04_

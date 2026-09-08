@@ -1,14 +1,22 @@
 import type { RouteLocationNormalized, RouteLocationNormalizedGeneric } from 'vue-router';
 import type { Ref } from 'vue';
 import type { DocsLocaleEntry } from '@deot/docs-locale';
+import type {
+	MarkdownIndicatorConfig,
+	MarkdownPlaygroundConfig,
+	MarkdownTheme
+} from '@deot/docs-markdown';
 import type { DocsTheme, DocsThemeOptions } from '@deot/docs-theme';
 import type {
 	RendererDocument,
+	RendererFit,
 	RendererModuleSource
 } from '@deot/docs-renderer';
 
 export type { DocsLocaleEntry, Language } from '@deot/docs-locale';
 export type { DocsTheme, DocsThemeOptions, DocsThemePreference } from '@deot/docs-theme';
+export type { MarkdownIndicatorConfig, MarkdownTheme } from '@deot/docs-markdown';
+export type { RendererFit } from '@deot/docs-renderer';
 
 export const DOCS_RESOURCE_TYPES = ['markdown', 'sidebar', 'page', 'sfc', 'module', 'style'] as const;
 export type DocsResourceType = typeof DOCS_RESOURCE_TYPES[number];
@@ -259,6 +267,45 @@ export interface DocsLayoutOptions {
 	footer?: 'default' | DocsFooterOptions | false;
 }
 
+/**
+ * 站点级 Markdown 组件默认 props（排除实例数据如 `value` / `modelValue`）。
+ */
+export interface DocsMarkdownComponentOptions {
+	/**
+	 * 排版皮肤，与站点 light/dark（`theme`）正交。缺省 `default`。
+	 */
+	theme?: MarkdownTheme;
+	/**
+	 * 文档指示器。`false` 关闭；`true` 或对象开启。
+	 */
+	indicator?: MarkdownIndicatorConfig;
+}
+
+/**
+ * 站点级 Playground 组件默认 props。
+ * 对齐 `MarkdownPlaygroundConfig` 中的非实例字段；`:::playground` 块配置会覆盖。
+ */
+export type DocsPlaygroundComponentOptions = Omit<MarkdownPlaygroundConfig, 'entry' | 'title' | 'id'>;
+
+/**
+ * 站点级 Renderer 组件默认 props（排除 `document` / `modules` / `context`）。
+ */
+export interface DocsRendererComponentOptions {
+	/**
+	 * 画布适配策略。未传时由 Renderer 自行决定（draggable 默认 width）。
+	 */
+	fit?: RendererFit;
+}
+
+/**
+ * 站点级组件默认配置。字段对齐各包组件 props，不含实例数据。
+ */
+export interface DocsComponentsOptions {
+	markdown?: DocsMarkdownComponentOptions;
+	playground?: DocsPlaygroundComponentOptions;
+	renderer?: DocsRendererComponentOptions;
+}
+
 export interface DocsConfig {
 	locales: Record<string, DocsLocaleEntry>;
 	/**
@@ -296,9 +343,9 @@ export interface DocsConfig {
 	 */
 	theme?: boolean | DocsThemeOptions;
 	/**
-	 * Markdown 排版皮肤，与 `theme`（light/dark）正交。缺省 `default`。
+	 * Markdown / Playground / Renderer 组件的站点默认 props。
 	 */
-	markdownTheme?: 'default' | 'traditional';
+	components?: DocsComponentsOptions;
 	/**
 	 * 内置页面布局配置。
 	 */
@@ -342,6 +389,15 @@ export interface SidebarItem {
 	 * 点击后跳转的站内路径。可带语言前缀；缺省时只作分组标题。
 	 */
 	value?: string;
+	/**
+	 * 侧栏图标。字符串可为 url、base64 或 `@deot/vc` Icon 的 type；
+	 * 元组为 [normal, selected]，激活时用第二项。
+	 */
+	icon?: string | [normal: string, selected: string];
+	/**
+	 * 侧栏行尾标签，如 `NEW`。
+	 */
+	tag?: string;
 	children?: SidebarItem[];
 }
 

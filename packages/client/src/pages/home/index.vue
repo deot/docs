@@ -1,7 +1,13 @@
 <template>
 	<section class="docs-home">
 		<div v-if="error" class="docs-home__error">{{ error }}</div>
-		<Renderer v-if="document" :document="document" :modules="rendererModules" :context="rendererContext" />
+		<Renderer
+			v-if="document"
+			:document="document"
+			:modules="rendererModules"
+			:context="rendererContext"
+			:fit="rendererFit"
+		/>
 		<div v-else-if="loading" class="docs-home__loading">{{ t('client.common.loading') }}</div>
 	</section>
 </template>
@@ -13,6 +19,7 @@ import { Renderer, validateRendererDocument } from '@deot/docs-renderer';
 import type { RendererContext, RendererDocument } from '@deot/docs-renderer';
 import { Gateway } from '../../modules/gateway';
 import { Theme } from '../../modules/settings';
+import { resolveDocsRendererComponent } from '../../utils/components';
 import {
 	createResourceIdentity,
 	getDefaultLanguage,
@@ -35,6 +42,7 @@ let unsubscribe: (() => void) | undefined;
 let generation = 0;
 
 const lang = computed(() => String(route.params.lang || getDefaultLanguage(config)));
+const rendererFit = computed(() => resolveDocsRendererComponent(config).fit);
 const rendererContext = computed<RendererContext>(() => ({
 	lang: lang.value,
 	locale: locale.value,

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
-import { defineComponent, reactive, ref } from 'vue';
+import { defineComponent, provide, reactive, ref } from 'vue';
 import type { PropType } from 'vue';
 import { provideLocale, resolveLocale } from '@deot/docs-locale';
 import App from '../src/app.vue';
@@ -10,7 +10,11 @@ import DefaultHeader from '../src/components/layout/default-header.vue';
 import DefaultSidebar from '../src/components/layout/default-sidebar.vue';
 import ClientIcon from '../src/components/icon';
 import ThemeToggler from '../src/components/theme-toggler/index.vue';
-import { Theme } from '../src/modules/settings';
+import { ContentWidth, Theme } from '../src/modules/settings';
+import { setSidebarItems } from '../src/modules/sidebar';
+import PageHeader from '../src/components/layout/page-header.vue';
+import PageFooter from '../src/components/layout/page-footer.vue';
+import PageOutline from '../src/components/layout/page-outline.vue';
 
 const { push, route: routeState, setScrollTop } = vi.hoisted(() => ({
 	push: vi.fn(),
@@ -83,6 +87,8 @@ describe('client layout components', () => {
 			routes: {}
 		};
 		sessionStorage.clear();
+		void ContentWidth.set('regular');
+		setSidebarItems(null);
 	});
 
 	it('resets the custom document scroller for route content changes', async () => {
@@ -117,6 +123,8 @@ describe('client layout components', () => {
 			.toBe(true);
 		expect(wrapper.find('.docs-layout__main-scroller [data-fixed-slot="header"]').exists())
 			.toBe(false);
+		expect(wrapper.find('.docs-layout__rail--start').exists()).toBe(true);
+		expect(wrapper.find('.docs-layout__rail--end').exists()).toBe(true);
 		expect(wrapper.find('.docs-layout--home').exists()).toBe(false);
 	});
 
@@ -538,6 +546,38 @@ describe('client layout components', () => {
 		]);
 	});
 
+	it('renders sidebar icons and tags for url, type and selected tuple', () => {
+		route.path = '/zh-CN/guide';
+		const wrapper = mount(() => (
+			<DefaultSidebar
+				items={[
+					{
+						label: 'Guide',
+						value: '/guide',
+						icon: ['book', 'book-fill'] as [string, string],
+						tag: 'NEW'
+					},
+					{
+						label: 'Logo',
+						value: '/logo',
+						icon: 'https://example.com/logo.svg'
+					},
+					{
+						label: 'Docs',
+						value: '/docs',
+						icon: 'folder'
+					}
+				]}
+			/>
+		));
+		expect(wrapper.find('.docs-sidebar__tag').text()).toBe('NEW');
+		expect(wrapper.find('.vc-icon[data-type="book-fill"]').exists()).toBe(true);
+		expect(wrapper.find('.docs-sidebar__media').attributes('src'))
+			.toBe('https://example.com/logo.svg');
+		expect(wrapper.find('.vc-icon[data-type="folder"]').exists()).toBe(true);
+		expect(wrapper.find('.docs-sidebar__link.is-active').text()).toContain('Guide');
+	});
+
 	it('renders the built-in footer groups and localized provider', () => {
 		const { wrapper } = mountFooter();
 		expect(wrapper.findAll('.docs-footer__group')).toHaveLength(4);
@@ -552,6 +592,37 @@ describe('client layout components', () => {
 			target: '_blank',
 			rel: 'noopener noreferrer'
 		});
+	});
+
+	it('aligns the site footer inner width with the markdown content width', async () => {
+		setSidebarItems([
+			{ label: 'Guide', value: '/packages/guide' }
+		]);
+		const { wrapper } = mountFooter();
+		expect(wrapper.find('.docs-footer').attributes('data-content-width')).toBe('regular');
+		await ContentWidth.set('wide');
+		await flushPromises();
+		expect(wrapper.find('.docs-footer').attributes('data-content-width')).toBe('wide');
+		await ContentWidth.set('full');
+		await flushPromises();
+		// Full article can bleed; footer CSS still caps inner/bar at the wide 1200px column.
+		expect(wrapper.find('.docs-footer').attributes('data-content-width')).toBe('full');
+	});
+
+	it('locks the site footer to the wide column when no sidebar is present', async () => {
+		setSidebarItems(null);
+		const { wrapper } = mountFooter();
+		await ContentWidth.set('regular');
+		await flushPromises();
+		expect(wrapper.find('.docs-footer').attributes('data-content-width')).toBe('wide');
+		await ContentWidth.set('full');
+		await flushPromises();
+		expect(wrapper.find('.docs-footer').attributes('data-content-width')).toBe('wide');
+		setSidebarItems([
+			{ label: 'Guide', value: '/packages/guide' }
+		]);
+		await flushPromises();
+		expect(wrapper.find('.docs-footer').attributes('data-content-width')).toBe('full');
 	});
 
 	it('localizes the default footer and reacts to language changes', async () => {
@@ -586,6 +657,12 @@ describe('client layout components', () => {
 		const invalid = mountFooter('zh-CN').wrapper;
 		expect(invalid.findAll('.docs-footer__group')).toHaveLength(3);
 		expect(invalid.text()).not.toContain('反馈');
+
+		window.$docs.repository = 'https://github.com/acme/widgets/tree/main';
+		expect(mountFooter('zh-CN').wrapper.findAll('.docs-footer__group')).toHaveLength(3);
+
+		window.$docs.repository = 'not a url';
+		expect(mountFooter('zh-CN').wrapper.findAll('.docs-footer__group')).toHaveLength(3);
 	});
 
 	it('uses external footer groups without merging defaults', () => {
@@ -605,10 +682,72 @@ describe('client layout components', () => {
 		expect(wrapper.findAll('.docs-footer__group')).toHaveLength(1);
 		expect(wrapper.text()).toContain('Built by Docs Team');
 		expect(wrapper.text()).not.toContain('@deot/vc');
-		expect(wrapper.findAll('a').map(link => link.attributes('href'))).toEqual([
+		expect(wrapper.findAll('.docs-footer__links a').map(link => link.attributes('href'))).toEqual([
 			'/zh-CN/guide',
 			'https://example.com'
 		]);
+	});
+
+	it('renders protocol-relative links and groups without children', () => {
+		window.$docs.layout = {
+			footer: {
+				nav: [
+					{ label: 'Empty' },
+					{
+						label: 'Links',
+						children: [
+							{ label: 'Plain' },
+							{ label: 'CDN', value: '//cdn.example.com' }
+						]
+					}
+				]
+			}
+		};
+		const { wrapper } = mountFooter();
+		expect(wrapper.findAll('.docs-footer__group')).toHaveLength(2);
+		expect(wrapper.find('.docs-footer__links a').attributes('href')).toBe('//cdn.example.com');
+		expect(wrapper.text()).toContain('Plain');
+	});
+
+	it('places the header brand on the footer bar', () => {
+		window.$docs.namespace = 'acme-docs';
+		window.$docs.layout = {
+			header: {
+				brand: {
+					label: 'Acme Docs',
+					logo: 'https://example.com/logo.svg',
+					value: 'https://example.com'
+				}
+			},
+			footer: { nav: [], poweredBy: 'Built by Docs Team' }
+		};
+		const { wrapper } = mountFooter();
+		const brand = wrapper.find('.docs-footer__brand');
+		expect(brand.text()).toBe('Acme Docs');
+		expect(brand.attributes()).toMatchObject({
+			href: 'https://example.com',
+			target: '_blank',
+			rel: 'noopener noreferrer'
+		});
+		expect(wrapper.find('.docs-footer__brand-logo').attributes('src'))
+			.toBe('https://example.com/logo.svg');
+		expect(wrapper.find('.docs-footer__powered-by').text()).toBe('Built by Docs Team');
+	});
+
+	it('places an internal header brand with a logo on the footer bar', () => {
+		window.$docs.layout = {
+			header: {
+				brand: {
+					label: 'Docs Home',
+					logo: '/logo.svg',
+					value: '/'
+				}
+			},
+			footer: { nav: [], poweredBy: false }
+		};
+		const { wrapper } = mountFooter();
+		expect(wrapper.find('.docs-footer__brand').attributes('href')).toBe('/en-US');
+		expect(wrapper.find('.docs-footer__brand-logo').attributes('src')).toBe('/logo.svg');
 	});
 
 	it('selects localized external groups and falls back to the default language', () => {
@@ -640,22 +779,229 @@ describe('client layout components', () => {
 			}
 		};
 		const { wrapper } = mountFooter();
-		expect(wrapper.text()).toBe('');
+		expect(wrapper.findAll('.docs-footer__group')).toHaveLength(0);
+		expect(wrapper.find('.docs-footer__powered-by').exists()).toBe(false);
+		expect(wrapper.find('.docs-footer__brand').text()).toBe('@deot/docs');
 	});
 
 	it('supports default, omitted and hidden footer provider states', () => {
 		window.$docs.layout = { footer: { nav: [], poweredBy: 'default' } };
-		expect(mountFooter().wrapper.text()).toBe('Powered by @deot/docs');
+		expect(mountFooter().wrapper.find('.docs-footer__powered-by').text())
+			.toBe('Powered by @deot/docs');
 
 		window.$docs.layout = { footer: { nav: [] } };
-		expect(mountFooter().wrapper.text()).toBe('');
+		const omitted = mountFooter().wrapper;
+		expect(omitted.find('.docs-footer__powered-by').exists()).toBe(false);
+		expect(omitted.find('.docs-footer__brand').exists()).toBe(true);
 
 		window.$docs.layout = { footer: { nav: [], poweredBy: false } };
-		expect(mountFooter().wrapper.text()).toBe('');
+		expect(mountFooter().wrapper.find('.docs-footer__powered-by').exists()).toBe(false);
 	});
 
 	it('hides the built-in footer through the site layout configuration', () => {
 		window.$docs.layout = { footer: false };
 		expect(mountFooter().wrapper.find('.docs-footer').exists()).toBe(false);
+	});
+
+	it('renders a markdown page header eyebrow from the sidebar section', () => {
+		setSidebarItems([
+			{ label: 'Introduction', value: '/packages/guide' },
+			{
+				label: 'Packages',
+				children: [{ label: 'Client', value: '/packages/client' }]
+			}
+		]);
+		route.path = '/zh-CN/packages/client';
+		const wrapper = mount(() => <PageHeader />);
+		expect(wrapper.find('.docs-page-header__eyebrow').text()).toBe('Packages');
+		expect(wrapper.find('.docs-content-width').exists()).toBe(true);
+		expect(wrapper.find('[aria-checked="true"]').attributes('aria-label')).toBe('Regular');
+
+		route.path = '/zh-CN/packages/guide';
+		const topLevel = mount(() => <PageHeader />);
+		expect(topLevel.find('.docs-page-header').exists()).toBe(true);
+		expect(topLevel.find('.docs-page-header__eyebrow').exists()).toBe(false);
+		expect(topLevel.find('.docs-content-width').exists()).toBe(true);
+	});
+
+	it('switches markdown content width from the page header pill', async () => {
+		const wrapper = mount(() => <PageHeader />);
+		const options = wrapper.findAll('.docs-content-width__option');
+		expect(options).toHaveLength(3);
+		await options[1]!.trigger('click');
+		expect(wrapper.find('[aria-checked="true"]').attributes('aria-label')).toBe('Wide');
+		expect(ContentWidth.current.value).toBe('wide');
+
+		await wrapper.find('.docs-content-width').trigger('keydown', { key: 'ArrowRight' });
+		expect(wrapper.find('[aria-checked="true"]').attributes('aria-label')).toBe('Full');
+		await wrapper.find('.docs-content-width').trigger('keydown', { key: 'ArrowLeft' });
+		expect(wrapper.find('[aria-checked="true"]').attributes('aria-label')).toBe('Wide');
+		await wrapper.find('.docs-content-width').trigger('keydown', { key: 'ArrowUp' });
+		expect(wrapper.find('[aria-checked="true"]').attributes('aria-label')).toBe('Regular');
+		await wrapper.find('.docs-content-width').trigger('keydown', { key: 'Enter' });
+		expect(wrapper.find('[aria-checked="true"]').attributes('aria-label')).toBe('Regular');
+	});
+
+	it('renders markdown page footer neighbors from the sidebar order', () => {
+		setSidebarItems([
+			{ label: 'Introduction', value: '/packages/guide' },
+			{
+				label: 'Packages',
+				children: [
+					{ label: 'Client', value: '/packages/client' },
+					{ label: 'CLI', value: '/packages/cli' }
+				]
+			}
+		]);
+		route.path = '/zh-CN/packages/client';
+		const wrapper = mount(() => <PageFooter />);
+		expect(wrapper.find('.docs-page-footer__link--previous').text()).toBe('Introduction');
+		expect(wrapper.find('.docs-page-footer__link--previous').attributes('href'))
+			.toBe('/zh-CN/packages/guide');
+		expect(wrapper.find('.docs-page-footer__link--next').text()).toBe('CLI');
+		expect(wrapper.find('.docs-page-footer__link--next').attributes('href'))
+			.toBe('/zh-CN/packages/cli');
+
+		route.path = '/zh-CN/packages/guide';
+		const first = mount(() => <PageFooter />);
+		expect(first.find('.docs-page-footer__link--previous').exists()).toBe(false);
+		expect(first.find('.docs-page-footer__link--next').text()).toBe('Client');
+
+		route.path = '/zh-CN/missing';
+		expect(mount(() => <PageFooter />).find('.docs-page-footer').exists()).toBe(false);
+	});
+
+	it('hides the page outline when markdown has no headings', async () => {
+		const host = document.createElement('div');
+		const wrapper = mount(() => <PageOutline target={host} />);
+		await flushPromises();
+		expect(wrapper.find('.docs-page-outline').exists()).toBe(false);
+	});
+
+	it('renders nested outline links and navigates to the heading hash', async () => {
+		const host = document.createElement('div');
+		host.innerHTML = [
+			'<h2 id="pseudo"><a class="header-anchor" href="#pseudo">#</a> Pseudo-classes</h2>',
+			'<h3 id="hover">:hover</h3>'
+		].join('');
+		document.body.appendChild(host);
+		const wrapper = mount(() => <PageOutline target={host} />);
+		await vi.waitFor(() => expect(wrapper.find('.docs-page-outline__link').exists()).toBe(true));
+		expect(wrapper.find('.docs-page-outline__title').text()).toBe('On this page');
+		expect(wrapper.get('.docs-page-outline__title').element.tagName).toBe('P');
+		const links = wrapper.findAll('.docs-page-outline__link');
+		expect(links.map(link => link.text())).toEqual(['Pseudo-classes', ':hover']);
+		expect(links[1]!.classes()).toContain('docs-page-outline__link--nested');
+		await links[1]!.trigger('click');
+		expect(push).toHaveBeenCalledWith(expect.objectContaining({ hash: '#hover' }));
+		host.remove();
+	});
+
+	it('uses 大纲 as the chinese outline title', async () => {
+		const host = document.createElement('div');
+		host.innerHTML = '<h2 id="one">One</h2>';
+		const current = ref(resolveLocale('zh-CN', window.$docs.locales));
+		const Host = defineComponent({
+			setup() {
+				provideLocale(current);
+				return () => <PageOutline target={host} />;
+			}
+		});
+		const wrapper = mount(Host);
+		await vi.waitFor(() => expect(wrapper.find('.docs-page-outline__title').text()).toBe('大纲'));
+	});
+
+	it('stays hidden when the outline has no article target', async () => {
+		const wrapper = mount(() => <PageOutline />);
+		await flushPromises();
+		expect(wrapper.find('.docs-page-outline').exists()).toBe(false);
+		route.hash = '#gone';
+		await flushPromises();
+		expect(wrapper.find('.docs-page-outline').exists()).toBe(false);
+	});
+
+	it('scrolls the article scroller and follows encoded outline hashes', async () => {
+		const main = document.createElement('div');
+		main.className = 'docs-layout__main-scroller';
+		const scroller = document.createElement('div');
+		scroller.className = 'vc-scroller__wrapper';
+		Object.defineProperty(scroller, 'scrollTop', { value: 24, writable: true });
+		const host = document.createElement('div');
+		host.innerHTML = '<h2 id="one">One</h2><h2 id="%E">Broken</h2>';
+		scroller.append(host);
+		main.append(scroller);
+		document.body.append(main);
+		const wrapper = mount(() => <PageOutline target={host} />);
+		await vi.waitFor(() => expect(wrapper.findAll('.docs-page-outline__link')).toHaveLength(2));
+		await wrapper.findAll('.docs-page-outline__link')[1]!.trigger('click');
+		expect(push).toHaveBeenCalledWith(expect.objectContaining({ hash: '#%E' }));
+		route.hash = '#one';
+		await flushPromises();
+		expect(wrapper.find('[aria-current="location"]').text()).toBe('One');
+		window.dispatchEvent(new Event('scroll'));
+		window.dispatchEvent(new Event('resize'));
+		main.remove();
+	});
+
+	it('tracks the parent scroller and refreshes when headings change', async () => {
+		class ResizeObserverMock {
+			observe = vi.fn();
+			disconnect = vi.fn();
+			unobserve = vi.fn();
+		}
+		vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+		vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+			cb(0);
+			return 1;
+		});
+		vi.stubGlobal('cancelAnimationFrame', vi.fn());
+		const host = document.createElement('div');
+		host.innerHTML = '<h2 id="one">One</h2>';
+		document.body.append(host);
+		const scrollerEl = document.createElement('div');
+		const on = vi.fn();
+		const off = vi.fn();
+		const Host = defineComponent({
+			setup() {
+				provide('vc-scroller', {
+					on,
+					off,
+					wrapper: scrollerEl,
+					clientHeight: 600,
+					scrollHeight: 2000,
+					scrollTop: 1400
+				});
+				return () => <PageOutline target={host} />;
+			}
+		});
+		const wrapper = mount(Host);
+		await vi.waitFor(() => expect(wrapper.find('.docs-page-outline__link').exists()).toBe(true));
+		expect(on).toHaveBeenCalled();
+		host.insertAdjacentHTML('beforeend', '<h2 id="two">Two</h2>');
+		await vi.waitFor(() => expect(wrapper.findAll('.docs-page-outline__link')).toHaveLength(2));
+		wrapper.unmount();
+		expect(off).toHaveBeenCalled();
+		host.remove();
+		vi.unstubAllGlobals();
+	});
+
+	it('falls back to window scrolling when the parent scroller cannot subscribe', async () => {
+		const host = document.createElement('div');
+		host.innerHTML = '<h2 id="one">One</h2>';
+		document.body.append(host);
+		const Host = defineComponent({
+			setup() {
+				provide('vc-scroller', {
+					on: () => {
+						throw new Error('unavailable');
+					}
+				});
+				return () => <PageOutline target={host} />;
+			}
+		});
+		const wrapper = mount(Host);
+		await vi.waitFor(() => expect(wrapper.find('.docs-page-outline__link').exists()).toBe(true));
+		wrapper.unmount();
+		host.remove();
 	});
 });
