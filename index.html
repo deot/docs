@@ -272,11 +272,28 @@
 			: location.pathname.endsWith('/')
 				? location.pathname
 				: new URL('./', location.href).pathname;
+		const logo = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="docs-logo" x1="12" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse"><stop stop-color="#873bf4"/><stop offset="1" stop-color="#2d8cf0"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#docs-logo)"/><path fill="#fff" fill-rule="evenodd" d="M18 13h12c10.5 0 19 8.5 19 19s-8.5 19-19 19H18V13zm12 9v20h1.5c5.8 0 10.5-4.5 10.5-10S37.3 22 31.5 22H30z"/></svg>')}`;
+		if (typeof document !== 'undefined') {
+			const favicon = document.createElement('link');
+			favicon.rel = 'icon';
+			favicon.type = 'image/svg+xml';
+			favicon.href = logo;
+			document.head.appendChild(favicon);
+		}
 		window.$docs = {
 			base: new URL(basePath, location.origin).href,
 			namespace: '@deot/docs-site',
 			repository: 'https://github.com/deot/docs',
 			theme: { default: 'system' },
+			layout: {
+				header: {
+					brand: {
+						logo,
+						label: '@deot/docs',
+						value: '/'
+					}
+				}
+			},
 			locales,
 			routes: Object.fromEntries([
 				['/', {

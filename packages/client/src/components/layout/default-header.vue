@@ -403,9 +403,10 @@ const handleTools = (action: string | number) => {
 
 	@include element(brand-logo) {
 		display: block;
-		width: 28px;
+		width: auto;
 		height: 28px;
 		object-fit: contain;
+		flex-shrink: 0;
 	}
 
 	@include element(locales) {

@@ -278,9 +278,10 @@ const toPath = (value: string) => {
 
 	@include element(brand-logo) {
 		display: block;
-		width: 20px;
+		width: auto;
 		height: 20px;
 		object-fit: contain;
+		flex-shrink: 0;
 	}
 
 	@include element(powered-by) {
