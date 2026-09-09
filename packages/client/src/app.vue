@@ -74,16 +74,20 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch, provide } from 'vue';
 import { Scroller } from '@deot/vc';
 import type { ScrollerExposed } from '@deot/vc';
-import { RouterView, useRoute } from 'vue-router';
+import { RouterView, useRoute, useRouter } from 'vue-router';
+import { markdownTabQueryKey } from '@deot/docs-markdown';
+import type { MarkdownTabQueryAdapter } from '@deot/docs-markdown';
 import { useLocale } from '@deot/docs-locale';
 import { ResourceSlot } from './components/layout';
 import ClientIcon from './components/icon';
 import { isRendererEditorDemo } from './pages/renderer-editor-demos/catalog';
+import { omitRouteQuery } from './utils/query';
 
 const route = useRoute();
+const router = useRouter();
 const { t } = useLocale();
 const mainScroller = ref<ScrollerExposed>();
 const mobileSidebarOpen = ref(false);
@@ -104,10 +108,25 @@ const handleSidebarNavigation = (event: MouseEvent) => {
 	if ((event.target as Element | null)?.closest('a')) closeMobileSidebar();
 };
 
+const tabQueryAdapter: MarkdownTabQueryAdapter = {
+	get: () => {
+		const value = route.query.tab;
+		return typeof value === 'string' ? value : Array.isArray(value) ? String(value[0] || '') : '';
+	},
+	set: (tab) => {
+		const query = { ...route.query };
+		if (tab) query.tab = tab;
+		else delete query.tab;
+		void router.replace({ path: route.path, query, hash: route.hash });
+	},
+	subscribe: listener => watch(() => route.query.tab, () => listener())
+};
+provide(markdownTabQueryKey, tabQueryAdapter);
+
 // Vue Router 的 scrollBehavior 只能控制 window；正文位于 VcScroller 内，
-// 因此路由内容变化时需要单独重置该滚动容器。
+// 因此路由内容变化时需要单独重置该滚动容器。`?tab=` 只切换 Markdown 分栏，不复位滚动。
 watch(
-	[() => route.path, () => JSON.stringify(route.query)],
+	[() => route.path, () => JSON.stringify(omitRouteQuery(route.query, ['tab']))],
 	async () => {
 		closeMobileSidebar();
 		await nextTick();

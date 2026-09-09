@@ -1,6 +1,6 @@
 # @deot/docs-markdown
 
-`@deot/docs-markdown` 提供 Vue 3 Markdown 渲染组件，内置文档指示器、标题锚点、链接识别、tip/warning 容器、代码高亮预览和按需加载的 Playground 容器。
+`@deot/docs-markdown` 提供 Vue 3 Markdown 渲染组件，内置文档指示器、标题锚点、链接识别、tip/warning 容器、tabs 分栏、代码高亮预览和按需加载的 Playground 容器。
 
 ## 安装
 
@@ -73,6 +73,37 @@ const source = ref('# Hello @deot/docs');
 :::
 ````
 
+### Tabs 分栏
+
+每一栏用 **4 个反引号** 的 fence（info 为 `markdown <标题>`），这样栏内还能写普通 ` ``` ` 代码块。切换时写入 `?tab=<id>`（标题小写、空白变 `-`；非 ASCII 与标题锚点一致做 `encodeURIComponent`）。
+
+`````markdown
+:::tabs
+````markdown Linux
+Linux 安装步骤，可含普通代码块：
+
+```ts
+const value = 1;
+```
+````
+````markdown Android
+Android 安装步骤。
+````
+:::
+`````
+
+栏内若再嵌套 `:::tip` / `:::playground` / `:::warning`，外层必须加长冒号（`::::tabs` … `::::`）。`markdown-it-container` 会按「足够长的纯 `:::` 行」闭合外层，内层结束标记会提前关掉 `:::tabs`。
+
+``````markdown
+::::tabs
+````markdown Demo
+:::tip
+嵌套提示。
+:::
+````
+::::
+``````
+
 ### 单文件 Playground
 
 ````markdown
@@ -130,8 +161,10 @@ Playground 只在页面出现 fence 或 `:::playground` 时动态加载。使用
 | --- | --- |
 | `Markdown` | Vue Markdown 渲染组件。 |
 | `parseMarkdownSearchSections(content)` | 使用渲染器相同的标题锚点规则提取文档标题、正文和小节，供搜索索引使用。 |
+| `toMarkdownTabId(title)` | 将 Tab 标题转为 `?tab=` id。 |
+| `markdownTabQueryKey` / `createHistoryTabQueryAdapter` | 文档壳可 `provide` Router 版适配器；独立预览回退 history。 |
 
-类型：`MarkdownSearchDocument`、`MarkdownSearchSection`、`MarkdownIndicatorConfig`、`MarkdownIndicatorOptions`、`MarkdownPlaygroundConfig`、`MarkdownPlaygroundMountProps`。
+类型：`MarkdownSearchDocument`、`MarkdownSearchSection`、`MarkdownIndicatorConfig`、`MarkdownIndicatorOptions`、`MarkdownPlaygroundConfig`、`MarkdownPlaygroundMountProps`、`MarkdownTabQueryAdapter`。
 
 底层 markdown-it 实例和内部指令不是包入口的公共导出。搜索解析结果不会包含代码围栏和 HTML 内容。
 

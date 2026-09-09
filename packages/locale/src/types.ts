@@ -15,6 +15,7 @@ export interface ClientLocaleMessages {
 
 export interface MarkdownLocaleMessages {
 	indicator: Record<string, string>;
+	tabs: Record<string, string>;
 }
 
 export interface PlaygroundLocaleMessages {

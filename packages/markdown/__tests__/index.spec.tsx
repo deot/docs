@@ -3,8 +3,9 @@
 import { defineComponent, provide, ref } from 'vue';
 import { flushPromises, mount } from '@vue/test-utils';
 import { zhCN } from '@deot/docs-locale';
-import { Markdown as MarkdownRenderer } from '../src/markdown';
+import { Markdown as MarkdownRenderer, toMarkdownTabId } from '../src/markdown';
 import { Markdown, parseMarkdownSearchSections } from '../src';
+import { createHistoryTabQueryAdapter } from '../src/tab-query';
 import { INDICATOR_RAIL_GAP } from '../src/indicator-anchor';
 
 const htmlElementOf = (
@@ -276,6 +277,254 @@ describe('markdown', () => {
 		expect(html).toContain('class="tip tip--filled"');
 		expect(html).toContain('class="warning warning--filled"');
 		expect(html).toContain('docs-markdown-callout-icon');
+	});
+
+	it('renders tabs panels from 4-backtick fences including nested code fences', () => {
+		const html = MarkdownRenderer.render([
+			':::tabs',
+			'````markdown Linux',
+			'Linux body with code:',
+			'',
+			'```ts',
+			'const value = 1;',
+			'```',
+			'````',
+			'````markdown Android',
+			'Android install steps.',
+			'````',
+			':::'
+		].join('\n'));
+
+		expect(html).toContain('data-tabs');
+		expect(html).toContain('data-tab="linux"');
+		expect(html).toContain('data-tab-title="Linux"');
+		expect(html).toContain('data-tab="android"');
+		expect(html).toContain('data-tab-title="Android"');
+		expect(html).toContain('language-ts');
+		expect(html).toContain('Android install steps.');
+		expect(html).toMatch(/data-tab="android"[^>]*hidden/);
+		expect(html).not.toMatch(/data-tab="linux"[^>]*hidden/);
+	});
+
+	it('reports invalid tabs declarations', () => {
+		expect(MarkdownRenderer.render(':::tabs\n:::')).toContain('至少需要声明一个分栏');
+		expect(MarkdownRenderer.render([
+			':::tabs',
+			'````markdown',
+			'body',
+			'````',
+			':::'
+		].join('\n'))).toContain('每个分栏都必须声明标题');
+		expect(MarkdownRenderer.render([
+			':::tabs',
+			'````markdown Linux',
+			'one',
+			'````',
+			'````markdown Linux',
+			'two',
+			'````',
+			':::'
+		].join('\n'))).toContain('id 重复');
+	});
+
+	it('indexes tabs panel prose for search', () => {
+		const parsed = parseMarkdownSearchSections([
+			'# Guide',
+			'',
+			':::tabs',
+			'````markdown Linux',
+			'Install on Linux hosts.',
+			'````',
+			'````markdown Android',
+			'Install on Android devices.',
+			'````',
+			':::'
+		].join('\n'));
+
+		expect(parsed.text).toContain('Install on Linux hosts.');
+		expect(parsed.text).toContain('Install on Android devices.');
+	});
+
+	it('switches tabs and writes ?tab= via the adapter', async () => {
+		const current = { tab: '' };
+		const listeners = new Set<() => void>();
+		const adapter = {
+			get: () => current.tab,
+			set: (tab: string) => {
+				current.tab = tab;
+				listeners.forEach(listener => listener());
+			},
+			subscribe: (listener: () => void) => {
+				listeners.add(listener);
+				return () => listeners.delete(listener);
+			}
+		};
+		const wrapper = mount(Markdown, {
+			props: {
+				modelValue: [
+					':::tabs',
+					'````markdown Linux',
+					'Linux panel',
+					'````',
+					'````markdown Android',
+					'Android panel',
+					'````',
+					':::'
+				].join('\n'),
+				tabQuery: adapter
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(document.querySelector('[role="tablist"]')).not.toBeNull());
+		const tabs = [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+		expect(tabs.map(tab => tab.textContent?.trim())).toEqual(['Linux', 'Android']);
+		expect(document.querySelector('[data-tab="linux"]')?.hasAttribute('hidden')).toBe(false);
+		expect(document.querySelector('[data-tab="android"]')?.hasAttribute('hidden')).toBe(true);
+
+		tabs[1]!.click();
+		await flushPromises();
+		expect(current.tab).toBe('android');
+		expect(document.querySelector('[data-tab="linux"]')?.hasAttribute('hidden')).toBe(true);
+		expect(document.querySelector('[data-tab="android"]')?.hasAttribute('hidden')).toBe(false);
+
+		current.tab = 'linux';
+		listeners.forEach(listener => listener());
+		await flushPromises();
+		expect(document.querySelector('[data-tab="linux"]')?.hasAttribute('hidden')).toBe(false);
+		expect(document.querySelector('[data-tab="android"]')?.hasAttribute('hidden')).toBe(true);
+		wrapper.unmount();
+	});
+
+	it('falls back to a default tabs aria-label', async () => {
+		const locale = {
+			...zhCN,
+			markdown: {
+				indicator: zhCN.markdown.indicator
+			}
+		} as typeof zhCN;
+		const wrapper = mount(Markdown, {
+			props: {
+				locale,
+				modelValue: [
+					':::tabs',
+					'````markdown One',
+					'panel',
+					'````',
+					':::'
+				].join('\n')
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(document.querySelector('[role="tablist"]')).not.toBeNull());
+		expect(document.querySelector('[role="tablist"]')?.getAttribute('aria-label')).toBe('Tabs');
+		wrapper.unmount();
+	});
+
+	it('accepts tab titles without the markdown language prefix', () => {
+		const html = MarkdownRenderer.render([
+			':::tabs',
+			'````Linux',
+			'plain title panel',
+			'````',
+			':::'
+		].join('\n'));
+		expect(html).toContain('data-tab="linux"');
+		expect(html).toContain('data-tab-title="Linux"');
+		expect(html).toContain('plain title panel');
+	});
+
+	it('subscribes to history popstate for tab changes', () => {
+		const adapter = createHistoryTabQueryAdapter();
+		const listener = vi.fn();
+		const stop = adapter.subscribe?.(listener);
+		window.dispatchEvent(new PopStateEvent('popstate'));
+		expect(listener).toHaveBeenCalledOnce();
+		stop?.();
+		window.dispatchEvent(new PopStateEvent('popstate'));
+		expect(listener).toHaveBeenCalledOnce();
+	});
+
+	it('reads and writes tab query through the history adapter', () => {
+		const adapter = createHistoryTabQueryAdapter();
+		window.history.replaceState(null, '', '/docs/guide');
+		expect(adapter.get()).toBe('');
+		adapter.set('android');
+		expect(window.location.search).toContain('tab=android');
+		expect(adapter.get()).toBe('android');
+		adapter.set('');
+		expect(window.location.search).not.toContain('tab=');
+		expect(toMarkdownTabId('Linux')).toBe('linux');
+		expect(toMarkdownTabId('安装')).toBe(encodeURIComponent('安装'));
+		expect(toMarkdownTabId('  ')).toBe('');
+	});
+
+	it('tolerates tab query adapter failures', () => {
+		const adapter = createHistoryTabQueryAdapter();
+		const getSpy = vi.spyOn(URLSearchParams.prototype, 'get').mockImplementation(() => {
+			throw new Error('boom');
+		});
+		expect(adapter.get()).toBe('');
+		getSpy.mockRestore();
+		const hrefSpy = vi.spyOn(window, 'location', 'get').mockImplementation(() => {
+			throw new Error('boom');
+		});
+		expect(() => adapter.set('x')).not.toThrow();
+		hrefSpy.mockRestore();
+	});
+
+	it('keeps nested playground mounts inside tabs panels', async () => {
+		const wrapper = mount(Markdown, {
+			props: {
+				modelValue: [
+					'::::tabs',
+					'````markdown Demo',
+					':::playground',
+					'```vue',
+					'<template>tab-playground</template>',
+					'```',
+					':::',
+					'````',
+					'::::'
+				].join('\n')
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(document.querySelector('.playground')).not.toBeNull());
+		expect(document.querySelector('.playground')?.textContent).toContain('tab-playground');
+		wrapper.unmount();
+	});
+
+	it('requires longer outer markers when panels nest tip containers', () => {
+		const broken = MarkdownRenderer.render([
+			':::tabs',
+			'````markdown Demo',
+			':::tip',
+			'nested',
+			':::',
+			'````',
+			'````markdown Other',
+			'other',
+			'````',
+			':::'
+		].join('\n'));
+		expect(broken).toContain('data-tab="demo"');
+		expect(broken).not.toContain('data-tab="other"');
+
+		const ok = MarkdownRenderer.render([
+			'::::tabs',
+			'````markdown Demo',
+			':::tip',
+			'nested',
+			':::',
+			'````',
+			'````markdown Other',
+			'other',
+			'````',
+			'::::'
+		].join('\n'));
+		expect(ok).toContain('data-tab="demo"');
+		expect(ok).toContain('data-tab="other"');
+		expect(ok).toContain('class="tip"');
 	});
 
 	it('applies docs-markdown theme modifiers', () => {

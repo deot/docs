@@ -1,5 +1,9 @@
 <template>
-	<ul class="docs-sidebar" :class="{ 'docs-sidebar--nested': nested }">
+	<ul
+		class="docs-sidebar"
+		:class="{ 'docs-sidebar--nested': nested }"
+		:style="nested ? { '--docs-sidebar-depth': depth } : undefined"
+	>
 		<li
 			v-for="item in items"
 			:key="`${item.label}:${item.value || ''}`"
@@ -29,7 +33,12 @@
 				<span class="docs-sidebar__text">{{ item.label }}</span>
 				<span v-if="item.tag" class="docs-sidebar__tag">{{ item.tag }}</span>
 			</span>
-			<DefaultSidebar v-if="item.children?.length" :items="item.children" nested />
+			<DefaultSidebar
+				v-if="item.children?.length"
+				:items="item.children"
+				nested
+				:depth="depth + 1"
+			/>
 		</li>
 	</ul>
 </template>
@@ -39,7 +48,9 @@ import type { SidebarItem } from '../../types';
 import SidebarGlyph from './sidebar-glyph.vue';
 
 defineOptions({ name: 'DefaultSidebar' });
-defineProps<{ items: SidebarItem[]; nested?: boolean }>();
+withDefaults(defineProps<{ items: SidebarItem[]; nested?: boolean; depth?: number }>(), {
+	depth: 0
+});
 const route = useRoute();
 const isExternal = (value: string) => (
 	/^[a-z][a-z\d+.-]*:/i.test(value) || value.startsWith('//')
@@ -70,6 +81,10 @@ const isItemActive = (value: string) => {
 		padding: 0;
 		margin: 0;
 		border-left: 1px solid color-mix(in srgb, varfix(foreground-color) 10%, transparent);
+
+		.docs-sidebar--nested {
+			border-left-color: transparent;
+		}
 	}
 
 	@include element(item) {
@@ -126,11 +141,18 @@ const isItemActive = (value: string) => {
 	}
 
 	@include modifier(nested) {
+		@include element(item) {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			margin-left: -1px;
+			align-items: flex-start;
+		}
+
 		@include element(link) {
 			display: flex;
 			width: 100%;
-			padding: 0 0 0 16px;
-			margin-left: -1px;
+			padding: 0 0 0 calc(16px + (var(--docs-sidebar-depth, 1) - 1) * 14px);
 			font-size: 14px;
 			line-height: 24px;
 			border-left: 1px solid transparent;
@@ -146,7 +168,7 @@ const isItemActive = (value: string) => {
 		}
 
 		@include element(label) {
-			padding-left: 16px;
+			padding-left: calc(16px + (var(--docs-sidebar-depth, 1) - 1) * 14px);
 			margin: 16px 0 12px;
 		}
 	}
@@ -192,14 +214,13 @@ const isItemActive = (value: string) => {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		flex: 1 1 auto;
+		flex: 0 1 auto;
 	}
 
 	@include element(tag) {
 		position: relative;
 		display: inline-flex;
 		padding: 0 6px;
-		margin-left: auto;
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 		font-size: 10px;
 		font-weight: 500;

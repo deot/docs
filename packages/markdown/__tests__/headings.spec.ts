@@ -22,9 +22,11 @@ describe('markdown headings', () => {
 			<h3 id="hover">:hover</h3>
 			<pre><h4 id="code">Code title</h4></pre>
 			<div data-playground data-code="x"><h3 id="play">Playground</h3></div>
+			<div class="docs-markdown-tabs__panel" hidden><h3 id="hidden-tab">Hidden</h3></div>
+			<div class="docs-markdown-tabs__panel"><h3 id="visible-tab">Visible</h3></div>
 			<h2 id="empty"><a class="header-anchor" href="#empty">#</a></h2>
 		`;
-		expect(collectMarkdownHeadings(root).map(item => item.id)).toEqual(['pseudo', 'hover']);
+		expect(collectMarkdownHeadings(root).map(item => item.id)).toEqual(['pseudo', 'hover', 'visible-tab']);
 		expect(collectMarkdownHeadings(null)).toEqual([]);
 	});
 

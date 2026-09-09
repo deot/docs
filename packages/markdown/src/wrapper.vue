@@ -9,11 +9,16 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, inject, ref } from 'vue';
 import { provideLocale, useLocale } from '@deot/docs-locale';
 import type { Language } from '@deot/docs-locale';
 import { vMarkdown } from './directive';
 import MarkdownIndicator from './indicator.vue';
+import {
+	createHistoryTabQueryAdapter,
+	markdownTabQueryKey
+} from './tab-query';
+import type { MarkdownTabQueryAdapter } from './tab-query';
 import type {
 	MarkdownIndicatorConfig,
 	MarkdownPlaygroundConfig,
@@ -36,6 +41,10 @@ const props = withDefaults(defineProps<{
 	 * Playground 站点默认 props。`:::playground` 块配置会浅合并覆盖。
 	 */
 	playground?: MarkdownPlaygroundConfig;
+	/**
+	 * `?tab=` 读写；未传时优先 inject，再回退 history 适配器。
+	 */
+	tabQuery?: MarkdownTabQueryAdapter;
 	modelValue?: string;
 	value?: string;
 }>(), {
@@ -55,6 +64,11 @@ const indicatorOptions = computed(() => {
 const resolvedTheme = computed<MarkdownTheme>(() => (
 	props.theme === 'traditional' ? 'traditional' : 'default'
 ));
+const injectedTabQuery = inject(markdownTabQueryKey, null);
+const historyTabQuery = createHistoryTabQueryAdapter();
+const resolvedTabQuery = computed(() => (
+	props.tabQuery || injectedTabQuery || historyTabQuery
+));
 
 // 即使 modelValue 是合法的空文档，它仍然是唯一可信的数据源。
 const source = computed(() => typeof props.modelValue === 'string'
@@ -63,7 +77,8 @@ const source = computed(() => typeof props.modelValue === 'string'
 const markdownBinding = computed(() => ({
 	source: source.value,
 	locale: locale.value,
-	playground: props.playground
+	playground: props.playground,
+	tabQuery: resolvedTabQuery.value
 }));
 </script>
 <style lang="scss">

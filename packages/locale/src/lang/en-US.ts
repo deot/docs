@@ -192,6 +192,9 @@ const enUS = {
 			label: 'Document indicator',
 			untitled: 'Untitled section',
 			document: 'Document'
+		},
+		tabs: {
+			label: 'Content tabs'
 		}
 	},
 	playground: {

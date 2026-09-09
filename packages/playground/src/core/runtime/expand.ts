@@ -4,6 +4,26 @@ import type { PlaygroundExpandable } from '../../types';
 /** 展开后预留底部空隙，避免贴死视口边缘。 */
 export const PLAYGROUND_EXPAND_VIEWPORT_GAP = 16;
 
+/**
+ * `.docs-playground__preview` 单边描边。必须保持 `border-box`：改成
+ * `content-box` 后 expand 会看起来占用高度或把预览撑开。
+ * 指定内容高度时要把上下描边加回盒子。
+ */
+export const PLAYGROUND_PREVIEW_BORDER_WIDTH = 1;
+
+export const resolvePreviewBoxHeight = (
+	contentHeight: number,
+	verticalInset = 0,
+	borderWidth = PLAYGROUND_PREVIEW_BORDER_WIDTH
+) => {
+	const content = Number.isFinite(contentHeight) ? Math.max(0, contentHeight) : 0;
+	const inset = Number.isFinite(verticalInset) ? Math.max(0, verticalInset) : 0;
+	const border = Number.isFinite(borderWidth)
+		? Math.max(0, borderWidth)
+		: PLAYGROUND_PREVIEW_BORDER_WIDTH;
+	return content + inset * 2 + border * 2;
+};
+
 const CLIPPING_OVERFLOW = new Set(['auto', 'scroll', 'hidden', 'overlay']);
 const SCROLLABLE_OVERFLOW = new Set(['auto', 'scroll', 'overlay']);
 

@@ -191,6 +191,9 @@ const zhCN = {
 			label: '文档指示器',
 			untitled: '未命名章节',
 			document: '文档'
+		},
+		tabs: {
+			label: '内容分栏'
 		}
 	},
 	playground: {

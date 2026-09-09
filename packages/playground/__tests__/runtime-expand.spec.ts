@@ -3,11 +3,13 @@
 import { MIN_RUNTIME_HEIGHT } from '../src/core/runtime/auto-height';
 import {
 	PLAYGROUND_EXPAND_VIEWPORT_GAP,
+	PLAYGROUND_PREVIEW_BORDER_WIDTH,
 	findScrollableAncestor,
 	getVisibleViewportRect,
 	getWindowInnerHeight,
 	isPlaygroundExpandable,
 	resolveExpandedPreviewHeight,
+	resolvePreviewBoxHeight,
 	resolveRemainingPreviewHeight,
 	scrollPlaygroundToViewportStart
 } from '../src/core/runtime/expand';
@@ -56,6 +58,14 @@ describe('runtime preview expand', () => {
 		expect(resolveExpandedPreviewHeight(true, 2000)).toBe(2000);
 		expect(resolveExpandedPreviewHeight(600, 400)).toBe(600);
 		expect(resolveExpandedPreviewHeight(10, 400)).toBe(MIN_RUNTIME_HEIGHT);
+	});
+
+	it('adds preview border back so border-box content matches the requested height', () => {
+		expect(PLAYGROUND_PREVIEW_BORDER_WIDTH).toBe(1);
+		expect(resolvePreviewBoxHeight(32)).toBe(34);
+		expect(resolvePreviewBoxHeight(32, 0)).toBe(34);
+		expect(resolvePreviewBoxHeight(667, 16)).toBe(701);
+		expect(resolvePreviewBoxHeight(Number.NaN, -1)).toBe(2);
 	});
 
 	it('caps expandable:true to the available viewport instead of content height', () => {

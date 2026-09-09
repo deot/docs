@@ -113,7 +113,9 @@ import type { SandboxExposed } from './auto-height';
 import {
 	getVisibleViewportRect,
 	isPlaygroundExpandable,
+	PLAYGROUND_PREVIEW_BORDER_WIDTH,
 	resolveExpandedPreviewHeight,
+	resolvePreviewBoxHeight,
 	resolveRemainingPreviewHeight,
 	scrollPlaygroundToViewportStart
 } from './expand';
@@ -257,16 +259,31 @@ const measurePreviewChromeHeight = () => {
 		+ (error instanceof HTMLElement ? error.offsetHeight : 0);
 };
 
+const normalizedPreviewInset = computed<[vertical: number, horizontal: number]>(() => {
+	const value = props.previewInset;
+	if (typeof value === 'number') {
+		return Number.isFinite(value) && value >= 0 ? [value, value] : [10, 10];
+	}
+	if (Array.isArray(value)
+		&& value.length === 2
+		&& value.every(item => typeof item === 'number' && Number.isFinite(item) && item >= 0)) {
+		return [value[0], value[1]];
+	}
+	return [10, 10];
+});
+
 const measureExpandedPreviewHeight = () => {
 	if (typeof window === 'undefined') return runtimeHeight.value;
 	const chromeHeight = measurePreviewChromeHeight();
 	const viewport = getVisibleViewportRect(runtimeRoot.value);
+	const [vertical] = normalizedPreviewInset.value;
+	const remaining = resolveRemainingPreviewHeight({
+		viewportHeight: viewport.height,
+		chromeHeight
+	});
 	return resolveExpandedPreviewHeight(
 		true,
-		resolveRemainingPreviewHeight({
-			viewportHeight: viewport.height,
-			chromeHeight
-		})
+		remaining - vertical * 2 - PLAYGROUND_PREVIEW_BORDER_WIDTH * 2
 	);
 };
 
@@ -319,22 +336,10 @@ watch(canExpandPreview, (enabled) => {
 		frozenExpandedHeight.value = 0;
 	}
 });
-const normalizedPreviewInset = computed<[vertical: number, horizontal: number]>(() => {
-	const value = props.previewInset;
-	if (typeof value === 'number') {
-		return Number.isFinite(value) && value >= 0 ? [value, value] : [10, 10];
-	}
-	if (Array.isArray(value)
-		&& value.length === 2
-		&& value.every(item => typeof item === 'number' && Number.isFinite(item) && item >= 0)) {
-		return [value[0], value[1]];
-	}
-	return [10, 10];
-});
 const previewStyle = computed(() => {
 	const [vertical, horizontal] = normalizedPreviewInset.value;
 	return {
-		height: `${desiredViewportHeight.value + vertical * 2}px`,
+		height: `${resolvePreviewBoxHeight(desiredViewportHeight.value, vertical)}px`,
 		padding: vertical === horizontal
 			? `${vertical}px`
 			: `${vertical}px ${horizontal}px`,
@@ -531,6 +536,8 @@ defineExpose({
 		background: var(--vc-background-color-light, var(--docs-background-color, #fff));
 		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e2e8f0));
 		border-radius: 12px;
+
+		// 保持 border-box：高度已含上下描边。content-box 会让 expand 看起来撑开预览。
 		box-sizing: border-box;
 		flex: 1 1 auto;
 	}

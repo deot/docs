@@ -2,6 +2,7 @@
 
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent, reactive } from 'vue';
+import type { LocationQuery } from 'vue-router';
 import { Renderer } from '@deot/docs-renderer';
 import ResourceSlot from '../src/components/layout/resource-slot.vue';
 import { isPlainNavigationClick } from '../src/utils/link';
@@ -22,7 +23,7 @@ const {
 	route: {
 		fullPath: '/zh-CN/components/installation',
 		path: '/zh-CN/components/installation',
-		query: { tab: 'api' },
+		query: { tab: 'api' } as LocationQuery,
 		hash: '',
 		params: { lang: 'zh-CN', name: 'installation' },
 		meta: {
@@ -223,6 +224,21 @@ describe('ResourceSlot', () => {
 		await vi.waitFor(() => expect(wrapper.text()).toContain('Input'));
 		expect(load).toHaveBeenCalledTimes(2);
 		expect(unsubscribe).toHaveBeenCalledOnce();
+	});
+
+	it('ignores Markdown tab query changes when reloading content', async () => {
+		load.mockResolvedValue({ content: '# Install' });
+		mount(ResourceSlot, { props: { name: 'content' } });
+		await flushPromises();
+		expect(load).toHaveBeenCalledOnce();
+
+		route.query = { tab: 'examples' };
+		await flushPromises();
+		expect(load).toHaveBeenCalledOnce();
+
+		route.query = { tab: 'examples', preview: '1' };
+		await flushPromises();
+		expect(load).toHaveBeenCalledTimes(2);
 	});
 
 	it('resolves the built-in sidebar from the default sidebar resource', async () => {

@@ -16,8 +16,9 @@ import PageHeader from '../src/components/layout/page-header.vue';
 import PageFooter from '../src/components/layout/page-footer.vue';
 import PageOutline from '../src/components/layout/page-outline.vue';
 
-const { push, route: routeState, setScrollTop } = vi.hoisted(() => ({
+const { push, replace, route: routeState, setScrollTop } = vi.hoisted(() => ({
 	push: vi.fn(),
+	replace: vi.fn(),
 	route: {
 		fullPath: '/zh-CN/components/button?tab=api#props',
 		path: '/zh-CN/components/button',
@@ -41,7 +42,7 @@ vi.mock('../src/components/layout', async () => ({
 vi.mock('vue-router', async original => ({
 	...await original<typeof import('vue-router')>(),
 	useRoute: () => route,
-	useRouter: () => ({ push }),
+	useRouter: () => ({ push, replace }),
 	RouterLink: (await import('vue')).defineComponent({
 		props: { to: { type: [String, Object] as PropType<string | { path?: string }>, required: true } },
 		setup: (props, { slots }) => () => (
@@ -104,7 +105,12 @@ describe('client layout components', () => {
 		await flushPromises();
 		expect(setScrollTop).not.toHaveBeenCalled();
 
+		// Markdown `?tab=` 只切换分栏，不应复位主滚动。
 		route.query = { tab: 'examples' };
+		await flushPromises();
+		expect(setScrollTop).not.toHaveBeenCalled();
+
+		route.query = { tab: 'examples', name: 'landing' };
 		await flushPromises();
 		expect(setScrollTop).toHaveBeenLastCalledWith(0);
 	});
@@ -544,6 +550,37 @@ describe('client layout components', () => {
 			'https://example.com/docs',
 			'mailto:docs@example.com'
 		]);
+	});
+
+	it('tracks nested sidebar depth so deeper groups share one rail', () => {
+		const wrapper = mount(() => (
+			<DefaultSidebar
+				items={[
+					{
+						label: 'Intro',
+						children: [
+							{ label: 'Guide', value: '/guide' },
+							{
+								label: 'Markdown',
+								children: [{
+									label: 'Default',
+									children: [{ label: 'page', value: '/md' }]
+								}]
+							}
+						]
+					}
+				]}
+			/>
+		));
+		const lists = wrapper.findAll('ul');
+		expect(lists).toHaveLength(4);
+		expect(lists[0]!.classes()).not.toContain('docs-sidebar--nested');
+		expect(lists[0]!.attributes('style') || '').not.toContain('--docs-sidebar-depth');
+		expect(lists[1]!.classes()).toContain('docs-sidebar--nested');
+		expect(lists[1]!.attributes('style')).toContain('--docs-sidebar-depth: 1');
+		expect(lists[2]!.classes()).toContain('docs-sidebar--nested');
+		expect(lists[2]!.attributes('style')).toContain('--docs-sidebar-depth: 2');
+		expect(lists[3]!.attributes('style')).toContain('--docs-sidebar-depth: 3');
 	});
 
 	it('renders sidebar icons and tags for url, type and selected tuple', () => {

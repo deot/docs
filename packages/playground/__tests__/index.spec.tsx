@@ -24,7 +24,11 @@ import {
 } from '../src/import-map';
 import Playground from '../src/playground.vue';
 import type { PlaygroundPreviewInset } from '../src/types';
-import { PLAYGROUND_EXPAND_VIEWPORT_GAP } from '../src/core/runtime/expand';
+import {
+	PLAYGROUND_EXPAND_VIEWPORT_GAP,
+	resolvePreviewBoxHeight
+} from '../src/core/runtime/expand';
+import { MIN_RUNTIME_HEIGHT } from '../src/core/runtime/auto-height';
 import { PLAYGROUND_POPUP_HEADER_HEIGHT, PLAYGROUND_POPUP_SCREEN_GAP } from '../src/core/runtime/alone/layout';
 import type { PlaygroundStoreStub } from './fixtures';
 
@@ -579,7 +583,7 @@ describe('Playground', () => {
 		});
 
 		expect(wrapper.find('.docs-playground__preview').attributes('style'))
-			.toContain('height: 667px');
+			.toContain(`height: ${resolvePreviewBoxHeight(667)}px`);
 		expect(wrapper.find('.docs-playground__preview').attributes('style'))
 			.toContain('padding: 0px');
 		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
@@ -591,7 +595,7 @@ describe('Playground', () => {
 
 		await wrapper.setProps({ viewport: 768 });
 		expect(wrapper.find('.docs-playground__preview').attributes('style'))
-			.toContain('height: 24px');
+			.toContain(`height: ${resolvePreviewBoxHeight(MIN_RUNTIME_HEIGHT)}px`);
 		expect(wrapper.find('.docs-playground-runtime__viewport').attributes('style'))
 			.toContain('width: 768px');
 		await wrapper.setProps({ viewport: undefined });
@@ -621,21 +625,21 @@ describe('Playground', () => {
 		});
 		const previewStyle = () => wrapper.find('.docs-playground__preview').attributes('style');
 
-		expect(previewStyle()).toContain('height: 667px');
+		expect(previewStyle()).toContain(`height: ${resolvePreviewBoxHeight(667)}px`);
 		expect(previewStyle()).toContain('padding: 0px');
 		expect(previewStyle()).toContain(`background: ${PLAYGROUND_RUNTIME_CANVAS_BACKGROUND}`);
 
 		await wrapper.setProps({ previewInset: 16 });
-		expect(previewStyle()).toContain('height: 699px');
+		expect(previewStyle()).toContain(`height: ${resolvePreviewBoxHeight(667, 16)}px`);
 		expect(previewStyle()).toContain('padding: 16px');
 		expect(previewStyle()).toContain(`background: ${PLAYGROUND_RUNTIME_CANVAS_BACKGROUND}`);
 
 		await wrapper.setProps({ previewInset: [8, 16] });
-		expect(previewStyle()).toContain('height: 683px');
+		expect(previewStyle()).toContain(`height: ${resolvePreviewBoxHeight(667, 8)}px`);
 		expect(previewStyle()).toContain('padding: 8px 16px');
 
 		await wrapper.setProps({ previewInset: -1 as PlaygroundPreviewInset });
-		expect(previewStyle()).toContain('height: 687px');
+		expect(previewStyle()).toContain(`height: ${resolvePreviewBoxHeight(667, 10)}px`);
 		expect(previewStyle()).toContain('padding: 10px');
 	});
 
@@ -662,7 +666,7 @@ describe('Playground', () => {
 
 		expect(preview.classes()).not.toContain('is-expanded');
 		expect(wrapper.find('.docs-playground__expand').exists()).toBe(true);
-		expect(preview.attributes('style')).toContain('height: 24px');
+		expect(preview.attributes('style')).toContain(`height: ${resolvePreviewBoxHeight(MIN_RUNTIME_HEIGHT)}px`);
 		expect(toggle.attributes('aria-expanded')).toBe('false');
 		expect(toggle.attributes('aria-label')).toBe('Expand to full height');
 
@@ -686,7 +690,7 @@ describe('Playground', () => {
 
 		await toggle.trigger('click');
 		expect(preview.classes()).not.toContain('is-expanded');
-		expect(preview.attributes('style')).toContain('height: 24px');
+		expect(preview.attributes('style')).toContain(`height: ${resolvePreviewBoxHeight(MIN_RUNTIME_HEIGHT)}px`);
 		wrapper.unmount();
 
 		const cramped = mount(Playground, {
@@ -711,12 +715,12 @@ describe('Playground', () => {
 		expect(fixed.find('.docs-playground__expand').exists()).toBe(true);
 		await fixed.find('[data-action="expand-preview"]').trigger('click');
 		expect(fixed.find('.docs-playground__preview').attributes('style'))
-			.toContain('height: 480px');
+			.toContain(`height: ${resolvePreviewBoxHeight(480)}px`);
 		await fixed.setProps({ expandable: undefined });
 		await nextTick();
 		expect(fixed.find('[data-action="expand-preview"]').exists()).toBe(false);
 		expect(fixed.find('.docs-playground__preview').attributes('style'))
-			.toContain('height: 24px');
+			.toContain(`height: ${resolvePreviewBoxHeight(MIN_RUNTIME_HEIGHT)}px`);
 		fixed.unmount();
 
 		const styleless = mount(Playground, {
@@ -989,7 +993,7 @@ describe('Playground', () => {
 		expect(runtime.find('.docs-playground-files').exists()).toBe(false);
 		expect(runtime.find('.docs-playground__views').exists()).toBe(false);
 		expect(runtime.find('.docs-playground__preview').attributes('style'))
-			.toContain('height: 24px');
+			.toContain(`height: ${resolvePreviewBoxHeight(MIN_RUNTIME_HEIGHT)}px`);
 
 		const fixedRuntime = mount(Playground, {
 			attrs: { style: 'height: 200px' },
@@ -997,7 +1001,7 @@ describe('Playground', () => {
 		});
 		expect(fixedRuntime.attributes('style')).toContain('height: 200px');
 		expect(fixedRuntime.find('.docs-playground__preview').attributes('style'))
-			.toContain('height: 24px');
+			.toContain(`height: ${resolvePreviewBoxHeight(MIN_RUNTIME_HEIGHT)}px`);
 
 		const files = mount(Playground, {
 			props: {

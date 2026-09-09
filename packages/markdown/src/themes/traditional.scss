@@ -620,6 +620,69 @@ $sign: md;
 				}
 			}
 
+			& .docs-markdown-tabs[#{$sign}],
+			& .docs-markdown-tabs {
+				margin: 20px 0;
+			}
+
+			& .docs-markdown-tabs__nav {
+				min-width: 0;
+				overflow-x: auto;
+				box-shadow: inset 0 -1px 0 color-mix(in srgb, currentcolor 10%, transparent);
+			}
+
+			& .docs-markdown-tabs__list {
+				display: flex;
+				gap: 24px;
+				margin: 0;
+				white-space: nowrap;
+			}
+
+			& .docs-markdown-tabs__tab {
+				display: flex;
+				padding: 0 0 8px;
+				font-size: 14px;
+				font-weight: 500;
+				line-height: 1.75;
+				color: var(--docs-foreground-color-light, #445368);
+				cursor: pointer;
+				background: transparent;
+				border: 0;
+				box-shadow: inset 0 -1px 0 transparent;
+				appearance: none;
+			}
+
+			& .docs-markdown-tabs__tab:hover {
+				box-shadow: inset 0 -1px 0 color-mix(in srgb, currentcolor 25%, transparent);
+			}
+
+			& .docs-markdown-tabs__tab--active,
+			& .docs-markdown-tabs__tab[aria-selected='true'] {
+				color: var(--docs-foreground-color, #24292f);
+				box-shadow: inset 0 -2px 0 currentcolor;
+			}
+
+			& .docs-markdown-tabs__panel {
+				padding-top: 20px;
+			}
+
+			& .docs-markdown-tabs__panel > :first-child {
+				margin-top: 0;
+			}
+
+			& .docs-markdown-tabs__panel > :last-child {
+				margin-bottom: 0;
+			}
+
+			& .docs-markdown-tabs-error {
+				padding: 10px 14px;
+				margin: 20px 0;
+				color: #991b1b;
+				background: #fef2f2;
+				border: 1px solid #fecaca;
+				border-radius: 6px;
+			}
+
 			& code[#{$sign}]:not(.hljs)  {
 				padding: 0.15em 0.4em;
 				color: var(--docs-primary-color, #873bf4);
@@ -738,6 +801,26 @@ $sign: md;
 				&>details {
 					background-color: var(--docs-background-color-soft, #252b3a);
 					border-color: var(--docs-border-color, #3b4355);
+				}
+
+				.docs-markdown-tabs__nav {
+					box-shadow: inset 0 -1px 0 color-mix(in srgb, #fff 12%, transparent);
+				}
+
+				.docs-markdown-tabs__tab {
+					color: var(--docs-foreground-color-light, #d9d9d9);
+				}
+
+				.docs-markdown-tabs__tab--active,
+				.docs-markdown-tabs__tab[aria-selected='true'] {
+					color: var(--docs-foreground-color, #f8f8f8);
+					box-shadow: inset 0 -2px 0 currentcolor;
+				}
+
+				.docs-markdown-tabs-error {
+					color: #fecaca;
+					background: color-mix(in srgb, #991b1b 24%, transparent);
+					border-color: color-mix(in srgb, #fecaca 35%, transparent);
 				}
 
 				kbd[md],

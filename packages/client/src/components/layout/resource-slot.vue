@@ -78,6 +78,7 @@ import {
 import { getDocsConfig } from '../../utils/runtime';
 import { resolveInlineSidebar } from '../../utils/sidebar';
 import { markdownArticleKey } from '../../utils/outline';
+import { omitRouteQuery } from '../../utils/query';
 import { resolveRouteContent } from '../../utils/content';
 import type { DocsContent, DocsLocalized, DocsResourceType, DocsRoute, DocsSidebar, SidebarItem } from '../../types';
 import { useRendererModules } from '../renderer';
@@ -462,9 +463,9 @@ const load = async () => {
 	}
 };
 
-// hash 变化只移动当前文档，不应重新加载资源。
+// hash / `?tab=` 变化只影响当前文档 UI，不应重新加载资源。
 watch(
-	[() => route.path, () => JSON.stringify(route.query), () => props.name],
+	[() => route.path, () => JSON.stringify(omitRouteQuery(route.query, ['tab'])), () => props.name],
 	load,
 	{ immediate: true }
 );

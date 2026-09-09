@@ -11,7 +11,7 @@ This is a **pnpm monorepo** for `@deot/docs`, a Vue 3 documentation toolchain. I
 | `packages/client` | `@deot/docs-client` | Vue application shell and router |
 | `packages/cli` | `@deot/docs-cli` | `doc dev` / `doc build` command entry |
 | `packages/dever` | `@deot/docs-dever` | Vite dev-server and build implementation used by the CLI |
-| `packages/markdown` | `@deot/docs-markdown` | Markdown renderer, highlighting, and `playground` container blocks |
+| `packages/markdown` | `@deot/docs-markdown` | Markdown renderer, highlighting, `playground` / `tabs` container blocks |
 | `packages/playground` | `@deot/docs-playground` | Vue REPL preview and editor UI |
 | `packages/renderer` | `@deot/docs-renderer` | Flat page document protocol, read-only `Renderer`, and visual editor `Combo` |
 | `packages/index` | `@deot/docs` | Umbrella package |

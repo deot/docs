@@ -8,9 +8,11 @@ import type { MarkdownPlaygroundConfig } from './types';
 
 const HTML_MD_SIGN = 'md';
 const PLAYGROUND = 'playground';
+const TABS = 'tabs';
 const TIP = 'tip';
 const WARNING = 'warning';
 const CALLOUT_FILLED_RE = /(^|\s)filled(\s|$)/;
+const TAB_MARKDOWN_INFO_RE = /^markdown(?:\s+(.*))?$/i;
 const CALLOUT_INFO_ICON = [
 	'<svg width="22" height="28" viewBox="0 0 22 28" fill="none" aria-hidden="true">',
 	'<circle class="docs-markdown-callout-icon__fill" cx="11" cy="14" r="11"></circle>',
@@ -66,10 +68,16 @@ config
 
 	.plugin('container')
 	.use(($md) => {
-		const reg = new RegExp(`^${PLAYGROUND}\\s*(.*)$`);
+		const playgroundReg = new RegExp(`^${PLAYGROUND}\\s*(.*)$`);
 		$md.use(mdContainer, PLAYGROUND, {
 			validate(params) {
-				return params.trim().match(reg);
+				return params.trim().match(playgroundReg);
+			}
+		});
+		const tabsReg = new RegExp(`^${TABS}\\s*$`);
+		$md.use(mdContainer, TABS, {
+			validate(params) {
+				return tabsReg.test(params.trim());
 			}
 		});
 
@@ -86,10 +94,37 @@ const md = config.toMd(markdownIt);
 
 const playgroundOpen = `container_${PLAYGROUND}_open`;
 const playgroundClose = `container_${PLAYGROUND}_close`;
+const tabsOpen = `container_${TABS}_open`;
+const tabsClose = `container_${TABS}_close`;
 const htmlCommentRE = /<!--([\s\S]*?)-->/g;
 const runtimeConfigRE = /<config\s+lang\s*=\s*["']json5["']\s*>([\s\S]*?)<\/config>/i;
 const renderPlaygroundError = (message: string) =>
 	`<div class="docs-playground-error">PLAYGROUND: ${md.utils.escapeHtml(message)}</div>\n`;
+const renderTabsError = (message: string) =>
+	`<div class="docs-markdown-tabs-error">TABS: ${md.utils.escapeHtml(message)}</div>\n`;
+/**
+ * 从 fence info 解析 Tab 显示名：去掉可选的 `markdown` 语言前缀。
+ * @param info fence 的 info 字符串，如 `markdown Linux` 或 `Android`。
+ * @returns 显示标题（可能为空）。
+ */
+const parseTabFenceTitle = (info: string) => {
+	const trimmed = info.trim();
+	const match = trimmed.match(TAB_MARKDOWN_INFO_RE);
+	if (match) return (match[1] || '').trim();
+	return trimmed;
+};
+/**
+ * 生成 `?tab=` 使用的 id：小写、空白变 `-`；含非 ASCII 时与标题锚点一致做 encodeURIComponent。
+ * @param title Tab 显示名。
+ * @returns 可写入 query 的 id；标题为空时返回空串。
+ */
+export const toMarkdownTabId = (title: string) => {
+	const normalized = title.trim().toLowerCase().replace(/\s+/gu, '-');
+	if (!normalized) return '';
+	return /[^\x20-\x7E]/u.test(normalized)
+		? encodeURIComponent(normalized)
+		: normalized;
+};
 const PLAYGROUND_VIEWS = ['runtime', 'files'] as const satisfies readonly PlaygroundView[];
 const isPlaygroundView = (value: unknown): value is PlaygroundView => (
 	typeof value === 'string' && (PLAYGROUND_VIEWS as readonly string[]).includes(value)
@@ -192,7 +227,80 @@ const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>): M
 };
 const renderPlaygroundAttrs = (propsData: MarkdownPlaygroundConfig) => `data-props="${md.utils.escapeHtml(JSON.stringify(propsData))}"`;
 
-md.core.ruler.after('block', 'runtime-files', (state) => {
+const renderTabsHtml = (
+	panels: Array<{ id: string; title: string; content: string }>
+) => {
+	const parts = [
+		'<div class="docs-markdown-tabs" md data-tabs>',
+		'<div class="docs-markdown-tabs__nav" data-tabs-nav></div>'
+	];
+	panels.forEach((panel, index) => {
+		const hidden = index === 0 ? '' : ' hidden';
+		const id = md.utils.escapeHtml(panel.id);
+		const title = md.utils.escapeHtml(panel.title);
+		parts.push(
+			`<div class="docs-markdown-tabs__panel" role="tabpanel" data-tab="${id}" data-tab-title="${title}"${hidden}>`,
+			md.render(panel.content),
+			'</div>'
+		);
+	});
+	parts.push('</div>\n');
+	return parts.join('');
+};
+
+md.core.ruler.after('block', 'markdown-tabs', (state) => {
+	const panelSources = Array.isArray(state.env?.tabsPanelSources)
+		? state.env.tabsPanelSources as string[]
+		: undefined;
+
+	for (let index = 0; index < state.tokens.length; index++) {
+		const openToken = state.tokens[index];
+		if (openToken.type !== tabsOpen) continue;
+
+		let depth = 1;
+		let closeIndex = index + 1;
+		for (; closeIndex < state.tokens.length; closeIndex++) {
+			if (state.tokens[closeIndex].type === tabsOpen) depth++;
+			if (state.tokens[closeIndex].type === tabsClose) depth--;
+			if (depth === 0) break;
+		}
+
+		const innerTokens = state.tokens.slice(index + 1, closeIndex);
+		const fences = innerTokens.filter(token => token.type === 'fence');
+		const placeholder = new state.Token('html_block', '', 0);
+		placeholder.block = true;
+
+		if (!fences.length) {
+			placeholder.content = renderTabsError('至少需要声明一个分栏');
+		} else {
+			const panels: Array<{ id: string; title: string; content: string }> = [];
+			const seen = new Set<string>();
+			let error = '';
+			for (const fence of fences) {
+				const title = parseTabFenceTitle(fence.info);
+				const id = toMarkdownTabId(title);
+				if (!title || !id) {
+					error = '每个分栏都必须声明标题';
+					break;
+				}
+				if (seen.has(id)) {
+					error = `分栏 ${title} 的 id 重复`;
+					break;
+				}
+				seen.add(id);
+				panels.push({ id, title, content: fence.content });
+				panelSources?.push(fence.content);
+			}
+			placeholder.content = error
+				? renderTabsError(error)
+				: renderTabsHtml(panels);
+		}
+
+		state.tokens.splice(index, closeIndex - index + 1, placeholder);
+	}
+});
+
+md.core.ruler.after('markdown-tabs', 'runtime-files', (state) => {
 	for (let index = 0; index < state.tokens.length; index++) {
 		const openToken = state.tokens[index];
 		if (openToken.type !== playgroundOpen) continue;
@@ -270,7 +378,7 @@ md.core.ruler.after('block', 'runtime-files', (state) => {
 
 const renderAttrs = md.renderer.renderAttrs;
 md.renderer.renderAttrs = (token) => {
-	const reg = new RegExp(`container_${PLAYGROUND}|fence|text`);
+	const reg = new RegExp(`container_${PLAYGROUND}|container_${TABS}|fence|text`);
 	// 结束标记会复用 renderAttrs，但语法上不能携带属性。
 	if (token.nesting !== -1 && token.type && !reg.test(token.type)) {
 		token.attrPush([HTML_MD_SIGN, '']);
@@ -328,36 +436,44 @@ const getInlineSearchText = (token: ReturnType<typeof md.parse>[number]) => {
  * @returns 文档标题、正文和按标题划分的小节。
  */
 export const parseMarkdownSearchSections = (content: string): MarkdownSearchDocument => {
-	const tokens = md.parse(content, {});
 	const sections: MarkdownSearchSection[] = [];
 	const documentParts: string[] = [];
 	let activeSection: MarkdownSearchSection | undefined;
 
-	for (let index = 0; index < tokens.length; index++) {
-		const token = tokens[index];
-		if (token.type === 'heading_open') {
-			const inline = tokens[index + 1];
-			if (inline?.type !== 'inline') continue;
-			const title = getInlineSearchText(inline);
-			if (!title) continue;
-			activeSection = {
-				title,
-				anchor: token.attrGet('id') || '',
-				level: Number(token.tag.slice(1)) || 1,
-				text: ''
-			};
-			sections.push(activeSection);
-			continue;
-		}
-		// 除标题外的 inline token 都是可见正文，包含段落、列表和表格单元格。
-		if (token.type !== 'inline' || tokens[index - 1]?.type === 'heading_open') continue;
-		const text = getInlineSearchText(token);
-		if (!text) continue;
+	const consumeInline = (text: string) => {
+		if (!text) return;
 		documentParts.push(text);
 		if (activeSection) {
 			activeSection.text = normalizeSearchText(`${activeSection.text} ${text}`);
 		}
-	}
+	};
+
+	const walk = (source: string, withHeadings: boolean) => {
+		const tabsPanelSources: string[] = [];
+		const tokens = md.parse(source, { tabsPanelSources });
+		for (let index = 0; index < tokens.length; index++) {
+			const token = tokens[index];
+			if (withHeadings && token.type === 'heading_open') {
+				const inline = tokens[index + 1];
+				if (inline?.type !== 'inline') continue;
+				const title = getInlineSearchText(inline);
+				if (!title) continue;
+				activeSection = {
+					title,
+					anchor: token.attrGet('id') || '',
+					level: Number(token.tag.slice(1)) || 1,
+					text: ''
+				};
+				sections.push(activeSection);
+				continue;
+			}
+			if (token.type !== 'inline' || tokens[index - 1]?.type === 'heading_open') continue;
+			consumeInline(getInlineSearchText(token));
+		}
+		for (const panelSource of tabsPanelSources) walk(panelSource, false);
+	};
+
+	walk(content, true);
 
 	return {
 		title: sections.find(section => section.level === 1)?.title || sections[0]?.title || '',

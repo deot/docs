@@ -247,8 +247,8 @@ describe('dever configuration', () => {
 				{
 					label: 'Packages',
 					children: expect.arrayContaining([
-						{ label: '@deot/docs', value: '/packages/index' },
-						{ label: '@deot/docs-client', value: '/packages/client' }
+						{ label: 'index', value: '/packages/index' },
+						{ label: 'client', value: '/packages/client' }
 					])
 				}
 			]);

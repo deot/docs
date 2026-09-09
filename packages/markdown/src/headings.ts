@@ -6,7 +6,13 @@ export interface MarkdownHeading {
 }
 
 const HEADING_SELECTOR = 'h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]';
-const SKIP_CLOSEST = 'pre, .docs-markdown-code-preview, [data-playground][data-code], [data-playground][data-files]';
+const SKIP_CLOSEST = [
+	'pre',
+	'.docs-markdown-code-preview',
+	'[data-playground][data-code]',
+	'[data-playground][data-files]',
+	'.docs-markdown-tabs__panel[hidden]'
+].join(', ');
 
 /**
  * 去掉 markdown-it-anchor 的井号后，读取标题的可见文案。

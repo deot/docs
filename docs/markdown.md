@@ -169,6 +169,31 @@ Paragraph with **bold** and `inline code`.
 2. 再确认环境变量是否已注入
 :::
 
+## Tabs 分栏
+
+:::tabs
+````markdown Linux
+在 Linux 上安装：
+
+```bash
+curl -fsSL https://example.com/install.sh | sh
+```
+````
+````markdown Android
+在 Android 上打开应用设置，启用 Subnet routing。
+````
+:::
+
+栏内若再写 `:::tip` / `:::playground` 等容器，外层需加长冒号，否则内层结束标记会提前关掉 tabs：
+
+::::tabs
+````markdown Demo
+:::tip
+可嵌套提示与普通代码块。
+:::
+````
+::::
+
 ## Playground 基础示例
 
 :::playground
