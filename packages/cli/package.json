@@ -1,6 +1,6 @@
 {
   "name": "@deot/docs-cli",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -13,7 +13,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@deot/docs-dever": "^1.1.0",
+    "@deot/docs-dever": "^1.1.1",
     "commander": "^15.0.0"
   },
   "devDependencies": {

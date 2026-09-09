@@ -1,5 +1,18 @@
 # @deot/docs ChangeLog
 
+## v1.1.1
+
+_2026-09-09_
+
+### Bugfixes
+
+- fix(dever,client): align SSE identity for shared docs paths ([c9262db](https://github.com/deot/docs/commit/c9262db553d971451c065a96341fdb10d4407c95))
+
+### Features
+
+- feat(markdown,client): add tabs container synced to ?tab= (:::tabs) ([0549eaf](https://github.com/deot/docs/commit/0549eafef3b7463bb18fce93adae46fd15c9a8ac))
+- feat(client): add a site brand mark sized by height ([454155e](https://github.com/deot/docs/commit/454155eb5519b05d749b010ba06758677ceba296))
+
 ## v1.1.0
 
 _2026-09-08_

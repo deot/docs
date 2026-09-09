@@ -15,7 +15,7 @@ importers:
   packages/cli:
     dependencies:
       '@deot/docs-dever':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../dever
       commander:
         specifier: ^15.0.0
@@ -34,7 +34,7 @@ importers:
         specifier: ^1.1.0
         version: link:../locale
       '@deot/docs-markdown':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../markdown
       '@deot/docs-playground':
         specifier: ^1.1.0
@@ -113,19 +113,19 @@ importers:
   packages/index:
     dependencies:
       '@deot/docs-cli':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../cli
       '@deot/docs-client':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../client
       '@deot/docs-dever':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../dever
       '@deot/docs-locale':
         specifier: ^1.1.0
         version: link:../locale
       '@deot/docs-markdown':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../markdown
       '@deot/docs-playground':
         specifier: ^1.1.0

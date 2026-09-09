@@ -1,5 +1,13 @@
 # @deot/docs-markdown ChangeLog
 
+## v1.1.1
+
+_2026-09-09_
+
+### Features
+
+- feat: add tabs container synced to ?tab= (:::tabs) ([0549eaf](https://github.com/deot/docs/commit/0549eafef3b7463bb18fce93adae46fd15c9a8ac))
+
 ## v1.1.0
 
 _2026-09-08_

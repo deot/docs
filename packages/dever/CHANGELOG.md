@@ -1,5 +1,13 @@
 # @deot/docs-dever ChangeLog
 
+## v1.1.1
+
+_2026-09-09_
+
+### Bugfixes
+
+- fix: align SSE identity for shared docs paths ([c9262db](https://github.com/deot/docs/commit/c9262db553d971451c065a96341fdb10d4407c95))
+
 ## v1.1.0
 
 _2026-09-08_
