@@ -126,6 +126,32 @@ describe('resource SSE events', () => {
 			lang: 'en-US',
 			source: 'packages/client/README.md'
 		}), { priority: 75, trailing: true });
+
+		gateway.isSubscribed.mockImplementation(identity => (
+			identity.lang === 'zh-CN' && identity.source === 'docs/markdown.md'
+		));
+		source.emit({
+			type: 'change',
+			lang: 'docs',
+			source: './markdown.md',
+			resourceType: 'markdown',
+			timestamp: 6
+		});
+		expect(gateway.revalidate).toHaveBeenLastCalledWith(expect.objectContaining({
+			lang: 'zh-CN',
+			source: 'docs/markdown.md'
+		}), { priority: 75, trailing: true });
+		source.emit({
+			type: 'change',
+			lang: '',
+			source: 'docs/markdown.md',
+			resourceType: 'markdown',
+			timestamp: 7
+		});
+		expect(gateway.revalidate).toHaveBeenLastCalledWith(expect.objectContaining({
+			lang: 'zh-CN',
+			source: 'docs/markdown.md'
+		}), { priority: 75, trailing: true });
 		disconnect();
 		expect(source.close).toHaveBeenCalledOnce();
 	});

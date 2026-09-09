@@ -835,6 +835,8 @@ describe('dever configuration', () => {
 		fs.writeFileSync(path.join(root, 'index.html'), '<div id="root-docs"></div>');
 		fs.writeFileSync(path.join(root, 'README.md'), '# Root');
 		fs.writeFileSync(path.join(root, 'zh-CN/index.md'), '# 首页');
+		fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+		fs.writeFileSync(path.join(root, 'docs/markdown.md'), '# Markdown');
 		fs.writeFileSync(path.join(root, 'packages/client/README.md'), '# Client');
 		const restoreCwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
 		try {
@@ -893,6 +895,10 @@ describe('dever configuration', () => {
 			watcherHandlers.get('change')!(path.join(root, 'zh-CN/index.md'));
 			expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
 				'"lang":"zh-CN","source":"./index.md"'
+			));
+			watcherHandlers.get('change')!(path.join(root, 'docs/markdown.md'));
+			expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(
+				'"lang":"","source":"docs/markdown.md"'
 			));
 			watcherHandlers.get('change')!(path.join(root, 'packages/client/README.md'));
 			expect(response.write).toHaveBeenLastCalledWith(expect.stringContaining(

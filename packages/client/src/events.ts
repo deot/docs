@@ -75,7 +75,14 @@ export const connectResourceEvents = () => {
 			return;
 		}
 		const configuredLanguages = Object.keys(config.locales);
-		const languages = event.lang
+		/**
+		 * 共享目录（docs/markdown.md）若被服务端误拆成 `{ lang: 'docs', source: './markdown.md' }`，
+		 * 仍还原成 Client 订阅使用的 logical source。
+		 */
+		const sharedSource = event.lang && !configuredLanguages.includes(event.lang)
+			? `${event.lang}/${event.source.replace(/^\.\//, '')}`
+			: event.source;
+		const languages = event.lang && configuredLanguages.includes(event.lang)
 			? [event.lang]
 			: configuredLanguages.length
 				? configuredLanguages
@@ -85,7 +92,7 @@ export const connectResourceEvents = () => {
 				config,
 				lang,
 				event.resourceType,
-				event.source
+				sharedSource
 			);
 			// 即使尚无组件订阅，预加载资源也属于需要维护的热缓存。
 			if (!Gateway.isSubscribed(identity) && !Gateway.isPrefetched(identity)) return;

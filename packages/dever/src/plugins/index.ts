@@ -183,6 +183,15 @@ const isPackageReadme = (relative: string) => (
 	/^[^/]+\/README\.md$/u.test(relative)
 );
 
+/**
+ * 传统 workspace 把语言放在第一段目录，例如 `zh-CN/guide.md`。
+ * `docs/`、`src/` 这类共享目录不能当成语言，否则 SSE identity 对不上 Client。
+ * @param value
+ */
+const isLocaleDirectory = (value: string) => (
+	/^[a-z]{2}(?:-[A-Za-z0-9]{2,8})*$/u.test(value)
+);
+
 const getContentType = (extension: string) => {
 	switch (extension) {
 		case '.md': return 'text/markdown; charset=utf-8';
@@ -414,6 +423,8 @@ const configureEvents = (
 		res.setHeader('Content-Type', 'text/event-stream');
 		res.setHeader('Cache-Control', 'no-cache');
 		res.setHeader('Connection', 'keep-alive');
+		res.setHeader('X-Accel-Buffering', 'no');
+		res.flushHeaders?.();
 		res.write(': connected\n\n');
 		clients.add(res);
 		req.on('close', () => clients.delete(res));
@@ -466,13 +477,24 @@ const configureEvents = (
 		}
 		const [lang, ...segments] = relative.split('/');
 		if (!lang || !segments.length) return;
-		const payload = JSON.stringify({
-			type,
-			lang,
-			source: `./${segments.join('/')}`,
-			resourceType: getResourceType(relative),
-			timestamp: Date.now()
-		});
+		const resourceType = getResourceType(relative);
+		// 语言目录保持 `./file.md`；共享目录（如 docs/markdown.md）用空语言 + 完整相对路径，
+		// 与 README 聚合站点的 logical source / Client identity 对齐。
+		const payload = JSON.stringify(isLocaleDirectory(lang)
+			? {
+					type,
+					lang,
+					source: `./${segments.join('/')}`,
+					resourceType,
+					timestamp: Date.now()
+				}
+			: {
+					type,
+					lang: '',
+					source: relative,
+					resourceType,
+					timestamp: Date.now()
+				});
 		clients.forEach(client => client.write(`data: ${payload}\n\n`));
 	};
 	server.watcher.on('add', filename => send('add', filename));
