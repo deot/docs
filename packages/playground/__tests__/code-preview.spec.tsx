@@ -12,6 +12,12 @@ vi.mock('@deot/vc', () => ({
 		setup: (_, { slots }) => () => (
 			<button class="clipboard">{slots.default?.()}</button>
 		)
+	}),
+	Scroller: defineComponent({
+		name: 'Scroller',
+		setup: (_, { slots }) => () => (
+			<div class="scroller">{slots.default?.()}</div>
+		)
 	})
 }));
 
@@ -36,7 +42,7 @@ describe('CodePreview', () => {
 		});
 
 		expect(wrapper.find('.docs-code-preview__language').text()).toBe('vue');
-		expect(wrapper.find('code.hljs').html()).toContain('hljs-tag');
+		expect(wrapper.find('.docs-code-preview__scroller code.hljs').html()).toContain('hljs-tag');
 		expect(wrapper.find('.clipboard').attributes('aria-label')).toBe('复制示例');
 		expect(wrapper.find('.clipboard').attributes('title')).toBe('复制示例');
 	});
@@ -70,6 +76,7 @@ describe('CodePreview', () => {
 		expect(wrapper.find('.docs-code-preview__language').exists()).toBe(false);
 		expect(wrapper.find('code.hljs').html()).toContain('&lt;script&gt;');
 		expect(wrapper.find('code.hljs').html()).not.toContain('<script>');
+		expect(wrapper.find('.docs-code-preview__scroller pre').exists()).toBe(true);
 		expect(wrapper.find('pre').element.childNodes).toHaveLength(1);
 	});
 });

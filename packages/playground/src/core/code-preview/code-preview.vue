@@ -15,13 +15,21 @@
 		>
 			<PlaygroundIcon name="copy" />
 		</Clipboard>
-		<!-- eslint-disable-next-line vue/no-v-html -->
-		<pre class="docs-code-preview__code"><code class="hljs" v-html="highlightedCode"></code></pre>
+		<Scroller
+			class="docs-code-preview__scroller"
+			:auto-resize="true"
+			:native="false"
+			:show-bar="true"
+			height="100%"
+		>
+			<!-- eslint-disable-next-line vue/no-v-html -->
+			<pre class="docs-code-preview__code"><code class="hljs" v-html="highlightedCode"></code></pre>
+		</Scroller>
 	</div>
 </template>
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Clipboard } from '@deot/vc';
+import { Clipboard, Scroller } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import type { Language } from '@deot/docs-locale';
 import {
