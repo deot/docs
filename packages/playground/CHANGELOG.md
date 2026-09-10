@@ -1,5 +1,17 @@
 # @deot/docs-playground ChangeLog
 
+## v1.1.1
+
+_2026-09-10_
+
+### Bugfixes
+
+- fix: scroll code preview with Scroller instead of native bars ([47f040f](https://github.com/deot/docs/commit/47f040fcf7d0cc95a74b5ce6d4248da6f26faa54))
+
+### Features
+
+- feat: add previewScroller for iframe overflow ([cac26fd](https://github.com/deot/docs/commit/cac26fda72a244b9f90b2f90f86d4ab7e89d9085))
+
 ## v1.1.0
 
 _2026-09-08_
