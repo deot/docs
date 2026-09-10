@@ -149,7 +149,8 @@ vi.mock('@deot/docs-playground', async () => {
 				'previewInset',
 				'expandable',
 				'title',
-				'id'
+				'id',
+				'previewScroller'
 			],
 			unmounted: playgroundUnmounted,
 			setup(props) {
@@ -165,7 +166,8 @@ vi.mock('@deot/docs-playground', async () => {
 						JSON.stringify(props.previewInset),
 						JSON.stringify(props.expandable),
 						props.title || '',
-						props.id || ''
+						props.id || '',
+						JSON.stringify(props.previewScroller)
 					].join('-');
 					return (
 						<div class="playground">
@@ -1303,6 +1305,18 @@ describe('markdown', () => {
 		expect(render('{ expandable: \'auto\' }')).toContain(error);
 		expect(render('{ expandable: true }')).toContain('data-playground');
 		expect(render('{ expandable: 600 }')).toContain('data-playground');
+	});
+
+	it('reports invalid playground previewScroller declarations', () => {
+		const render = (config: string) => MarkdownRenderer.render(
+			runtimeWithConfig(config, '```vue\n<template />\n```')
+		);
+		const error = 'previewScroller 必须是布尔值';
+
+		expect(render('{ previewScroller: 1 }')).toContain(error);
+		expect(render('{ previewScroller: \'true\' }')).toContain(error);
+		expect(render('{ previewScroller: true }')).toContain('data-playground');
+		expect(render('{ previewScroller: false }')).toContain('data-playground');
 	});
 
 	it('passes playground title to Playground', async () => {

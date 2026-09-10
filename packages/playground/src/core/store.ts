@@ -16,9 +16,22 @@ import {
 import type { PlaygroundFiles, PlaygroundOptions } from '../types';
 import { SANDBOX_RUNTIME_ERROR_CAPTURE_HTML } from './runtime/error-guard';
 import { bindPlaygroundScss, whenSassReady } from './scss';
+import {
+	PREVIEW_SCROLL_RESET_CODE,
+	PREVIEW_SCROLLER_STYLE
+} from './preview-scroll';
 
-const DOCS_LINK_IMPORT_CODE = 'import { h as __docsH } from "vue"';
+export {
+	PREVIEW_SCROLL_CONTENT_CLASS,
+	PREVIEW_SCROLL_HTML_CLASS,
+	PREVIEW_SCROLL_RESET_CODE,
+	PREVIEW_SCROLLER_IMPORT_CODE,
+	PREVIEW_SCROLLER_USE_CODE
+} from './preview-scroll';
+
+export const DOCS_LINK_IMPORT_CODE = 'import { h as __docsH } from "vue"';
 const DOCS_LINK_USE_CODE = [
+	PREVIEW_SCROLL_RESET_CODE,
 	'app.component("DocsLink",{',
 	'props:{to:{type:String,default:""}},',
 	'setup(props,{slots}){return()=>__docsH("a",{',
@@ -43,15 +56,29 @@ const escapeHtmlAttr = (value: string) => value
  */
 export const PLAYGROUND_RUNTIME_CANVAS_BACKGROUND = 'var(--vc-background-color-light, var(--docs-background-color, #fff))';
 
+export interface CreateRuntimePreviewOptions {
+	/**
+	 * 是否注入 iframe 内 Scroller 包装代码。默认关闭。
+	 */
+	previewScroller?: boolean;
+}
+
 // 预览 head：内置 CSS → 站点 styles 内存 → 覆盖内存。
 export const createRuntimePreviewOptions = (
-	cdnURL = DEFAULT_CDN_URL
+	cdnURL = DEFAULT_CDN_URL,
+	options: CreateRuntimePreviewOptions = {}
 ): NonNullable<SandboxProps['previewOptions']> => {
+	const previewScroller = options.previewScroller === true;
 	const hrefs = Object.values({
 		...createBuiltinStyles(cdnURL),
 		...getPlaygroundSiteStyles(),
 		...getPlaygroundStyleOverrides()
 	});
+	const styleBlocks = [
+		`html,body{height:auto;min-height:0;background:${PLAYGROUND_RUNTIME_CANVAS_BACKGROUND}}`,
+		'body{color:var(--vc-foreground-color,#080f20)}',
+		...(previewScroller ? [PREVIEW_SCROLLER_STYLE] : [])
+	];
 	return {
 		showRuntimeError: false,
 		showRuntimeWarning: false,
@@ -62,12 +89,12 @@ export const createRuntimePreviewOptions = (
 				`<link rel="stylesheet" href="${escapeHtmlAttr(href)}">`
 			)),
 			'<style>',
-			`html,body{height:auto;min-height:0;background:${PLAYGROUND_RUNTIME_CANVAS_BACKGROUND}}`,
-			'body{color:var(--vc-foreground-color,#080f20)}',
+			...styleBlocks,
 			'</style>'
 		].join('\n'),
 		customCode: {
 			importCode: DOCS_LINK_IMPORT_CODE,
+			// Scroller 包装必须接在实例 customCode 之后，避免被覆盖；由 mergePreviewOptions 追加。
 			useCode: DOCS_LINK_USE_CODE
 		}
 	};

@@ -358,6 +358,7 @@ defineProps({ label: String });
 {
 	views: ['runtime'],
 	style: 'height:200px',
+	previewScroller: true,
 }
 </config>
 -->

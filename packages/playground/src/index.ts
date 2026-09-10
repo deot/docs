@@ -9,7 +9,10 @@ export {
 	normalizeCdnURL
 } from './cdn';
 export {
-	createRuntimePreviewOptions
+	createRuntimePreviewOptions,
+	PREVIEW_SCROLL_CONTENT_CLASS,
+	PREVIEW_SCROLL_HTML_CLASS,
+	PREVIEW_SCROLLER_USE_CODE
 } from './core/store';
 export {
 	applyPlaygroundImportMapOverride,

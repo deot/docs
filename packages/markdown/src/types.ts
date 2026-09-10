@@ -4,6 +4,7 @@ import type {
 	PlaygroundOptions,
 	PlaygroundPreviewInset,
 	PlaygroundPreviewOptions,
+	PlaygroundPreviewScroller,
 	PlaygroundView,
 	PlaygroundViewport
 } from '@deot/docs-playground';
@@ -42,6 +43,10 @@ export interface MarkdownPlaygroundConfig {
 	 * 预览是否可展开。未传不显示控件；`true` 展开到剩余视口；正数为目标高度 px。
 	 */
 	expandable?: PlaygroundExpandable;
+	/**
+	 * 是否在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条。默认关闭。
+	 */
+	previewScroller?: PlaygroundPreviewScroller;
 	previewOptions?: PlaygroundPreviewOptions;
 }
 

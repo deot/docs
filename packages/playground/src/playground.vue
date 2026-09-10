@@ -6,6 +6,7 @@
 		:options="options"
 		:preview-options="previewOptions"
 		:preview-inset="previewInset"
+		:preview-scroller="previewScroller"
 		:expandable="expandable"
 		:styleless="true"
 		:title="title"
@@ -68,6 +69,7 @@
 				:options="options"
 				:preview-options="previewOptions"
 				:preview-inset="previewInset"
+				:preview-scroller="previewScroller"
 				:expandable="expandable"
 				:hide-chrome="true"
 				:title="title"
@@ -108,6 +110,7 @@ import type {
 	PlaygroundOptions,
 	PlaygroundPreviewInset,
 	PlaygroundPreviewOptions,
+	PlaygroundPreviewScroller,
 	PlaygroundView,
 	PlaygroundViewport
 } from './types';
@@ -151,6 +154,11 @@ const props = withDefaults(defineProps<{
 	 * 标题锚点 id。未传时按 markdown-it-anchor 规则从 `title` 生成。
 	 */
 	id?: string;
+	/**
+	 * 是否在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条。
+	 * 默认关闭；开启后动态探测 `Scroller`，不存在则回退。
+	 */
+	previewScroller?: PlaygroundPreviewScroller;
 	previewOptions?: PlaygroundPreviewOptions;
 	locale?: Language;
 }>(), {
@@ -160,6 +168,7 @@ const props = withDefaults(defineProps<{
 	views: () => ['runtime'],
 	styleless: false,
 	previewInset: 0,
+	previewScroller: false,
 	title: '',
 	id: '',
 	options: () => ({})

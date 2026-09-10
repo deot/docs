@@ -201,6 +201,11 @@ const validateTitleId = (propsData: MarkdownPlaygroundConfig) => {
 	if (typeof propsData.id === 'string') return '';
 	return 'id 必须是字符串';
 };
+const validatePreviewScroller = (propsData: MarkdownPlaygroundConfig) => {
+	if (!('previewScroller' in propsData)) return '';
+	if (typeof propsData.previewScroller === 'boolean') return '';
+	return 'previewScroller 必须是布尔值';
+};
 const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>): MarkdownPlaygroundConfig => {
 	for (const token of tokens) {
 		const sources: string[] = [];
@@ -323,7 +328,8 @@ md.core.ruler.after('markdown-tabs', 'runtime-files', (state) => {
 			|| validatePreviewInset(propsData)
 			|| validateExpandable(propsData)
 			|| validateTitle(propsData)
-			|| validateTitleId(propsData);
+			|| validateTitleId(propsData)
+			|| validatePreviewScroller(propsData);
 		const propsAttr = renderPlaygroundAttrs(propsData);
 
 		if (!fences.length) {

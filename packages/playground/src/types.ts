@@ -56,3 +56,9 @@ export type PlaygroundOptions = Omit<Partial<StoreState>,
 };
 
 export type PlaygroundPreviewOptions = SandboxProps['previewOptions'];
+
+/**
+ * 是否在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条。
+ * 默认关闭；开启后会动态探测 `Scroller`，不存在则回退原生滚动。
+ */
+export type PlaygroundPreviewScroller = boolean;

@@ -52,6 +52,7 @@ const files = ref({
 | `title` | `string` | `''` | 顶栏标题；空串或不传不渲染标题文本。runtime / 双视图始终保留顶栏；files-only 仅在有标题时显示顶栏。带标题时生成锚点（`#` 链接），规则对齐 markdown-it-anchor。 |
 | `id` | `string` | `''` | 标题锚点 id；未传时从 `title` 自动生成。仅挂在内联 runtime 标题上，弹窗不重复。 |
 | `expandable` | `true \| number` | `undefined` | 开启预览高度展开；未传不显示控件；`true` 展开到剩余视口；正数为目标高度（px）。 |
+| `previewScroller` | `boolean` | `false` | 在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条；开启后会动态探测 `Scroller`，不存在则回退原生滚动。 |
 | `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项；`cdnURL` 会同时作用于预览样式和默认 import map。 |
 | `previewOptions` | `SandboxProps['previewOptions']` | `undefined` | 传给当前 iframe 的 preview 选项。 |
 | `locale` | `Language` | `en-US` | 界面语言；未传入时使用上层 Locale Provider。 |

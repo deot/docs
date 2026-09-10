@@ -103,6 +103,7 @@ import type {
 	PlaygroundOptions,
 	PlaygroundPreviewInset,
 	PlaygroundPreviewOptions,
+	PlaygroundPreviewScroller,
 	PlaygroundView,
 	PlaygroundViewport,
 	PlaygroundViewsProps
@@ -135,7 +136,11 @@ import {
 	createReplFile,
 	createRuntimePreviewOptions,
 	createRuntimeStore,
+	DOCS_LINK_IMPORT_CODE,
 	PLAYGROUND_RUNTIME_CANVAS_BACKGROUND,
+	PREVIEW_SCROLL_RESET_CODE,
+	PREVIEW_SCROLLER_IMPORT_CODE,
+	PREVIEW_SCROLLER_USE_CODE,
 	toReplFilename
 } from '../store';
 import { whenSassReady } from '../scss';
@@ -144,6 +149,10 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	options: PlaygroundOptions;
 	previewInset?: PlaygroundPreviewInset;
 	previewOptions?: PlaygroundPreviewOptions;
+	/**
+	 * 是否在 iframe 内用 Scroller 替换原生滚动条。
+	 */
+	previewScroller?: PlaygroundPreviewScroller;
 	styleless?: boolean;
 	/**
 	 * 由外层 Playground 渲染共享顶栏时隐藏内联 header。
@@ -158,6 +167,7 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	styleless: false,
 	hideChrome: false,
 	previewInset: 10,
+	previewScroller: false,
 	title: '',
 	id: '',
 	activeView: 'runtime',
@@ -188,7 +198,9 @@ const joinCode = (...values: Array<string | undefined>) => values.filter(Boolean
 const mergePreviewOptions = (
 	extraHeadHTML?: string
 ): NonNullable<PlaygroundPreviewOptions> => {
-	const runtimePreviewOptions = createRuntimePreviewOptions(props.options.cdnURL);
+	const runtimePreviewOptions = createRuntimePreviewOptions(props.options.cdnURL, {
+		previewScroller: props.previewScroller
+	});
 	return {
 		...runtimePreviewOptions,
 		...props.previewOptions,
@@ -198,13 +210,17 @@ const mergePreviewOptions = (
 			extraHeadHTML
 		].filter(Boolean).join('\n'),
 		customCode: {
+			// import 声明必须连续；await import 和实例语句要放在所有 import 之后。
 			importCode: joinCode(
-				runtimePreviewOptions.customCode?.importCode,
-				props.previewOptions?.customCode?.importCode
+				DOCS_LINK_IMPORT_CODE,
+				props.previewOptions?.customCode?.importCode,
+				props.previewScroller ? PREVIEW_SCROLL_RESET_CODE : undefined,
+				props.previewScroller ? PREVIEW_SCROLLER_IMPORT_CODE : undefined
 			),
 			useCode: joinCode(
 				runtimePreviewOptions.customCode?.useCode,
-				props.previewOptions?.customCode?.useCode
+				props.previewOptions?.customCode?.useCode,
+				props.previewScroller ? PREVIEW_SCROLLER_USE_CODE : undefined
 			)
 		}
 	};

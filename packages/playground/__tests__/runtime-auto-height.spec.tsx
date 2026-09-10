@@ -12,6 +12,10 @@ import {
 	useSandboxAutoHeight
 } from '../src/core/runtime/auto-height';
 import type { SandboxExposed } from '../src/core/runtime/auto-height';
+import {
+	PREVIEW_SCROLL_CONTENT_CLASS,
+	PREVIEW_SCROLL_HTML_CLASS
+} from '../src/core/preview-scroll';
 import { invalid } from './fixtures';
 
 class ResizeObserverMock {
@@ -52,6 +56,24 @@ const createIframe = (initialHeight: number) => {
 		iframe,
 		setHeight: (height: number) => (contentHeight = height)
 	};
+};
+
+const mockBox = (element: HTMLElement, size: number) => {
+	Object.defineProperties(element, {
+		offsetHeight: { configurable: true, get: () => size },
+		scrollHeight: { configurable: true, get: () => size }
+	});
+	element.getBoundingClientRect = () => ({
+		x: 0,
+		y: 0,
+		top: 0,
+		left: 0,
+		right: 0,
+		width: 0,
+		height: size,
+		bottom: size,
+		toJSON: () => ({})
+	});
 };
 
 describe('runtime auto height', () => {
@@ -231,5 +253,86 @@ describe('runtime auto height', () => {
 		wrapper.unmount();
 		expect(secondObserver.disconnect).toHaveBeenCalledTimes(1);
 		expect(cancelAnimationFrame).toHaveBeenCalledTimes(1);
+	});
+
+	it('measures Scroller content when preview scroll class is present', async () => {
+		let sandboxRef!: Ref<SandboxExposed | null>;
+		let runtimeHeight!: Ref<number>;
+		const Harness = defineComponent({
+			setup() {
+				sandboxRef = shallowRef<SandboxExposed | null>(null);
+				runtimeHeight = useSandboxAutoHeight(sandboxRef);
+				return () => <div />;
+			}
+		});
+		mount(Harness);
+		const iframe = document.createElement('iframe');
+		const container = document.createElement('div');
+		container.appendChild(iframe);
+		document.body.appendChild(container);
+		const iframeWindow = iframe.contentWindow as Window & typeof globalThis;
+		const iframeDocument = iframe.contentDocument as Document;
+		Object.defineProperty(iframeWindow, 'ResizeObserver', {
+			configurable: true,
+			value: ResizeObserverMock
+		});
+		Object.defineProperty(iframe, 'clientHeight', {
+			configurable: true,
+			get: () => 146
+		});
+		Object.defineProperties(iframeDocument.body, {
+			offsetHeight: { configurable: true, get: () => 146 },
+			scrollHeight: { configurable: true, get: () => 146 }
+		});
+		Object.defineProperties(iframeDocument.documentElement, {
+			offsetHeight: { configurable: true, get: () => 146 },
+			scrollHeight: { configurable: true, get: () => 146 }
+		});
+
+		sandboxRef.value = { container };
+		await nextTick();
+		flushFrames();
+		await nextTick();
+		expect(runtimeHeight.value).toBe(146);
+
+		// await import('@deot/vc') 成功后才会挂 class 与内容节点。
+		iframeDocument.documentElement.classList.add(PREVIEW_SCROLL_HTML_CLASS);
+		const app = iframeDocument.createElement('div');
+		app.id = 'app';
+		const scrollContent = iframeDocument.createElement('div');
+		scrollContent.className = PREVIEW_SCROLL_CONTENT_CLASS;
+		const inner = iframeDocument.createElement('div');
+		scrollContent.appendChild(inner);
+		app.appendChild(scrollContent);
+		iframeDocument.body.appendChild(app);
+		mockBox(scrollContent, 320);
+		mockBox(inner, 320);
+		await nextTick();
+		flushFrames();
+		await nextTick();
+		expect(runtimeHeight.value).toBe(320);
+
+		iframeDocument.documentElement.classList.remove(PREVIEW_SCROLL_HTML_CLASS);
+		iframeDocument.body.replaceChildren();
+		const emptyApp = iframeDocument.createElement('div');
+		emptyApp.id = 'app';
+		iframeDocument.body.appendChild(emptyApp);
+		await nextTick();
+		flushFrames();
+		await nextTick();
+		expect(runtimeHeight.value).toBe(320);
+
+		iframeDocument.documentElement.classList.add(PREVIEW_SCROLL_HTML_CLASS);
+		const nextContent = iframeDocument.createElement('div');
+		nextContent.className = PREVIEW_SCROLL_CONTENT_CLASS;
+		const nextInner = iframeDocument.createElement('div');
+		nextContent.appendChild(nextInner);
+		emptyApp.appendChild(nextContent);
+		mockBox(nextContent, 410);
+		mockBox(nextInner, 410);
+		await nextTick();
+		flushFrames();
+		await nextTick();
+		expect(runtimeHeight.value).toBe(410);
 	});
 });

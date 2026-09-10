@@ -234,6 +234,51 @@ describe('Playground', () => {
 			.toContain('app.component("DocsLink"');
 		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').customCode.useCode)
 			.toContain('textDecoration:"none"');
+		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').customCode.importCode)
+			.not.toContain('@deot/vc');
+		expect(wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').customCode.useCode)
+			.not.toContain('Scroller');
+	});
+
+	it('injects iframe Scroller wrap code only when previewScroller is enabled', () => {
+		const off = createRuntimePreviewOptions();
+		expect(off.customCode?.importCode).not.toContain('@deot/vc');
+		expect(off.customCode?.useCode).not.toContain('Scroller');
+		expect(off.headHTML).not.toContain('docs-playground-preview-scroll');
+
+		const on = createRuntimePreviewOptions(DEFAULT_CDN_URL, { previewScroller: true });
+		expect(on.customCode?.importCode).not.toContain('@deot/vc');
+		expect(on.customCode?.useCode).not.toContain('Scroller');
+		expect(on.headHTML).toContain('docs-playground-preview-scroll');
+		expect(on.headHTML).toContain('#app>.vc-scroller');
+
+		const wrapper = mount(Playground, {
+			props: {
+				modelValue: '<template>scroll</template>',
+				previewScroller: true,
+				previewOptions: {
+					customCode: {
+						importCode: 'import { ref as __docsRef } from "vue"',
+						useCode: 'void imported'
+					}
+				}
+			}
+		});
+		const previewOptions = wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions');
+		expect(previewOptions.customCode.importCode).toContain('import("@deot/vc")');
+		expect(previewOptions.customCode.importCode.indexOf('import { h as __docsH }'))
+			.toBeLessThan(previewOptions.customCode.importCode.indexOf('import { ref as __docsRef }'));
+		expect(previewOptions.customCode.importCode.indexOf('import { ref as __docsRef }'))
+			.toBeLessThan(previewOptions.customCode.importCode.indexOf('classList.remove'));
+		expect(previewOptions.customCode.importCode.indexOf('classList.remove'))
+			.toBeLessThan(previewOptions.customCode.importCode.indexOf('import("@deot/vc")'));
+		expect(previewOptions.customCode.useCode).toContain('DocsPreviewRoot');
+		expect(previewOptions.customCode.useCode).toContain('app.mount=(container,...rest)=>{');
+		expect(previewOptions.customCode.useCode).toContain('_createApp');
+		expect(previewOptions.headHTML).toContain('docs-playground-preview-scroll');
+		expect(previewOptions.customCode.useCode.indexOf('void imported'))
+			.toBeLessThan(previewOptions.customCode.useCode.indexOf('DocsPreviewRoot'));
+		expect(previewOptions.customCode.useCode).toContain(';(()=>{');
 	});
 
 	it('shares a configurable npm CDN between preview styles and builtin imports', () => {
