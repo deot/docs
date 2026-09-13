@@ -1,4 +1,5 @@
 import {
+	nextTick,
 	onBeforeUnmount,
 	ref,
 	unref,
@@ -63,6 +64,8 @@ export const useSandboxAutoHeight = (sandboxRef: Ref<SandboxExposed | null>) => 
 		const collapsedTop = Math.max(0, bodyRect.top - rootTop);
 		let childrenBottom = 0;
 		for (const child of body.children) {
+			// fixed 弹层依赖视口高度，不能反向成为内容固有高度，否则临时高度无法收回。
+			if (iframeWindow.getComputedStyle(child).position === 'fixed') continue;
 			const rect = child.getBoundingClientRect();
 			const marginBottom = Number.parseFloat(
 				iframeWindow.getComputedStyle(child).marginBottom
@@ -111,9 +114,17 @@ export const useSandboxAutoHeight = (sandboxRef: Ref<SandboxExposed | null>) => 
 		));
 	};
 
-	const isEmptyPreviewApp = (iframeDocument: Document) => {
+	const isPendingPreviewApp = (iframeDocument: Document) => {
 		const app = iframeDocument.getElementById('app');
-		return !!app && app.childElementCount === 0;
+		return app
+			? app.childElementCount === 0
+			: !!iframe?.srcdoc;
+	};
+
+	const releaseBootstrapHeight = (target: HTMLIFrameElement) => {
+		void nextTick(() => {
+			if (iframe === target) target.style.height = '100%';
+		});
 	};
 
 	const measure = () => {
@@ -126,12 +137,13 @@ export const useSandboxAutoHeight = (sandboxRef: Ref<SandboxExposed | null>) => 
 
 			const scrollContent = resolveScrollContent(iframeDocument);
 			// 重评会先换成空 `#app`，再 await import；这段窗口保持上次高度，避免预览塌缩。
-			if (!scrollContent && isEmptyPreviewApp(iframeDocument)) return;
+			if (!scrollContent && isPendingPreviewApp(iframeDocument)) return;
 			const contentHeight = scrollContent
 				? measureScrollContent(scrollContent)
 				: measureDocumentContent(iframeWindow, iframeDocument);
 			const nextHeight = Math.max(contentHeight, MIN_RUNTIME_HEIGHT);
 			if (height.value !== nextHeight) height.value = nextHeight;
+			releaseBootstrapHeight(iframe);
 		} catch {
 			if (height.value !== MIN_RUNTIME_HEIGHT) height.value = MIN_RUNTIME_HEIGHT;
 		}
@@ -208,7 +220,9 @@ export const useSandboxAutoHeight = (sandboxRef: Ref<SandboxExposed | null>) => 
 			return;
 		}
 		iframe.addEventListener('load', handleIframeLoad);
-		iframe.style.height = '100%';
+		// 预览应用可能在 setup 阶段读取 window.innerHeight 并固化布局上限。
+		// 先按宿主可视高度启动，内容挂载并完成首次测量后再交还自动高度。
+		iframe.style.height = `${Math.max(window.innerHeight, MIN_RUNTIME_HEIGHT)}px`;
 		observeContent();
 	};
 

@@ -28,7 +28,9 @@ const BUILTIN_IMPORT_ASSETS: Record<string, string> = {
 	'@deot/helper': '@deot/helper/dist/index.js',
 	'normalize-wheel': 'normalize-wheel-es/dist/index.mjs',
 	'photoswipe': 'photoswipe/dist/photoswipe.esm.js',
-	'photoswipe/lightbox': 'photoswipe/dist/photoswipe-lightbox.esm.js'
+	'photoswipe/lightbox': 'photoswipe/dist/photoswipe-lightbox.esm.js',
+	'vue': 'vue/dist/vue.runtime.esm-browser.js',
+	'vue/server-renderer': 'vue/dist/server-renderer.esm-browser.js'
 };
 
 export const normalizeCdnURL = (cdnURL = DEFAULT_CDN_URL) => {
@@ -56,9 +58,7 @@ export const createBuiltinImports = (
 		])
 	),
 	// 避免走 lodash-es/lodash.js 再拆出几百个请求。
-	'lodash-es': jsdelivrEsmURL('lodash-es/+esm'),
-	'vue': 'https://play.vuejs.org/vue.runtime.esm-browser.js',
-	'vue/server-renderer': 'https://play.vuejs.org/server-renderer.esm-browser.js'
+	'lodash-es': jsdelivrEsmURL('lodash-es/+esm')
 });
 
 // 预览 iframe 默认注入的样式表（key 为资源路径，value 为完整 CDN URL）。

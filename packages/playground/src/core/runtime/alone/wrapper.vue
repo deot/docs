@@ -80,8 +80,9 @@ import {
 	toErrorText,
 	useSandboxRuntimeErrorGuard
 } from '../error-guard';
-import { resolvePopupLayout } from './layout';
+import { getWindowInnerSize, PLAYGROUND_POPUP_HEADER_HEIGHT, PLAYGROUND_POPUP_SCREEN_GAP, resolvePopupLayout } from './layout';
 import { useSandboxTheme } from '../theme';
+import { usePreviewHeightBridge } from '../height-bridge';
 import RuntimeToolbar from '../toolbar.vue';
 import { PLAYGROUND_RUNTIME_CANVAS_BACKGROUND } from '../../store';
 
@@ -110,6 +111,8 @@ const emit = defineEmits<{
 const { t } = useLocale();
 const currentViewport = ref<PlaygroundViewport>(props.viewport);
 const sandboxRef = ref<SandboxExposed | null>(null);
+const availableHeight = () => Math.max(0, getWindowInnerSize().height - PLAYGROUND_POPUP_SCREEN_GAP - PLAYGROUND_POPUP_HEADER_HEIGHT);
+const temporaryHeight = usePreviewHeightBridge(sandboxRef, availableHeight);
 const sandboxKey = ref(0);
 const layoutTick = ref(0);
 const runtimeError = useSandboxRuntimeErrorGuard(sandboxRef);
@@ -127,7 +130,11 @@ const errorText = computed(() => {
 });
 const layout = computed(() => {
 	void layoutTick.value;
-	return resolvePopupLayout(currentViewport.value);
+	const base = resolvePopupLayout(currentViewport.value);
+	if (!temporaryHeight.value) return base;
+	const canvasHeight = Math.min(availableHeight(), Math.max(base.canvasHeight, temporaryHeight.value));
+	const shellHeight = Math.max(base.shellHeight, canvasHeight + PLAYGROUND_POPUP_HEADER_HEIGHT);
+	return { ...base, canvasHeight, shellHeight, bodyHeight: shellHeight - PLAYGROUND_POPUP_HEADER_HEIGHT };
 });
 const shellStyle = computed(() => ({
 	width: `${layout.value.shellWidth}px`,

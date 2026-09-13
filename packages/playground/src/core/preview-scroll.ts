@@ -37,6 +37,8 @@ export const PREVIEW_SCROLLER_USE_CODE = [
 	'if(app._context&&next._context){',
 	'if(app._context.components)Object.assign(next._context.components,app._context.components);',
 	'if(app._context.directives)Object.assign(next._context.directives,app._context.directives);',
+	'Object.assign(next._context.provides,app._context.provides);',
+	'next._context.mixins.push(...app._context.mixins);',
 	'}',
 	'window.__app__=next;',
 	`document.documentElement.classList.add("${PREVIEW_SCROLL_HTML_CLASS}");`,

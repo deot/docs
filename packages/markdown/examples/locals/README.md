@@ -432,15 +432,17 @@ defineProps({ label: String });
 -->
 ```vue
 <template>
-	<Button type="primary" @click="visible = true">Open Modal</Button>
-	<Modal v-model="visible" title="Demo">Modal content</Modal>
+	<Button type="primary" @click="handleClick">Open Modal</Button>
+	<Modal v-model="isActive" title="Demo">Modal content</Modal>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Button, Modal } from '@deot/vc';
 
-const visible = ref(false);
+const playground = inject('docs:playground');
+const isActive = ref(false);
+
+const handleClick = playground.run(560, { visible: isActive });
 </script>
 ```
 :::
-

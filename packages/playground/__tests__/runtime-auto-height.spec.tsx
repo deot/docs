@@ -121,6 +121,9 @@ describe('runtime auto height', () => {
 		container.appendChild(preview.iframe);
 		sandboxRef.value = { container };
 		await nextTick();
+		expect(preview.iframe.style.height).toBe(`${window.innerHeight}px`);
+		expect(runtimeHeight.value).toBe(MIN_RUNTIME_HEIGHT);
+		expect(wrapper.attributes('data-height')).toBe(String(MIN_RUNTIME_HEIGHT));
 		flushFrames();
 		await nextTick();
 
@@ -135,6 +138,26 @@ describe('runtime auto height', () => {
 		await nextTick();
 		expect(runtimeHeight.value).toBe(MIN_RUNTIME_HEIGHT);
 		expect(wrapper.attributes('data-height')).toBe(String(MIN_RUNTIME_HEIGHT));
+	});
+
+	it('does not retain temporary viewport height from a fixed overlay', async () => {
+		const preview = createIframe(64);
+		const overlay = preview.iframe.contentDocument!.createElement('div');
+		overlay.style.position = 'fixed';
+		mockBox(overlay, 560);
+		preview.iframe.contentDocument!.body.appendChild(overlay);
+		Object.defineProperty(preview.iframe, 'clientHeight', { get: () => 560 });
+		let height!: Ref<number>;
+		const wrapper = mount(defineComponent({
+			setup() {
+				height = useSandboxAutoHeight(shallowRef({ container: document.body }));
+				return () => <div />;
+			}
+		}));
+		await nextTick();
+		flushFrames();
+		expect(height.value).toBe(64);
+		wrapper.unmount();
 	});
 
 	it('keeps collapsing heading margins so html 100% height does not oscillate', async () => {

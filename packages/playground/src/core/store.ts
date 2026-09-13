@@ -15,6 +15,7 @@ import {
 } from '../import-map';
 import type { PlaygroundFiles, PlaygroundOptions } from '../types';
 import { SANDBOX_RUNTIME_ERROR_CAPTURE_HTML } from './runtime/error-guard';
+import { PREVIEW_SERVICE_IMPORT_CODE, PREVIEW_SERVICE_USE_CODE } from '../preview-service';
 import { bindPlaygroundScss, whenSassReady } from './scss';
 import {
 	PREVIEW_SCROLL_RESET_CODE,
@@ -93,9 +94,9 @@ export const createRuntimePreviewOptions = (
 			'</style>'
 		].join('\n'),
 		customCode: {
-			importCode: DOCS_LINK_IMPORT_CODE,
+			importCode: `${DOCS_LINK_IMPORT_CODE}\n${PREVIEW_SERVICE_IMPORT_CODE}`,
 			// Scroller 包装必须接在实例 customCode 之后，避免被覆盖；由 mergePreviewOptions 追加。
-			useCode: DOCS_LINK_USE_CODE
+			useCode: `${DOCS_LINK_USE_CODE}\n${PREVIEW_SERVICE_USE_CODE}`
 		}
 	};
 };

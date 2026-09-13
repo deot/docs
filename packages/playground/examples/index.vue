@@ -3,6 +3,10 @@
 		<h2>仅运行时预览</h2>
 		<Playground v-model="source" title="基础运行时" :views="['runtime']" />
 
+		<h2>临时预览高度</h2>
+		<Playground :model-value="heightSource" title="自动高度服务" :preview-inset="16" expandable />
+		<Playground :model-value="heightSource" title="固定视口与 Scroller" :viewport="[375, 240]" preview-scroller />
+
 		<h2>响应式运行时尺寸</h2>
 		<Playground
 			v-model="source"
@@ -47,6 +51,7 @@ import { ref } from 'vue';
 import { Playground } from '@deot/docs-playground';
 import '/node_modules/@deot/vc-components/dist/index.style.css';
 import sourceText from './fixtures/source.vue?raw';
+import heightSource from './fixtures/height.vue?raw';
 import javascriptMain from './fixtures/javascript/main.js?raw';
 import javascriptApp from './fixtures/javascript/App.vue?raw';
 import javascriptMessage from './fixtures/javascript/message.js?raw';

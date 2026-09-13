@@ -2,6 +2,8 @@ export { CodePreview } from './core';
 export { default as Playground } from './playground.vue';
 export * from './editor';
 export * from './types';
+export { PlaygroundService } from './preview-service';
+export type { PlaygroundRunOptions, PlaygroundWindow } from './preview-service';
 export { DEFAULT_CDN_URL } from './constants';
 export {
 	createBuiltinImports,

@@ -127,6 +127,7 @@ import {
 } from './error-guard';
 import { Alone } from './alone';
 import { useSandboxTheme } from './theme';
+import { usePreviewHeightBridge } from './height-bridge';
 import RuntimeToolbar from './toolbar.vue';
 import {
 	getViewportHeight,
@@ -136,7 +137,6 @@ import {
 	createReplFile,
 	createRuntimePreviewOptions,
 	createRuntimeStore,
-	DOCS_LINK_IMPORT_CODE,
 	PLAYGROUND_RUNTIME_CANVAS_BACKGROUND,
 	PREVIEW_SCROLL_RESET_CODE,
 	PREVIEW_SCROLLER_IMPORT_CODE,
@@ -212,7 +212,7 @@ const mergePreviewOptions = (
 		customCode: {
 			// import 声明必须连续；await import 和实例语句要放在所有 import 之后。
 			importCode: joinCode(
-				DOCS_LINK_IMPORT_CODE,
+				runtimePreviewOptions.customCode?.importCode,
 				props.previewOptions?.customCode?.importCode,
 				props.previewScroller ? PREVIEW_SCROLL_RESET_CODE : undefined,
 				props.previewScroller ? PREVIEW_SCROLLER_IMPORT_CODE : undefined
@@ -235,6 +235,7 @@ const clearConsole = env.MODE !== 'development';
 const copyValue = computed(() => props.files[props.entry] || '');
 const store = createRuntimeStore(props.files, props.entry, props.options);
 const sandboxRef = ref<SandboxExposed | null>(null);
+const temporaryHeight = usePreviewHeightBridge(sandboxRef);
 const sandboxKey = ref(0);
 const runtimeHeight = useSandboxAutoHeight(sandboxRef);
 const runtimeError = useSandboxRuntimeErrorGuard(sandboxRef);
@@ -316,7 +317,7 @@ const canExpandPreview = computed(() => !props.styleless && isPlaygroundExpandab
 const expandLabel = computed(() => t(previewExpanded.value
 	? 'playground.runtime.collapsePreview'
 	: 'playground.runtime.expandPreview'));
-const desiredViewportHeight = computed(() => {
+const baseViewportHeight = computed(() => {
 	if (previewExpanded.value && props.expandable === true) {
 		return frozenExpandedHeight.value;
 	}
@@ -327,6 +328,7 @@ const desiredViewportHeight = computed(() => {
 	if (fixedHeight) return fixedHeight;
 	return runtimeHeight.value;
 });
+const desiredViewportHeight = computed(() => Math.max(baseViewportHeight.value, temporaryHeight.value));
 const scrollExpandedPreviewIntoView = () => {
 	scrollPlaygroundToViewportStart(runtimeRoot.value);
 };

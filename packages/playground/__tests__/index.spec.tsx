@@ -286,6 +286,10 @@ describe('Playground', () => {
 		expect(normalizeCdnURL('')).toBe(DEFAULT_CDN_URL);
 		expect(createBuiltinImports()['@deot/vc'])
 			.toBe(`${DEFAULT_CDN_URL}/@deot/vc/dist/index.js`);
+		expect(createBuiltinImports().vue)
+			.toBe(`${DEFAULT_CDN_URL}/vue/dist/vue.runtime.esm-browser.js`);
+		expect(createBuiltinImports()['vue/server-renderer'])
+			.toBe(`${DEFAULT_CDN_URL}/vue/dist/server-renderer.esm-browser.js`);
 		expect(createBuiltinImports()['lodash-es']).toBe(`${DEFAULT_CDN_URL}/lodash-es/+esm`);
 		expect(createBuiltinImports('https://cdn.example.com/npm/')['lodash-es'])
 			.toBe(`${DEFAULT_CDN_URL}/lodash-es/+esm`);
@@ -307,7 +311,10 @@ describe('Playground', () => {
 		expect(imports['@deot/vc']).toBe('https://cdn.example.com/npm/@deot/vc/dist/index.js');
 		expect(imports['lodash-es']).toBe(`${DEFAULT_CDN_URL}/lodash-es/+esm`);
 		expect(imports.custom).toBe('/custom.js');
-		expect(imports.vue).toBe('https://play.vuejs.org/vue.runtime.esm-browser.js');
+		expect(imports.vue)
+			.toBe('https://cdn.example.com/npm/vue/dist/vue.runtime.esm-browser.js');
+		expect(imports['vue/server-renderer'])
+			.toBe('https://cdn.example.com/npm/vue/dist/server-renderer.esm-browser.js');
 		expect(headHTML).toContain('https://cdn.example.com/npm/@deot/style/dist/index.normalize-only.css');
 		expect(headHTML).toContain('https://cdn.example.com/npm/@deot/vc-components/dist/index.style.css');
 		expect(headHTML).toContain('https://cdn.example.com/npm/@deot/style/dist/index.css');

@@ -70,6 +70,66 @@ const files = ref({
 
 Playground 只接受来自自身 iframe 的导航消息。宿主应用应监听 `navigate` 并交给自己的 Router 处理。
 
+## 预览内的临时高度
+
+Playground 会在预览应用中注入 `docs:playground`，也可通过 iframe 内的 `window.$docsPlayground` 访问同一服务。适用于 ActionSheet、Modal、Drawer、Message 等依赖视口高度的示例，无需自行撑高 DOM 或轮询 `window.innerHeight`。
+
+```ts
+import { inject, ref } from 'vue';
+import type { PlaygroundService } from '@deot/docs-playground';
+
+const playground = inject<PlaygroundService>('docs:playground')!;
+const visible = ref(false);
+
+// 定义时不执行，点击后先等待高度就绪，再打开弹层；visible 关闭时恢复。
+// visible 是 ref 且省略 handler 时，默认执行 visible.value = true。
+const handleOpen = playground.run(560, { visible });
+
+// 也可生成 boolean 状态处理函数：true 扩展高度，false 恢复高度。
+const handleVisibleChange = playground.run(560);
+
+// 支持 getter 和 computed；不能传入普通 boolean 快照。
+const openDrawer = playground.run(560, { visible: () => state.drawerVisible }, () => {
+	state.drawerVisible = true;
+});
+
+// 回调返回的 Promise 表示弹层关闭时，可省略 options。
+const openActionSheet = playground.run(560, async () => {
+	await MActionSheet.open({ title: '请选择操作' });
+});
+```
+
+`run(height)`、`run(height, handler)` 和 `run(height, options, handler)` 均返回事件处理函数。传入 handler 时会透传调用参数和回调结果，最后一个参数始终为 handler。`options` 当前只包含 `visible?: Ref<boolean> | (() => boolean)`；传入可写 `Ref<boolean>` 时可以省略 handler，默认将其设为 `true`。getter 和只读 computed 需要显式 handler。示例中的 `state`、`MActionSheet` 由业务代码提供。
+
+| 接口 | 行为 |
+| --- | --- |
+| `enable(height): Promise<boolean>` | 设置手动临时高度，等待 iframe 实际高度达到要求后返回 `true`。连续调用替换旧的手动请求。 |
+| `disable(): void` | 释放手动请求；重复调用无副作用，不影响 `run` 的请求。 |
+| `run(height)` | 返回 boolean 事件处理函数；收到 `true` 时调用 `enable(height)`，收到 `false` 时调用 `disable()`。 |
+| `run(height, handler)` | 等待高度后执行；同步返回或 Promise 完成时恢复高度，异常也恢复并继续抛出。 |
+| `run(height, { visible: ref })` | 等待高度后默认执行 `visible.value = true`，并在状态关闭时恢复高度。 |
+| `run(height, { visible }, handler)` | 执行前监听状态，关闭时恢复；回调完成后未打开或回调抛错时也释放。异步打开流程应由回调返回的 Promise 覆盖。 |
+
+同一个 `run` 返回函数在回调与弹层均结束前会复用当前 Promise，避免重复点击打开；不同函数的请求独立管理并取最大高度。Message / Toast 等立即返回的 API 应通过 `visible` 或关闭回调恢复高度，不能把函数返回当成弹层关闭。
+
+```ts
+const handleMessage = async () => {
+	if (!await playground.enable(240)) return;
+	try {
+		Message.info({ content: '已保存', onClose: () => playground.disable() });
+	} catch (error) {
+		playground.disable();
+		throw error;
+	}
+};
+```
+
+高度为正有限 CSS px，表示 iframe 内部可视高度，不包含 `previewInset` 与边框。普通预览取原有高度与临时请求的最大值，释放后恢复当前视口规则；独立窗口受可用屏幕空间限制。等待超时（2 秒）、取消或空间不足时返回 `false`；`run` 在这些情况下不执行回调并返回 `undefined`。
+
+在 `setup` 中创建的 `run` 会随当前 Vue scope 自动取消等待、移除监听并释放高度；其他位置创建时绑定预览应用。手动 `enable/disable` 绑定整个预览应用，子组件单独卸载时按需自行 `disable()`。刷新、重新运行及应用卸载会统一释放请求。服务不取消已经启动的业务任务，也不调用组件的 `destroy()`；示例保留必要的业务 `onUnmounted`，只需删除高度等待使用的 `disposed` 标记。
+
+类型导出为 `PlaygroundService`、`PlaygroundRunOptions` 和 `PlaygroundWindow`。Window 类型可通过 `(window as PlaygroundWindow).$docsPlayground` 显式使用；服务仅存在于 Playground 预览应用，不向普通页面声明必然存在的全局变量。接入项目需使用包含该接口的新版 Playground。
+
 ## 其他公共导出
 
 | 导出 | 说明 |
