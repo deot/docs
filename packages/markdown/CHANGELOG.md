@@ -1,5 +1,13 @@
 # @deot/docs-markdown ChangeLog
 
+## v1.1.3
+
+_2026-09-13_
+
+### Features
+
+- feat(playground): inject preview height service for overlays ([3245134](https://github.com/deot/docs/commit/3245134d71b60ce8a28cfef561533ba2a142ecb8))
+
 ## v1.1.2
 
 _2026-09-10_
