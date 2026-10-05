@@ -553,6 +553,35 @@ describe('Playground', () => {
 		expect(navigate).toHaveBeenCalledTimes(1);
 	});
 
+	it('renders local files in the host document', async () => {
+		const wrapper = mount(Playground, {
+			attachTo: document.body,
+			props: {
+				local: true,
+				expandable: true,
+				title: '直接渲染',
+				files: {
+					'App.vue': '<template><p class="local-doc">local-doc</p></template>'
+				},
+				entry: 'App.vue'
+			}
+		});
+		await vi.waitFor(() => expect(wrapper.get('.local-doc').text()).toBe('local-doc'));
+		expect(wrapper.findComponent({ name: 'Sandbox' }).exists()).toBe(false);
+		expect(wrapper.find('[data-action="expand-preview"]').exists()).toBe(false);
+		expect(wrapper.text()).toContain('直接渲染');
+		await wrapper.get('[data-action="edit"]').trigger('click');
+		await wrapper.get('[data-action="refresh"]').trigger('click');
+		await vi.waitFor(() => expect(wrapper.get('.local-doc').text()).toBe('local-doc'));
+		await wrapper.get('[data-action="edit"]').trigger('click');
+		await wrapper.get('[data-action="open-popup"]').trigger('click');
+		await vi.waitFor(() => expect(document.querySelector('.docs-playground-popup')).toBeTruthy());
+		document.querySelector<HTMLElement>('.docs-playground-popup [data-action="refresh"]')?.click();
+		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+		window.dispatchEvent(new Event('resize'));
+		wrapper.unmount();
+	});
+
 	it('surfaces sandbox runtime errors in the playground chrome', async () => {
 		const wrapper = mount(Playground, {
 			attachTo: document.body,

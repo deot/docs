@@ -20,11 +20,39 @@ export interface SandboxExposed {
 	 * `@vue/repl` sandbox 根节点，用来测量运行时高度。
 	 */
 	container?: SandboxContainer;
+	/**
+	 * 预览消息来源。iframe 为 contentWindow，直接渲染为桥接 iframe。
+	 */
+	messageSource?: Window | null | Ref<Window | null>;
+	/** 直接渲染时为 true，高度按本地内容测量。 */
+	local?: boolean;
 }
 
 export const resolveSandboxContainer = (sandbox: SandboxExposed | null) => sandbox?.container
 	? unref(sandbox.container)
 	: null;
+
+export const resolveSandboxMessageSource = (sandbox: SandboxExposed | null): Window | null => {
+	const exposed = sandbox?.messageSource ? unref(sandbox.messageSource) : null;
+	if (exposed && typeof exposed.postMessage === 'function') return exposed;
+	const iframe = resolveSandboxContainer(sandbox)?.querySelector('iframe');
+	return iframe?.contentWindow ?? null;
+};
+
+/**
+ * iframe 的 contentWindow 在 jsdom 里可能是 null，仍要和旧的元素校验一致。
+ * 直接渲染会暴露真实的 messageSource。
+ * @param sandbox
+ * @param event
+ */
+export const isSandboxMessage = (sandbox: SandboxExposed | null, event: MessageEvent) => {
+	const explicit = sandbox?.messageSource ? unref(sandbox.messageSource) : null;
+	if (explicit && typeof explicit.postMessage === 'function') {
+		return event.source === explicit;
+	}
+	const iframe = resolveSandboxContainer(sandbox)?.querySelector('iframe');
+	return !!iframe && event.source === iframe.contentWindow;
+};
 
 const resolveScrollContent = (iframeDocument: Document) => {
 	if (!iframeDocument.documentElement.classList.contains(PREVIEW_SCROLL_HTML_CLASS)) {
@@ -127,8 +155,46 @@ export const useSandboxAutoHeight = (sandboxRef: Ref<SandboxExposed | null>) => 
 		});
 	};
 
+	const measureElementChildren = (root: HTMLElement) => {
+		const view = root.ownerDocument.defaultView || window;
+		const rootTop = root.getBoundingClientRect().top;
+		let childrenBottom = 0;
+		for (const child of root.children) {
+			if (!(child instanceof HTMLElement)) continue;
+			if (view.getComputedStyle(child).position === 'fixed') continue;
+			const rect = child.getBoundingClientRect();
+			const marginBottom = Number.parseFloat(view.getComputedStyle(child).marginBottom) || 0;
+			childrenBottom = Math.max(childrenBottom, rect.bottom + marginBottom - rootTop);
+		}
+		const overflowingHeight = root.scrollHeight > root.clientHeight + 1
+			? root.scrollHeight
+			: 0;
+		return Math.ceil(Math.max(root.offsetHeight, childrenBottom, overflowingHeight));
+	};
+
+	const measureLocalContainer = () => {
+		if (!container) return;
+		const scrollContent = container.querySelector<HTMLElement>(`.${PREVIEW_SCROLL_CONTENT_CLASS}`);
+		const mount = container.querySelector<HTMLElement>('.docs-playground-local__mount');
+		const target = scrollContent || mount;
+		if (!target || (!scrollContent && target.childElementCount === 0)) return;
+		const contentHeight = scrollContent
+			? measureScrollContent(scrollContent)
+			: measureElementChildren(target);
+		const nextHeight = Math.max(contentHeight, MIN_RUNTIME_HEIGHT);
+		if (height.value !== nextHeight) height.value = nextHeight;
+	};
+
+	const isLocalContainer = (element: HTMLElement | null) => (
+		element?.classList.contains('docs-playground-local') === true
+	);
+
 	const measure = () => {
 		frameId = 0;
+		if (isLocalContainer(container)) {
+			measureLocalContainer();
+			return;
+		}
 		if (!iframe) return;
 		try {
 			const iframeWindow = iframe.contentWindow;
@@ -226,15 +292,55 @@ export const useSandboxAutoHeight = (sandboxRef: Ref<SandboxExposed | null>) => 
 		observeContent();
 	};
 
-	const syncIframe = () => setIframe(container?.querySelector('iframe') || null);
+	const observeLocal = () => {
+		disconnectContent();
+		if (!container || typeof ResizeObserver === 'undefined') {
+			scheduleMeasure();
+			return;
+		}
+		const observer = new ResizeObserver(scheduleMeasure);
+		observer.observe(container);
+		const mount = container.querySelector('.docs-playground-local__mount');
+		if (mount) observer.observe(mount);
+		contentObserver = observer;
+		scrollMountObserver = new MutationObserver(() => {
+			const nextMount = container?.querySelector('.docs-playground-local__mount');
+			if (nextMount && contentObserver) {
+				contentObserver.observe(nextMount);
+				for (const child of nextMount.children) contentObserver.observe(child);
+			}
+			scheduleMeasure();
+		});
+		scrollMountObserver.observe(container, { childList: true, subtree: true });
+		scheduleMeasure();
+	};
+
+	const syncIframe = () => {
+		if (isLocalContainer(container)) {
+			iframe?.removeEventListener('load', handleIframeLoad);
+			iframe = null;
+			observeLocal();
+			return;
+		}
+		setIframe(container?.querySelector('iframe') || null);
+	};
 
 	const setContainer = (nextContainer: HTMLElement | null) => {
 		if (container === nextContainer) return;
 		containerObserver?.disconnect();
 		containerObserver = null;
+		disconnectContent();
+		iframe?.removeEventListener('load', handleIframeLoad);
+		iframe = null;
 		container = nextContainer;
-		setIframe(null);
-		if (!container) return;
+		if (!container) {
+			height.value = MIN_RUNTIME_HEIGHT;
+			return;
+		}
+		if (isLocalContainer(container)) {
+			observeLocal();
+			return;
+		}
 		containerObserver = new MutationObserver(syncIframe);
 		containerObserver.observe(container, { childList: true, subtree: true });
 		syncIframe();

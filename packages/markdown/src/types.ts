@@ -47,6 +47,10 @@ export interface MarkdownPlaygroundConfig {
 	 * 是否在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条。默认关闭。
 	 */
 	previewScroller?: PlaygroundPreviewScroller;
+	/**
+	 * 在当前文档直接编译挂载。默认仍使用 iframe。
+	 */
+	local?: boolean;
 	previewOptions?: PlaygroundPreviewOptions;
 }
 

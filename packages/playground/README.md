@@ -53,6 +53,7 @@ const files = ref({
 | `id` | `string` | `''` | 标题锚点 id；未传时从 `title` 自动生成。仅挂在内联 runtime 标题上，弹窗不重复。 |
 | `expandable` | `true \| number` | `undefined` | 开启预览高度展开；未传不显示控件；`true` 展开到剩余视口；正数为目标高度（px）。 |
 | `previewScroller` | `boolean` | `false` | 在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条；开启后会动态探测 `Scroller`，不存在则回退原生滚动。 |
+| `local` | `boolean` | `false` | 在当前文档编译并挂载，不使用 iframe。`vue` 使用宿主同一份实例；其余 import map 仍是 URL，加载后作为模块变量。 |
 | `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项；`cdnURL` 会同时作用于预览样式和默认 import map。 |
 | `previewOptions` | `SandboxProps['previewOptions']` | `undefined` | 传给当前 iframe 的 preview 选项。 |
 | `locale` | `Language` | `en-US` | 界面语言；未传入时使用上层 Locale Provider。 |
@@ -158,6 +159,7 @@ const handleMessage = async () => {
 - Vue SFC 的 `<style lang="scss">` / `lang="sass"` 以及独立 `.scss` / `.sass` 文件会在浏览器里编译；`_partial.scss` 只作为 `@use` 依赖。
 - `options.builtinImportMap.imports` 可以覆盖默认模块 URL。Vue 运行时仍从 `play.vuejs.org` 加载。
 - 每个 Playground 实例都使用自己的 preview 配置和 iframe 消息来源校验。
+- `local` 为 `true` 时，同一份 `files` 在当前文档里编译。`vue` 固定为宿主实例，`vue-router` 默认也是宿主依赖，可被 import map 的同名 URL 覆盖。直接渲染不撑开预览高度，`expandable` 固定为关闭，`docs:playground.run` 不会申请临时高度；`<DocsLink>` 仍通过 `docs:navigate` 通知。
 
 ## 仓库内 examples
 

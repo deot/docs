@@ -7,7 +7,8 @@
 		:preview-options="previewOptions"
 		:preview-inset="previewInset"
 		:preview-scroller="previewScroller"
-		:expandable="expandable"
+		:local="local"
+		:expandable="local ? false : expandable"
 		:styleless="true"
 		:title="title"
 		:id="id"
@@ -70,7 +71,8 @@
 				:preview-options="previewOptions"
 				:preview-inset="previewInset"
 				:preview-scroller="previewScroller"
-				:expandable="expandable"
+				:local="local"
+				:expandable="local ? false : expandable"
 				:hide-chrome="true"
 				:title="title"
 				:id="id"
@@ -159,6 +161,10 @@ const props = withDefaults(defineProps<{
 	 * 默认关闭；开启后动态探测 `Scroller`，不存在则回退。
 	 */
 	previewScroller?: PlaygroundPreviewScroller;
+	/**
+	 * 在当前文档直接编译挂载。默认仍使用 iframe Sandbox。
+	 */
+	local?: boolean;
 	previewOptions?: PlaygroundPreviewOptions;
 	locale?: Language;
 }>(), {
@@ -169,6 +175,7 @@ const props = withDefaults(defineProps<{
 	styleless: false,
 	previewInset: 0,
 	previewScroller: false,
+	local: false,
 	title: '',
 	id: '',
 	options: () => ({})

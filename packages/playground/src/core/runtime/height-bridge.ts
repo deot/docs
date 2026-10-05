@@ -1,6 +1,6 @@
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import type { Ref } from 'vue';
-import { resolveSandboxContainer } from './auto-height';
+import { resolveSandboxMessageSource } from './auto-height';
 import type { SandboxExposed } from './auto-height';
 
 /**
@@ -26,17 +26,17 @@ export function usePreviewHeightBridge(
 		sync();
 	};
 	const handleMessage = async (event: MessageEvent) => {
-		const iframe = resolveSandboxContainer(sandbox.value)?.querySelector('iframe');
+		const current = resolveSandboxMessageSource(sandbox.value);
 		const data = event.data;
-		if (!iframe?.contentWindow || event.source !== iframe.contentWindow
+		if (!current || event.source !== current
 			|| data?.action !== 'docs:height' || typeof data.session !== 'string') return;
 		if (data.operation === 'start') {
 			reset();
-			source = iframe.contentWindow;
+			source = current;
 			session = data.session;
 			return;
 		}
-		if (source !== iframe.contentWindow || session !== data.session) return;
+		if (source !== current || session !== data.session) return;
 		if (data.operation === 'stop') {
 			reset();
 			return;
@@ -61,7 +61,7 @@ export function usePreviewHeightBridge(
 			accepted
 		}, '*');
 	};
-	watch(() => resolveSandboxContainer(sandbox.value), reset, { flush: 'sync' });
+	watch(() => resolveSandboxMessageSource(sandbox.value), reset, { flush: 'sync' });
 	if (typeof window !== 'undefined') window.addEventListener('message', handleMessage);
 	onBeforeUnmount(() => {
 		disposed = true;

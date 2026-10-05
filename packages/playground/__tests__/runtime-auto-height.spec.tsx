@@ -358,4 +358,36 @@ describe('runtime auto height', () => {
 		await nextTick();
 		expect(runtimeHeight.value).toBe(410);
 	});
+
+	it('measures local sandbox content instead of its bridge iframe', async () => {
+		vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+		const container = document.createElement('div');
+		container.className = 'docs-playground-local';
+		const mountPoint = document.createElement('div');
+		mountPoint.className = 'docs-playground-local__mount';
+		const child = document.createElement('p');
+		mountPoint.appendChild(child);
+		container.appendChild(mountPoint);
+		document.body.appendChild(container);
+		mockBox(mountPoint, 180);
+		mockBox(child, 180);
+		let height!: Ref<number>;
+		const wrapper = mount(defineComponent({
+			setup() {
+				height = useSandboxAutoHeight(shallowRef({ container }));
+				return () => <div />;
+			}
+		}));
+		await nextTick();
+		flushFrames();
+		expect(height.value).toBe(180);
+		const extra = document.createElement('span');
+		mountPoint.appendChild(extra);
+		mockBox(extra, 240);
+		mockBox(mountPoint, 240);
+		await nextTick();
+		flushFrames();
+		expect(height.value).toBe(240);
+		wrapper.unmount();
+	});
 });

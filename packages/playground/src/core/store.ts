@@ -109,6 +109,22 @@ export const createReplFile = (filename: string, code: string) => {
 	return new ReplFile(replFilename, code);
 };
 
+/**
+ * 默认 CDN → 站点 modules → 实例 builtinImportMap → 管理页覆盖。
+ * iframe import map 与直接渲染加载的是同一份地址表。
+ * @param cdnURL
+ * @param builtinImportMap
+ */
+export const createRuntimeImports = (
+	cdnURL = DEFAULT_CDN_URL,
+	builtinImportMap?: PlaygroundOptions['builtinImportMap']
+): Record<string, string> => ({
+	...createBuiltinImports(cdnURL),
+	...getPlaygroundSiteModules(),
+	...filterSafeHrefs(builtinImportMap?.imports),
+	...getPlaygroundImportMapOverrides()
+});
+
 export const createRuntimeStore = (
 	files: PlaygroundFiles,
 	entry: string,
@@ -130,13 +146,7 @@ export const createRuntimeStore = (
 		activeFilename,
 		builtinImportMap: ref({
 			...builtinImportMap,
-			imports: {
-				// 默认 CDN → 站点 modules → 实例 builtinImportMap → 管理页覆盖
-				...createBuiltinImports(cdnURL),
-				...getPlaygroundSiteModules(),
-				...filterSafeHrefs(builtinImportMap?.imports),
-				...getPlaygroundImportMapOverrides()
-			}
+			imports: createRuntimeImports(cdnURL, builtinImportMap)
 		}),
 		template: ref({
 			welcomeSFC: files[entry],

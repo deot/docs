@@ -21,7 +21,7 @@ describe('workspace modules', () => {
 		setHeader: vi.fn(),
 		end: vi.fn(),
 		writableEnded: false
-	});
+	}) as unknown as import('node:http').ServerResponse;
 
 	beforeEach(() => {
 		resetWorkspaceModuleCache();

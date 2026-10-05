@@ -659,6 +659,8 @@ onBeforeUnmount(() => {
 @include block(docs-markdown-indicator) {
 	position: sticky;
 	top: var(--docs-markdown-indicator-top, 0);
+
+	// 高于正文和预览装饰（展开按钮 2），低于搜索/弹层（1000+）。
 	z-index: 4;
 	height: 0;
 	pointer-events: none;

@@ -12,7 +12,18 @@
 				role="alert"
 			>{{ errorText }}</pre>
 			<div class="docs-playground-runtime__viewport" :style="viewportStyle">
+				<LocalSandbox
+					v-if="local"
+					ref="sandboxRef"
+					:files="files"
+					:entry="entry"
+					:options="options"
+					:preview-scroller="previewScroller"
+					:clear-console="clearConsole"
+					@error="handleLocalError"
+				/>
 				<Sandbox
+					v-else-if="store"
 					ref="sandboxRef"
 					:store="store"
 					:auto-store-init="false"
@@ -62,7 +73,19 @@
 			>
 				<div class="docs-playground-runtime__viewport-stage">
 					<div class="docs-playground-runtime__viewport" :style="viewportStyle">
+						<LocalSandbox
+							v-if="local"
+							:key="sandboxKey"
+							ref="sandboxRef"
+							:files="files"
+							:entry="entry"
+							:options="options"
+							:preview-scroller="previewScroller"
+							:clear-console="clearConsole"
+							@error="handleLocalError"
+						/>
 						<Sandbox
+							v-else-if="store"
 							:key="sandboxKey"
 							ref="sandboxRef"
 							:store="store"
@@ -90,7 +113,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useLocale } from '@deot/docs-locale';
 import { Sandbox } from '@vue/repl';
 import { Editor } from '../../editor';
@@ -109,7 +132,7 @@ import type {
 	PlaygroundViewsProps
 } from '../../types';
 import { filesEqual, resolvePlaygroundTitleId } from '../../utils';
-import { resolveSandboxContainer, useSandboxAutoHeight } from './auto-height';
+import { isSandboxMessage, useSandboxAutoHeight } from './auto-height';
 import type { SandboxExposed } from './auto-height';
 import {
 	getVisibleViewportRect,
@@ -145,6 +168,8 @@ import {
 } from '../store';
 import { whenSassReady } from '../scss';
 
+const LocalSandbox = defineAsyncComponent(() => import('./local/local-sandbox.vue'));
+
 const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<PlaygroundViewsProps> & {
 	options: PlaygroundOptions;
 	previewInset?: PlaygroundPreviewInset;
@@ -158,11 +183,15 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	 * 由外层 Playground 渲染共享顶栏时隐藏内联 header。
 	 */
 	hideChrome?: boolean;
-	expandable?: PlaygroundExpandable;
+	expandable?: PlaygroundExpandable | false;
 	title?: string;
 	id?: string;
 	viewport?: PlaygroundViewport;
 	viewportOptions?: PlaygroundViewport[];
+	/**
+	 * 在当前文档编译并挂载，不使用 iframe Sandbox。
+	 */
+	local?: boolean;
 }>(), {
 	styleless: false,
 	hideChrome: false,
@@ -173,7 +202,8 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	activeView: 'runtime',
 	views: () => ['runtime'],
 	viewport: 'auto',
-	viewportOptions: () => ['auto', 375]
+	viewportOptions: () => ['auto', 375],
+	local: false
 });
 const { locale, t } = useLocale();
 const displayTitle = computed(() => props.title.trim());
@@ -233,26 +263,34 @@ const popupPreviewOptions = computed(() => mergePreviewOptions(
 const env = (import.meta as ImportMeta & { env: { MODE?: string } }).env;
 const clearConsole = env.MODE !== 'development';
 const copyValue = computed(() => props.files[props.entry] || '');
-const store = createRuntimeStore(props.files, props.entry, props.options);
+const store = props.local ? null : createRuntimeStore(props.files, props.entry, props.options);
 const sandboxRef = ref<SandboxExposed | null>(null);
+const localError = ref({ compile: '', runtime: '' });
+const handleLocalError = (payload: { compile: string; runtime: string }) => {
+	localError.value = payload;
+};
 const temporaryHeight = usePreviewHeightBridge(sandboxRef);
 const sandboxKey = ref(0);
 const runtimeHeight = useSandboxAutoHeight(sandboxRef);
 const runtimeError = useSandboxRuntimeErrorGuard(sandboxRef);
 useSandboxTheme(sandboxRef);
-const compileErrorText = computed(() => (store.errors || [])
-	.map(toErrorText)
-	.filter(Boolean)
-	.join('\n'));
+const compileErrorText = computed(() => {
+	if (props.local) return localError.value.compile;
+	return (store?.errors || [])
+		.map(toErrorText)
+		.filter(Boolean)
+		.join('\n');
+});
 const errorText = computed(() => {
-	const runtime = runtimeError.value
-		? formatSandboxRuntimeError(runtimeError.value, t('playground.runtime.importMapTip'))
-		: '';
+	let runtime = '';
+	if (props.local) runtime = localError.value.runtime;
+	else if (runtimeError.value) {
+		runtime = formatSandboxRuntimeError(runtimeError.value, t('playground.runtime.importMapTip'));
+	}
 	return [compileErrorText.value, runtime].filter(Boolean).join('\n\n');
 });
 const handleBridgeMessage = (event: MessageEvent) => {
-	const iframe = resolveSandboxContainer(sandboxRef.value)?.querySelector('iframe');
-	if (!iframe || event.source !== iframe.contentWindow) return;
+	if (!isSandboxMessage(sandboxRef.value, event)) return;
 	const data = event.data;
 	if (
 		!data
@@ -305,7 +343,7 @@ const measureExpandedPreviewHeight = () => {
 };
 
 const syncFrozenExpandedHeight = () => {
-	if (!previewExpanded.value || props.expandable !== true) return;
+	if (props.local || !previewExpanded.value || props.expandable !== true) return;
 	frozenExpandedHeight.value = measureExpandedPreviewHeight();
 };
 
@@ -313,11 +351,20 @@ if (typeof window !== 'undefined') {
 	window.addEventListener('message', handleBridgeMessage);
 	window.addEventListener('resize', syncFrozenExpandedHeight);
 }
-const canExpandPreview = computed(() => !props.styleless && isPlaygroundExpandable(props.expandable));
+const canExpandPreview = computed(() => (
+	!props.local
+	&& !props.styleless
+	&& isPlaygroundExpandable(props.expandable)
+));
 const expandLabel = computed(() => t(previewExpanded.value
 	? 'playground.runtime.collapsePreview'
 	: 'playground.runtime.expandPreview'));
 const baseViewportHeight = computed(() => {
+	if (props.local) {
+		const fixedHeight = getViewportHeight(props.viewport);
+		if (fixedHeight) return fixedHeight;
+		return runtimeHeight.value;
+	}
 	if (previewExpanded.value && props.expandable === true) {
 		return frozenExpandedHeight.value;
 	}
@@ -334,7 +381,7 @@ const scrollExpandedPreviewIntoView = () => {
 };
 
 const handleTogglePreviewExpand = () => {
-	if (!canExpandPreview.value) return;
+	if (props.local || !canExpandPreview.value) return;
 	if (!previewExpanded.value) {
 		if (props.expandable === true) {
 			frozenExpandedHeight.value = measureExpandedPreviewHeight();
@@ -386,33 +433,36 @@ const handleFilesChange = (
 	syncedFiles = { ...files };
 	syncedEntry = entry;
 	const apply = () => {
-		switch (action.type) {
-			case 'update': {
-				const file = store.files[toReplFilename(action.filename)];
-				if (file) file.code = files[action.filename];
-				break;
+		if (store) {
+			switch (action.type) {
+				case 'update': {
+					const file = store.files[toReplFilename(action.filename)];
+					if (file) file.code = files[action.filename];
+					break;
+				}
+				case 'create':
+					store.addFile(createReplFile(action.filename, files[action.filename]));
+					break;
+				case 'rename':
+					store.renameFile(
+						toReplFilename(action.previousFilename),
+						toReplFilename(action.filename)
+					);
+					break;
+				case 'delete':
+					store.setActive(toReplFilename(entry));
+					delete store.files[toReplFilename(action.filename)];
+					break;
+				case 'entry':
+					store.mainFile = toReplFilename(entry);
+					store.setActive(toReplFilename(entry));
+					break;
 			}
-			case 'create':
-				store.addFile(createReplFile(action.filename, files[action.filename]));
-				break;
-			case 'rename':
-				store.renameFile(
-					toReplFilename(action.previousFilename),
-					toReplFilename(action.filename)
-				);
-				break;
-			case 'delete':
-				store.setActive(toReplFilename(entry));
-				delete store.files[toReplFilename(action.filename)];
-				break;
-			case 'entry':
-				store.mainFile = toReplFilename(entry);
-				store.setActive(toReplFilename(entry));
-				break;
 		}
 		emit('files-change', files, entry, action);
 	};
-	whenSassReady(files, apply);
+	if (store) whenSassReady(files, apply);
+	else apply();
 };
 
 const handleEditor = () => {
@@ -420,13 +470,17 @@ const handleEditor = () => {
 		files: { ...props.files },
 		entry: props.entry,
 		locale: locale.value,
-		getCodeErrors: () => store.errors,
+		getCodeErrors: () => {
+			if (!props.local) return store?.errors || [];
+			return localError.value.compile ? [localError.value.compile] : [];
+		},
 		onFilesChange: handleFilesChange,
-		onActiveChange: (filename: string) => store.setActive(toReplFilename(filename))
+		onActiveChange: (filename: string) => store?.setActive(toReplFilename(filename))
 	});
 };
 const handleInlineRefresh = () => {
 	runtimeError.value = '';
+	localError.value = { compile: '', runtime: '' };
 	sandboxKey.value++;
 };
 const handleClosePopup = () => {
@@ -434,6 +488,11 @@ const handleClosePopup = () => {
 };
 const handleOpenPopup = () => {
 	Alone.popup({
+		local: props.local,
+		files: props.files,
+		entry: props.entry,
+		options: props.options,
+		previewScroller: props.previewScroller,
 		store,
 		copyValue: copyValue.value,
 		title: props.title,
@@ -455,12 +514,14 @@ watch(() => props.files, (files) => {
 	syncedFiles = { ...files };
 	syncedEntry = props.entry;
 	runtimeError.value = '';
-	void store.setFiles(files, props.entry);
+	localError.value = { compile: '', runtime: '' };
+	if (store) void store.setFiles(files, props.entry);
 }, { deep: true });
 
 watch(() => props.entry, (entry) => {
 	if (!entry || entry === syncedEntry) return;
 	syncedEntry = entry;
+	if (!store) return;
 	store.mainFile = toReplFilename(entry);
 	store.setActive(toReplFilename(entry));
 });
@@ -564,6 +625,8 @@ defineExpose({
 		position: absolute;
 		bottom: 2px;
 		left: 50%;
+
+		// 只盖住预览内容。页面指示器是 4，弹层是 1000+。
 		z-index: 2;
 		display: inline-flex;
 		width: 32px;

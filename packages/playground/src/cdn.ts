@@ -10,6 +10,7 @@ const BUILTIN_IMPORT_ASSETS: Record<string, string> = {
 	'@deot/vc': '@deot/vc/dist/index.js',
 	'@deot/vc-shared': '@deot/vc-shared/dist/index.js',
 	'@deot/vc-hooks': '@deot/vc-hooks/dist/index.js',
+	'@deot/vc-locale': '@deot/vc-locale/dist/index.js',
 	'@deot/vc-components': '@deot/vc-components/dist/index.js',
 	'@deot/helper-resize': '@deot/helper-resize/dist/index.js',
 	'@deot/helper-utils': '@deot/helper-utils/dist/index.js',

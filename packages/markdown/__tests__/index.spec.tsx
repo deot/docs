@@ -1319,6 +1319,18 @@ describe('markdown', () => {
 		expect(render('{ previewScroller: false }')).toContain('data-playground');
 	});
 
+	it('reports invalid playground local declarations', () => {
+		const render = (config: string) => MarkdownRenderer.render(
+			runtimeWithConfig(config, '```vue\n<template />\n```')
+		);
+		const error = 'local 必须是布尔值';
+
+		expect(render('{ local: 1 }')).toContain(error);
+		expect(render('{ local: \'true\' }')).toContain(error);
+		expect(render('{ local: true }')).toContain('data-playground');
+		expect(render('{ local: false }')).toContain('data-playground');
+	});
+
 	it('passes playground title to Playground', async () => {
 		const source = runtimeWithConfig(
 			'{ title: \'Demo Title\', id: \'demo-anchor\' }',

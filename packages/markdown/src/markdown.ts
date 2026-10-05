@@ -206,6 +206,11 @@ const validatePreviewScroller = (propsData: MarkdownPlaygroundConfig) => {
 	if (typeof propsData.previewScroller === 'boolean') return '';
 	return 'previewScroller 必须是布尔值';
 };
+const validateLocal = (propsData: MarkdownPlaygroundConfig) => {
+	if (!('local' in propsData)) return '';
+	if (typeof propsData.local === 'boolean') return '';
+	return 'local 必须是布尔值';
+};
 const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>): MarkdownPlaygroundConfig => {
 	for (const token of tokens) {
 		const sources: string[] = [];
@@ -329,7 +334,8 @@ md.core.ruler.after('markdown-tabs', 'runtime-files', (state) => {
 			|| validateExpandable(propsData)
 			|| validateTitle(propsData)
 			|| validateTitleId(propsData)
-			|| validatePreviewScroller(propsData);
+			|| validatePreviewScroller(propsData)
+			|| validateLocal(propsData);
 		const propsAttr = renderPlaygroundAttrs(propsData);
 
 		if (!fences.length) {

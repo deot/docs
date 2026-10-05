@@ -444,3 +444,32 @@ const handleClick = playground.run(560, { visible: isActive });
 </script>
 ```
 :::
+
+## 直接渲染
+
+`local: true` 时不使用 iframe，在当前文档里编译同一段代码。`docs:playground.run` 不会撑开预览高度。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	local: true
+}
+</config>
+-->
+```vue
+<template>
+	<Button type="primary" @click="handleClick">Open Modal</Button>
+	<Modal v-model="isActive" title="Demo">Modal content</Modal>
+</template>
+<script setup>
+import { ref, inject } from 'vue';
+import { Button, Modal } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const isActive = ref(false);
+
+const handleClick = playground.run(560, { visible: isActive });
+</script>
+```
+:::

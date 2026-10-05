@@ -29,7 +29,7 @@
     "@deot/helper-cache": "^1.1.10",
     "@deot/helper-fp": "^1.1.5",
     "@deot/http": "^1.1.10",
-    "@deot/vc": "^1.0.72",
+    "@deot/vc": "^1.1.1",
     "es-module-lexer": "^2.3.1"
   },
   "devDependencies": {

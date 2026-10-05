@@ -52,7 +52,19 @@
 							class="docs-playground-popup__canvas"
 							:style="canvasStyle"
 						>
+							<LocalSandbox
+								v-if="local"
+								:key="sandboxKey"
+								ref="sandboxRef"
+								:files="files"
+								:entry="entry"
+								:options="options"
+								:preview-scroller="previewScroller"
+								:clear-console="clearConsole"
+								@error="handleLocalError"
+							/>
 							<Sandbox
+								v-else-if="store"
 								:key="sandboxKey"
 								ref="sandboxRef"
 								:store="store"
@@ -68,13 +80,19 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from 'vue';
 import { Scroller } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import { Sandbox } from '@vue/repl';
 import type { Store } from '@vue/repl';
-import type { PlaygroundPreviewOptions, PlaygroundViewport } from '../../../types';
-import { resolveSandboxContainer, type SandboxExposed } from '../auto-height';
+import type {
+	PlaygroundFiles,
+	PlaygroundOptions,
+	PlaygroundPreviewOptions,
+	PlaygroundPreviewScroller,
+	PlaygroundViewport
+} from '../../../types';
+import { isSandboxMessage, type SandboxExposed } from '../auto-height';
 import {
 	formatSandboxRuntimeError,
 	toErrorText,
@@ -86,19 +104,31 @@ import { usePreviewHeightBridge } from '../height-bridge';
 import RuntimeToolbar from '../toolbar.vue';
 import { PLAYGROUND_RUNTIME_CANVAS_BACKGROUND } from '../../store';
 
+const LocalSandbox = defineAsyncComponent(() => import('../local/local-sandbox.vue'));
+
 const props = withDefaults(defineProps<{
-	store: Store;
+	store: Store | null;
 	copyValue: string;
 	title?: string;
 	viewport?: PlaygroundViewport;
 	viewportOptions?: PlaygroundViewport[];
 	previewOptions?: PlaygroundPreviewOptions;
 	clearConsole?: boolean;
+	local?: boolean;
+	files?: PlaygroundFiles;
+	entry?: string;
+	options?: PlaygroundOptions;
+	previewScroller?: PlaygroundPreviewScroller;
 }>(), {
 	title: '',
 	viewport: 'auto',
 	viewportOptions: () => ['auto', 375],
-	clearConsole: true
+	clearConsole: true,
+	local: false,
+	files: () => ({}),
+	entry: '',
+	options: () => ({}),
+	previewScroller: false
 });
 
 const emit = defineEmits<{
@@ -111,6 +141,10 @@ const emit = defineEmits<{
 const { t } = useLocale();
 const currentViewport = ref<PlaygroundViewport>(props.viewport);
 const sandboxRef = ref<SandboxExposed | null>(null);
+const localError = ref({ compile: '', runtime: '' });
+const handleLocalError = (payload: { compile: string; runtime: string }) => {
+	localError.value = payload;
+};
 const availableHeight = () => Math.max(0, getWindowInnerSize().height - PLAYGROUND_POPUP_SCREEN_GAP - PLAYGROUND_POPUP_HEADER_HEIGHT);
 const temporaryHeight = usePreviewHeightBridge(sandboxRef, availableHeight);
 const sandboxKey = ref(0);
@@ -118,14 +152,18 @@ const layoutTick = ref(0);
 const runtimeError = useSandboxRuntimeErrorGuard(sandboxRef);
 useSandboxTheme(sandboxRef);
 
-const storeErrors = computed(() => (props.store.errors || [])
-	.map(toErrorText)
-	.filter(Boolean)
-	.join('\n'));
+const storeErrors = computed(() => props.local
+	? localError.value.compile
+	: (props.store?.errors || [])
+			.map(toErrorText)
+			.filter(Boolean)
+			.join('\n'));
 const errorText = computed(() => {
-	const runtime = runtimeError.value
-		? formatSandboxRuntimeError(runtimeError.value, t('playground.runtime.importMapTip'))
-		: '';
+	const runtime = props.local
+		? localError.value.runtime
+		: (runtimeError.value
+				? formatSandboxRuntimeError(runtimeError.value, t('playground.runtime.importMapTip'))
+				: '');
 	return [storeErrors.value, runtime].filter(Boolean).join('\n\n');
 });
 const layout = computed(() => {
@@ -148,6 +186,7 @@ const canvasStyle = computed(() => ({
 
 const handleRefresh = () => {
 	runtimeError.value = '';
+	localError.value = { compile: '', runtime: '' };
 	sandboxKey.value++;
 };
 const handleViewportChange = (viewport: PlaygroundViewport) => {
@@ -172,8 +211,7 @@ const handleResize = () => {
 	layoutTick.value++;
 };
 const handleBridgeMessage = (event: MessageEvent) => {
-	const iframe = resolveSandboxContainer(sandboxRef.value)?.querySelector('iframe');
-	if (!iframe || event.source !== iframe.contentWindow) return;
+	if (!isSandboxMessage(sandboxRef.value, event)) return;
 	const data = event.data;
 	if (
 		!data

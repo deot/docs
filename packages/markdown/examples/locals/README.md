@@ -446,3 +446,44 @@ const handleClick = playground.run(560, { visible: isActive });
 </script>
 ```
 :::
+
+## 直接渲染
+
+`local: true` 时不使用 iframe。`files` 与上面的示例相同，`vue` 来自宿主，`docs:playground` 仍然可用。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	local: true,
+	entry: 'App.vue',
+	views: ['runtime', 'files'],
+	title: '直接渲染',
+}
+</config>
+-->
+```vue App.vue
+<template>
+	<section>
+		<p>{{ label }} {{ version }}</p>
+		<Button type="primary" @click="handleClick">Open Modal</Button>
+		<Modal v-model="isActive" title="Local">当前文档内的预览</Modal>
+		<DocsLink to="/markdown">回到 Markdown</DocsLink>
+	</section>
+</template>
+<script setup>
+import { inject, ref, version } from 'vue';
+import { Button, Modal } from '@deot/vc';
+import { note } from './note';
+
+const playground = inject('docs:playground');
+const isActive = ref(false);
+const label = note;
+const handleClick = playground.run(560, { visible: isActive });
+</script>
+```
+
+```js note.js
+export const note = 'local';
+```
+:::

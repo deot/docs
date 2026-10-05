@@ -1,6 +1,6 @@
 import { onBeforeUnmount, ref } from 'vue';
 import type { Ref } from 'vue';
-import { resolveSandboxContainer } from './auto-height';
+import { resolveSandboxMessageSource } from './auto-height';
 import type { SandboxExposed } from './auto-height';
 
 export const UNKNOWN_RUNTIME_ERROR = '运行时发生未知错误';
@@ -70,8 +70,8 @@ export const useSandboxRuntimeErrorGuard = (sandboxRef: Ref<SandboxExposed | nul
 	const error = ref('');
 	if (typeof window === 'undefined') return error;
 	const handleMessage = (event: MessageEvent) => {
-		const iframe = resolveSandboxContainer(sandboxRef.value)?.querySelector('iframe');
-		if (!iframe || event.source !== iframe.contentWindow) return;
+		const source = resolveSandboxMessageSource(sandboxRef.value);
+		if (!source || event.source !== source) return;
 		if (!normalizeRuntimeErrorMessage(event.data)) return;
 		error.value = (event.data as RuntimeErrorMessage).value as string;
 	};
