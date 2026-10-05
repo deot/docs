@@ -54,6 +54,15 @@ development 和 preview 会保持服务运行；build 在 Vite 构建结束后�
 - 为客户端路由提供 HTML history fallback；静态托管若只能配置自定义 404 页，请改用 Client 的 [`@deot/docs:redirect`](../client/README.md) 约定。
 - 在 build 模式复制 Markdown、JSON（含 `.page.json`）、SFC 等静态内容资源；
 - 当当前仓库源码存在时，将 locale、renderer、markdown、playground、theme 包映射到本地入口。
+- 在 development 模式提供 `GET /__docs/module/<包名>`，把工作区源码编成一份浏览器 ESM。preview 与 build 对该地址返回 404。
+
+## 本地模块
+
+`doc dev` 扫描项目 `packages/*/package.json`。存在 `src/index.ts` 或 `index.ts`，且真实路径仍在项目内时，可以用 `/__docs/module/<包名>` 取到编译结果。例如 `@deot/docs-locale` 对应 `/__docs/module/@deot/docs-locale`。
+
+当前包内的相对 `.vue`、`.ts`、`.tsx` 和样式会打进这一份 ESM，样式写入 iframe 的 `document.head`。`vue`、其它工作区包，以及其余裸导入保持原样，交给 Playground import map。`vue/jsx-runtime` 会打进包。
+
+站点自己决定是否使用这些地址。本仓库的 `index.html` 在 `window.__DOCS_RUNTIME__?.mode !== 'development'` 时把 `modules` 留空，development 时改指本地地址。直接打开 HTML 没有 runtime，因此仍走内置 CDN。管理页里对同名包的覆盖会压过 `index.html`。改完源码后刷新文档页；已打开的 Playground 不会热更新这份外部模块。
 
 ### `getDeverMode(options)`
 

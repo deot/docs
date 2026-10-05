@@ -36,6 +36,8 @@ pnpm exec doc dev --workspace .
 
 启动 Vite 开发服务。该模式会向 HTML 注入 `window.__DOCS_RUNTIME__`，提供本地资源寻址、`/__docs/events` SSE、已加载资源的更新通知，以及 `PUT /__docs/page` 页面保存入口。保存规则见 [`@deot/docs-dever`](../dever/README.md)。
 
+development 还会把工作区里带 `src/index.ts` 或 `index.ts` 的包编成浏览器 ESM，地址是 `/__docs/module/<包名>`。站点在 `index.html` 里用 `window.__DOCS_RUNTIME__?.mode !== 'development'` 决定 `$docs.modules`：开发时指向这些本地地址，直接打开 HTML 时继续用 CDN。`vue` 以及其它非工作区依赖保持裸导入，仍由 Playground 的 import map 解析。preview 和 build 不提供该地址。
+
 ```bash
 pnpm exec doc dev --workspace site
 ```

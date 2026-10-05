@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { defineConfig } from 'vite';
 import type { Plugin, ViteDevServer } from 'vite';
 import { isInside, resolveDocsWorkspace } from '../workspace';
+import { respondWorkspaceModule } from '../workspace-module';
 import type { ResolvedDocsWorkspace } from '../workspace';
 import type { DocsPluginOptions } from '../types';
 
@@ -299,6 +300,14 @@ const configureWorkspaceServer = (
 		let realResourceRoot = realWorkspace;
 		try {
 			const rawPathname = getRawPathname(req.url || '/');
+			if (!options.preview && rawPathname.startsWith('/__docs/module/')) {
+				void respondWorkspaceModule(req, res, resolved.projectRoot).catch((reason) => {
+					if (res.writableEnded) return;
+					res.statusCode = 500;
+					res.end(reason instanceof Error ? reason.message : 'Module compile failed');
+				});
+				return;
+			}
 			if (rawPathname.startsWith('/__docs/') && rawPathname !== '/__docs/events') {
 				res.statusCode = 404;
 				res.end('Not Found');
