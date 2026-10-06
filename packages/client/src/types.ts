@@ -314,6 +314,7 @@ export interface DocsConfig {
 	routes: Record<string, DocsRouteConfig>;
 	/**
 	 * 站点 public base，与 Vite `base` 对齐。
+	 * 可省略；未配置时由客户端在路由启动前根据当前地址推导。
 	 */
 	base?: string;
 	/**

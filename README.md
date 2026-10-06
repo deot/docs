@@ -93,7 +93,6 @@ site/
 
 	<script>
 		window.$docs = {
-			base: new URL('./', document.baseURI).href,
 			namespace: 'my-docs',
 			locales: {
 				'zh-CN': { label: '简体中文' },
@@ -130,7 +129,7 @@ site/
 默认资源寻址会将 `./guide/installation.md` 转换为：
 
 - development：`/site/{lang}/guide/installation.md`
-- production：相对于 `$docs.base` 的 `{lang}/guide/installation.md`
+- production：相对于 `$docs.base` 的 `{lang}/guide/installation.md`；未配置 `base` 时使用当前部署目录
 
 需要从仓库、CDN 或其他网关加载内容时，可以通过 `resolve.markdown`、`resolve.resource` 和 `resolve.link` 定义逻辑地址、最终 URL 与 Markdown 站内链接。
 

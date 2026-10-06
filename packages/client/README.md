@@ -17,7 +17,6 @@ pnpm add @deot/docs-client
 
 <script>
 	window.$docs = {
-		base: new URL('./', document.baseURI).href,
 		namespace: 'my-docs',
 		layout: {
 			header: {
@@ -104,7 +103,7 @@ const { app, router, disconnect } = await bootstrap(window.$docs);
 | --- | --- |
 | `locales` | 语言代码到 `{ label, client?, markdown?, playground?, renderer? }` 的映射；第一项是默认文档语言。 |
 | `routes` | 去掉语言前缀后的路由配置。字符串和函数表示重定向。 |
-| `base` | production 资源的基准 URL。 |
+| `base` | production 资源的基准 URL。可省略；未配置时由客户端在路由启动前根据当前地址推导。 |
 | `namespace` | IndexedDB 缓存隔离标识；未设置时使用规范化后的 `base`。 |
 | `repository` | 当前文档项目的远程仓库页面。Header 在语言与工具之间展示入口，并在新窗口打开；GitHub 地址还会用于生成默认 Footer 的 Issues、需求与 Releases 链接。 |
 | `modules` | 站点级裸模块名到 URL 的映射，对所有 Playground（含 Markdown）生效；远程 SFC 仍可通过实例 `builtinImportMap` 覆盖。`doc dev` 会把工作区源码编到 `/__docs/module/<包名>`；development 下可以把同名 key 指到该地址，直接打开 HTML 时不要使用它。 |
