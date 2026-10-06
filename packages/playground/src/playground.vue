@@ -162,7 +162,7 @@ const props = withDefaults(defineProps<{
 	 */
 	previewScroller?: PlaygroundPreviewScroller;
 	/**
-	 * 在当前文档直接编译挂载。默认仍使用 iframe Sandbox。
+	 * 在当前文档直接编译挂载。默认开启；`false` 改回 iframe Sandbox。
 	 */
 	local?: boolean;
 	previewOptions?: PlaygroundPreviewOptions;
@@ -175,7 +175,7 @@ const props = withDefaults(defineProps<{
 	styleless: false,
 	previewInset: 0,
 	previewScroller: false,
-	local: false,
+	local: true,
 	title: '',
 	id: '',
 	options: () => ({})

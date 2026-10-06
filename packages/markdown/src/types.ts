@@ -48,7 +48,7 @@ export interface MarkdownPlaygroundConfig {
 	 */
 	previewScroller?: PlaygroundPreviewScroller;
 	/**
-	 * 在当前文档直接编译挂载。默认仍使用 iframe。
+	 * 在当前文档直接编译挂载。默认开启；`false` 使用 iframe。
 	 */
 	local?: boolean;
 	previewOptions?: PlaygroundPreviewOptions;

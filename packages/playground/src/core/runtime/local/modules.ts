@@ -110,41 +110,37 @@ const messageOf = (error: unknown) => (
  * 找到 import map 里能覆盖该说明符的键。子路径没有独立 URL 时回退到父包。
  * @param id 裸模块说明符。
  * @param imports 合并后的 import map。
- * @returns 命中的 import map 键；宿主 Vue 或没有地址时返回 null。
+ * @returns 命中的 import map 键；没有地址时返回 null。
  */
 export const resolveImportTarget = (
 	id: string,
 	imports: Record<string, string>
 ): string | null => {
-	if (HOST_VUE_SPECIFIERS.has(id)) return null;
 	if (imports[id]) return id;
 	let cursor = id;
 	while (true) {
 		const slash = cursor.lastIndexOf('/');
 		if (slash <= 0) return null;
 		const parent = cursor.slice(0, slash);
-		if (HOST_VUE_SPECIFIERS.has(parent)) return null;
 		if (imports[parent]) return parent;
 		cursor = parent;
 	}
 };
 
-// 宿主模块优先。默认 CDN 地址不覆盖本地包；import map 里另给的 URL 才远程加载。
+// 默认 CDN 地址仍用宿主副本。import map 里另给的 URL 会覆盖，包括 vue。
 export const prefersLocalBuiltin = (
 	id: string,
 	imports: Record<string, string>,
 	cdnURL?: string
 ): boolean => {
-	if (!localBuiltinIds.has(id)) return false;
-	if (HOST_VUE_SPECIFIERS.has(id)) return true;
+	if (!localBuiltinIds.has(id) && !HOST_VUE_SPECIFIERS.has(id)) return false;
 	const url = imports[id];
 	if (!url) return true;
 	return url === createBuiltinImports(cdnURL)[id];
 };
 
 /**
- * 内置依赖先注入宿主副本。`vue` 固定为宿主模块。
- * 其余包在 import map 提供了非默认 CDN 地址时才改为远程加载。
+ * 内置依赖先注入宿主副本。import map 里与默认 CDN 不同的地址会覆盖，包括 `vue`。
  * @param specifiers 本次预览用到的裸模块说明符。
  * @param imports 合并后的 import map。
  * @param builtins 宿主 Vue 与 vue-router。
@@ -195,6 +191,10 @@ export const loadLocalModules = async (
 
 	await Promise.all([...localIds].map(async (id) => {
 		if (id === 'vue' || id === 'vue-router') return;
+		if (id === 'vue/server-renderer') {
+			modules[id] = builtins.vue;
+			return;
+		}
 		modules[id] = await ensureLocalBuiltin(id);
 	}));
 

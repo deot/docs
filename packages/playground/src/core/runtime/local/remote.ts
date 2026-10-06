@@ -13,7 +13,7 @@ const HOST_VUE = new Set(['vue', 'vue/server-renderer']);
 
 /**
  * 把 CDN 上的 ESM 先拉完整张依赖图，再在当前页面里执行。
- * 裸导入走同一份 import map；`vue` 固定用宿主实例，避免第二份 Vue。
+ * 裸导入走同一份 import map。与默认 CDN 不同的 `vue` 地址会远程加载。
  * @param imports 合并后的 import map。
  * @param builtins 宿主 Vue 与 vue-router。
  * @param cdnURL 当前 CDN 根，用来识别默认地址。
@@ -34,6 +34,7 @@ export const createRemoteLoader = (
 	const crawled = new Set<string>();
 
 	const localBuiltinId = (id: string) => {
+		if (imports[id] && !prefersLocalBuiltin(id, imports, cdnURL)) return null;
 		if (prefersLocalBuiltin(id, imports, cdnURL)) return id;
 		let cursor = id;
 		while (true) {
@@ -46,8 +47,11 @@ export const createRemoteLoader = (
 	};
 
 	const dependencyUrl = (from: string, specifier: string) => {
-		if (HOST_VUE.has(specifier)) return null;
 		if (isRelativeSpecifier(specifier)) return new URL(specifier, from).href;
+		if (imports[specifier] && !prefersLocalBuiltin(specifier, imports, cdnURL)) {
+			return imports[specifier];
+		}
+		if (HOST_VUE.has(specifier) && prefersLocalBuiltin(specifier, imports, cdnURL)) return null;
 		let cursor = specifier;
 		while (cursor) {
 			if (localBuiltinIds.has(cursor) && prefersLocalBuiltin(cursor, imports, cdnURL)) {
@@ -80,7 +84,9 @@ export const createRemoteLoader = (
 	};
 
 	const requireFrom = (from: string) => (id: string) => {
-		if (HOST_VUE.has(id)) return toHostModule(builtins.vue);
+		if (HOST_VUE.has(id) && prefersLocalBuiltin(id, imports, cdnURL)) {
+			return toHostModule(builtins.vue);
+		}
 		const builtinId = localBuiltinId(id);
 		if (builtinId) return toHostModule(hostModules[builtinId]);
 		if (isRelativeSpecifier(id)) return evaluate(new URL(id, from).href);

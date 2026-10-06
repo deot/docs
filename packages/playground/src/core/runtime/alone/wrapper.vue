@@ -124,7 +124,7 @@ const props = withDefaults(defineProps<{
 	viewport: 'auto',
 	viewportOptions: () => ['auto', 375],
 	clearConsole: true,
-	local: false,
+	local: true,
 	files: () => ({}),
 	entry: '',
 	options: () => ({}),

@@ -28,7 +28,7 @@ const source = ref('# Hello @deot/docs');
 组件接受 `modelValue` 或 `value` 字符串。当前组件负责渲染，不会修改传入的 Markdown 内容。
 `locale` 可显式传入 `Language`；未传入时优先使用上层 `provideLocale()`，否则回退到 `en-US`。
 `theme` 控制排版皮肤（`'default' | 'traditional'`），与站点 light/dark 正交。
-`playground` 可传入站点级 Playground 默认 props；`:::playground` 块内 JSON5 配置会浅合并覆盖这些默认值。
+`playground` 可传入站点级 Playground 默认 props；`:::playground` 块内 JSON5 配置会浅合并覆盖这些默认值。Playground 默认在当前文档直接渲染（`local: true`）；需要 iframe 时写 `local: false`。
 
 ## 文档指示器
 

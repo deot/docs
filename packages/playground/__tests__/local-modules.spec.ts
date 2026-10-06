@@ -25,8 +25,8 @@ describe('local playground modules', () => {
 		);
 
 		expect(result.errors).toEqual([]);
-		expect(result.modules.vue).toBe(Vue);
-		expect(loader).not.toHaveBeenCalledWith('https://example.test/vue.js');
+		expect(result.modules.vue).toMatchObject({ url: 'https://example.test/vue.js' });
+		expect(loader).toHaveBeenCalledWith('https://example.test/vue.js');
 		expect(result.modules['vue-router']).toMatchObject({ url: 'https://example.test/router.js' });
 		expect(result.modules['@deot/vc']).toMatchObject({ marker: true });
 		expect(result.modules['lodash-es']).toMatchObject({ url: 'https://example.test/lodash.js' });
@@ -46,7 +46,7 @@ describe('local playground modules', () => {
 		expect(loader).not.toHaveBeenCalled();
 		expect(plain.modules.vue).toBe(Vue);
 		expect(plain.modules['vue-router']).toBe(VueRouter);
-		expect(resolveImportTarget('vue', { vue: 'https://example.test/vue.js' })).toBeNull();
+		expect(resolveImportTarget('vue', { vue: 'https://example.test/vue.js' })).toBe('vue');
 		expect(resolveImportTarget('@deot/vc/button', { '@deot/vc': 'https://example.test/vc.js' }))
 			.toBe('@deot/vc');
 	});
@@ -74,6 +74,11 @@ describe('local playground modules', () => {
 		expect(prefersLocalBuiltin('@deot/vc', { '@deot/vc': defaults['@deot/vc'] })).toBe(true);
 		expect(prefersLocalBuiltin('@deot/vc', { '@deot/vc': 'https://example.test/vc.js' })).toBe(false);
 		expect(prefersLocalBuiltin('not-builtin', {})).toBe(false);
+		expect(prefersLocalBuiltin('vue', { vue: defaults.vue })).toBe(true);
+		expect(prefersLocalBuiltin('vue', { vue: 'https://example.test/vue.js' })).toBe(false);
+		expect(prefersLocalBuiltin('vue/server-renderer', {
+			'vue/server-renderer': defaults['vue/server-renderer']
+		})).toBe(true);
 		const kept = await loadLocalModules(
 			['@deot/vc', 'pinia', 'dayjs'],
 			{ '@deot/vc': defaults['@deot/vc'] },

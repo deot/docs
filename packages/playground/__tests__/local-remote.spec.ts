@@ -1,4 +1,5 @@
 import * as Vue from 'vue';
+import { createBuiltinImports } from '../src/cdn';
 import { createRemoteLoader } from '../src/core/runtime/local/remote';
 
 describe('local remote modules', () => {
@@ -23,9 +24,9 @@ describe('local remote modules', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('executes a cdn graph with the host vue', async () => {
+	it('keeps the host vue when the import map uses the default cdn url', async () => {
 		const loader = createRemoteLoader({
-			'vue': vueUrl,
+			'vue': createBuiltinImports().vue,
 			'@deot/helper': helperUrl,
 			'@deot/vc': buttonUrl,
 			'lodash-es': 'https://example.test/lodash.js'
@@ -33,6 +34,16 @@ describe('local remote modules', () => {
 		const loaded = await loader.load(buttonUrl) as { Button: { value: string } };
 		expect(loaded.Button.value).toBe('helper');
 		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).not.toContain(vueUrl);
+	});
+
+	it('loads vue from a custom import-map url', async () => {
+		const loader = createRemoteLoader({
+			'vue': vueUrl,
+			'@deot/helper': helperUrl
+		}, { vue: Vue, vueRouter: {} });
+		const loaded = await loader.load(helperUrl) as { mark: string };
+		expect(loaded.mark).toBe('cdn-vue');
+		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toContain(vueUrl);
 	});
 
 	it('follows relative files and reports missing modules', async () => {

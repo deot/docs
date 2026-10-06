@@ -426,7 +426,8 @@ defineProps({ label: String });
 <!--
 <config lang="json5">
 {
-	expandable: true
+	expandable: true,
+	local: false
 }
 </config>
 -->
@@ -449,13 +450,12 @@ const handleClick = playground.run(560, { visible: isActive });
 
 ## 直接渲染
 
-`local: true` 时不使用 iframe。`files` 与上面的示例相同，`vue` 来自宿主，`docs:playground` 仍然可用。
+直接渲染是默认方式，不使用 iframe。`files` 与上面的示例相同，`vue` 来自宿主，`docs:playground` 仍然可用。上面的示例通过 `local: false` 改回 iframe。
 
 :::playground
 <!--
 <config lang="json5">
 {
-	local: true,
 	entry: 'App.vue',
 	views: ['runtime', 'files'],
 	title: '直接渲染',

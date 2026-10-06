@@ -189,7 +189,7 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	viewport?: PlaygroundViewport;
 	viewportOptions?: PlaygroundViewport[];
 	/**
-	 * 在当前文档编译并挂载，不使用 iframe Sandbox。
+	 * 在当前文档编译并挂载，不使用 iframe Sandbox。默认开启。
 	 */
 	local?: boolean;
 }>(), {
@@ -203,7 +203,7 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	views: () => ['runtime'],
 	viewport: 'auto',
 	viewportOptions: () => ['auto', 375],
-	local: false
+	local: true
 });
 const { locale, t } = useLocale();
 const displayTitle = computed(() => props.title.trim());

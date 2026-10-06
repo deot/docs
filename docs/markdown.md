@@ -424,7 +424,8 @@ defineProps({ label: String });
 <!--
 <config lang="json5">
 {
-	expandable: true
+	expandable: true,
+	local: false
 }
 </config>
 -->
@@ -447,16 +448,9 @@ const handleClick = playground.run(560, { visible: isActive });
 
 ## 直接渲染
 
-`local: true` 时不使用 iframe，在当前文档里编译同一段代码。`docs:playground.run` 不会撑开预览高度。
+直接渲染是 Playground 的默认方式，不使用 iframe，在当前文档里编译同一段代码。`docs:playground.run` 不会撑开预览高度。上面的示例通过 `local: false` 改回 iframe，才能按传入高度展开。
 
 :::playground
-<!--
-<config lang="json5">
-{
-	local: true
-}
-</config>
--->
 ```vue
 <template>
 	<Button type="primary" @click="handleClick">Open Modal</Button>

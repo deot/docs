@@ -159,7 +159,7 @@ const handleMessage = async () => {
 - Vue SFC 的 `<style lang="scss">` / `lang="sass"` 以及独立 `.scss` / `.sass` 文件会在浏览器里编译；`_partial.scss` 只作为 `@use` 依赖。
 - `options.builtinImportMap.imports` 可以覆盖默认模块 URL。Vue 运行时仍从 `play.vuejs.org` 加载。
 - 每个 Playground 实例都使用自己的 preview 配置和 iframe 消息来源校验。
-- `local` 为 `true` 时，同一份 `files` 在当前文档里编译。`vue` 固定为宿主实例，`vue-router` 默认也是宿主依赖，可被 import map 的同名 URL 覆盖。直接渲染不撑开预览高度，`expandable` 固定为关闭，`docs:playground.run` 不会申请临时高度；`<DocsLink>` 仍通过 `docs:navigate` 通知。
+- `local` 默认开启：同一份 `files` 在当前文档里编译。内置依赖默认用宿主副本；`modules` 里与默认 CDN 不同的地址会覆盖，包括 `vue` 和 `vue/server-renderer`。直接渲染不撑开预览高度，`expandable` 固定为关闭，`docs:playground.run` 不会申请临时高度；`<DocsLink>` 仍通过 `docs:navigate` 通知。`local: false` 改回 iframe Sandbox。
 
 ## 仓库内 examples
 

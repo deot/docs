@@ -1,3 +1,4 @@
+import * as Vue from 'vue';
 import type { PlaygroundFiles } from '../../../types';
 import type { CompileResult, LinkResult } from './compile/types';
 import {
@@ -16,7 +17,8 @@ export interface LinkOptions {
 }
 
 /**
- * 在当前页面链接编译结果，返回入口组件。不创建第二份 Vue。
+ * 在当前页面链接编译结果，返回入口组件。
+ * 未覆盖 `vue` 时换成带防护的宿主实例，避免 `mount` 卸掉页面。
  * @param compiled 浏览器编译结果。
  * @param files 当前 Playground 文件表。
  * @param options 可选的宿主模块表。
@@ -38,9 +40,11 @@ export const linkPlayground = (
 		provides: {}
 	};
 	const modules: Record<string, unknown> = {
-		...(options.modules || {}),
-		vue: createGuardedVue(capture)
+		...(options.modules || {})
 	};
+	if (modules.vue == null || modules.vue === Vue) {
+		modules.vue = createGuardedVue(capture);
+	}
 	const fileIndex = createFileIndex(files);
 	const root = getCommonRoot([...fileIndex.keys()]);
 	const cache = new Map<string, unknown>();

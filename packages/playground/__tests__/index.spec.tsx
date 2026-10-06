@@ -32,6 +32,15 @@ import { MIN_RUNTIME_HEIGHT } from '../src/core/runtime/auto-height';
 import { PLAYGROUND_POPUP_HEADER_HEIGHT, PLAYGROUND_POPUP_SCREEN_GAP } from '../src/core/runtime/alone/layout';
 import type { PlaygroundStoreStub } from './fixtures';
 
+// 组件默认直接渲染。这里的 iframe 用例显式关掉 local，除非测试自己传入。
+const mountPlayground = (options?: Parameters<typeof mount>[1]) => mount(Playground, {
+	...options,
+	props: {
+		local: false,
+		...(options?.props as Record<string, unknown> | undefined)
+	}
+});
+
 const { popup, store, setFiles } = vi.hoisted(() => {
 	const nextStore: PlaygroundStoreStub = {
 		options: {
@@ -199,7 +208,7 @@ describe('Playground', () => {
 	});
 
 	it('renders the preview and merges custom imports', () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				modelValue: '<template>hello</template>',
 				options: { builtinImportMap: { imports: { vue: '/vue.js', custom: '/custom.js' } } }
@@ -252,7 +261,7 @@ describe('Playground', () => {
 		expect(on.headHTML).toContain('docs-playground-preview-scroll');
 		expect(on.headHTML).toContain('#app>.vc-scroller');
 
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				modelValue: '<template>scroll</template>',
 				previewScroller: true,
@@ -296,7 +305,7 @@ describe('Playground', () => {
 		expect(createRuntimePreviewOptions().headHTML)
 			.toContain(`${DEFAULT_CDN_URL}/@deot/vc-components/dist/index.style.css`);
 
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				modelValue: '<template>cdn</template>',
 				options: {
@@ -324,7 +333,7 @@ describe('Playground', () => {
 	it('applies site-level import map overrides above instance imports', () => {
 		applyPlaygroundImportMapOverride('vue', 'https://cdn.example.com/vue.js');
 		applyPlaygroundImportMapOverride('custom', 'https://cdn.example.com/custom.js');
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				modelValue: '<template>override</template>',
 				options: {
@@ -343,7 +352,7 @@ describe('Playground', () => {
 		expect(imports['@deot/vc']).toBe(`${DEFAULT_CDN_URL}/@deot/vc/dist/index.js`);
 
 		removePlaygroundImportMapOverride('vue');
-		mount(Playground, {
+		mountPlayground({
 			props: {
 				modelValue: '<template>reset</template>',
 				options: { builtinImportMap: { imports: { vue: '/vue.js' } } }
@@ -357,7 +366,7 @@ describe('Playground', () => {
 
 	it('ignores unsafe site-level import overrides so instance defaults remain', () => {
 		applyPlaygroundImportMapOverride('vue', 'javascript:alert(1)');
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				modelValue: '<template>unsafe</template>',
 				options: { builtinImportMap: { imports: { vue: '/vue.js' } } }
@@ -370,7 +379,7 @@ describe('Playground', () => {
 	});
 
 	it('ignores unsafe instance import map entries so builtin defaults remain', () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				modelValue: '<template>unsafe-instance</template>',
 				options: {
@@ -396,7 +405,7 @@ describe('Playground', () => {
 			'@my/ui/dist/index.css': '/assets/ui.css',
 			'evil': 'javascript:alert(1)'
 		});
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: { modelValue: '<template>site-style</template>' }
 		});
 		const headHTML = wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions').headHTML;
@@ -413,7 +422,7 @@ describe('Playground', () => {
 			'@deot/style/dist/index.css',
 			'https://cdn.example.com/custom-style.css'
 		);
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				modelValue: '<template>style</template>'
 			}
@@ -439,7 +448,7 @@ describe('Playground', () => {
 			'custom.css',
 			'https://cdn.example.com/x.css" onload="alert(1)'
 		);
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				modelValue: '<template>site</template>',
 				options: {
@@ -462,7 +471,7 @@ describe('Playground', () => {
 
 	it('keeps the sandbox body theme in sync with the host document', async () => {
 		document.body.setAttribute('data-doc-theme', 'dark');
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			attachTo: document.body,
 			props: { modelValue: '<template>theme</template>' }
 		});
@@ -495,7 +504,7 @@ describe('Playground', () => {
 	});
 
 	it('uses the explicit locale across nested preview controls', () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				locale: zhCN,
 				modelValue: '<template>locale</template>'
@@ -510,7 +519,7 @@ describe('Playground', () => {
 
 	it('merges instance preview options and validates DocsLink bridge messages', async () => {
 		const navigate = vi.fn();
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				modelValue: '<template>bridge</template>',
 				onNavigate: navigate,
@@ -554,7 +563,7 @@ describe('Playground', () => {
 	});
 
 	it('renders local files in the host document', async () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			attachTo: document.body,
 			props: {
 				local: true,
@@ -583,7 +592,7 @@ describe('Playground', () => {
 	});
 
 	it('surfaces sandbox runtime errors in the playground chrome', async () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			attachTo: document.body,
 			props: { modelValue: '<template>error</template>' }
 		});
@@ -607,11 +616,11 @@ describe('Playground', () => {
 	});
 
 	it('forwards runtime navigation in standard and styleless layouts', async () => {
-		const standard = mount(Playground, { props: { modelValue: '<template />' } });
+		const standard = mountPlayground({ props: { modelValue: '<template />' } });
 		standard.findComponent({ name: 'Runtime' }).vm.$emit('navigate', '/standard');
 		expect(standard.emitted('navigate')).toEqual([['/standard']]);
 
-		const styleless = mount(Playground, {
+		const styleless = mountPlayground({
 			props: { modelValue: '<template />', styleless: true }
 		});
 		styleless.findComponent({ name: 'Runtime' }).vm.$emit('navigate', '/styleless');
@@ -619,7 +628,7 @@ describe('Playground', () => {
 	});
 
 	it('switches the default responsive viewports without recreating the sandbox', async () => {
-		const wrapper = mount(Playground, { props: { modelValue: '<template>viewport</template>' } });
+		const wrapper = mountPlayground({ props: { modelValue: '<template>viewport</template>' } });
 		const viewport = wrapper.find('.docs-playground-runtime__viewport');
 		const sandbox = wrapper.find('.sandbox').element;
 		const options = wrapper.findAll('.docs-playground__viewport-option');
@@ -640,7 +649,7 @@ describe('Playground', () => {
 	});
 
 	it('closes the viewport menu when external options hide it', async () => {
-		const wrapper = mount(Playground, { props: { modelValue: '<template>viewport</template>' } });
+		const wrapper = mountPlayground({ props: { modelValue: '<template>viewport</template>' } });
 		wrapper.findComponent({ name: 'Dropdown' }).vm.$emit('update:modelValue', true);
 		await nextTick();
 		expect(wrapper.find('.docs-playground__viewport-trigger').attributes('aria-expanded'))
@@ -655,7 +664,7 @@ describe('Playground', () => {
 	});
 
 	it('supports fixed viewport height, external updates and an empty option list', async () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				modelValue: '<template>fixed viewport</template>',
 				viewport: [375, 667],
@@ -697,7 +706,7 @@ describe('Playground', () => {
 	});
 
 	it('configures preview inset and keeps the outer height in sync', async () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				modelValue: '<template>padding</template>',
 				viewport: [375, 667],
@@ -726,14 +735,14 @@ describe('Playground', () => {
 
 	it('keeps expandable opt-in and freezes expanded height on first click', async () => {
 		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 900 });
-		const withoutExpand = mount(Playground, {
+		const withoutExpand = mountPlayground({
 			props: { modelValue: '<template>default</template>' }
 		});
 		expect(withoutExpand.find('[data-action="expand-preview"]').exists()).toBe(false);
 		expect(withoutExpand.find('.docs-playground__expand').exists()).toBe(false);
 		withoutExpand.unmount();
 
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			attachTo: document.body,
 			props: { modelValue: '<template>expand</template>', expandable: true }
 		});
@@ -774,7 +783,7 @@ describe('Playground', () => {
 		expect(preview.attributes('style')).toContain(`height: ${resolvePreviewBoxHeight(MIN_RUNTIME_HEIGHT)}px`);
 		wrapper.unmount();
 
-		const cramped = mount(Playground, {
+		const cramped = mountPlayground({
 			attachTo: document.body,
 			props: { modelValue: '<template>cramped</template>', expandable: true }
 		});
@@ -789,7 +798,7 @@ describe('Playground', () => {
 			.toContain(`height: ${900 - 44 - PLAYGROUND_EXPAND_VIEWPORT_GAP}px`);
 		cramped.unmount();
 
-		const fixed = mount(Playground, {
+		const fixed = mountPlayground({
 			attachTo: document.body,
 			props: { modelValue: '<template>fixed expand</template>', expandable: 480 }
 		});
@@ -804,14 +813,14 @@ describe('Playground', () => {
 			.toContain(`height: ${resolvePreviewBoxHeight(MIN_RUNTIME_HEIGHT)}px`);
 		fixed.unmount();
 
-		const styleless = mount(Playground, {
+		const styleless = mountPlayground({
 			props: { modelValue: '<template>styleless</template>', styleless: true, expandable: true }
 		});
 		expect(styleless.find('[data-action="expand-preview"]').exists()).toBe(false);
 	});
 
 	it('filters invalid direct viewport options and applies viewport sizing to styleless mode', () => {
-		const normalized = mount(Playground, {
+		const normalized = mountPlayground({
 			props: {
 				modelValue: '<template>normalized</template>',
 				viewportOptions: [0, 'mobile', 375, 375]
@@ -821,7 +830,7 @@ describe('Playground', () => {
 		expect(normalized.find('.docs-playground-runtime__viewport').attributes('style'))
 			.toContain('width: 375px');
 
-		const styleless = mount(Playground, {
+		const styleless = mountPlayground({
 			props: {
 				modelValue: '<template>styleless</template>',
 				styleless: true,
@@ -845,7 +854,7 @@ describe('Playground', () => {
 	});
 
 	it('opens the editor and synchronizes multi-file actions', async () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				files: { 'main.js': 'first', 'App.vue': '<template />' },
 				entry: 'main.js',
@@ -909,7 +918,7 @@ describe('Playground', () => {
 	});
 
 	it('refreshes locale validation and closes the viewport menu on Code', async () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				files: { 'App.vue': '<template>app</template>' },
 				entry: 'missing.js',
@@ -924,7 +933,7 @@ describe('Playground', () => {
 		expect(wrapper.find('.docs-playground__error').text()).toContain('missing.js');
 		wrapper.unmount();
 
-		const dual = mount(Playground, {
+		const dual = mountPlayground({
 			props: {
 				files: { 'App.vue': '<template>app</template>' },
 				entry: 'App.vue',
@@ -942,7 +951,7 @@ describe('Playground', () => {
 	});
 
 	it('changes entry and accepts external file updates', async () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: { files: { 'App.vue': 'app', 'main.js': 'main' }, entry: 'App.vue' }
 		});
 		await wrapper.find('[data-action="edit"]').trigger('click');
@@ -970,14 +979,14 @@ describe('Playground', () => {
 	});
 
 	it('synchronizes external single-file model changes', async () => {
-		const wrapper = mount(Playground, { props: { modelValue: 'first' } });
+		const wrapper = mountPlayground({ props: { modelValue: 'first' } });
 		await wrapper.setProps({ modelValue: 'second' });
 		await nextTick();
 		expect(store.files['src/App.vue'].code).toBe('second');
 	});
 
 	it('supports a styleless sandbox and default template', () => {
-		const wrapper = mount(Playground, { props: { styleless: true } });
+		const wrapper = mountPlayground({ props: { styleless: true } });
 		expect(wrapper.find('.docs-playground').exists()).toBe(false);
 		expect(wrapper.find('.docs-playground-runtime--styleless').attributes('style'))
 			.toContain('height: 24px');
@@ -988,7 +997,7 @@ describe('Playground', () => {
 	});
 
 	it('shows a runtime title in the header and popup; files-only only with a title', async () => {
-		const runtime = mount(Playground, {
+		const runtime = mountPlayground({
 			attachTo: document.body,
 			props: { modelValue: '<template>titled</template>', title: 'Demo Title' }
 		});
@@ -1009,7 +1018,7 @@ describe('Playground', () => {
 		await nextTick();
 		runtime.unmount();
 
-		const customId = mount(Playground, {
+		const customId = mountPlayground({
 			attachTo: document.body,
 			props: { modelValue: '<template>custom</template>', title: 'Demo Title', id: 'custom-anchor' }
 		});
@@ -1020,7 +1029,7 @@ describe('Playground', () => {
 		const occupied = document.createElement('div');
 		occupied.id = 'shared-title';
 		document.body.appendChild(occupied);
-		const unique = mount(Playground, {
+		const unique = mountPlayground({
 			attachTo: document.body,
 			props: { modelValue: '<template>unique</template>', title: 'Shared Title' }
 		});
@@ -1028,20 +1037,20 @@ describe('Playground', () => {
 		unique.unmount();
 		occupied.remove();
 
-		const emptyTitle = mount(Playground, {
+		const emptyTitle = mountPlayground({
 			props: { modelValue: '<template>empty</template>', title: '' }
 		});
 		expect(emptyTitle.find('.docs-playground__title').exists()).toBe(false);
 		expect(emptyTitle.find('.docs-playground__header').exists()).toBe(true);
 		emptyTitle.unmount();
 
-		const styleless = mount(Playground, {
+		const styleless = mountPlayground({
 			props: { modelValue: '<template>styleless</template>', styleless: true, title: 'Hidden' }
 		});
 		expect(styleless.find('.docs-playground__title').exists()).toBe(false);
 		styleless.unmount();
 
-		const filesTitled = mount(Playground, {
+		const filesTitled = mountPlayground({
 			props: {
 				files: { 'App.vue': '<template>files</template>' },
 				entry: 'App.vue',
@@ -1056,7 +1065,7 @@ describe('Playground', () => {
 		expect(filesTitled.find('.docs-playground__views').exists()).toBe(false);
 		filesTitled.unmount();
 
-		const filesUntitled = mount(Playground, {
+		const filesUntitled = mountPlayground({
 			props: {
 				files: { 'App.vue': '<template>files</template>' },
 				entry: 'App.vue',
@@ -1068,7 +1077,7 @@ describe('Playground', () => {
 	});
 
 	it('supports runtime-only and files-only views', async () => {
-		const runtime = mount(Playground, { props: { modelValue: '<template>runtime</template>' } });
+		const runtime = mountPlayground({ props: { modelValue: '<template>runtime</template>' } });
 		expect(runtime.find('.sandbox').exists()).toBe(true);
 		expect(runtime.find('[data-action="refresh"]').attributes('aria-label')).toBe('Reload preview');
 		expect(runtime.find('.docs-playground-files').exists()).toBe(false);
@@ -1076,7 +1085,7 @@ describe('Playground', () => {
 		expect(runtime.find('.docs-playground__preview').attributes('style'))
 			.toContain(`height: ${resolvePreviewBoxHeight(MIN_RUNTIME_HEIGHT)}px`);
 
-		const fixedRuntime = mount(Playground, {
+		const fixedRuntime = mountPlayground({
 			attrs: { style: 'height: 200px' },
 			props: { modelValue: '<template>fixed</template>' }
 		});
@@ -1084,7 +1093,7 @@ describe('Playground', () => {
 		expect(fixedRuntime.find('.docs-playground__preview').attributes('style'))
 			.toContain(`height: ${resolvePreviewBoxHeight(MIN_RUNTIME_HEIGHT)}px`);
 
-		const files = mount(Playground, {
+		const files = mountPlayground({
 			props: {
 				files: {
 					'App.vue': '<template><strong>files</strong></template>',
@@ -1111,7 +1120,7 @@ describe('Playground', () => {
 	});
 
 	it('keeps dual-view chrome and drops runtime actions on Code', async () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				files: { 'App.vue': '<template>dual</template>' },
 				entry: 'App.vue',
@@ -1141,7 +1150,7 @@ describe('Playground', () => {
 	});
 
 	it('reloads the runtime preview without recreating its store', async () => {
-		const wrapper = mount(Playground, { props: { modelValue: '<template>runtime</template>' } });
+		const wrapper = mountPlayground({ props: { modelValue: '<template>runtime</template>' } });
 		const sandbox = wrapper.find('.sandbox').element;
 		const runtimeStore = wrapper.findComponent({ name: 'Sandbox' }).props('store');
 
@@ -1156,7 +1165,7 @@ describe('Playground', () => {
 		Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 });
 		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
 
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			attachTo: document.body,
 			props: { modelValue: '<template>popup</template>' }
 		});
@@ -1210,7 +1219,7 @@ describe('Playground', () => {
 		Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 });
 		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
 
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			attachTo: document.body,
 			props: { modelValue: '<template>escape</template>' }
 		});
@@ -1238,7 +1247,7 @@ describe('Playground', () => {
 		Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1200 });
 		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
 
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			attachTo: document.body,
 			props: {
 				modelValue: '<template>fixed popup</template>',
@@ -1262,7 +1271,7 @@ describe('Playground', () => {
 		await nextTick();
 		expect(document.body.querySelector('.docs-playground-popup')).toBeNull();
 
-		const styleless = mount(Playground, {
+		const styleless = mountPlayground({
 			props: { modelValue: '<template>styleless</template>', styleless: true }
 		});
 		expect(styleless.find('[data-action="open-popup"]').exists()).toBe(false);
@@ -1271,7 +1280,7 @@ describe('Playground', () => {
 	});
 
 	it('orders views, lazily creates the sandbox and retains it after switching', async () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				files: { 'App.vue': '<template>app</template>' },
 				entry: 'App.vue',
@@ -1302,7 +1311,7 @@ describe('Playground', () => {
 	});
 
 	it('normalizes and reacts to external views', async () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				files: { 'App.vue': '<template>app</template>' },
 				views: ['invalid', 'files', 'files']
@@ -1318,7 +1327,7 @@ describe('Playground', () => {
 	});
 
 	it('destroys a removed runtime and recreates it only when selected', async () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: {
 				files: { 'App.vue': '<template>app</template>' },
 				views: ['runtime', 'files']
@@ -1336,7 +1345,7 @@ describe('Playground', () => {
 	});
 
 	it('shows an invalid explicit entry', () => {
-		const wrapper = mount(Playground, {
+		const wrapper = mountPlayground({
 			props: { files: { 'App.vue': 'app' }, entry: 'missing.js' }
 		});
 		expect(wrapper.find('.docs-playground__error').text()).toContain('missing.js');
