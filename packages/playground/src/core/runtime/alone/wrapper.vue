@@ -299,10 +299,6 @@ onBeforeUnmount(() => {
 	@include element(scroller) {
 		width: 100%;
 		height: 100%;
-
-		.vc-scroller__wrapper {
-			height: 100%;
-		}
 	}
 
 	@include element(scroller-content) {

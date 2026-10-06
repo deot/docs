@@ -77,7 +77,7 @@ const handleUpdate = (value: number | string) => {
 const handleSelectReady = async () => {
 	await nextTick();
 	document.querySelectorAll<HTMLElement>([
-		'.docs-renderer-zoom-bar__popup .vc-select__options > .vc-scroller__wrapper',
+		'.docs-renderer-zoom-bar__popup .vc-select__options',
 		'.docs-renderer-zoom-bar__popup .vc-select__options .vc-scroller__content'
 	].join(',')).forEach(element => Resize.off(element));
 };

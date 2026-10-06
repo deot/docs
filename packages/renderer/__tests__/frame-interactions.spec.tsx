@@ -147,7 +147,7 @@ describe('renderer frame interactions', () => {
 		await flushPromises();
 		const items = wrapper.findAll('.docs-renderer-frame__item');
 		items.forEach((item, index) => setRect(item.element, rect(0, index * 100, 400, 100)));
-		const scroller = htmlElementOf(wrapper.get('.vc-scroller__wrapper'));
+		const scroller = htmlElementOf(wrapper.get('.vc-scroller'));
 		setRect(scroller, rect(0, 0, 500, 300));
 		scroller.scrollTop = 30;
 
@@ -650,7 +650,7 @@ describe('renderer frame interactions', () => {
 		});
 		await flushPromises();
 		store.updateViewport({ scale: 2 });
-		const scroller = htmlElementOf(wrapper.get('.vc-scroller__wrapper'));
+		const scroller = htmlElementOf(wrapper.get('.vc-scroller'));
 		Object.defineProperties(scroller, {
 			clientWidth: { configurable: true, value: 400 },
 			clientHeight: { configurable: true, value: 300 }

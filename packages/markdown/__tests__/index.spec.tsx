@@ -104,14 +104,13 @@ vi.mock('@deot/vc', () => ({
 				}
 			});
 			return () => (
-				<div {...attrs} class={['vc-scroller', attrs.class]}>
-					<div
-						ref={wrapper}
-						class="vc-scroller__wrapper"
-						style={[props.wrapperStyle, { height: props.height }]}
-					>
-						<div class="vc-scroller__content">{slots.default?.()}</div>
-					</div>
+				<div
+					{...attrs}
+					ref={wrapper}
+					class={['vc-scroller', attrs.class]}
+					style={[props.wrapperStyle, { height: props.height }]}
+				>
+					<div class="vc-scroller__content">{slots.default?.()}</div>
 				</div>
 			);
 		}
@@ -866,7 +865,7 @@ describe('markdown', () => {
 	it('previews and scrubs through a document minimap', async () => {
 		const frames = mockAnimationFrames();
 		const host = document.createElement('div');
-		host.className = 'vc-scroller__wrapper';
+		host.className = 'vc-scroller';
 		host.style.overflow = 'auto';
 		document.body.appendChild(host);
 		const scrollTo = vi.fn();

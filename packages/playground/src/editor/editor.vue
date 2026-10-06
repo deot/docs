@@ -425,15 +425,11 @@ onBeforeUnmount(() => {
 	@include element(scroller) {
 		width: 0;
 		min-width: 0;
-		overflow: hidden;
 		flex: 1 1 0;
+		scrollbar-width: none;
 
-		.vc-scroller__wrapper {
-			scrollbar-width: none;
-
-			&::-webkit-scrollbar {
-				display: none;
-			}
+		&::-webkit-scrollbar {
+			display: none;
 		}
 	}
 
@@ -536,12 +532,7 @@ onBeforeUnmount(() => {
 	@include element(body) {
 		min-width: 0;
 		min-height: 240px;
-		overflow: hidden;
 		flex: 0 1 auto;
-
-		.vc-scroller__wrapper {
-			min-height: 240px;
-		}
 	}
 
 	@include element(editor) {

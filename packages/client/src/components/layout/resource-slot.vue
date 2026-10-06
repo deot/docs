@@ -253,7 +253,7 @@ const scrollToMarkdownHash = async (hash: string, current = generation) => {
 		if (current !== generation) return;
 		target = getHashTarget(hash);
 	}
-	const scroller = target?.closest<HTMLElement>('.vc-scroller__wrapper');
+	const scroller = target?.closest<HTMLElement>('.vc-scroller');
 	if (target && scroller) {
 		scroller.scrollTop += target.getBoundingClientRect().top
 			- scroller.getBoundingClientRect().top;

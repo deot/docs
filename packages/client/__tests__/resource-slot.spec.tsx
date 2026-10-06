@@ -485,7 +485,7 @@ describe('ResourceSlot', () => {
 	it('keeps header and ordinary Markdown anchors on the current route', async () => {
 		load.mockResolvedValueOnce({ content: '# Initial' });
 		const scroller = document.createElement('div');
-		scroller.className = 'vc-scroller__wrapper';
+		scroller.className = 'vc-scroller';
 		scroller.scrollTop = 5;
 		vi.spyOn(scroller, 'getBoundingClientRect').mockReturnValue({ top: 60 } as DOMRect);
 		document.body.appendChild(scroller);
@@ -527,7 +527,7 @@ describe('ResourceSlot', () => {
 		load.mockResolvedValueOnce({ content: '# Initial' });
 		route.hash = '#%E5%9F%BA%E6%9C%AC';
 		const scroller = document.createElement('div');
-		scroller.className = 'vc-scroller__wrapper';
+		scroller.className = 'vc-scroller';
 		document.body.appendChild(scroller);
 		const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
 			.mockImplementation(function (this: HTMLElement) {

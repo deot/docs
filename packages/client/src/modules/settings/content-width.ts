@@ -23,13 +23,13 @@ export const isDocsContentWidth = (value: unknown): value is DocsContentWidth =>
  * 管理 Markdown 正文宽度，并按站点 namespace 持久化到设置库。
  */
 export class ContentWidthSettingsManager {
-	private value = ref<DocsContentWidth>(DEFAULT_CONTENT_WIDTH);
+	private currentValue = ref<DocsContentWidth>(DEFAULT_CONTENT_WIDTH);
 	private namespace = '';
 	private session = 0;
 	private preferenceVersion = 0;
 	private active = false;
 
-	readonly current = readonly(this.value);
+	readonly current = readonly(this.currentValue);
 
 	constructor(private settings: SettingsAccess) {}
 
@@ -38,7 +38,7 @@ export class ContentWidthSettingsManager {
 		const preferenceVersion = ++this.preferenceVersion;
 		this.active = true;
 		this.namespace = getDocsNamespace(config);
-		this.value.value = DEFAULT_CONTENT_WIDTH;
+		this.currentValue.value = DEFAULT_CONTENT_WIDTH;
 		void this.restore(session, preferenceVersion, this.namespace);
 		return () => this.stop(session);
 	}
@@ -61,15 +61,15 @@ export class ContentWidthSettingsManager {
 			&& session === this.session
 			&& preferenceVersion === this.preferenceVersion
 		) {
-			this.value.value = stored;
+			this.currentValue.value = stored;
 		}
 	}
 
 	async set(next: DocsContentWidth) {
-		if (!isDocsContentWidth(next) || next === this.value.value) return;
+		if (!isDocsContentWidth(next) || next === this.currentValue.value) return;
 		// 用户操作必须让尚未完成的 IndexedDB 恢复失效，避免旧设置覆盖刚完成的选择。
 		this.preferenceVersion++;
-		this.value.value = next;
+		this.currentValue.value = next;
 		if (!this.active) return;
 		try {
 			await this.settings.set(this.namespace, SETTING_KEY, next);

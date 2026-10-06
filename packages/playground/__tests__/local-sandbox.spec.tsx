@@ -4,8 +4,13 @@ import { mount } from '@vue/test-utils';
 import LocalSandbox from '../src/core/runtime/local/local-sandbox.vue';
 import PopupPreview from '../src/core/runtime/alone/wrapper.vue';
 import { createLocalPlayground } from '../src/core/runtime/local/playground';
+import { preloadLocalPlayground } from './preload-local';
 
 describe('LocalSandbox', () => {
+	beforeAll(async () => {
+		await preloadLocalPlayground();
+	}, 20_000);
+
 	it('runs the injected handler without requesting preview height', async () => {
 		const service = createLocalPlayground({
 			isRef: (value: unknown): value is Ref => (
@@ -43,13 +48,13 @@ const label = playground && version ? 'ready' : 'missing'
 
 		await vi.waitFor(() => {
 			expect(wrapper.get('.local-result').text()).toBe('ready');
-		});
+		}, { timeout: 10_000 });
 		expect(wrapper.find('iframe').exists()).toBe(true);
 		expect(document.querySelector('style[data-playground-id]')).toBeTruthy();
 		wrapper.unmount();
 		await nextTick();
 		expect(document.querySelector('.local-result')).toBeNull();
-	});
+	}, 15_000);
 
 	it('does not expand preview height when docs:playground.run is called', async () => {
 		const messages: unknown[] = [];

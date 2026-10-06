@@ -267,8 +267,7 @@ onMounted(() => nextTick(refreshCanvas));
 		min-height: 0;
 		flex: 1;
 
-		> .vc-scroller,
-		> .vc-scroller > .vc-scroller__wrapper {
+		> .vc-scroller {
 			width: 100%;
 			height: 100%;
 			min-width: 0;

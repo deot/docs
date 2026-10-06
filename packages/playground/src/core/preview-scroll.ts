@@ -53,9 +53,8 @@ export const PREVIEW_SCROLLER_STYLE = [
 	`html.${PREVIEW_SCROLL_HTML_CLASS} #app{`,
 	'height:100%;min-height:100%;margin:0;overflow:hidden',
 	'}',
-	// Scroller 的 height 写在 wrapper 上；根节点需先有明确高度，百分比才能约束滚动。
-	`html.${PREVIEW_SCROLL_HTML_CLASS} #app>.vc-scroller,`,
-	`html.${PREVIEW_SCROLL_HTML_CLASS} #app>.vc-scroller>.vc-scroller__wrapper{`,
+	// Scroller 根节点就是滚动容器，height 写在根节点上。
+	`html.${PREVIEW_SCROLL_HTML_CLASS} #app>.vc-scroller{`,
 	'height:100%;max-height:100%;box-sizing:border-box',
 	'}'
 ].join('');

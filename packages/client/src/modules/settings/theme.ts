@@ -33,7 +33,7 @@ interface SettingsAccess {
  * 管理主题解析、DOM 同步、系统监听和用户设置持久化。
  */
 export class ThemeSettingsManager implements DocsThemeController {
-	private value = ref<DocsTheme>('light');
+	private currentValue = ref<DocsTheme>('light');
 	private enabledValue = ref(true);
 	private readyValue = ref(false);
 	private active = false;
@@ -49,7 +49,7 @@ export class ThemeSettingsManager implements DocsThemeController {
 	private queued?: ThemeRequest;
 	private requested?: DocsTheme;
 
-	readonly current = readonly(this.value);
+	readonly current = readonly(this.currentValue);
 	readonly enabled = readonly(this.enabledValue);
 	readonly ready = readonly(this.readyValue);
 
@@ -94,7 +94,7 @@ export class ThemeSettingsManager implements DocsThemeController {
 	}
 
 	private apply(theme: DocsTheme) {
-		this.value.value = theme;
+		this.currentValue.value = theme;
 		this.appliedTarget = this.target;
 		this.appliedTheme = theme;
 		const document = this.target?.document;
@@ -260,7 +260,7 @@ export class ThemeSettingsManager implements DocsThemeController {
 		while (this.queued?.session === session) {
 			const request = this.queued;
 			this.queued = undefined;
-			if (request.theme !== this.value.value) {
+			if (request.theme !== this.currentValue.value) {
 				await this.applyWithTransition(request.theme, request.origin, session);
 			}
 			if (session !== this.session) return;
@@ -270,7 +270,7 @@ export class ThemeSettingsManager implements DocsThemeController {
 				// 持久化失败不撤销当前会话中已经完成的主题切换。
 			}
 		}
-		if (session === this.session) this.requested = this.value.value;
+		if (session === this.session) this.requested = this.currentValue.value;
 	}
 
 	private async ensureFlush(session: number) {
@@ -292,7 +292,7 @@ export class ThemeSettingsManager implements DocsThemeController {
 	async set(theme: DocsTheme, origin?: HTMLElement) {
 		if (!this.active || !this.enabledValue.value || !isDocsTheme(theme)) return;
 		const session = this.session;
-		if (theme === (this.requested || this.value.value)) return;
+		if (theme === (this.requested || this.currentValue.value)) return;
 		// 用户操作必须让尚未完成的 IndexedDB 恢复失效，避免旧设置覆盖刚完成的选择。
 		this.preferenceVersion++;
 		this.followingSystem = false;
@@ -308,6 +308,6 @@ export class ThemeSettingsManager implements DocsThemeController {
 	}
 
 	toggle(origin?: HTMLElement) {
-		return this.set((this.requested || this.value.value) === 'dark' ? 'light' : 'dark', origin);
+		return this.set((this.requested || this.currentValue.value) === 'dark' ? 'light' : 'dark', origin);
 	}
 }

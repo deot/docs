@@ -331,10 +331,8 @@ export const createVcStubs = (options: VcStubOptions = {}) => ({
 		setup: (props, { expose, slots }) => {
 			expose({ setScrollTop: options.setScrollTop || (() => undefined) });
 			return () => (
-				<div class="test-scroller">
-					<div class="vc-scroller__wrapper">
-						<div class={props.contentClass}>{slots.default?.()}</div>
-					</div>
+				<div class="vc-scroller">
+					<div class={['vc-scroller__content', props.contentClass]}>{slots.default?.()}</div>
 				</div>
 			);
 		}

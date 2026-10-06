@@ -26,10 +26,10 @@
     "@deot/docs-playground": "^1.1.2",
     "@deot/docs-renderer": "^1.1.0",
     "@deot/docs-theme": "^1.1.0",
-    "@deot/helper-cache": "^1.1.10",
-    "@deot/helper-fp": "^1.1.5",
+    "@deot/helper-cache": "^1.1.11",
+    "@deot/helper-fp": "^1.1.6",
     "@deot/http": "^1.1.10",
-    "@deot/vc": "^1.1.1",
+    "@deot/vc": "^1.2.1",
     "es-module-lexer": "^2.3.1"
   },
   "devDependencies": {

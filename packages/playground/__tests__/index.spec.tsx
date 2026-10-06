@@ -31,6 +31,7 @@ import {
 import { MIN_RUNTIME_HEIGHT } from '../src/core/runtime/auto-height';
 import { PLAYGROUND_POPUP_HEADER_HEIGHT, PLAYGROUND_POPUP_SCREEN_GAP } from '../src/core/runtime/alone/layout';
 import type { PlaygroundStoreStub } from './fixtures';
+import { preloadLocalPlayground } from './preload-local';
 
 // 组件默认直接渲染。这里的 iframe 用例显式关掉 local，除非测试自己传入。
 const mountPlayground = (options?: Parameters<typeof mount>[1]) => mount(Playground, {
@@ -200,6 +201,10 @@ vi.mock('@vue/repl', () => ({
 }));
 
 describe('Playground', () => {
+	beforeAll(async () => {
+		await preloadLocalPlayground();
+	}, 20_000);
+
 	beforeEach(() => {
 		popup.mockReset();
 		setFiles.mockReset();
@@ -575,13 +580,13 @@ describe('Playground', () => {
 				entry: 'App.vue'
 			}
 		});
-		await vi.waitFor(() => expect(wrapper.get('.local-doc').text()).toBe('local-doc'));
+		await vi.waitFor(() => expect(wrapper.get('.local-doc').text()).toBe('local-doc'), { timeout: 10_000 });
 		expect(wrapper.findComponent({ name: 'Sandbox' }).exists()).toBe(false);
 		expect(wrapper.find('[data-action="expand-preview"]').exists()).toBe(false);
 		expect(wrapper.text()).toContain('直接渲染');
 		await wrapper.get('[data-action="edit"]').trigger('click');
 		await wrapper.get('[data-action="refresh"]').trigger('click');
-		await vi.waitFor(() => expect(wrapper.get('.local-doc').text()).toBe('local-doc'));
+		await vi.waitFor(() => expect(wrapper.get('.local-doc').text()).toBe('local-doc'), { timeout: 10_000 });
 		await wrapper.get('[data-action="edit"]').trigger('click');
 		await wrapper.get('[data-action="open-popup"]').trigger('click');
 		await vi.waitFor(() => expect(document.querySelector('.docs-playground-popup')).toBeTruthy());
@@ -589,7 +594,7 @@ describe('Playground', () => {
 		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
 		window.dispatchEvent(new Event('resize'));
 		wrapper.unmount();
-	});
+	}, 15_000);
 
 	it('surfaces sandbox runtime errors in the playground chrome', async () => {
 		const wrapper = mountPlayground({

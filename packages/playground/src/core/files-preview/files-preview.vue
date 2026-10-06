@@ -84,20 +84,14 @@ const handleActive = (filename: string) => {
 		width: 0;
 		height: 40px;
 		min-width: 0;
-		overflow: hidden;
 		flex: 1 1 auto;
+		scrollbar-width: none;
 
-		.vc-scroller__wrapper {
-			height: 40px;
-			overflow-y: hidden !important;
-			scrollbar-width: none;
-
-			&::-webkit-scrollbar {
-				display: none;
-			}
+		&::-webkit-scrollbar {
+			display: none;
 		}
 
-		.vc-scroller-track.is-y {
+		.vc-scroller-track.is-vertical {
 			display: none !important;
 		}
 	}

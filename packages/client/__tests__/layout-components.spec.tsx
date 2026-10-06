@@ -961,7 +961,7 @@ describe('client layout components', () => {
 		const main = document.createElement('div');
 		main.className = 'docs-layout__main-scroller';
 		const scroller = document.createElement('div');
-		scroller.className = 'vc-scroller__wrapper';
+		scroller.className = 'vc-scroller';
 		Object.defineProperty(scroller, 'scrollTop', { value: 24, writable: true });
 		const host = document.createElement('div');
 		host.innerHTML = '<h2 id="one">One</h2><h2 id="%E">Broken</h2>';

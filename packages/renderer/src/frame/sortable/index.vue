@@ -232,7 +232,7 @@ const scheduleCanvasHeight = (forceRefresh = false) => {
 	});
 };
 const syncViewportSize = () => {
-	const wrapper = root.value?.querySelector<HTMLElement>('.vc-scroller__wrapper');
+	const wrapper = root.value?.querySelector<HTMLElement>('.vc-scroller');
 	if (!wrapper) return;
 	viewportSize.value = { width: wrapper.clientWidth, height: wrapper.clientHeight };
 };
@@ -240,7 +240,7 @@ const fitScale = computed(() => Math.min(1, Math.max(
 	0.1,
 	(viewportSize.value.width - SORTABLE_PAD * 2) / canvasWidth.value
 )));
-const getScrollWrapper = () => root.value?.querySelector<HTMLElement>('.vc-scroller__wrapper') || null;
+const getScrollWrapper = () => root.value?.querySelector<HTMLElement>('.vc-scroller') || null;
 let scaleGeneration = 0;
 const handleWindowResize = () => {
 	syncViewportSize();
@@ -431,8 +431,7 @@ const handleWidgetDrop = (event: DragEvent) => {
 	min-height: 0;
 	overflow: hidden;
 
-	> .vc-scroller,
-	> .vc-scroller > .vc-scroller__wrapper {
+	> .vc-scroller {
 		width: 100%;
 		height: 100%;
 		min-width: 0;

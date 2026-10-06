@@ -203,7 +203,7 @@ const updateMaxHeight = () => {
 const followActiveLink = async () => {
 	await nextTick();
 	const current = outlineRoot.value?.querySelector<HTMLElement>('a[aria-current="location"]');
-	const wrapper = outlineRoot.value?.querySelector<HTMLElement>('.vc-scroller__wrapper');
+	const wrapper = outlineRoot.value?.querySelector<HTMLElement>('.vc-scroller');
 	if (!current || !wrapper) return;
 	const currentRect = current.getBoundingClientRect();
 	const wrapperRect = wrapper.getBoundingClientRect();
@@ -309,8 +309,8 @@ const scrollHeadingIntoView = (id: string) => {
 	const target = headings.value.find(item => item.id === id)?.element;
 	if (!target) return;
 	const main = target.closest<HTMLElement>('.docs-layout__main-scroller');
-	const scroller = main?.querySelector<HTMLElement>('.vc-scroller__wrapper')
-		|| target.closest<HTMLElement>('.vc-scroller__wrapper');
+	const scroller = main?.querySelector<HTMLElement>('.vc-scroller')
+		|| target.closest<HTMLElement>('.vc-scroller');
 	if (scroller) {
 		scroller.scrollTop += target.getBoundingClientRect().top
 			- scroller.getBoundingClientRect().top;

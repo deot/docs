@@ -641,7 +641,7 @@ const handlePointerUp = (event: PointerEvent) => {
 	window.removeEventListener('pointercancel', handlePointerUp);
 };
 
-const getScrollWrapper = () => root.value?.querySelector<HTMLElement>('.vc-scroller__wrapper') || null;
+const getScrollWrapper = () => root.value?.querySelector<HTMLElement>('.vc-scroller') || null;
 const syncViewportSize = () => {
 	const wrapper = getScrollWrapper();
 	if (!wrapper) return;
@@ -940,8 +940,7 @@ onBeforeUnmount(() => {
 	min-height: 0;
 	overflow: hidden;
 
-	> .vc-scroller,
-	> .vc-scroller > .vc-scroller__wrapper {
+	> .vc-scroller {
 		width: 100%;
 		height: 100%;
 		min-width: 0;
