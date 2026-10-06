@@ -1,5 +1,17 @@
 # @deot/docs-cli ChangeLog
 
+## v1.1.2
+
+_2026-10-06_
+
+### Features
+
+- feat(dever): serve workspace source as playground modules in doc dev ([7c28f9c](https://github.com/deot/docs/commit/7c28f9c87c4de12b2f47ace5edb6eac03baedede))
+
+### Updates
+
+- chore: bump @deot/vc to 1.2.1 ([f18044d](https://github.com/deot/docs/commit/f18044d222a57f58cad9d410a02594183333ea5f))
+
 ## v1.1.1
 
 _2026-09-09_

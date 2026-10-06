@@ -1,5 +1,22 @@
 # @deot/docs-client ChangeLog
 
+## v1.1.4
+
+_2026-10-06_
+
+### Bugfixes
+
+- fix(markdown): keep default theme table headers on one line ([99b34b9](https://github.com/deot/docs/commit/99b34b9f60a3723b29e2861fc9fa4308ee3f7928))
+
+### Features
+
+- feat(playground,markdown): render playground previews in the host document ([dfd0625](https://github.com/deot/docs/commit/dfd0625793a02237ca1ffe05e36cc0f0b858aa0c))
+- feat(playground): default direct rendering and allow vue import-map overrides ([cd90290](https://github.com/deot/docs/commit/cd902901d7141251d6c547d4a1b868e1cc53b4a6))
+
+### Updates
+
+- chore: bump @deot/vc to 1.2.1 ([f18044d](https://github.com/deot/docs/commit/f18044d222a57f58cad9d410a02594183333ea5f))
+
 ## v1.1.3
 
 _2026-09-13_

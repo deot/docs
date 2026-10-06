@@ -15,7 +15,7 @@ importers:
   packages/cli:
     dependencies:
       '@deot/docs-dever':
-        specifier: ^1.1.1
+        specifier: ^1.1.2
         version: link:../dever
       commander:
         specifier: ^15.0.0
@@ -31,19 +31,19 @@ importers:
   packages/client:
     dependencies:
       '@deot/docs-locale':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../locale
       '@deot/docs-markdown':
-        specifier: ^1.1.3
+        specifier: ^1.1.4
         version: link:../markdown
       '@deot/docs-playground':
-        specifier: ^1.1.2
+        specifier: ^1.1.3
         version: link:../playground
       '@deot/docs-renderer':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../renderer
       '@deot/docs-theme':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../theme
       '@deot/helper-cache':
         specifier: ^1.1.11
@@ -113,28 +113,28 @@ importers:
   packages/index:
     dependencies:
       '@deot/docs-cli':
-        specifier: ^1.1.1
+        specifier: ^1.1.2
         version: link:../cli
       '@deot/docs-client':
-        specifier: ^1.1.3
+        specifier: ^1.1.4
         version: link:../client
       '@deot/docs-dever':
-        specifier: ^1.1.1
+        specifier: ^1.1.2
         version: link:../dever
       '@deot/docs-locale':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../locale
       '@deot/docs-markdown':
-        specifier: ^1.1.3
+        specifier: ^1.1.4
         version: link:../markdown
       '@deot/docs-playground':
-        specifier: ^1.1.2
+        specifier: ^1.1.3
         version: link:../playground
       '@deot/docs-renderer':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../renderer
       '@deot/docs-theme':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../theme
 
   packages/locale:
@@ -146,13 +146,13 @@ importers:
   packages/markdown:
     dependencies:
       '@deot/docs-locale':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../locale
       '@deot/docs-playground':
-        specifier: ^1.1.2
+        specifier: ^1.1.3
         version: link:../playground
       '@deot/docs-theme':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../theme
       '@deot/helper-dom':
         specifier: ^1.1.5
@@ -207,10 +207,10 @@ importers:
         specifier: ^6.38.0
         version: 6.43.13
       '@deot/docs-locale':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../locale
       '@deot/docs-theme':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../theme
       '@deot/helper':
         specifier: ^1.1.19
@@ -274,10 +274,10 @@ importers:
   packages/renderer:
     dependencies:
       '@deot/docs-locale':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../locale
       '@deot/docs-theme':
-        specifier: ^1.1.0
+        specifier: ^1.1.1
         version: link:../theme
       '@deot/helper-cache':
         specifier: ^1.1.11
