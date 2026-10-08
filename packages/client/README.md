@@ -166,6 +166,91 @@ const sidebar = {
 };
 ```
 
+### 页面布局
+
+路由对象的 `layout` 缺省为 `'default'`。设为 `'none'` 时只渲染 `content`，跳过文档布局、Header、Sidebar、Footer、extra、边缘装饰和正文留白：
+
+```js
+const routes = {
+	'/remote-sfc-example': {
+		layout: 'none',
+		content: 'https://example.com/theme-audit.vue'
+	}
+};
+```
+
+### 直接渲染资源
+
+内置 `/__docs/preview?url=...` 无需配置业务路由，默认使用 `layout: 'none'`。
+按资源 URL 的 pathname 区分：`.vue` 使用无外框 Playground；`page.json` 和
+`*.page.json` 使用只读 Renderer，并校验现有 RendererDocument 协议。
+普通配置路由对 `.json` 的分类保持不变。
+
+```js
+const query = new URLSearchParams({
+	url: 'https://raw.githubusercontent.com/deot/vc/refs/heads/main/packages/components/theme/examples/theme-audit.vue'
+});
+const href = `/__docs/preview?${query}`;
+```
+
+`url` 必填且只能指定一个资源；源地址的 query 和 hash 会保留。
+可选 `lang` 使用已配置的语言，省略或无效时回退站点默认语言。
+可选 `styles` 为追加的 CSS URL 列表，支持 HTTP(S) URL 与站点根路径：
+
+```js
+const query = new URLSearchParams({ url: sourceUrl, styles: '/theme.css,/custom.css' });
+// URL 自身包含逗号时，使用重复参数，每个参数是一条完整 URL。
+query.delete('styles');
+query.append('styles', 'https://example.com/theme.css?fonts=a,b');
+query.append('styles', '/custom.css');
+```
+
+样式按声明顺序追加；同一 URL 去重并复用已加载的宿主 `<link>`。
+仅修改 `styles` 不重新加载 `.vue` 或 `.page.json`；切换资源、移除参数或离开预览时
+释放样式引用，只删除预览创建且已无引用的节点。加载失败会显示 CSS 错误，保留预览内容。
+
+复杂配置可使用 `raw`，通过 `@deot/helper-unicode` 的 `encode(JSON.stringify(config))`
+生成，预览入口使用 `decode` 还原。`raw` 存在时以它为完整配置，不与明文参数混合：
+
+```js
+import { encode } from '@deot/helper-unicode';
+
+const config = {
+	url: sourceUrl,
+	styles: ['https://cdn.jsdelivr.net/npm/@deot/vc-components@1.2.1/dist/index.style.css'],
+	modules: { lodash: 'https://esm.sh/lodash-es' },
+	playground: {
+		local: true,
+		styleless: false,
+		views: ['runtime', 'files'],
+		viewport: [375, 640],
+		previewInset: [8, 16],
+		expandable: true,
+		title: 'Component preview'
+	},
+	lang: 'zh-CN'
+};
+const query = new URLSearchParams({ raw: encode(JSON.stringify(config)) });
+const href = `/__docs/preview?${query}`;
+```
+
+`modules` 是模块说明符到 ESM URL 的映射，在当前远程 SFC 的导入表中覆盖站点默认，
+不修改全站配置。`playground` 复用现有组件参数，作用于 `.vue` 和 page.json 内的
+`docs:sfc` 块；省略时沿用站点默认，`styleless` 默认 `true`。
+支持 `local`、`styleless`、`previewScroller`（布尔值）、`views`（`runtime` / `files` 数组）、
+`viewport`（`auto`、宽度或宽高数组）、`previewInset`（数值或垂直/水平数组）、
+`expandable`（`true` 或目标高度）和 `title`（字符串）。iframe 模式也接收配置中的 CSS。
+这里只检查 `playground` 是对象，并提取上述展示参数；具体参数由 Playground 自身处理，
+`files`、`entry` 等源码数据不接受链接覆盖。
+
+`/__docs/preview-config-generate` 提供表单实时生成链接、一键复制和打开预览。
+访问 `/__docs/preview-config-generate?raw=...` 自动解析并回填；也可粘贴现有
+`?raw=...` 或 `?url=...&styles=...` 预览链接进行解析。JSON 或字段无效时显示错误并停用复制。
+
+相对资源地址沿用现有 Resolver；源码依赖相对于源文件解析。
+缺失参数、不支持的资源以及加载或解析失败会显示页面错误。
+开发和生产预览服务均支持直接访问及刷新此入口；静态部署仍需 HTML history fallback。
+
 ### 首页
 
 未配置 `routes['/']` 时，Client 渲染空画布首页（默认 Header/Footer、无 Sidebar）。把首页文档写在 `routes['/'].content`：可以是 Renderer 文档、`.page.json` 地址，或按语言的映射（缺语言回退 `en-US`）。Client 不内置示例页：
@@ -295,7 +380,7 @@ window.__DOCS_RUNTIME__ = Object.freeze({
 
 - development：`./guide.md` 解析为 `/site/{lang}/guide.md`；
 - production：相对于 `$docs.base` 生成绝对 URL；未配置时，客户端会在路由启动前推导并固定部署目录；
-- 相对依赖：相对于 `importer` URL 解析。
+- 相对依赖：相对于 `importer` URL 解析。普通 HTTP 源码从入口逐层追踪引用，补全扩展名、目录入口及 Sass partial，并复用成功解析的路径；GitHub Raw 优先使用仓库文件清单，API 限流、网络失败或清单不完整时回退到路径探测；glob 展开使用 jsDelivr 的备用文件清单。普通 HTTP 地址无法枚举目录，`import.meta.glob` 需预先展开为显式模块引用。
 
 组件不应自行拼接资源 URL；应使用 `resolveResource()` 和 `createResourceIdentity()`。
 

@@ -7,6 +7,7 @@
 		:data-content-width="name === 'content' && resourceType === 'markdown' ? contentWidth : undefined"
 		:style="{ minHeight: transitionMinHeight }"
 	>
+		<div v-if="styleError" class="docs-resource-slot__error" role="alert">{{ styleError }}</div>
 		<DefaultHeader v-if="builtin === 'header'" />
 		<DefaultFooter v-else-if="builtin === 'footer'" />
 		<DefaultSidebar v-else-if="sidebarItems" :items="sidebarItems" />
@@ -80,6 +81,8 @@ import { resolveInlineSidebar } from '../../utils/sidebar';
 import { markdownArticleKey } from '../../utils/outline';
 import { omitRouteQuery } from '../../utils/query';
 import { resolveRouteContent } from '../../utils/content';
+import { acquirePreviewStyles, parsePreviewStyleUrls } from '../../modules/preview/styles';
+import { readPreviewConfig, previewConfigKey, resolvePreviewType } from '../../modules/preview/config';
 import type { DocsContent, DocsLocalized, DocsResourceType, DocsRoute, DocsSidebar, SidebarItem } from '../../types';
 import { useRendererModules } from '../renderer';
 
@@ -99,6 +102,19 @@ const rendererFit = computed(() => resolveDocsRendererComponent(docs).fit);
 const contentWidth = ContentWidth.current;
 const content = ref('');
 const error = ref('');
+const styleError = ref('');
+let releaseStyles: (() => void) | undefined;
+const preview = computed(() => {
+	if (!route.meta.docsPreview || props.name !== 'content') return { config: undefined, error: '' };
+	try {
+		return { config: readPreviewConfig(route.query), error: '' };
+	} catch (reason) {
+		return { config: undefined, error: t('client.common.previewConfigFailed', {
+			message: reason instanceof Error ? reason.message : String(reason)
+		}) };
+	}
+});
+provide(previewConfigKey, computed(() => preview.value.config));
 const loading = ref(false);
 const source = ref('');
 const resourceType = ref<DocsResourceType | ''>('');
@@ -385,6 +401,19 @@ const load = async () => {
 		if (current === generation && stableSlotKey) activeStableSlotKey = stableSlotKey;
 	};
 	try {
+		let directType: DocsResourceType | undefined;
+		if (route.meta.docsPreview && props.name === 'content') {
+			if (preview.value.error) throw new TypeError(preview.value.error);
+			const url = preview.value.config?.url;
+			if (typeof url !== 'string' || !url.trim()) {
+				throw new TypeError(t('client.common.previewUrlRequired'));
+			}
+			slot = url.trim();
+			directType = resolvePreviewType(slot, location.href);
+			if (!directType) {
+				throw new TypeError(t('client.common.previewUrlUnsupported'));
+			}
+		}
 		if (slot === null) {
 			markStableSlot();
 			return;
@@ -421,7 +450,7 @@ const load = async () => {
 		}
 		if (current !== generation || typeof slot !== 'string') return;
 		source.value = slot;
-		resourceType.value = classifyResourceSource(slot);
+		resourceType.value = directType || classifyResourceSource(slot);
 		if (resourceType.value === 'sfc') {
 			markStableSlot();
 			return;
@@ -463,9 +492,34 @@ const load = async () => {
 	}
 };
 
-// hash / `?tab=` 变化只影响当前文档 UI，不应重新加载资源。
 watch(
-	[() => route.path, () => JSON.stringify(omitRouteQuery(route.query, ['tab'])), () => props.name],
+	() => JSON.stringify([route.meta.docsPreview, route.path, preview.value.config?.url, preview.value.config?.styles, props.name]),
+	() => {
+		releaseStyles?.();
+		releaseStyles = undefined;
+		styleError.value = '';
+		if (!preview.value.config) return;
+		try {
+			const urls = parsePreviewStyleUrls(preview.value.config.styles, location.href);
+			releaseStyles = acquirePreviewStyles(urls, (url) => {
+				styleError.value = t('client.common.previewStyleFailed', { url });
+			});
+		} catch (reason) {
+			styleError.value = reason instanceof Error ? reason.message : String(reason);
+		}
+	},
+	{ immediate: true }
+);
+
+// hash / `?tab=` / 直接预览的 styles 变化不重新加载内容。
+watch(
+	[
+		() => route.path,
+		() => route.meta.docsPreview
+			? JSON.stringify([preview.value.error, preview.value.config?.url, lang.value])
+			: JSON.stringify(omitRouteQuery(route.query, ['tab'])),
+		() => props.name
+	],
 	load,
 	{ immediate: true }
 );
@@ -491,6 +545,7 @@ watch(sidebarItems, (value) => {
 });
 onBeforeUnmount(() => {
 	generation += 1;
+	releaseStyles?.();
 	clear();
 	if (props.name === 'sidebar') setSidebarItems(null);
 });

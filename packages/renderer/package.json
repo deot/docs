@@ -19,15 +19,14 @@
   "dependencies": {
     "@deot/docs-locale": "^1.1.1",
     "@deot/docs-theme": "^1.1.1",
-    "@deot/helper-cache": "^1.1.11",
-    "@deot/helper-resize": "^1.1.3"
+    "@deot/helper": "^1.1.20"
   },
   "peerDependencies": {
-    "@deot/vc": "^1.2.1",
+    "@deot/vc": "^1.2.3",
     "vue": "^3.5.39"
   },
   "devDependencies": {
-    "@deot/vc": "^1.2.1",
+    "@deot/vc": "^1.2.3",
     "fake-indexeddb": "^6.2.5",
     "vue": "^3.5.39"
   }

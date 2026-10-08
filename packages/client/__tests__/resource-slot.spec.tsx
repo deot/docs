@@ -10,6 +10,7 @@ import type { DocsRoute } from '../src/types';
 import { ContentWidth } from '../src/modules/settings';
 import { setSidebarItems } from '../src/modules/sidebar';
 import { htmlElementOf } from './fixtures/docs';
+import { encode } from '@deot/helper-unicode';
 
 const {
 	route: routeState,
@@ -33,7 +34,7 @@ const {
 				header: 'default',
 				footer: 'default'
 			}
-		} as { docsRoute?: DocsRoute }
+		} as { docsRoute?: DocsRoute; docsPreview?: boolean }
 	},
 	routerPush: vi.fn(async () => undefined),
 	routerResolve: vi.fn((target: string) => ({
@@ -139,6 +140,7 @@ describe('ResourceSlot', () => {
 		route.query = { tab: 'api' };
 		route.hash = '';
 		route.params = { lang: 'zh-CN', name: 'installation' };
+		delete route.meta.docsPreview;
 		route.meta.docsRoute = {
 			content: 'default',
 			sidebar: './sidebar.json',
@@ -550,6 +552,145 @@ describe('ResourceSlot', () => {
 		wrapper.unmount();
 		rect.mockRestore();
 		scroller.remove();
+	});
+
+	it('switches URL rendering between page JSON and SFC while preserving source query and hash', async () => {
+		route.path = '/__docs/preview';
+		route.meta = { docsPreview: true, docsRoute: { layout: 'none', content: null } };
+		const page = {
+			schemaVersion: 2,
+			meta: { id: 'direct-page' },
+			layout: { mode: 'sortable', maxWidth: 1180, minHeight: 600, background: '#fff' },
+			blocks: [{
+				id: 'title',
+				module: { type: 'title', version: 1, props: { text: 'Direct page' } },
+				appearance: { marginTop: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }
+			}]
+		};
+		load.mockResolvedValue({ content: JSON.stringify(page) });
+		route.query = { url: 'https://example.com/page.json?version=2#title' };
+		const wrapper = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(wrapper.text()).toContain('Direct page'));
+		expect(load).toHaveBeenLastCalledWith(
+			expect.objectContaining({ type: 'page' }),
+			expect.objectContaining({ url: route.query.url })
+		);
+		route.query = { url: './pages/home.page.json?version=3' };
+		await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+		expect(load).toHaveBeenLastCalledWith(
+			expect.objectContaining({ type: 'page' }),
+			expect.objectContaining({ url: '/site/zh-CN/pages/home.page.json?version=3' })
+		);
+		route.query = { url: 'https://example.com/demo.vue?version=2&name=a#preview' };
+		await vi.waitFor(() => expect(wrapper.find('.remote-sfc').text()).toContain(String(route.query.url)));
+		expect(wrapper.findComponent(Renderer).exists()).toBe(false);
+		expect(load).toHaveBeenCalledTimes(2);
+	});
+
+	it.each<LocationQuery>([
+		{},
+		{ url: '' },
+		{ url: ['https://example.com/a.vue', 'https://example.com/b.vue'] },
+		{ url: 'https://example.com/sidebar.json' },
+		{ url: 'https://example.com/readme.md?file=demo.vue' },
+		{ url: 'data:text/plain,demo.vue' }
+	])('shows an error without fetching unsupported URL input %j', async (query) => {
+		route.path = '/__docs/preview';
+		route.meta = { docsPreview: true, docsRoute: { layout: 'none', content: null } };
+		route.query = query;
+		const wrapper = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(wrapper.find('.docs-resource-slot__error').exists()).toBe(true));
+		expect(load).not.toHaveBeenCalled();
+		expect(wrapper.find('.remote-sfc').exists()).toBe(false);
+	});
+
+	it('updates styles without remounting the SFC and cleans up on navigation', async () => {
+		route.path = '/__docs/preview';
+		route.meta = { docsPreview: true, docsRoute: { layout: 'none', content: null } };
+		route.query = { url: 'https://example.com/demo.vue', styles: '/theme.css,/custom.css' };
+		const wrapper = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(wrapper.find('.remote-sfc').exists()).toBe(true));
+		const preview = wrapper.find('.remote-sfc').element;
+		expect(document.querySelectorAll('link[data-docs-preview-style]')).toHaveLength(2);
+		route.query = { ...route.query, styles: '/other.css' };
+		await flushPromises();
+		expect(wrapper.find('.remote-sfc').element).toBe(preview);
+		expect(document.querySelector('link[href$="/theme.css"]')).toBeNull();
+		const link = document.querySelector('link[href$="/other.css"]')!;
+		link.dispatchEvent(new Event('error'));
+		await flushPromises();
+		expect(wrapper.find('[role="alert"]').text()).toContain('/other.css');
+		expect(wrapper.find('.remote-sfc').element).toBe(preview);
+		route.meta = { docsRoute: { content: null } };
+		route.path = '/zh-CN/guide';
+		await flushPromises();
+		expect(document.querySelectorAll('link[data-docs-preview-style]')).toHaveLength(0);
+	});
+
+	it('adds and removes URL styles while keeping the page JSON renderer mounted', async () => {
+		route.path = '/__docs/preview';
+		route.meta = { docsPreview: true, docsRoute: { layout: 'none', content: null } };
+		route.query = { url: 'https://example.com/page.json', styles: '/page.css' };
+		load.mockResolvedValue({ content: JSON.stringify({
+			schemaVersion: 2,
+			meta: { id: 'styles-page' },
+			layout: { mode: 'sortable', maxWidth: 1180, minHeight: 600, background: '#fff' },
+			blocks: []
+		}) });
+		const wrapper = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(wrapper.findComponent(Renderer).exists()).toBe(true));
+		const preview = wrapper.findComponent(Renderer).vm.$;
+		route.query = { url: route.query.url };
+		await flushPromises();
+		expect(load).toHaveBeenCalledOnce();
+		expect(wrapper.findComponent(Renderer).vm.$).toBe(preview);
+		expect(document.querySelector('link[href$="/page.css"]')).toBeNull();
+	});
+
+	it('releases styles when the URL preview unmounts', async () => {
+		route.path = '/__docs/preview';
+		route.meta = { docsPreview: true, docsRoute: { layout: 'none', content: null } };
+		route.query = { url: 'https://example.com/demo.vue', styles: '/preview.css' };
+		const wrapper = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(wrapper.find('.remote-sfc').exists()).toBe(true));
+		expect(document.querySelector('link[href$="/preview.css"]')).not.toBeNull();
+		wrapper.unmount();
+		expect(document.querySelector('link[href$="/preview.css"]')).toBeNull();
+	});
+
+	it('decodes raw and updates CSS without remounting content, then reports invalid raw', async () => {
+		route.path = '/__docs/preview';
+		route.meta = { docsPreview: true, docsRoute: { layout: 'none', content: null } };
+		const config = { url: 'https://example.com/demo.vue?name=中文', styles: ['/raw.css?fonts=a,b'], modules: {} };
+		route.query = { raw: encode(JSON.stringify(config)), url: 'https://example.com/ignored.vue' };
+		const wrapper = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(wrapper.find('.remote-sfc').exists()).toBe(true));
+		expect(wrapper.find('.remote-sfc').text()).toContain(config.url);
+		const preview = wrapper.find('.remote-sfc').element;
+		expect(document.querySelector('link[href$="/raw.css?fonts=a,b"]')).not.toBeNull();
+		route.query = { raw: encode(JSON.stringify({ ...config, styles: ['/next.css'] })) };
+		await flushPromises();
+		expect(wrapper.find('.remote-sfc').element).toBe(preview);
+		expect(document.querySelector('link[href$="/raw.css?fonts=a,b"]')).toBeNull();
+		expect(document.querySelector('link[href$="/next.css"]')).not.toBeNull();
+		route.query = { raw: 'invalid' };
+		await vi.waitFor(() => expect(wrapper.find('.docs-resource-slot__error').text()).toMatch(/预览配置无效|Invalid preview configuration/));
+		expect(wrapper.find('.remote-sfc').exists()).toBe(false);
+		expect(document.querySelectorAll('link[data-docs-preview-style]')).toHaveLength(0);
+		expect(load).not.toHaveBeenCalled();
+	});
+
+	it('shows document validation and request errors in the URL preview', async () => {
+		route.path = '/__docs/preview';
+		route.meta = { docsPreview: true, docsRoute: { layout: 'none', content: null } };
+		route.query = { url: 'https://example.com/page.json' };
+		load.mockResolvedValueOnce({ content: '{}' });
+		const wrapper = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(wrapper.find('.docs-resource-slot__error').exists()).toBe(true));
+		expect(wrapper.findComponent(Renderer).exists()).toBe(false);
+		load.mockRejectedValueOnce(new Error('Resource HTTP 404'));
+		route.query = { url: 'https://example.com/missing.page.json' };
+		await vi.waitFor(() => expect(wrapper.text()).toContain('Resource HTTP 404'));
 	});
 
 	it('renders inline and Gateway page documents while retaining valid hot content', async () => {

@@ -510,6 +510,21 @@ describe('dever configuration', () => {
 				headers: { 'If-None-Match': String(markdown.headers.get('etag')) }
 			})).status).toBe(304);
 			expect((await fetch(`${base}/__docs/events`)).status).toBe(404);
+			for (const endpoint of ['renderer', 'renderer-generate']) {
+				expect((await fetch(`${base}/__docs/${endpoint}`, {
+					headers: { Accept: 'text/html' }
+				})).status).toBe(404);
+			}
+			for (const endpoint of ['preview', 'preview-config-generate']) {
+				const previewPage = await fetch(`${base}/__docs/${endpoint}?url=https%3A%2F%2Fexample.com%2Fdemo.vue`, {
+					headers: { Accept: 'text/html' }
+				});
+				expect(previewPage.status).toBe(200);
+				expect(await previewPage.text()).toContain('/@deot/docs-client/dist/index.js');
+				expect((await fetch(`${base}/__docs/${endpoint}`, {
+					headers: { Accept: 'text/plain' }
+				})).status).toBe(404);
+			}
 			expect((await fetch(`${base}/zh-CN/missing.md`, {
 				headers: { Accept: 'text/plain' }
 			})).status).toBe(404);
@@ -689,6 +704,15 @@ describe('dever configuration', () => {
 			expect(response.end).toHaveBeenCalledWith(expect.not.stringContaining('__DOCS_RUNTIME__ ='));
 			expect(response.end).toHaveBeenCalledWith(expect.not.stringContaining('/@vite/client'));
 			expect(response.end).toHaveBeenCalledWith('<div id="site-docs"></div>');
+			const rendererResponse = { ...response, setHeader: vi.fn(), end: vi.fn() };
+			await middleware!({
+				url: '/__docs/preview?url=demo.vue',
+				headers: { accept: 'text/html' }
+			}, rendererResponse, vi.fn());
+			expect(rendererResponse.end).toHaveBeenCalledWith('<div id="site-docs"></div>');
+			const generatorResponse = { ...response, setHeader: vi.fn(), end: vi.fn() };
+			await middleware!({ url: '/__docs/preview-config-generate?raw=test', headers: { accept: 'text/html' } }, generatorResponse, vi.fn());
+			expect(generatorResponse.end).toHaveBeenCalledWith('<div id="site-docs"></div>');
 
 			const next = vi.fn();
 			await middleware!({
@@ -887,6 +911,18 @@ describe('dever configuration', () => {
 				headers: { accept: 'text/plain' }
 			}, blocked, vi.fn());
 			expect(blocked.statusCode).toBe(404);
+			const rendererNext = vi.fn();
+			rawMiddleware({
+				url: '/__docs/preview?url=demo.vue',
+				headers: { accept: 'text/html' }
+			}, createResponse(), rendererNext);
+			expect(rendererNext).toHaveBeenCalledOnce();
+			const generatorNext = vi.fn();
+			rawMiddleware({ url: '/__docs/preview-config-generate?raw=test', headers: { accept: 'text/html' } }, createResponse(), generatorNext);
+			expect(generatorNext).toHaveBeenCalledOnce();
+			const rendererSource = createResponse();
+			rawMiddleware({ url: '/__docs/preview', headers: { accept: 'text/plain' } }, rendererSource, vi.fn());
+			expect(rendererSource.statusCode).toBe(404);
 
 			const eventsMiddleware = middlewareEntries
 				.find(([route]) => route === '/__docs/events')![1]!;
@@ -921,6 +957,12 @@ describe('dever configuration', () => {
 				headers: { accept: 'text/html' }
 			}, historyResponse, vi.fn());
 			expect(historyResponse.end).toHaveBeenCalledWith('<div id="root-docs"></div>');
+			const rendererHistory = createResponse();
+			await historyMiddleware!({
+				url: '/__docs/preview?url=demo.vue',
+				headers: { accept: 'text/html' }
+			}, rendererHistory, vi.fn());
+			expect(rendererHistory.end).toHaveBeenCalledWith('<div id="root-docs"></div>');
 		} finally {
 			restoreCwd.mockRestore();
 			fs.rmSync(root, { recursive: true, force: true });

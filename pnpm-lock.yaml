@@ -45,18 +45,18 @@ importers:
       '@deot/docs-theme':
         specifier: ^1.1.1
         version: link:../theme
+      '@deot/helper':
+        specifier: ^1.1.20
+        version: 1.1.21
       '@deot/helper-cache':
         specifier: ^1.1.11
         version: 1.1.11
-      '@deot/helper-fp':
-        specifier: ^1.1.6
-        version: 1.1.6
       '@deot/http':
         specifier: ^1.1.10
         version: 1.1.10(debug@4.4.3(supports-color@10.2.2))
       '@deot/vc':
-        specifier: ^1.2.1
-        version: 1.2.1(@deot/helper@1.1.19)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))
+        specifier: ^1.2.3
+        version: 1.2.3(@deot/helper@1.1.21)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))
       es-module-lexer:
         specifier: ^2.3.1
         version: 2.3.2
@@ -174,14 +174,14 @@ importers:
         version: 4.0.0
     devDependencies:
       '@deot/helper':
-        specifier: ^1.1.19
-        version: 1.1.19
+        specifier: ^1.1.20
+        version: 1.1.21
       '@deot/style':
         specifier: ^1.1.4
         version: 1.3.0
       '@deot/vc':
-        specifier: ^1.2.1
-        version: 1.2.1(@deot/helper@1.1.19)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))
+        specifier: ^1.2.3
+        version: 1.2.3(@deot/helper@1.1.21)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))
       echarts:
         specifier: ^6.1.0
         version: 6.1.0
@@ -213,14 +213,14 @@ importers:
         specifier: ^1.1.1
         version: link:../theme
       '@deot/helper':
-        specifier: ^1.1.19
-        version: 1.1.19
+        specifier: ^1.1.20
+        version: 1.1.21
       '@deot/http':
         specifier: ^1.1.10
         version: 1.1.10(debug@4.4.3(supports-color@10.2.2))
       '@deot/vc':
-        specifier: ^1.2.1
-        version: 1.2.1(@deot/helper@1.1.19)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))
+        specifier: ^1.2.3
+        version: 1.2.3(@deot/helper@1.1.21)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))
       '@vue/compiler-sfc':
         specifier: ^3.5.39
         version: 3.5.43
@@ -236,6 +236,9 @@ importers:
       echarts:
         specifier: ^6.1.0
         version: 6.1.0
+      es-module-lexer:
+        specifier: ^2.3.1
+        version: 2.3.2
       highlight.js:
         specifier: ^11.11.1
         version: 11.12.0
@@ -279,16 +282,13 @@ importers:
       '@deot/docs-theme':
         specifier: ^1.1.1
         version: link:../theme
-      '@deot/helper-cache':
-        specifier: ^1.1.11
-        version: 1.1.11
-      '@deot/helper-resize':
-        specifier: ^1.1.3
-        version: 1.1.4
+      '@deot/helper':
+        specifier: ^1.1.20
+        version: 1.1.21
     devDependencies:
       '@deot/vc':
-        specifier: ^1.2.1
-        version: 1.2.1(@deot/helper@1.1.19)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))
+        specifier: ^1.2.3
+        version: 1.2.3(@deot/helper@1.1.21)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))
       fake-indexeddb:
         specifier: ^6.2.5
         version: 6.2.5
@@ -616,8 +616,8 @@ packages:
   '@deot/helper-load@1.1.3':
     resolution: {integrity: sha512-FWDjG5IuiVdNLzJAqLTOBt5wf3GbB12wbPkpR8Ap6x5dnEqjjpwuUSIIAKqaCLdwfACV0ayf+oRZqKrosEXzrg==}
 
-  '@deot/helper-resize@1.1.4':
-    resolution: {integrity: sha512-5jYHtmFpP1ybjLNDGY9g66MxWE5xExHka5VB1jAbHn7D/i67/Rq4JcURmBxQl14+GFWomQCjQ7wL1dDxaW4EcA==}
+  '@deot/helper-resize@1.1.6':
+    resolution: {integrity: sha512-v5AyTx5wVCt3hZcN9dHCRQseDrBn/8S4Gl97NRoC1u0T8G8pTE0cV0biBpUzcRsN9OqOuxwLZ0fPAOY+3Q7jzg==}
 
   '@deot/helper-route@1.1.10':
     resolution: {integrity: sha512-aKN90K4ZN/6V8xT97CImWh8GELBY1K8UD43L0uY91dSBphK22dXNcup8RkpVApoZRbjW7FrjU2hqf0eonfNwMQ==}
@@ -640,8 +640,8 @@ packages:
   '@deot/helper-wheel@1.1.8':
     resolution: {integrity: sha512-/IY8BfHZc/Zd1QO1VYN/8De1e7D9yF6PPdvo7oA1eo1lV6PmNqNvvNEqabd6EEhMhMt4KX2Q4rX2uzLtZYQNLw==}
 
-  '@deot/helper@1.1.19':
-    resolution: {integrity: sha512-rubyBAcn2aCyKXdPINdd///ScAmNUccaTnI5UQ0XhnTdM4RjRp3Jyt5zDuybyBb5xgTK1csCkVrIFSj4IgC3dg==}
+  '@deot/helper@1.1.21':
+    resolution: {integrity: sha512-TmXNqcX0ncJ69OlVQ7LkaIaW7eJvap8+UKK7cxnCgxoSnUi9czN/g9ydafT/JAvDQVhy+kapZecMY9LfjHyHVw==}
 
   '@deot/http-client@1.1.10':
     resolution: {integrity: sha512-B6gI7KK7hNSCTkOCQmPnnoWN92tRn5g2TxZBB4Fe9hBRRKFKed3RhthvQw+e7xsWahIzKK9df41YXdIjXI4kmQ==}
@@ -661,8 +661,8 @@ packages:
   '@deot/style@1.3.0':
     resolution: {integrity: sha512-CBRx71iw+DY3C/B0ZZapisuExO/vQnErIDliVeBpkpqZsM00R+WvPqQA5d2S4+5kjuIxTRlLq12z9/ixLUESMg==}
 
-  '@deot/vc-components@1.2.1':
-    resolution: {integrity: sha512-5XK0/Bhn8rrzO9AbwpObdLXnJbHBdQQV/GpSAXYmhQdQgTzqICPg9CLMd3451luIwNxA+jRllD/gS6+VcYnEGA==}
+  '@deot/vc-components@1.2.3':
+    resolution: {integrity: sha512-owcUUUsdMEqoJ7ZyTYy6pf+mlomW8l7nUyaeo5JppLwq2hmP9nS1iKD0GF5e91e0wgIIRWt12ajbqhJT17lceA==}
     peerDependencies:
       '@deot/helper': '*'
       '@zumer/snapdom': '*'
@@ -701,8 +701,8 @@ packages:
   '@deot/vc-shared@1.2.0':
     resolution: {integrity: sha512-gbdKtKysQsmR9vMdrQSb2reFpq2FqsYlUEtZVhT+q+Kw5Gnfwn6hY6PAF8Zr5oormGDM7eSnAKAKX1PkGekEAA==}
 
-  '@deot/vc@1.2.1':
-    resolution: {integrity: sha512-xVwwXJ0ZlMbtawpnzVisK57G0umXjSZWo4S2nLFNMvQ2qQNoAtPcx2ZgKW0GOf8HaofWBsFzQwlEU2X+IpnJiw==}
+  '@deot/vc@1.2.3':
+    resolution: {integrity: sha512-e3vbUB9tDOQKuw2+lc2Mobqb9KY1qduXpEwMAOLivF7CLk6wKu37H8L+o/N6cFgu2aODbrJSYbQiKisC6R3pvA==}
     peerDependencies:
       vue: '*'
     peerDependenciesMeta:
@@ -5331,7 +5331,7 @@ snapshots:
 
   '@deot/helper-load@1.1.3': {}
 
-  '@deot/helper-resize@1.1.4': {}
+  '@deot/helper-resize@1.1.6': {}
 
   '@deot/helper-route@1.1.10':
     dependencies:
@@ -5355,7 +5355,7 @@ snapshots:
     dependencies:
       normalize-wheel: 1.0.1
 
-  '@deot/helper@1.1.19':
+  '@deot/helper@1.1.21':
     dependencies:
       '@deot/helper-cache': 1.1.11
       '@deot/helper-device': 1.1.3
@@ -5364,7 +5364,7 @@ snapshots:
       '@deot/helper-fp': 1.1.6
       '@deot/helper-is': 1.1.3
       '@deot/helper-load': 1.1.3
-      '@deot/helper-resize': 1.1.4
+      '@deot/helper-resize': 1.1.6
       '@deot/helper-route': 1.1.10
       '@deot/helper-scheduler': 1.1.9
       '@deot/helper-shared': 1.1.3
@@ -5404,13 +5404,13 @@ snapshots:
 
   '@deot/style@1.3.0': {}
 
-  '@deot/vc-components@1.2.1(@deot/helper@1.1.19)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))':
+  '@deot/vc-components@1.2.3(@deot/helper@1.1.21)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))':
     dependencies:
       '@deot/vc-hooks': 1.2.0(vue@3.5.43(typescript@6.0.3))
       '@deot/vc-locale': 1.2.0
       '@deot/vc-shared': 1.2.0
     optionalDependencies:
-      '@deot/helper': 1.1.19
+      '@deot/helper': 1.1.21
       echarts: 6.1.0
       lodash-es: 4.18.1
       photoswipe: 5.4.4
@@ -5424,9 +5424,9 @@ snapshots:
 
   '@deot/vc-shared@1.2.0': {}
 
-  '@deot/vc@1.2.1(@deot/helper@1.1.19)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))':
+  '@deot/vc@1.2.3(@deot/helper@1.1.21)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))':
     dependencies:
-      '@deot/vc-components': 1.2.1(@deot/helper@1.1.19)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))
+      '@deot/vc-components': 1.2.3(@deot/helper@1.1.21)(echarts@6.1.0)(lodash-es@4.18.1)(photoswipe@5.4.4)(vue@3.5.43(typescript@6.0.3))
       '@deot/vc-hooks': 1.2.0(vue@3.5.43(typescript@6.0.3))
       '@deot/vc-locale': 1.2.0
       '@deot/vc-shared': 1.2.0

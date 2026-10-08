@@ -1,5 +1,8 @@
 <template>
-	<div class="docs-playground-runtime-host">
+	<div
+		class="docs-playground-runtime-host"
+		:class="{ 'docs-playground-runtime-host--direct': local && styleless }"
+	>
 		<div
 			v-if="styleless"
 			ref="runtimeRoot"
@@ -20,10 +23,11 @@
 					:options="options"
 					:preview-scroller="previewScroller"
 					:clear-console="clearConsole"
+					:auto-height="!getViewportHeight(viewport)"
 					@error="handleLocalError"
 				/>
 				<Sandbox
-					v-else-if="store"
+					v-else-if="store && storeReady"
 					ref="sandboxRef"
 					:store="store"
 					:auto-store-init="false"
@@ -82,10 +86,11 @@
 							:options="options"
 							:preview-scroller="previewScroller"
 							:clear-console="clearConsole"
+							:auto-height="!getViewportHeight(viewport)"
 							@error="handleLocalError"
 						/>
 						<Sandbox
-							v-else-if="store"
+							v-else-if="store && storeReady"
 							:key="sandboxKey"
 							ref="sandboxRef"
 							:store="store"
@@ -167,6 +172,7 @@ import {
 	toReplFilename
 } from '../store';
 import { whenSassReady } from '../scss';
+import { isIgnoredFilename } from './local/compile/files';
 
 const LocalSandbox = defineAsyncComponent(() => import('./local/local-sandbox.vue'));
 
@@ -264,6 +270,10 @@ const env = (import.meta as ImportMeta & { env: { MODE?: string } }).env;
 const clearConsole = env.MODE !== 'development';
 const copyValue = computed(() => props.files[props.entry] || '');
 const store = props.local ? null : createRuntimeStore(props.files, props.entry, props.options);
+const storeReady = computed(() => store && !store.loading && Object.values(store.files).every(file => (
+	isIgnoredFilename(file.filename) || !/\.(?:vue|[jt]sx?|json|s[ac]ss)$/.test(file.filename)
+	|| !file.code.trim() || !!file.compiled.js
+)));
 const sandboxRef = ref<SandboxExposed | null>(null);
 const localError = ref({ compile: '', runtime: '' });
 const handleLocalError = (payload: { compile: string; runtime: string }) => {
@@ -552,6 +562,16 @@ defineExpose({
 	overflow: hidden;
 	flex: 1 1 auto;
 	flex-direction: column;
+
+	@include modifier(direct) {
+		// 同页无外框预览沿用页面滚动容器，让源码中的 sticky 正常吸附。
+		overflow: visible;
+
+		.docs-playground-runtime--styleless,
+		.docs-playground-runtime__viewport {
+			overflow: visible;
+		}
+	}
 }
 
 @include block(docs-playground-runtime) {

@@ -9,7 +9,6 @@ const LANG_ATTR_RE = /\s*lang\s*=\s*(['"]?)s[ac]ss\1/i;
 const SCSS_ERROR_MARK = '[playground-sass]';
 const INJECT_START = '/* docs-playground-scss-start */';
 const INJECT_END = '/* docs-playground-scss-end */';
-const EMPTY_JS = 'export default {}\n';
 const boundStores = new WeakSet<object>();
 const wrappedCompilers = new WeakSet<object>();
 
@@ -276,6 +275,20 @@ const syncScssErrors = (store: Pick<ReplStore, 'errors'>, scssErrors: string[]) 
 	store.errors = next;
 };
 
+export const extractScssExports = (css: string, filename: string) => {
+	const exports: Record<string, string> = {};
+	if (/\.module\.(?:scss|sass)$/.test(filename)) {
+		css = css.replace(/:export\s*\{([^}]*)\}/g, (_block, declarations: string) => {
+			for (const declaration of declarations.split(';')) {
+				const colon = declaration.indexOf(':');
+				if (colon >= 0) exports[declaration.slice(0, colon).trim()] = declaration.slice(colon + 1).trim();
+			}
+			return '';
+		});
+	}
+	return { css, exports };
+};
+
 export const applyStandaloneScss = (
 	store: Pick<ReplStore, 'files' | 'mainFile' | 'errors'>,
 	sass = loadedSass
@@ -288,10 +301,9 @@ export const applyStandaloneScss = (
 	for (const [filename, file] of Object.entries(store.files)) {
 		if (!isScssFile(filename) || !file.compiled) continue;
 		try {
-			const css = compileScssSource(file.code, filename, sass, fileMap);
+			const { css, exports } = extractScssExports(compileScssSource(file.code, filename, sass, fileMap), filename);
 			file.compiled.css = css;
-			file.compiled.js = EMPTY_JS;
-			file.compiled.ssr = EMPTY_JS;
+			file.compiled.js = file.compiled.ssr = `export default ${JSON.stringify(exports)};\n`;
 			if (!isScssPartial(filename) && css.trim()) injected.push(css);
 		} catch (error) {
 			errors.push(scssFail(filename, error));

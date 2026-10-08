@@ -11,6 +11,7 @@ import { transformScript } from './script';
 import { compileSfc } from './sfc';
 import { compileLocalScss } from './scss';
 import { collectCss } from './css';
+import { extractScssExports } from '../../../scss';
 
 export interface CompilePlaygroundOptions {
 	entry?: string;
@@ -70,10 +71,10 @@ const compileOne = async (
 
 	if (ext === '.scss' || ext === '.sass') {
 		try {
-			const css = compileLocalScss(code, filename, files);
+			const { css, exports: styleExports } = extractScssExports(compileLocalScss(code, filename, files), filename);
 			return {
 				filename,
-				js: `exports.default = {};\n//# sourceURL=playground://${filename}`,
+				js: `exports.__esModule = true; exports.default = ${JSON.stringify(styleExports)};\n//# sourceURL=playground://${filename}`,
 				css,
 				errors
 			};
@@ -94,12 +95,8 @@ const compileOne = async (
 	}
 
 	if (ext === '.js' || ext === '.ts' || ext === '.jsx' || ext === '.tsx') {
-		if (ext === '.jsx' || ext === '.tsx') {
-			errors.push(`[Playground] JSX/TSX 暂不支持: ${filename}`);
-			return { filename, js: 'exports.default = {};', css: '', errors };
-		}
 		try {
-			const js = transformScript(code, filename, { typescript: ext === '.ts' });
+			const js = transformScript(code, filename, { typescript: ext === '.ts' || ext === '.tsx', jsx: ext === '.jsx' || ext === '.tsx' });
 			return { filename, js, css: '', errors };
 		} catch (error: unknown) {
 			errors.push(messageOf(error));

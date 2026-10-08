@@ -176,6 +176,10 @@ export type DocsSidebar = DocsSlot
 
 export interface DocsRoute {
 	/**
+	 * 页面布局。缺省为 `'default'`；`'none'` 直接渲染 content，跳过文档布局和其他插槽。
+	 */
+	layout?: 'default' | 'none';
+	/**
 	 * 路由展示名。字符串直接用；函数按当前路由计算。缺省时由路径推导。
 	 */
 	value?: string | ((to: RouteLocationNormalizedGeneric) => string);

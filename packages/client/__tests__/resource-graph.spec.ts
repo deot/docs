@@ -2,6 +2,8 @@
 
 import {
 	collectResourceImports,
+	dependencyUrlCandidates,
+	resolveDependencyRequestUrl,
 	getResourceType,
 	isSupportedDependency,
 	resolveDependencyUrl,
@@ -42,6 +44,34 @@ describe('resource graph helpers', () => {
 			'./external.css',
 			'./theme.css'
 		]);
+	});
+
+	it.each([
+		`import type { Props } from './types'`,
+		`import type Props from './types'`,
+		`import type * as Props from './types'`,
+		`import type {\n Props\n} from './types'`,
+		`export type { Props } from './types'`,
+		`export type { Props }`
+	])('keeps runtime dependencies after semicolonless type declarations: %s', async (declaration) => {
+		const source = `${declaration}\nimport Helper from './helper';\nexport { Helper };`;
+		await expect(collectResourceImports(source, 'module')).resolves.toEqual(['./helper']);
+		await expect(collectResourceImports(`${source}\nconst view = <div />;`, 'module')).resolves.toEqual(['./helper']);
+		await expect(collectResourceImports(`<script lang="ts">${source}</script>`, 'sfc')).resolves.toEqual(['./helper']);
+	});
+
+	it('resolves Sass directives, partials and GitHub npm dependencies', async () => {
+		await expect(collectResourceImports(`@use 'sass:map'; @forward './theme'; @use '../style';`, 'style'))
+			.resolves.toEqual(['./theme', '../style']);
+		expect(getResourceType('https://example.com/style.scss')).toBe('style');
+		expect(isSupportedDependency('./catalogue')).toBe(true);
+		expect(isSupportedDependency('./image.png')).toBe(false);
+		expect(dependencyUrlCandidates('./theme', 'https://example.com/demo.vue', true))
+			.toContain('https://example.com/_theme.scss');
+		expect(resolveDependencyRequestUrl('https://raw.githubusercontent.com/deot/vc/main/node_modules/@deot/style/src/mixins/bem.scss'))
+			.toBe('https://cdn.jsdelivr.net/npm/@deot/style/src/mixins/bem.scss');
+		expect(resolveDependencyRequestUrl('https://example.com/node_modules/style.scss'))
+			.toBe('https://example.com/node_modules/style.scss');
 	});
 
 	it('keeps dependency identities relative to the stable production base', () => {

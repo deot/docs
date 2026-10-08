@@ -17,6 +17,8 @@ import type { PlaygroundFiles, PlaygroundOptions } from '../types';
 import { SANDBOX_RUNTIME_ERROR_CAPTURE_HTML } from './runtime/error-guard';
 import { PREVIEW_SERVICE_IMPORT_CODE, PREVIEW_SERVICE_USE_CODE } from '../preview-service';
 import { bindPlaygroundScss, whenSassReady } from './scss';
+import { bindReplModules, resolveReplImports } from './repl-modules';
+import { collectBareSpecifiers } from './runtime/local/compile/files';
 import {
 	PREVIEW_SCROLL_RESET_CODE,
 	PREVIEW_SCROLLER_STYLE
@@ -139,6 +141,7 @@ export const createRuntimeStore = (
 	));
 	const mainFile = ref(toReplFilename(entry));
 	const activeFilename = ref(toReplFilename(entry));
+	const imports = createRuntimeImports(cdnURL, builtinImportMap);
 	const store = useStore({
 		...storeOptions,
 		files: replFiles,
@@ -146,7 +149,7 @@ export const createRuntimeStore = (
 		activeFilename,
 		builtinImportMap: ref({
 			...builtinImportMap,
-			imports: createRuntimeImports(cdnURL, builtinImportMap)
+			imports
 		}),
 		template: ref({
 			welcomeSFC: files[entry],
@@ -154,6 +157,18 @@ export const createRuntimeStore = (
 		})
 	});
 	bindPlaygroundScss(store);
-	whenSassReady(files, () => store.init());
+	bindReplModules(store);
+	whenSassReady(files, () => {
+		const specifiers = collectBareSpecifiers(files, Object.keys(files));
+		if (!specifiers.length) {
+			store.init();
+			return;
+		}
+		store.loading = true;
+		void resolveReplImports(imports, specifiers).then((resolved) => {
+			if (Object.keys(resolved).length !== Object.keys(imports).length) store.setImportMap({ imports: resolved }, true);
+			store.init();
+		}).catch((error) => { store.errors.push(error); }).finally(() => { store.loading = false; });
+	});
 	return store;
 };

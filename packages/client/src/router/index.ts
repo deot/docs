@@ -6,6 +6,8 @@ import EditorDemosPage from '../pages/renderer-editor-demos/index.vue';
 import EditorPage from '../pages/renderer-editor/index.vue';
 import HomePage from '../pages/home/index.vue';
 import PlaygroundResourcePage from '../pages/playground-resource/index.vue';
+import PreviewConfigGeneratePage from '../pages/preview-config-generate/index.vue';
+import { readPreviewConfig } from '../modules/preview/config';
 import {
 	getDefaultLanguage,
 	getDocsDeploymentBase
@@ -135,6 +137,17 @@ export const createDocsRouter = (
 	const isDevelopment = config.runtime?.mode === 'development';
 	const routes: RouteRecordRaw[] = [
 		{
+			path: '/__docs/preview-config-generate',
+			component: PreviewConfigGeneratePage,
+			meta: { docsPreviewConfigGenerate: true, docsRoute: { layout: 'none', content: null } }
+		},
+		{
+			path: '/__docs/preview',
+			component: ResourceSlot,
+			props: { name: 'content' },
+			meta: { docsPreview: true, docsRoute: { layout: 'none', content: null } }
+		},
+		{
 			path: '/:lang/__docs/database',
 			component: DatabasePage,
 			meta: { docsDatabase: true, docsLocalized: true }
@@ -254,6 +267,16 @@ export const createDocsRouter = (
 	const historyBase = new URL(deploymentBase).pathname;
 	const router = createRouter({ history: createWebHistory(historyBase), routes });
 	router.beforeEach((to) => {
+		if (to.meta.docsPreview || to.meta.docsPreviewConfigGenerate) {
+			let language = '';
+			try {
+				language = readPreviewConfig(to.query).lang || '';
+			} catch {
+				// 无效配置由预览或生成器展示；语言先回退默认值。
+			}
+			to.params.lang = hasConfiguredLanguage(config, language) ? language : defaultLanguage;
+			return true;
+		}
 		const lang = String(to.params.lang || '');
 		const configuredLanguages = Object.keys(config.locales);
 		if (lang && (

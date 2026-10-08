@@ -2,19 +2,19 @@ import { init, parse } from 'es-module-lexer';
 import { getDocsBase, normalizeWorkspaceBase, trimSlashes } from './resolver';
 import type { DocsConfig, DocsResourceType } from '../types';
 
-const SUPPORTED_DEPENDENCY_RE = /\.(?:vue|[jt]s|css)(?:$|[?#])/i;
-const STYLE_IMPORT_RE = /@import\s+(?:url\(\s*(?:(['"])(.*?)\1|([^'")\s]+))\s*\)|(['"])(.*?)\4)/gi;
+const SUPPORTED_DEPENDENCY_RE = /\.(?:vue|[jt]sx?|json|css|scss|sass)(?:$|[?#])/i;
+const STYLE_IMPORT_RE = /@(?:import|use|forward)\s+(?:url\(\s*(?:(['"])(.*?)\1|([^'")\s]+))\s*\)|(['"])(.*?)\4)/gi;
 const SFC_BLOCK_RE = /<(script|style)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
 const SOURCE_ATTRIBUTE_RE = /\bsrc\s*=\s*(['"])(.*?)\1/i;
 
 export const getResourceType = (url: string): DocsResourceType => {
 	if (/\.vue(?:$|[?#])/i.test(url)) return 'sfc';
-	if (/\.css(?:$|[?#])/i.test(url)) return 'style';
+	if (/\.(?:css|scss|sass)(?:$|[?#])/i.test(url)) return 'style';
 	return 'module';
 };
 
 export const isSupportedDependency = (value: string) => (
-	value.startsWith('.') && SUPPORTED_DEPENDENCY_RE.test(value)
+	value.startsWith('.') && (SUPPORTED_DEPENDENCY_RE.test(value) || /\.m(?:$|[?#])/.test(value) || !/\.[^/]+$/.test(value.split(/[?#]/)[0]))
 );
 
 export const resolveDependencyUrl = (specifier: string, importer: string) => {
@@ -23,12 +23,28 @@ export const resolveDependencyUrl = (specifier: string, importer: string) => {
 };
 
 const collectStyleImports = (code: string) => (
-	[...code.matchAll(STYLE_IMPORT_RE)].map(match => match[2] || match[3] || match[5])
+	[...code.matchAll(STYLE_IMPORT_RE)]
+		.map(match => match[2] || match[3] || match[5])
+		.filter(value => !/^(?:[a-z][a-z\d+.-]*:|\/)/i.test(value))
+		.map(value => value.startsWith('.') ? value : `./${value}`)
 );
 
 const collectModuleImports = async (code: string) => {
 	await init;
-	return parse(code)[0].map(item => item.n).filter((item): item is string => Boolean(item));
+	try {
+		return parse(code)[0]
+			.filter(item => !/^(?:import|export)\s+type\b(?!\s+from\b)/.test(code.slice(item.ss, item.se)))
+			.map(item => item.n).filter((item): item is string => Boolean(item));
+	} catch {
+		// JSX 不是 es-module-lexer 的输入语言，仍可读取其静态模块引用。
+		// 类型声明只移除自身的绑定及可选来源，不跨越下一条语句。
+		const source = code.replace(
+			/\b(?:import|export)\s+type\b(?!\s+from\b)\s*(?:\{[^}]*\}|\*\s+as\s+[\w$]+|[\w$]+)(?:\s+from\s*(['"])[^'"]+\1)?\s*;?/g,
+			''
+		);
+		return [...source.matchAll(/(?:\bfrom\s+|import\s*\(\s*|import\s+)['"]([^'"]+)['"]/g)]
+			.map(match => match[1]);
+	}
 };
 
 /*
@@ -74,4 +90,49 @@ export const toLogicalResourceSource = (
 		return resolved.href;
 	}
 	return `./${resolved.pathname.slice(root.pathname.length)}${resolved.search}${resolved.hash}`;
+};
+
+/**
+ * 远程静态文件没有 Vite 的扩展名补全，按源码类型探测实际文件。
+ * @param specifier 源码中的相对引用。
+ * @param importer 发起引用的源文件 URL。
+ * @param style 是否使用 Sass 样式路径规则。
+ * @returns 按优先级排列的候选 URL。
+ */
+export const dependencyUrlCandidates = (specifier: string, importer: string, style = false) => {
+	const url = new URL(resolveDependencyUrl(specifier, importer));
+	const path = url.pathname.replace(/\/$/, '');
+	const partial = (value: string) => value.replace(/([^/]+)$/, '_$1');
+	const hasExtension = SUPPORTED_DEPENDENCY_RE.test(path);
+	const paths = style
+		? (hasExtension
+				? [path, partial(path)]
+				: ['.scss', '.sass', '.css'].flatMap(ext => [
+						`${path}${ext}`, partial(`${path}${ext}`), `${path}/index${ext}`, `${path}/_index${ext}`
+					]))
+		: (hasExtension
+				? [path]
+				: [path, ...['.vue', '.ts', '.js', '.tsx', '.jsx', '.json'].map(ext => `${path}${ext}`),
+						...['.vue', '.ts', '.js', '.tsx', '.jsx', '.json'].map(ext => `${path}/index${ext}`)]);
+	return [...new Set(paths)].map((value) => {
+		const candidate = new URL(url);
+		candidate.pathname = value;
+		return candidate.href;
+	});
+};
+
+export const collectResourceStyleImports = (code: string, type: DocsResourceType) => {
+	if (type === 'style') return collectStyleImports(code);
+	if (type !== 'sfc') return [];
+	return [...code.matchAll(SFC_BLOCK_RE)]
+		.filter(match => match[1].toLowerCase() === 'style')
+		.flatMap(match => collectStyleImports(match[3]));
+};
+
+export const resolveDependencyRequestUrl = (url: string) => {
+	const resolved = new URL(url, typeof location === 'undefined' ? 'http://localhost/' : location.href);
+	if (resolved.hostname !== 'raw.githubusercontent.com') return url;
+	const marker = '/node_modules/';
+	const index = resolved.pathname.indexOf(marker);
+	return index < 0 ? url : `https://cdn.jsdelivr.net/npm/${resolved.pathname.slice(index + marker.length)}${resolved.search}`;
 };

@@ -1,18 +1,18 @@
 <template>
-	<div class="docs-remote-sfc">
+	<div class="docs-remote-sfc" :class="{ 'docs-remote-sfc--viewport': useIframeViewport }">
 		<div v-if="error" class="docs-remote-sfc__error">{{ error }}</div>
 		<div v-else-if="loading" class="docs-remote-sfc__loading">{{ t('client.common.loading') }}</div>
 		<component
 			:is="PlaygroundComponent"
 			v-else-if="PlaygroundComponent"
-			:key="revision"
+			:key="`${revision}:${playgroundProps.local}`"
 			v-bind="playgroundProps"
 			@navigate="handleNavigate"
 		/>
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, markRaw, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, inject, markRaw, onBeforeUnmount, ref, watch } from 'vue';
 import type { Component } from 'vue';
 import { useLocale } from '@deot/docs-locale';
 import { useRouter } from 'vue-router';
@@ -21,18 +21,26 @@ import { resolveDocsPlaygroundComponent } from '../../utils/components';
 import { createResourceIdentity, resolveResource, resourceIdentityKey } from '../../utils/resolver';
 import {
 	collectResourceImports,
+	collectResourceStyleImports,
+	dependencyUrlCandidates,
+	resolveDependencyRequestUrl,
 	getResourceType,
 	isSupportedDependency,
-	resolveDependencyUrl,
 	toLogicalResourceSource
 } from '../../utils/resource-graph';
+import { createGithubSourceResolver, rewritePackageStyleImports } from '../../utils/github-source';
+import { assertResolvableSourceGlobs } from '../../utils/source-dependencies';
 import { getDocsConfig } from '../../utils/runtime';
+import { previewConfigKey } from '../../modules/preview/config';
+import { parsePreviewStyleUrls } from '../../modules/preview/styles';
+import { ResourceRequestError } from '../../modules/gateway/types';
 import type { ResourceContentRecord } from '../../modules/gateway';
 
 const props = defineProps<{ source: string; lang: string }>();
 const { locale, t } = useLocale();
 const router = useRouter();
 const config = getDocsConfig();
+const preview = inject(previewConfigKey, undefined);
 const loading = ref(true);
 const error = ref('');
 const files = ref<Record<string, string>>({});
@@ -44,32 +52,57 @@ let controller: AbortController | undefined;
 let generation = 0;
 
 const playgroundDefaults = computed(() => resolveDocsPlaygroundComponent(config));
+const previewModules = computed(() => JSON.stringify(preview?.value?.modules || {}));
+const previewPlayground = computed(() => JSON.stringify(preview?.value?.playground || {}));
+// 样式变化不创建新的 options 引用，避免触发 local 预览重新编译。
+const playgroundOptions = computed(() => {
+	const siteOptions = playgroundDefaults.value.options || {};
+	const siteImportMap = siteOptions.builtinImportMap || {};
+	return {
+		...siteOptions,
+		builtinImportMap: {
+			...siteImportMap,
+			imports: {
+				...siteImportMap.imports,
+				...config.modules,
+				...JSON.parse(previewModules.value)
+			}
+		}
+	};
+});
 const playgroundProps = computed(() => {
 	const site = playgroundDefaults.value;
-	const siteOptions = site.options && typeof site.options === 'object' ? site.options : {};
-	const siteImportMap = siteOptions.builtinImportMap && typeof siteOptions.builtinImportMap === 'object'
-		? siteOptions.builtinImportMap
-		: {};
-	const siteImports = 'imports' in siteImportMap && siteImportMap.imports && typeof siteImportMap.imports === 'object'
-		? siteImportMap.imports
-		: {};
+	const overrides = JSON.parse(previewPlayground.value);
 	return {
 		...site,
 		files: files.value,
 		entry: entry.value,
 		locale: locale.value,
 		styleless: true,
-		options: {
-			...siteOptions,
-			builtinImportMap: {
-				...siteImportMap,
-				imports: {
-					...siteImports,
-					...config.modules
-				}
-			}
-		}
+		...overrides,
+		local: overrides.local ?? site.local ?? true,
+		...(previewStyleHead.value
+			? { previewOptions: {
+					...site.previewOptions,
+					headHTML: `${site.previewOptions?.headHTML || ''}${previewStyleHead.value}`
+				} }
+			: {}),
+		options: playgroundOptions.value
 	};
+});
+const useIframeViewport = computed(() => (
+	!!preview?.value && !playgroundProps.value.local && playgroundProps.value.styleless
+	&& !Array.isArray(playgroundProps.value.viewport)
+));
+
+// iframe 模式也接收同一份链接 CSS；local 模式由外层样式引用管理器注入。
+const previewStyleHead = computed(() => {
+	try {
+		return parsePreviewStyleUrls(preview?.value?.styles, location.href)
+			.map(url => `<link rel="stylesheet" href="${url.replaceAll('&', '&amp;').replaceAll('"', '&quot;')}">`).join('');
+	} catch {
+		return '';
+	}
 });
 
 const clearSubscriptions = () => {
@@ -104,12 +137,13 @@ const loadFiles = async () => {
 			lang: langSnapshot
 		});
 		if (current !== generation || activeController.signal.aborted) return;
+		const github = createGithubSourceResolver(rootUrl, activeController.signal);
 		const nextFiles: Record<string, string> = {};
 		const visited = new Set<string>();
 		const activeLoads = new Set<string>();
 		const visit = async (url: string, logicalSource?: string) => {
 			if (current !== generation || visited.has(url)) return;
-			visited.add(url);
+
 			const type = getResourceType(url);
 			const source = logicalSource || toLogicalResourceSource(config, langSnapshot, url);
 			const identity = createResourceIdentity(config, langSnapshot, type, source);
@@ -119,12 +153,12 @@ const loadFiles = async () => {
 			const reload = () => {
 				if (!activeLoads.has(key)) void loadFiles();
 			};
-			subscriptions.push(Gateway.subscribe(identity, reload));
+
 			activeLoads.add(key);
 			let record: ResourceContentRecord;
 			try {
 				record = await Gateway.load(identity, {
-					url,
+					url: resolveDependencyRequestUrl(url),
 					priority: 100,
 					signal: activeController.signal
 				});
@@ -132,11 +166,31 @@ const loadFiles = async () => {
 				activeLoads.delete(key);
 			}
 			if (current !== generation) return;
-			nextFiles[getFilename(url, langSnapshot)] = record.content;
-			const imports = await collectResourceImports(record.content, type);
+			visited.add(url);
+			subscriptions.push(Gateway.subscribe(identity, reload));
+			let content = github && type === 'module' ? await github.expandGlob(record.content, url) : record.content;
+			if (!github && type !== 'style') assertResolvableSourceGlobs(content, url);
+			if (github && type === 'style') content = rewritePackageStyleImports(content);
+			nextFiles[getFilename(url, langSnapshot)] = content;
+			const imports = /\.json(?:$|[?#])/i.test(url) ? [] : await collectResourceImports(content, type);
+			const styles = collectResourceStyleImports(content, type);
 			await Promise.all(imports.filter(isSupportedDependency).map(async (value) => {
-				const dependency = resolveDependencyUrl(value, url);
-				await visit(dependency);
+				const style = styles.includes(value) || /\.(?:scss|sass)(?:$|[?#])/i.test(value);
+				const candidates = github
+					? await github.resolve(value, url, style)
+					: dependencyUrlCandidates(value, url, style);
+				if (candidates.some(dependency => visited.has(dependency))) return;
+				for (const [index, dependency] of candidates.entries()) {
+					try {
+						await visit(dependency);
+						break;
+					} catch (reason) {
+						if (
+							visited.has(dependency) || !(reason instanceof ResourceRequestError)
+							|| reason.status !== 404 || index === candidates.length - 1
+						) throw reason;
+					}
+				}
 			}));
 		};
 		await visit(rootUrl, sourceSnapshot);
@@ -186,6 +240,13 @@ onBeforeUnmount(() => {
 @use '../../styles/bem' as *;
 
 @include block(docs-remote-sfc) {
+	@include modifier(viewport) {
+		// 独立预览由 iframe 内部滚动，sticky / vh 才能相对真实视口生效。
+		.docs-playground-runtime--styleless {
+			height: 100dvh !important;
+		}
+	}
+
 	@include element(loading) {
 		padding: 16px;
 		color: varfix(foreground-color-mute);

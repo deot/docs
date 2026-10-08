@@ -5,6 +5,7 @@ vi.mock('../src/components/layout', () => ({ ResourceSlot: { name: 'ResourceSlot
 import { createDocsRouter, getRouteValue, localizePath } from '../src/router';
 import type { DocsConfig } from '../src/types';
 import { createRouteShape } from './fixtures/docs';
+import { encode } from '@deot/helper-unicode';
 
 const config: DocsConfig = {
 	locales: { 'zh-CN': { label: '简体中文' }, 'en-US': { label: 'English' } },
@@ -17,6 +18,53 @@ const config: DocsConfig = {
 };
 
 describe('docs router', () => {
+	it('does not register the former renderer preview routes', () => {
+		const paths = createDocsRouter(config).getRoutes().map(route => route.path);
+		expect(paths).not.toContain('/__docs/renderer');
+		expect(paths).not.toContain('/__docs/renderer-generate');
+	});
+
+	it.each([
+		['/', 'preview'], ['/', 'preview-config-generate'], ['/docs/site/', 'preview'], ['/docs/site/', 'preview-config-generate']
+	])('boots the preview page under deployment %s at %s', async (base, page) => {
+		const previous = `${location.pathname}${location.search}${location.hash}`;
+		window.history.replaceState({}, '', `${base}__docs/${page}?url=demo.vue`);
+		try {
+			const router = createDocsRouter({ ...config });
+			await router.push({ path: `/__docs/${page}`, query: { url: 'demo.vue' } });
+			expect(router.resolve(`/__docs/${page}`).href).toBe(`${base}__docs/${page}`);
+			expect(location.pathname).toBe(`${base}__docs/${page}`);
+			expect(router.currentRoute.value.meta.docsRoute).toMatchObject({ layout: 'none' });
+		} finally {
+			window.history.replaceState({}, '', previous || '/');
+		}
+	});
+
+	it.each(['preview', 'preview-config-generate'])('uses the language encoded in raw at %s', async (page) => {
+		const router = createDocsRouter({ ...config });
+		await router.push({ path: `/__docs/${page}`, query: { raw: encode(JSON.stringify({ url: 'demo.vue', lang: 'en-US' })) } });
+		expect(router.currentRoute.value.params.lang).toBe('en-US');
+		await router.push({ path: `/__docs/${page}`, query: { raw: 'invalid' } });
+		expect(router.currentRoute.value.path).toBe(`/__docs/${page}`);
+		expect(router.currentRoute.value.params.lang).toBe('zh-CN');
+	});
+
+	it('opens the URL preview without a language prefix or configured document route', async () => {
+		const router = createDocsRouter(config);
+		const url = 'https://example.com/demo.vue?version=2&name=a#preview';
+		await router.push({ path: '/__docs/preview', query: { url } });
+		expect(router.currentRoute.value.path).toBe('/__docs/preview');
+		expect(router.currentRoute.value.query.url).toBe(url);
+		expect(router.currentRoute.value.params.lang).toBe('zh-CN');
+		expect(router.currentRoute.value.meta.docsRoute).toMatchObject({ layout: 'none' });
+		await router.push({ path: '/__docs/preview', query: { url, lang: 'en-US' } });
+		expect(router.currentRoute.value.params.lang).toBe('en-US');
+		await router.push({ path: '/__docs/preview', query: { url, lang: 'unknown' } });
+		expect(router.currentRoute.value.params.lang).toBe('zh-CN');
+		await router.push('/en-US/components/button');
+		expect(router.currentRoute.value.meta.docsPreview).toBeUndefined();
+	});
+
 	it('adds the default language and preserves explicit languages', async () => {
 		const router = createDocsRouter(config);
 		await router.push('/');

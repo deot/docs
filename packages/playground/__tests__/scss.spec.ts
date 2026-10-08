@@ -192,6 +192,18 @@ $color: red
 		expect(store.files['src/App.vue'].compiled.css).not.toContain('#c00');
 	});
 
+	it('exports Sass module values and removes the export block from preview CSS', async () => {
+		const store = createRuntimeStore({
+			'App.vue': `<script setup>import theme from './theme.module.scss';</script><template>{{ theme.accent }}</template>`,
+			'theme.module.scss': '$accent: red; :export { accent: $accent; } .box { color: $accent; }'
+		}, 'App.vue', {});
+		await vi.waitFor(() => {
+			expect(store.files['src/theme.module.scss'].compiled.js).toContain('"accent":"red"');
+			expect(store.files['src/theme.module.scss'].compiled.css).toContain('color: red');
+			expect(store.files['src/App.vue'].compiled.css).not.toContain(':export');
+		});
+	});
+
 	it('does not load sass when playground files have no scss', () => {
 		createRuntimeStore({ 'App.vue': '<template><div /></template>' }, 'App.vue', {});
 		expect(loads).toBe(0);

@@ -9,7 +9,28 @@ const enUS = {
 			loading: 'Loading…',
 			poweredBy: 'Powered by @deot/docs',
 			resourceRequestFailed: 'Resource request failed',
+			previewUrlRequired: 'The url parameter must specify a single resource',
+			previewStyleFailed: 'Failed to load CSS: {url}',
+			previewConfigFailed: 'Invalid preview configuration: {message}',
+			previewUrlUnsupported: 'Only .vue, page.json and *.page.json resources at HTTP(S) or relative URLs are supported',
 			yes: 'Yes'
+		},
+		previewConfigGenerate: {
+			title: 'Preview link generator',
+			description: 'Configure a remote Vue or page.json resource and generate a shareable preview link.',
+			importLabel: 'Existing preview link',
+			parseHint: 'Paste a /__docs/preview?raw=... or ?url=... link',
+			parse: 'Parse link',
+			urlHint: 'Remote .vue, page.json or *.page.json URL',
+			stylesHint: 'JSON array of CSS URLs in order; HTTP(S) URLs and site root paths are supported.',
+			modulesHint: 'JSON object mapping module names to ESM URLs; overrides imports in this preview.',
+			playgroundHint: 'JSON object supporting local, styleless, views, viewport, previewInset, expandable, previewScroller and title.',
+			language: 'lang · Preview language',
+			defaultLanguage: 'Site default language',
+			link: 'Generated link',
+			copy: 'Copy link',
+			preview: 'Open preview',
+			configuration: 'Show decoded configuration'
 		},
 		footer: {
 			resources: 'Resources',

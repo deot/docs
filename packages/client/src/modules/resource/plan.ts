@@ -12,12 +12,8 @@ import {
 } from '../../utils/resolver';
 import { isExternalLink } from '../../utils/link';
 import { localizeRoutePath, normalizePathname } from '../../utils/route';
-import {
-	collectResourceImports,
-	isSupportedDependency,
-	resolveDependencyUrl,
-	toLogicalResourceSource
-} from '../../utils/resource-graph';
+import { getResourceType, toLogicalResourceSource } from '../../utils/resource-graph';
+import { createResourceDependencyResolver } from '../../utils/source-dependencies';
 import { getDocsConfig } from '../../utils/runtime';
 import { resolveInlineSidebar } from '../../utils/sidebar';
 import { resolveRouteContent } from '../../utils/content';
@@ -561,6 +557,9 @@ export class ResourcePlanner {
 		collector: ResourceCollector,
 		records: ResourceRecord[]
 	): Promise<ResourceIdentity[]> {
+		const resolveDependencies = createResourceDependencyResolver(
+			records.filter(record => typeof record.content === 'string').map(record => record.url)
+		);
 		const recordsByKey = new Map<string, ResourceRecord>(records.map(record => [
 			resourceIdentityKey(record.identity),
 			record
@@ -603,14 +602,13 @@ export class ResourcePlanner {
 			if (!record || typeof record.content !== 'string') return;
 			let imports: string[];
 			try {
-				imports = await collectResourceImports(record.content, identity.type);
+				imports = await resolveDependencies(record.content, identity.type, record.url);
 			} catch {
 				return;
 			}
-			for (const specifier of imports.filter(isSupportedDependency)) {
+			for (const url of imports) {
 				let source: string;
 				try {
-					const url = resolveDependencyUrl(specifier, record.url);
 					source = toLogicalResourceSource(config, identity.lang, url);
 				} catch {
 					continue;
@@ -618,10 +616,10 @@ export class ResourcePlanner {
 				const candidate = createResourceIdentity(
 					config,
 					identity.lang,
-					classifyResourceSource(source),
+					getResourceType(source),
 					source
 				);
-				const dependency = collector.add(identity.lang, source)
+				const dependency = collector.add(identity.lang, source, getResourceType(source))
 					|| collector.identities.get(resourceIdentityKey(candidate));
 				if (dependency) await visit(dependency);
 			}
@@ -915,6 +913,9 @@ export class ResourcePlanner {
 		strict: boolean;
 		loadResources: PrefetchResources;
 	}): Promise<ResourcePrefetchOutcome[]> {
+		const resolveDependencies = createResourceDependencyResolver(
+			(await this.gateway.list()).filter(record => typeof record.content === 'string').map(record => record.url)
+		);
 		const results: ResourcePrefetchOutcome[] = [];
 		const processed = new Set<string>();
 		let queue = seeds;
@@ -935,15 +936,19 @@ export class ResourcePlanner {
 				}
 				let imports: string[];
 				try {
-					imports = await collectResourceImports(record.content, identity.type);
+					imports = await resolveDependencies(record.content, identity.type, record.url, async (url) => {
+						const source = toLogicalResourceSource(config, identity.lang, url);
+						const candidate = createResourceIdentity(config, identity.lang, getResourceType(url), source);
+						const [result] = await loadResources([candidate]);
+						if (result.status === 'rejected') throw result.reason;
+					});
 				} catch (reason) {
 					if (strict) throw reason;
 					continue;
 				}
-				for (const specifier of imports.filter(isSupportedDependency)) {
+				for (const url of imports) {
 					let source: string;
 					try {
-						const url = resolveDependencyUrl(specifier, record.url);
 						source = toLogicalResourceSource(config, identity.lang, url);
 					} catch (reason) {
 					// prune 必须得到可证明完整的依赖图；prefetch 可以跳过异常依赖，
@@ -951,7 +956,7 @@ export class ResourcePlanner {
 						if (strict) throw reason;
 						continue;
 					}
-					const dependency = collector.add(identity.lang, source);
+					const dependency = collector.add(identity.lang, source, getResourceType(source));
 					if (dependency) discovered.push(dependency);
 				}
 			}

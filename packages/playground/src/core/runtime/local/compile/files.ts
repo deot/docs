@@ -126,7 +126,10 @@ export const resolveModulePath = (
 	specifier: string,
 	fileIndex: Map<string, string>
 ): string | null => {
-	if (!specifier || !(specifier.startsWith('./') || specifier.startsWith('../') || specifier.startsWith('/'))) {
+	if (!specifier || !(
+		specifier === '.' || specifier === '..' || specifier.startsWith('./')
+		|| specifier.startsWith('../') || specifier.startsWith('/')
+	)) {
 		return null;
 	}
 
@@ -194,7 +197,7 @@ export const listImportSpecifiers = (code: string): string[] => {
 };
 
 export const isRelativeSpecifier = (id: string) => (
-	id.startsWith('./') || id.startsWith('../') || id.startsWith('/')
+	id === '.' || id === '..' || id.startsWith('./') || id.startsWith('../') || id.startsWith('/')
 );
 
 /**
@@ -236,7 +239,8 @@ export const collectBareSpecifiers = (
 	const seen = new Set<string>();
 	filenames.forEach((filename) => {
 		listImportSpecifiers(index.get(normalizeVirtualPath(filename)) || '').forEach((specifier) => {
-			if (!specifier || isRelativeSpecifier(specifier) || seen.has(specifier)) return;
+			if (!specifier || isRelativeSpecifier(specifier) || seen.has(specifier)
+				|| /\.(?:css|scss|sass)(?:[?#]|$)/.test(specifier)) return;
 			seen.add(specifier);
 			result.push(specifier);
 		});

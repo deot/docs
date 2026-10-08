@@ -35,6 +35,16 @@ describe('local playground modules', () => {
 		})).toMatchObject({ default: expect.any(Function) });
 	});
 
+	it('resolves arbitrary npm imports, scoped packages and subpaths without a registry', async () => {
+		const loader = vi.fn(async (url: string) => ({ url }));
+		const result = await loadLocalModules(
+			['nanoid', '@example/utility/helpers'], {}, { vue: Vue, vueRouter: VueRouter }, loader
+		);
+		expect(result.errors).toEqual([]);
+		expect(result.modules.nanoid).toEqual({ url: 'https://cdn.jsdelivr.net/npm/nanoid/+esm' });
+		expect(result.modules['@example/utility/helpers']).toEqual({ url: 'https://cdn.jsdelivr.net/npm/@example/utility/helpers/+esm' });
+	});
+
 	it('uses the bundled vue-router unless an import-map url overrides it', async () => {
 		const loader = vi.fn(async (url: string) => ({ url }));
 		const plain = await loadLocalModules(
@@ -85,7 +95,7 @@ describe('local playground modules', () => {
 			{ vue: Vue, vueRouter: VueRouter },
 			async () => ({ remote: true })
 		);
-		expect(kept.modules['@deot/vc']).not.toMatchObject({ remote: true });
+		expect(kept.modules['@deot/vc']).toBe(await ensureLocalBuiltin('@deot/vc'));
 		expect(kept.modules.pinia).toBeTruthy();
 		expect(kept.modules.dayjs).toBeTypeOf('function');
 		const nested = await loadLocalModules(

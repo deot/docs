@@ -1,5 +1,7 @@
 <template>
+	<RouterView v-if="routeLayout === 'none'" class="docs-page--none" />
 	<div
+		v-else
 		class="docs-app"
 		:class="{
 			'docs-app--database': isUtilityShell,
@@ -85,9 +87,11 @@ import { ResourceSlot } from './components/layout';
 import ClientIcon from './components/icon';
 import { isRendererEditorDemo } from './pages/renderer-editor-demos/catalog';
 import { omitRouteQuery } from './utils/query';
+import type { DocsRoute } from './types';
 
 const route = useRoute();
 const router = useRouter();
+const routeLayout = computed(() => (route.meta.docsRoute as DocsRoute | undefined)?.layout ?? 'default');
 const { t } = useLocale();
 const mainScroller = ref<ScrollerExposed>();
 const mobileSidebarOpen = ref(false);
@@ -174,6 +178,12 @@ body {
 a {
 	color: inherit;
 	text-decoration: none;
+}
+
+.docs-page--none {
+	width: 100%;
+	height: 100%;
+	overflow: auto;
 }
 
 @include block(docs-app) {

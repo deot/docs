@@ -211,7 +211,9 @@ export const createPreviewRequestHandler = (options: PreviewRequestHandlerOption
 				return;
 			}
 			const pathname = decodeRequestPath(req.url || '/');
-			if (pathname.startsWith('/__docs/')) {
+			const isPreviewPage = /^\/__docs\/preview(?:-config-generate)?$/.test(pathname)
+				&& String(req.headers.accept || '').includes('text/html');
+			if (pathname.startsWith('/__docs/') && !isPreviewPage) {
 				res.statusCode = 404;
 				res.end('Not Found');
 				return;

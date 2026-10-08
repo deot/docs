@@ -9,7 +9,28 @@ const zhCN = {
 			loading: '加载中…',
 			poweredBy: '由 @deot/docs 提供支持',
 			resourceRequestFailed: '资源请求失败',
+			previewUrlRequired: 'url 参数必须指定单个资源地址',
+			previewStyleFailed: 'CSS 加载失败：{url}',
+			previewConfigFailed: '预览配置无效：{message}',
+			previewUrlUnsupported: '仅支持 HTTP(S) 或相对地址的 .vue、page.json 和 *.page.json 资源',
 			yes: '是'
+		},
+		previewConfigGenerate: {
+			title: '预览链接生成器',
+			description: '配置远程 Vue 或 page.json，实时生成可分享的预览链接。',
+			importLabel: '已有预览链接',
+			parseHint: '粘贴 /__docs/preview?raw=... 或 ?url=... 链接',
+			parse: '解析链接',
+			urlHint: '远程 .vue、page.json 或 *.page.json 地址',
+			stylesHint: 'JSON 数组；按顺序填写 CSS URL，支持 HTTP(S) 和站点根路径。',
+			modulesHint: 'JSON 对象；模块名 → ESM URL，覆盖当前预览的 import 映射。',
+			playgroundHint: 'JSON 对象；支持 local、styleless、views、viewport、previewInset、expandable、previewScroller、title。',
+			language: 'lang · 预览语言',
+			defaultLanguage: '站点默认语言',
+			link: '实时生成的链接',
+			copy: '复制链接',
+			preview: '打开预览',
+			configuration: '查看编码前的配置'
 		},
 		footer: {
 			resources: '资源',

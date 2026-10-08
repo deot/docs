@@ -134,6 +134,21 @@ describe('client layout components', () => {
 		expect(wrapper.find('.docs-layout--home').exists()).toBe(false);
 	});
 
+	it('renders only route content with layout none and restores the default shell on navigation', async () => {
+		route.meta = { docsRoute: { layout: 'none', content: './App.vue', header: 'default', extra: './extra.md' } };
+		const wrapper = mount(App);
+		expect(wrapper.findAll('[data-view]')).toHaveLength(1);
+		expect(wrapper.find('[data-view="default"]').exists()).toBe(true);
+		expect(wrapper.find('.docs-app').exists()).toBe(false);
+		expect(wrapper.find('.docs-layout').exists()).toBe(false);
+		expect(wrapper.findAll('[data-fixed-slot]')).toHaveLength(0);
+		expect(wrapper.findAllComponents({ name: 'Scroller' })).toHaveLength(0);
+		route.meta = { docsRoute: { layout: 'default' } };
+		await flushPromises();
+		expect(wrapper.find('.docs-layout').exists()).toBe(true);
+		expect(wrapper.findAll('[data-view]')).toHaveLength(2);
+	});
+
 	it('opens and closes the mobile sidebar without changing utility routes', async () => {
 		const wrapper = mount(() => (<App />));
 		const toggle = wrapper.find('.docs-app__sidebar-toggle');

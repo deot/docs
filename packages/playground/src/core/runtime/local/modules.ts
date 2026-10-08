@@ -1,4 +1,4 @@
-import { createBuiltinImports } from '../../../cdn';
+import { createBuiltinImports, resolveNpmImport } from '../../../cdn';
 import { ensureLocalBuiltin, localBuiltinIds } from './builtins';
 
 type HostModule = Record<string | symbol, unknown>;
@@ -166,6 +166,7 @@ export const loadLocalModules = async (
 	const localIds = new Set<string>();
 
 	specifiers.forEach((specifier) => {
+		let local = false;
 		if (prefersLocalBuiltin(specifier, imports, cdnURL)) localIds.add(specifier);
 		else {
 			let cursor = specifier;
@@ -175,6 +176,7 @@ export const loadLocalModules = async (
 				const parent = cursor.slice(0, slash);
 				if (prefersLocalBuiltin(parent, imports, cdnURL)) {
 					localIds.add(parent);
+					local = true;
 					break;
 				}
 				cursor = parent;
@@ -187,6 +189,10 @@ export const loadLocalModules = async (
 		const target = resolveImportTarget(specifier, imports);
 		if (target && prefersLocalBuiltin(target, imports, cdnURL)) localIds.add(target);
 		else if (target) targets.add(target);
+		else if (!local && !localIds.has(specifier)) {
+			imports[specifier] = resolveNpmImport(specifier);
+			targets.add(specifier);
+		}
 	});
 
 	await Promise.all([...localIds].map(async (id) => {

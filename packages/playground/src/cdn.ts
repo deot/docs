@@ -68,3 +68,8 @@ export const createBuiltinStyles = (
 ): Record<string, string> => Object.fromEntries(
 	PREVIEW_STYLE_ASSETS.map(asset => [asset, cdnAsset(cdnURL, asset)])
 );
+
+// 没有 import map 的 npm 依赖交给 jsDelivr 转成浏览器可加载的 ESM。
+export const resolveNpmImport = (specifier: string) => (
+	/^https?:\/\//.test(specifier) ? specifier : jsdelivrEsmURL(`${specifier}/+esm`)
+);

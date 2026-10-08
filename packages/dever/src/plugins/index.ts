@@ -7,6 +7,7 @@ import { defineConfig } from 'vite';
 import type { Plugin, ViteDevServer } from 'vite';
 import { isInside, resolveDocsWorkspace } from '../workspace';
 import { respondWorkspaceModule } from '../workspace-module';
+import { createOptionalDependenciesPlugin } from './optional-dependencies';
 import type { ResolvedDocsWorkspace } from '../workspace';
 import type { DocsPluginOptions } from '../types';
 
@@ -300,6 +301,9 @@ const configureWorkspaceServer = (
 		let realResourceRoot = realWorkspace;
 		try {
 			const rawPathname = getRawPathname(req.url || '/');
+			if (/^\/__docs\/preview(?:-config-generate)?$/.test(rawPathname) && String(req.headers.accept || '').includes('text/html')) {
+				return next();
+			}
 			if (!options.preview && rawPathname.startsWith('/__docs/module/')) {
 				void respondWorkspaceModule(req, res, resolved.projectRoot).catch((reason) => {
 					if (res.writableEnded) return;
@@ -525,9 +529,11 @@ const createHistoryPlugin = (
 		server.middlewares.use(async (req, res, next) => {
 			const requestUrl = req.url || '/';
 			const url = requestUrl.replace(/\/+/g, '/').replace(/[?#].*$/s, '') || '';
+			const accept = String(req.headers?.accept || 'text/html');
+			const isPreviewPage = /^\/__docs\/preview(?:-config-generate)?$/.test(url) && accept.includes('text/html');
 			const candidate = path.resolve(root, `.${url}`);
 			const isFile = fs.existsSync(candidate) && fs.statSync(candidate).isFile();
-			if (options.preview && url.startsWith('/__docs/')) {
+			if (options.preview && url.startsWith('/__docs/') && !isPreviewPage) {
 				res.statusCode = 404;
 				res.end('Not Found');
 				return;
@@ -535,12 +541,11 @@ const createHistoryPlugin = (
 			if (
 				res.writableEnded
 				|| requestUrl.includes('html-proxy&')
-				|| innerPathRegex.test(url)
+				|| (innerPathRegex.test(url) && !isPreviewPage)
 				|| isFile
 			) return next();
 			// 浏览器导航声明接受 HTML；ResourceGateway 使用 text/plain，因此缺失的
 			// .md/.vue 仍返回真实 404，同时路由 slug 可以安全包含点号。
-			const accept = String(req.headers?.accept || 'text/html');
 			if (!accept.includes('text/html')) return next();
 			const indexFile = resolvedWorkspace?.entry
 				|| resolveDocsWorkspace(
@@ -630,6 +635,7 @@ export default (
 	resolvedWorkspace?: ResolvedDocsWorkspace
 ) => defineConfig({
 	plugins: [
+		createOptionalDependenciesPlugin(),
 		createRuntimePlugin(options, resolvedWorkspace),
 		createWorkspacePlugin(options, resolvedWorkspace),
 		createHistoryPlugin(options, resolvedWorkspace),

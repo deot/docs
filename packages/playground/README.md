@@ -156,6 +156,7 @@ const handleMessage = async () => {
 - Playground 运行时通过公共 CDN 加载 Vue 和默认 import map 中的依赖，手工预览需要网络访问。
 - 默认 CDN 为 `https://cdn.jsdelivr.net/npm`，可通过 `options.cdnURL` 换成 unpkg 等兼容 `/{package}/{file}` 路径的镜像；该地址用于预览样式和内置 import map。
 - `lodash-es` 和在线 Sass 编译器使用 jsDelivr 的 `/+esm` 入口；unpkg 等 CDN 不支持该路径。
+- 直接渲染时，未配置的 npm 模块（含作用域包和子路径）自动从 jsDelivr 的 `/+esm` 入口加载；组件包的传递依赖也适用，`import()` 在调用时加载。`@deot/vc` 的组件、hooks 和 locale 走远程模块加载器，Vue 保持与宿主共用。可用 `options.builtinImportMap.imports` 指定依赖的版本和 URL。
 - Vue SFC 的 `<style lang="scss">` / `lang="sass"` 以及独立 `.scss` / `.sass` 文件会在浏览器里编译；`_partial.scss` 只作为 `@use` 依赖。
 - `options.builtinImportMap.imports` 可以覆盖默认模块 URL。Vue 运行时仍从 `play.vuejs.org` 加载。
 - 每个 Playground 实例都使用自己的 preview 配置和 iframe 消息来源校验。

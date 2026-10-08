@@ -58,7 +58,7 @@ const createIframe = (initialHeight: number) => {
 	};
 };
 
-const mockBox = (element: HTMLElement, size: number) => {
+const mockBox = (element: Element, size: number) => {
 	Object.defineProperties(element, {
 		offsetHeight: { configurable: true, get: () => size },
 		scrollHeight: { configurable: true, get: () => size }
@@ -359,6 +359,50 @@ describe('runtime auto height', () => {
 		expect(runtimeHeight.value).toBe(410);
 	});
 
+	it('keeps inline line-box height stable and lets natural content shrink', async () => {
+		vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+		const container = document.createElement('div');
+		container.className = 'docs-playground-local';
+		const mountPoint = document.createElement('div');
+		mountPoint.className = 'docs-playground-local__mount docs-playground-local__mount--auto';
+		const strong = document.createElement('strong');
+		strong.textContent = 'Runtime first';
+		mountPoint.appendChild(strong);
+		container.appendChild(mountPoint);
+		document.body.appendChild(container);
+		let naturalHeight = 28;
+		let height!: Ref<number>;
+		mockBox(strong, 22);
+		Object.defineProperties(mountPoint, {
+			offsetHeight: { get: () => naturalHeight },
+			clientHeight: { get: () => height.value },
+			scrollHeight: { get: () => Math.max(naturalHeight, height.value) }
+		});
+		const wrapper = mount(defineComponent({
+			setup() {
+				height = useSandboxAutoHeight(shallowRef({ container }));
+				return () => <div />;
+			}
+		}));
+		await nextTick();
+		flushFrames();
+		const observer = ResizeObserverMock.instances.at(-1)!;
+		for (let index = 0; index < 4; index++) {
+			expect(height.value).toBe(28);
+			observer.trigger();
+			flushFrames();
+		}
+		naturalHeight = 56;
+		observer.trigger();
+		flushFrames();
+		expect(height.value).toBe(56);
+		naturalHeight = 28;
+		observer.trigger();
+		flushFrames();
+		expect(height.value).toBe(28);
+		wrapper.unmount();
+	});
+
 	it('measures local sandbox content instead of its bridge iframe', async () => {
 		vi.stubGlobal('ResizeObserver', ResizeObserverMock);
 		const container = document.createElement('div');
@@ -388,6 +432,19 @@ describe('runtime auto height', () => {
 		await nextTick();
 		flushFrames();
 		expect(height.value).toBe(240);
+		// mount 沿用上一次预览高度；内容缩短时不能被它的 offsetHeight 卡住。
+		Object.defineProperty(mountPoint, 'clientHeight', { get: () => 240 });
+		extra.remove();
+		mockBox(child, 64);
+		await nextTick();
+		flushFrames();
+		expect(height.value).toBe(64);
+		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		mockBox(svg, 96);
+		mountPoint.replaceChildren(svg);
+		await nextTick();
+		flushFrames();
+		expect(height.value).toBe(96);
 		wrapper.unmount();
 	});
 });

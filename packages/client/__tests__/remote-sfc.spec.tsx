@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { ResourceRequestError } from '../src/modules/gateway/types';
 import RemoteSfc from '../src/components/remote-sfc/remote-sfc.vue';
+import { computed, shallowRef } from 'vue';
+import { previewConfigKey } from '../src/modules/preview/config';
+import type { PreviewConfig } from '../src/modules/preview/config';
 
 const { load, subscribe, release, push, listeners, notifyOnLoad } = vi.hoisted(() => ({
 	load: vi.fn(),
@@ -12,6 +16,7 @@ const { load, subscribe, release, push, listeners, notifyOnLoad } = vi.hoisted((
 	notifyOnLoad: { value: false }
 }));
 enableAutoUnmount(afterEach);
+afterEach(() => vi.unstubAllGlobals());
 
 vi.mock('vue-router', () => ({ useRouter: () => ({ push }) }));
 vi.mock('../src/modules/gateway', () => ({
@@ -27,7 +32,7 @@ vi.mock('../src/modules/gateway', () => ({
 vi.mock('@deot/docs-playground', async () => ({
 	Playground: (await import('vue')).defineComponent({
 		name: 'Playground',
-		props: ['files', 'entry', 'options', 'styleless', 'previewInset', 'expandable'],
+		props: ['files', 'entry', 'options', 'styleless', 'previewInset', 'expandable', 'local', 'viewport', 'views', 'previewOptions'],
 		emits: ['navigate'],
 		setup: props => () => <div class="playground">{props.entry}</div>
 	})
@@ -103,6 +108,73 @@ describe('RemoteSfc', () => {
 		expect(signals[0].aborted).toBe(true);
 	});
 
+	it('loads extensionless remote modules, nested Vue files and Sass partials', async () => {
+		const root = 'https://raw.githubusercontent.com/deot/vc/refs/heads/main/packages/components/theme/examples/';
+		const sources: Record<string, string> = {
+			[`${root}theme-audit.vue`]: `<script setup>
+				import './theme-audit/catalogue'; import './theme-audit/gallery.vue';
+			</script><style lang="scss">@use './theme-audit/style';</style>`,
+			[`${root}theme-audit/catalogue.ts`]: 'export const count = 1',
+			[`${root}theme-audit/gallery.vue`]: '<template><div /></template>',
+			[`${root}theme-audit/style.scss`]: '@use \'../../../style/theme\';'
+		};
+		const partial = new URL('../../../style/_theme.scss', `${root}theme-audit/style.scss`).href;
+		sources[partial] = '$color: red;';
+		vi.stubGlobal('fetch', vi.fn(async () => ({
+			ok: true,
+			json: async () => ({ tree: Object.keys(sources).map(url => ({ type: 'blob', path: url.split('/refs/heads/main/')[1] })) })
+		})));
+
+		load.mockImplementation(async (_identity: any, options: any) => {
+			if (!(options.url in sources)) throw new ResourceRequestError(404);
+			return { content: sources[options.url] };
+		});
+		const wrapper = mount(RemoteSfc, { props: { source: `${root}theme-audit.vue`, lang: 'zh-CN' } });
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		const files = wrapper.findComponent({ name: 'Playground' }).props('files');
+		expect(Object.keys(files)).toHaveLength(5);
+		expect(files[new URL(partial).pathname.slice(1)]).toBe('$color: red;');
+		expect(Object.keys(files).some(key => key.endsWith('/catalogue.ts'))).toBe(true);
+	});
+
+	it('continues loading relative files when the GitHub file tree is rate limited', async () => {
+		const base = 'https://raw.githubusercontent.com/deot/vc/refs/heads/main/demo/';
+		const sources: Record<string, string> = {
+			[`${base}App.vue`]: `<script>import './logic';</script>`,
+			[`${base}logic.ts`]: 'export const value = 1;'
+		};
+		vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 403 })));
+		load.mockImplementation(async (_identity: any, options: any) => {
+			if (!(options.url in sources)) throw new ResourceRequestError(404);
+			return { content: sources[options.url] };
+		});
+		const wrapper = mount(RemoteSfc, { props: { source: `${base}App.vue`, lang: 'zh-CN' } });
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		expect(Object.keys(wrapper.findComponent({ name: 'Playground' }).props('files'))).toHaveLength(2);
+	});
+
+	it('tracks a non-GitHub HTTP source tree through extensionless imports and cycles', async () => {
+		const base = 'https://assets.example.com/demo/';
+		const sources: Record<string, string> = {
+			[`${base}App.vue`]: `<script setup>import './logic'; import './widgets';</script><style>@use './theme';</style>`,
+			[`${base}logic.js`]: `import './App.vue'; export const value = 1;`,
+			[`${base}widgets/index.tsx`]: `export { value } from '../logic';`,
+			[`${base}_theme.scss`]: '$color: red;'
+		};
+		load.mockImplementation(async (_identity: any, options: any) => {
+			if (!(options.url in sources)) throw new ResourceRequestError(404);
+			return { content: sources[options.url] };
+		});
+		const wrapper = mount(RemoteSfc, { props: { source: `${base}App.vue`, lang: 'zh-CN' } });
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		expect(wrapper.findComponent({ name: 'Playground' }).props('files')).toEqual({
+			'demo/App.vue': sources[`${base}App.vue`],
+			'demo/logic.js': sources[`${base}logic.js`],
+			'demo/widgets/index.tsx': sources[`${base}widgets/index.tsx`],
+			'demo/_theme.scss': '$color: red;'
+		});
+	});
+
 	it('forwards site playground defaults while keeping remote sfc styleless', async () => {
 		window.$docs.components = {
 			playground: {
@@ -131,6 +203,39 @@ describe('RemoteSfc', () => {
 				}
 			}
 		});
+	});
+
+	it('applies preview modules and local props without reloading sources for CSS changes', async () => {
+		const config = shallowRef<PreviewConfig>({
+			url: './components/index.vue', styles: ['/custom.css'], modules: { lodash: 'https://example.com/lodash.js' },
+			playground: { local: true, styleless: false, viewport: [375, 640], previewInset: 16, views: ['runtime', 'files'] }
+		});
+		const wrapper = mount(RemoteSfc, {
+			props: { source: config.value.url, lang: 'zh-CN' },
+			global: { provide: { [previewConfigKey as symbol]: computed(() => config.value) } }
+		});
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		const playground = wrapper.findComponent({ name: 'Playground' });
+		expect(playground.props('options').builtinImportMap.imports.lodash).toBe('https://example.com/lodash.js');
+		expect(playground.props('viewport')).toEqual([375, 640]);
+		expect(playground.props('styleless')).toBe(false);
+		expect(playground.props('previewInset')).toBe(16);
+		const options = playground.props('options');
+		const instance = playground.vm.$;
+		const calls = load.mock.calls.length;
+		config.value = { ...config.value, styles: ['/other.css'], modules: { ...config.value.modules } };
+		await flushPromises();
+		expect(wrapper.findComponent({ name: 'Playground' }).props('options')).toBe(options);
+		expect(wrapper.findComponent({ name: 'Playground' }).vm.$).toBe(instance);
+		expect(load).toHaveBeenCalledTimes(calls);
+		config.value = { ...config.value, modules: { lodash: 'https://example.com/next.js' }, playground: { local: false } };
+		await flushPromises();
+		const iframe = wrapper.findComponent({ name: 'Playground' });
+		expect(iframe.vm.$).not.toBe(instance);
+		expect(iframe.props('local')).toBe(false);
+		expect(iframe.props('previewOptions').headHTML).toContain('/other.css');
+		expect(iframe.props('options').builtinImportMap.imports.lodash).toBe('https://example.com/next.js');
+		expect(load).toHaveBeenCalledTimes(calls);
 	});
 
 	it('resolves recursive imports when development URLs are root-relative', async () => {

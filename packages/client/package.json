@@ -27,9 +27,9 @@
     "@deot/docs-renderer": "^1.1.1",
     "@deot/docs-theme": "^1.1.1",
     "@deot/helper-cache": "^1.1.11",
-    "@deot/helper-fp": "^1.1.6",
+    "@deot/helper": "^1.1.20",
     "@deot/http": "^1.1.10",
-    "@deot/vc": "^1.2.1",
+    "@deot/vc": "^1.2.3",
     "es-module-lexer": "^2.3.1"
   },
   "devDependencies": {

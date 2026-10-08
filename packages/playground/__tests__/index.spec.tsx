@@ -65,6 +65,10 @@ const { popup, store, setFiles } = vi.hoisted(() => {
 });
 
 vi.mock('../src/editor', () => ({ Editor: { popup } }));
+vi.mock('../src/core/repl-modules', () => ({
+	bindReplModules: vi.fn(),
+	resolveReplImports: vi.fn(async (imports: Record<string, string>) => imports)
+}));
 vi.mock('@deot/vc', async () => {
 	const vue = await import('vue');
 	class Portal {
@@ -155,6 +159,7 @@ vi.mock('@deot/vc', async () => {
 });
 vi.mock('@vue/repl', () => ({
 	File: class {
+		compiled = { js: 'export default {};', ssr: '', css: '' };
 		constructor(public filename: string, public code = '') {}
 	},
 	Sandbox: defineComponent({
@@ -192,7 +197,7 @@ vi.mock('@vue/repl', () => ({
 		store.setFiles = setFiles.mockImplementation((files: Record<string, string>, entry: string) => {
 			store.files = Object.fromEntries(Object.entries(files).map(([filename, code]) => [
 				`src/${filename}`,
-				{ filename: `src/${filename}`, code }
+				{ filename: `src/${filename}`, code, compiled: { js: 'export default {};', ssr: '', css: '' } }
 			]));
 			store.mainFile = `src/${entry}`;
 		});

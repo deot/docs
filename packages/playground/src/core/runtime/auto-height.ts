@@ -160,7 +160,6 @@ export const useSandboxAutoHeight = (sandboxRef: Ref<SandboxExposed | null>) => 
 		const rootTop = root.getBoundingClientRect().top;
 		let childrenBottom = 0;
 		for (const child of root.children) {
-			if (!(child instanceof HTMLElement)) continue;
 			if (view.getComputedStyle(child).position === 'fixed') continue;
 			const rect = child.getBoundingClientRect();
 			const marginBottom = Number.parseFloat(view.getComputedStyle(child).marginBottom) || 0;
@@ -169,7 +168,11 @@ export const useSandboxAutoHeight = (sandboxRef: Ref<SandboxExposed | null>) => 
 		const overflowingHeight = root.scrollHeight > root.clientHeight + 1
 			? root.scrollHeight
 			: 0;
-		return Math.ceil(Math.max(root.offsetHeight, childrenBottom, overflowingHeight));
+		// mount 继承上一次预览高度，offsetHeight 不能作为内容收缩时的下限。
+		const naturalHeight = root.classList.contains('docs-playground-local__mount--auto')
+			? root.offsetHeight
+			: 0;
+		return Math.ceil(Math.max(childrenBottom, overflowingHeight, naturalHeight));
 	};
 
 	const measureLocalContainer = () => {

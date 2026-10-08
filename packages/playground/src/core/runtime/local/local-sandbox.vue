@@ -9,7 +9,11 @@
 			:srcdoc="bridgeSrcdoc"
 			@load="handleBridgeLoad"
 		/>
-		<div ref="mountEl" class="docs-playground-local__mount" />
+		<div
+			ref="mountEl"
+			class="docs-playground-local__mount"
+			:class="{ 'docs-playground-local__mount--auto': autoHeight }"
+		/>
 	</div>
 </template>
 <script setup lang="ts">
@@ -51,9 +55,11 @@ const props = withDefaults(defineProps<{
 	options: PlaygroundOptions;
 	previewScroller?: PlaygroundPreviewScroller;
 	clearConsole?: boolean;
+	autoHeight?: boolean;
 }>(), {
 	previewScroller: false,
-	clearConsole: false
+	clearConsole: false,
+	autoHeight: false
 });
 
 const emit = defineEmits<{
@@ -307,6 +313,12 @@ defineExpose({
 		height: 100%;
 		min-width: 0;
 		min-height: 0;
+
+		@include modifier(auto) {
+			// 自然高度包含行框与边距，不能继承上一次测量结果。
+			display: flow-root;
+			height: auto;
+		}
 	}
 }
 </style>

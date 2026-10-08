@@ -41,9 +41,11 @@ const getEnvironmentBase = (config: DocsConfig) => {
 		const segments = location.pathname.split('/').filter(Boolean);
 		const configuredLanguages = Object.keys(config.locales);
 		const languages = configuredLanguages.length ? configuredLanguages : ['zh-CN'];
-		const languageIndex = segments.findIndex(segment => languages.includes(segment));
-		if (languageIndex >= 0) {
-			const deploymentSegments = segments.slice(0, languageIndex);
+		const routeIndex = /^__docs\/preview(?:-config-generate)?$/.test(segments.slice(-2).join('/'))
+			? segments.length - 2
+			: segments.findIndex(segment => languages.includes(segment));
+		if (routeIndex >= 0) {
+			const deploymentSegments = segments.slice(0, routeIndex);
 			return new URL(`/${deploymentSegments.join('/')}${deploymentSegments.length ? '/' : ''}`, location.origin).href;
 		}
 		return new URL('./', location.href).href;

@@ -192,6 +192,7 @@ const fail = () => { throw new Error('render-fail') }
 	});
 
 	it('reports a remote module that cannot be loaded', async () => {
+		const fetchRequest = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'));
 		const errors: string[] = [];
 		const wrapper = mount(LocalSandbox, {
 			props: {
@@ -215,5 +216,6 @@ import dayjs from 'dayjs'
 		});
 		await vi.waitFor(() => expect(errors.join('\n')).toContain('无法加载模块'));
 		wrapper.unmount();
+		fetchRequest.mockRestore();
 	});
 });

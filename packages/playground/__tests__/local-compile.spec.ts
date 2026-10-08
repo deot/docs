@@ -75,6 +75,88 @@ createApp(App).mount('#app');`,
 		expect(compiled.css.join('\n')).toContain('#123456');
 	});
 
+	it('compiles imported TSX components with Vue events and children', async () => {
+		const { linked } = await mountLinked({
+			'App.vue': `<script setup>import Example from './Example';</script><template><Example /></template>`,
+			'Example.tsx': `import { defineComponent, ref } from 'vue';
+				export default defineComponent({ setup() { const count = ref<number>(0);
+				return () => <button onUpdate:modelValue={(value: number) => { count.value = value; }}
+					onClick={() => count.value++}>Count {count.value}</button>; } });`
+		});
+		const wrapper = mount(linked.component!);
+		expect(wrapper.text()).toBe('Count 0');
+		await wrapper.get('button').trigger('click');
+		expect(wrapper.text()).toBe('Count 1');
+		wrapper.unmount();
+	});
+
+	it('preserves Vue model events with nested expressions and string braces in TSX', async () => {
+		const { linked } = await mountLinked({
+			'App.vue': `<script setup>import Example from './Example';</script><template><Example /></template>`,
+			'Example.tsx': `import { defineComponent, ref } from 'vue';
+				const Child = defineComponent({ emits: ['update:modelValue'], setup(_, { emit }) {
+					return () => <button onClick={() => emit('update:modelValue', 2)}>Update</button>;
+				} });
+				export default defineComponent({ setup() { const count = ref(0);
+					return () => <><Child onUpdate:modelValue={(value: number) => {
+						const offset = 'a}b'.length; count.value = value + offset;
+					}} /><p>Updated {count.value}</p></>; } });`
+		});
+		const wrapper = mount(linked.component!);
+		await wrapper.get('button').trigger('click');
+		expect(wrapper.get('p').text()).toBe('Updated 5');
+		wrapper.unmount();
+	});
+
+	it('erases imported types from exports and replaces the Vite NODE_ENV constant', async () => {
+		const { linked } = await mountLinked({
+			'App.vue': `<script setup>import { mode } from './env';</script><template><p>{{ mode }}</p></template>`,
+			'env.ts': `import type { Options as EnvOptions } from './types';
+				export { EnvOptions }; export const mode = process.env.NODE_ENV;`,
+			'types.ts': 'export interface Options { enabled: boolean }'
+		});
+		const wrapper = mount(linked.component!);
+		expect(wrapper.text()).toBe('development');
+		wrapper.unmount();
+	});
+
+	it('replaces environment expressions while preserving strings, comments and template text', () => {
+		const source = `
+			export const quoted = "process.env.NODE_ENV";
+			export const single = 'process.env.NODE_ENV';
+			export const metaText = "import.meta.env.MODE";
+			export const template = \`process.env.NODE_ENV import.meta.env.MODE\`;
+			export const interpolated = \`env:\${process.env.NODE_ENV}:\${import.meta.env.MODE}\`;
+			export const actual: string = process.env.NODE_ENV;
+			export const url = import.meta.url;
+			export const pattern = /process.env.NODE_ENV/.source;
+			const other = { process: { env: { NODE_ENV: 'custom' } } };
+			export const nested = other.process.env.NODE_ENV;
+			// process.env.NODE_ENV import.meta.env.MODE
+		`;
+		const script = transformScript(source, 'env.ts');
+		const exports = {};
+		new Function('exports', script)(exports);
+		expect(exports).toMatchObject({
+			quoted: 'process.env.NODE_ENV', single: 'process.env.NODE_ENV', metaText: 'import.meta.env.MODE',
+			template: 'process.env.NODE_ENV import.meta.env.MODE', interpolated: 'env:development:development',
+			actual: 'development', url: 'playground://env.ts', pattern: 'process.env.NODE_ENV', nested: 'custom'
+		});
+		expect(script).toContain('// process.env.NODE_ENV import.meta.env.MODE');
+	});
+
+	it('exports compiled Sass module parameters without injecting the export block', async () => {
+		const { compiled, linked } = await mountLinked({
+			'App.vue': `<script setup>import params from './parameters.module.scss';</script><template><p>{{ params.accent }}</p></template>`,
+			'parameters.module.scss': '@use \'./variables\' as source; :export { accent: source.$accent; }',
+			'_variables.scss': '$accent: red;'
+		});
+		const wrapper = mount(linked.component!);
+		expect(wrapper.text()).toBe('red');
+		expect(compiled.css.join('')).not.toContain(':export');
+		wrapper.unmount();
+	});
+
 	it('compiles scss from the same files without injecting bem', async () => {
 		const files: PlaygroundFiles = {
 			'App.vue': `<template><p class="scss-box">SCSS</p></template>
@@ -202,7 +284,7 @@ $broken: ;
 		expect(options.errors.join('\n')).toContain('SCSS');
 		expect(options.modules['/App.vue']?.js).toContain('option');
 		const jsxFile = await compilePlayground({ 'App.jsx': 'export default {}' }, 'App.jsx');
-		expect(jsxFile.errors.join('\n')).toContain('JSX/TSX');
+		expect(jsxFile.errors).toEqual([]);
 		const cycleFiles: PlaygroundFiles = {
 			'a.js': `import { b } from './b.js'\nexport const a = b\n`,
 			'b.js': `import { a } from './a.js'\nexport const b = a || 2\n`,

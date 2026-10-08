@@ -2,9 +2,10 @@
 
 import { Resource } from '../src/modules/resource';
 import { Gateway } from '../src/modules/gateway';
+import { ResourceRequestError } from '../src/modules/gateway/types';
 import { defineRendererModule } from '@deot/docs-renderer';
 import { defineComponent } from 'vue';
-import type { DocsConfig } from '../src/types';
+import type { DocsConfig, ResourceIdentity } from '../src/types';
 import { createContentRecord } from './fixtures/docs';
 
 const component = defineComponent(() => () => null);
@@ -26,6 +27,35 @@ const resourceModule = (
 
 describe('ResourcePlan route resources', () => {
 	afterEach(() => vi.restoreAllMocks());
+
+	it('prefetches and retains the actual non-GitHub dependency tree', async () => {
+		const base = 'https://assets.example.com/';
+		const root = `${base}App.vue`;
+		const config: DocsConfig = {
+			namespace: 'http-tree',
+			locales: { 'en-US': { label: 'English' } },
+			routes: { '/example': { content: root } }
+		};
+		const sources: Record<string, string> = {
+			[root]: `<script>import './logic';</script>`,
+			[`${base}logic.ts`]: `export * from './parts';`,
+			[`${base}parts/index.js`]: `import '../App.vue';`
+		};
+		const cached = new Map<string, ReturnType<typeof createContentRecord>>();
+		vi.spyOn(Gateway, 'list').mockImplementation(async () => [...cached.values()]);
+		const prefetch = vi.fn(async (identities: ResourceIdentity[]) => identities.map((identity) => {
+			const content = sources[identity.source];
+			if (content === undefined) return { status: 'rejected' as const, reason: new ResourceRequestError(404) };
+			const record = createContentRecord({ identity, url: identity.source, content });
+			cached.set(identity.source, record);
+			return { status: 'fulfilled' as const, value: record };
+		}));
+		const plan = await ResourcePlan.build({ config, strict: true, prefetchResources: prefetch });
+		expect([...plan.collector.identities.values()].map(identity => identity.source)).toEqual([
+			root, `${base}logic.ts`, `${base}parts/index.js`
+		]);
+		expect(plan.results.every(result => result.status === 'fulfilled')).toBe(true);
+	});
 
 	it('maps static, redirected and sidebar dynamic Markdown to localized routes', async () => {
 		const config: DocsConfig = {
