@@ -1,5 +1,13 @@
 # @deot/docs-markdown ChangeLog
 
+## v1.1.5
+
+_2026-10-08_
+
+### Features
+
+- feat: add configurable remote previews and CDN fallback ([bc9bcb4](https://github.com/deot/docs/commit/bc9bcb4885b2e4f99f302f8b0cc8bd85bc5b76b1))
+
 ## v1.1.4
 
 _2026-10-06_
