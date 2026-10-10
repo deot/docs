@@ -30,11 +30,13 @@ const collectStyleImports = (code: string) => (
 );
 
 const collectModuleImports = async (code: string) => {
-	await init;
+	await init();
 	try {
-		return parse(code)[0]
-			.filter(item => !/^(?:import|export)\s+type\b(?!\s+from\b)/.test(code.slice(item.ss, item.se)))
-			.map(item => item.n).filter((item): item is string => Boolean(item));
+		return parse(code)[0].flatMap((item) => {
+			if (item.type === 'dynamic') return item.specifier && !item.glob ? [item.specifier] : [];
+			if (item.type === 'import-meta' || item.typeOnly) return [];
+			return [item.specifier];
+		});
 	} catch {
 		// JSX 不是 es-module-lexer 的输入语言，仍可读取其静态模块引用。
 		// 类型声明只移除自身的绑定及可选来源，不跨越下一条语句。

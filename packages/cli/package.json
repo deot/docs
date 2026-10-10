@@ -17,8 +17,8 @@
     "commander": "^15.0.0"
   },
   "devDependencies": {
-    "cross-env": "^10.0.1",
-    "@deot/dev-test": "^2.9.13"
+    "cross-env": "^10.1.0",
+    "@deot/dev-test": "^2.9.14"
   },
   "bin": {
     "doc": "bin/cli.js"

@@ -14,7 +14,7 @@
     "link": "ddc link",
     "dev": "ddc dev --vue-package 'renderer,playground,markdown'",
     "update": "ddc update",
-    "build": "ddc build --vue-package 'client,renderer,index,playground,markdown' --external vue,@deot/vc",
+    "build": "ddc build --vue-package 'client,renderer,index,playground,markdown' --external vue,@deot/vc --eval-package 'client'",
     "test": "ddc test",
     "add": "ddc add",
     "release": "ddc release",
@@ -43,6 +43,6 @@
   },
   "homepage": "https://github.com/deot/docs#readme",
   "devDependencies": {
-    "@deot/dev": "^2.9.15"
+    "@deot/dev": "^2.9.19"
   }
 }

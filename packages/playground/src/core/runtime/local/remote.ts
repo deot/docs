@@ -99,16 +99,17 @@ export const createRemoteLoader = (
 			throw new Error(`${response.status} ${url}`);
 		}
 		const text = await response.text();
-		await init;
+		await init();
 		const [specifiers] = parse(text);
 		// 按语法位置替换 import()，避免误改字符串、注释或对象的 import 方法。
 		let source = text;
 		for (const item of [...specifiers].reverse()) {
-			if (item.d >= 0) source = source.slice(0, item.ss) + '__import' + source.slice(item.ss + 6);
+			if (item.type === 'dynamic') source = source.slice(0, item.importStart) + '__import' + source.slice(item.importStart + 6);
 		}
 		texts.set(url, source);
-		await Promise.all(specifiers.filter(item => item.d === -1).map(async (item) => {
-			const next = dependencyUrl(url, item.n!);
+		await Promise.all(specifiers.map(async (item) => {
+			if (item.type !== 'static' && item.type !== 'reexport-star') return;
+			const next = dependencyUrl(url, item.specifier);
 			if (next) await crawl(next);
 		}));
 	};

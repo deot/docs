@@ -19,7 +19,7 @@
   "dependencies": {
     "@deot/docs-locale": "^1.1.2",
     "@deot/docs-theme": "^1.1.2",
-    "@deot/helper": "^1.1.20"
+    "@deot/helper": "^1.1.21"
   },
   "peerDependencies": {
     "@deot/vc": "^1.2.3",
@@ -28,6 +28,6 @@
   "devDependencies": {
     "@deot/vc": "^1.2.3",
     "fake-indexeddb": "^6.2.5",
-    "vue": "^3.5.39"
+    "vue": "^3.5.43"
   }
 }

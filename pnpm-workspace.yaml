@@ -16,3 +16,9 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - '@deot/*'
+  - '@vue/*'
+  - 'vite'
+  - 'vue-tsc'
+  - '@puppeteer/*'
+  - 'puppeteer'
+  - 'puppeteer-core'
