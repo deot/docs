@@ -1,5 +1,13 @@
 # @deot/docs-renderer ChangeLog
 
+## v1.1.3
+
+_2026-10-10_
+
+### Updates
+
+- chore: deps updated ([816a4b8](https://github.com/deot/docs/commit/816a4b8ac5d6e277618747acfa8b931b887d3f3d))
+
 ## v1.1.2
 
 _2026-10-08_

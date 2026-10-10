@@ -1,5 +1,17 @@
 # @deot/docs-markdown ChangeLog
 
+## v1.1.6
+
+_2026-10-10_
+
+### Bugfixes
+
+- fix(client,dever,playground): keep Vue runtime consistent in CDN previews ([3699dea](https://github.com/deot/docs/commit/3699dea79b72691d13ffd6d6c663437418cafc1f))
+
+### Updates
+
+- chore: deps updated ([816a4b8](https://github.com/deot/docs/commit/816a4b8ac5d6e277618747acfa8b931b887d3f3d))
+
 ## v1.1.5
 
 _2026-10-08_

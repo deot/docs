@@ -1,5 +1,17 @@
 # @deot/docs-dever ChangeLog
 
+## v1.1.4
+
+_2026-10-10_
+
+### Bugfixes
+
+- fix: keep Vue runtime consistent in CDN previews ([3699dea](https://github.com/deot/docs/commit/3699dea79b72691d13ffd6d6c663437418cafc1f))
+
+### Updates
+
+- chore: deps updated ([816a4b8](https://github.com/deot/docs/commit/816a4b8ac5d6e277618747acfa8b931b887d3f3d))
+
 ## v1.1.3
 
 _2026-10-08_
