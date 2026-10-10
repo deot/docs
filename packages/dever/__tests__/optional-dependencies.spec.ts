@@ -2,7 +2,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { build, optimizeDeps, resolveConfig } from 'vite';
+import { build, mergeConfig, optimizeDeps, resolveConfig } from 'vite';
 import { createOptionalDependenciesPlugin } from '../src/plugins/optional-dependencies';
 import { pluginHook } from './fixtures';
 
@@ -61,5 +61,25 @@ describe('optional peer CDN fallback', () => {
 		const optimized = fs.readFileSync(metadata.optimized['fixture-widget'].file, 'utf8');
 		expect(optimized).toContain('import("https://cdn.jsdelivr.net/npm/@example/capture/+esm")');
 		expect(optimized).not.toContain('Could not resolve');
+	});
+
+	it('applies the CDN fallback in the published Client browser build', async () => {
+		vi.stubEnv('BUILD_OPTIONS', encodeURIComponent(JSON.stringify({
+			packageName: '@deot/docs-client', format: 'es'
+		})));
+		try {
+			const { default: config } = await import('../../../z.build.config');
+			const output = await build(mergeConfig(config, {
+				root, configFile: false, logLevel: 'silent',
+				build: { write: false, lib: { entry, formats: ['es'] } }
+			}));
+			const bundles = Array.isArray(output) ? output : [output];
+			const code = bundles.flatMap(bundle => 'output' in bundle ? bundle.output : [])
+				.filter(chunk => chunk.type === 'chunk').map(chunk => chunk.code).join('\n');
+			expect(code).toContain('import("https://cdn.jsdelivr.net/npm/@example/capture/+esm")');
+			expect(code).not.toContain('Could not resolve');
+		} finally {
+			vi.unstubAllEnvs();
+		}
 	});
 });

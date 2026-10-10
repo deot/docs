@@ -123,6 +123,7 @@ export const bootstrap = async (config?: DocsConfig) => {
 	return { app, router, disconnect };
 };
 
+// CDN 延迟分块可能重复执行入口；Vue 挂载后会为容器添加 data-v-app。
 if (typeof window !== 'undefined'
 	&& typeof document !== 'undefined'
-	&& document.querySelector('#app')) void bootstrap();
+	&& document.querySelector('#app:not([data-v-app])')) void bootstrap();

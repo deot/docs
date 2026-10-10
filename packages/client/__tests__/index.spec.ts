@@ -82,6 +82,18 @@ describe('client entry', () => {
 		expect(entry).not.toContain('renderer/src/styles/style.scss');
 	});
 
+	it('does not auto-bootstrap again when a CDN chunk reevaluates the entry', async () => {
+		document.body.innerHTML = '<div id="app" data-v-app></div>';
+		vi.resetModules();
+		try {
+			await import('../src');
+			expect(createApp).not.toHaveBeenCalled();
+			expect(startPlaygroundResource).not.toHaveBeenCalled();
+		} finally {
+			vi.resetModules();
+		}
+	});
+
 	it('normalizes runtime and mounts the configured application', async () => {
 		document.body.innerHTML = '<div id="app"></div>';
 		sessionStorage.removeItem('@deot/docs:redirect');

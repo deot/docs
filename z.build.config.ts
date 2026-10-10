@@ -2,6 +2,7 @@ import configVue from '@deot/dev-vue';
 import { mergeConfig } from 'vite';
 import type { Plugin, UserConfig } from 'vite';
 import configShared from './node_modules/@deot/dev-builder/shared.config.ts';
+import { createOptionalDependenciesPlugin } from './packages/dever/src/plugins/optional-dependencies.ts';
 
 interface BuildOptions {
 	format?: string;
@@ -57,6 +58,7 @@ if (isClientBrowserEntry) {
 	};
 	config.plugins = [
 		...(config.plugins || []),
+		createOptionalDependenciesPlugin(),
 		browserChunkPlugin
 	];
 	config.define = {

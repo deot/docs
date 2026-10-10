@@ -48,6 +48,10 @@ import {
 } from './port';
 import { injectStyle, removeStyle } from './compile/css';
 import { formatPlaygroundRuntimeError } from './format-error';
+import { linkPlayground } from './linker';
+import { loadLocalModules } from './modules';
+import { createRemoteLoader } from './remote';
+import { collectBareSpecifiers, collectReachableFilenames } from './compile/files';
 
 const props = withDefaults(defineProps<{
 	files: PlaygroundFiles;
@@ -185,12 +189,7 @@ const run = async () => {
 	publishError();
 	destroyPreview();
 	try {
-		const [{ compilePlayground }, { linkPlayground }, modulesApi, fileApi] = await Promise.all([
-			import('./compile'),
-			import('./linker'),
-			import('./modules'),
-			import('./compile/files')
-		]);
+		const { compilePlayground } = await import('./compile');
 		/* istanbul ignore if -- 并发编译时只保留最后一次 */
 		if (current !== version) return;
 		const compiled = await compilePlayground(props.files, { entry: props.entry });
@@ -203,17 +202,16 @@ const run = async () => {
 			return;
 		}
 		const imports = createRuntimeImports(props.options.cdnURL, props.options.builtinImportMap);
-		const specifiers = fileApi.collectBareSpecifiers(
+		const specifiers = collectBareSpecifiers(
 			props.files,
-			fileApi.collectReachableFilenames(props.files, compiled.entry)
+			collectReachableFilenames(props.files, compiled.entry)
 		);
-		const { createRemoteLoader } = await import('./remote');
 		const remote = createRemoteLoader(
 			imports,
 			{ vue: Vue, vueRouter: VueRouter },
 			props.options.cdnURL
 		);
-		const loaded = await modulesApi.loadLocalModules(
+		const loaded = await loadLocalModules(
 			specifiers,
 			imports,
 			{ vue: Vue, vueRouter: VueRouter },

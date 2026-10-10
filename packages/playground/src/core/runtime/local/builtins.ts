@@ -1,7 +1,13 @@
+import * as Pinia from 'pinia';
+import * as Vc from '@deot/vc';
+import * as VcComponents from '@deot/vc-components';
+import * as VcHooks from '@deot/vc-hooks';
+
 const loaders: Record<string, () => Promise<unknown>> = {
 	'vue': () => import('vue'),
 	'vue-router': () => import('vue-router'),
-	'pinia': () => import('pinia'),
+	// 依赖 Vue 的宿主模块保持静态关联，避免 CDN 为延迟分块再打入另一份 Vue。
+	'pinia': async () => Pinia,
 	'@deot/helper': () => import('@deot/helper'),
 	'@deot/helper-cache': () => import('@deot/helper-cache'),
 	'@deot/helper-device': () => import('@deot/helper-device'),
@@ -23,9 +29,9 @@ const loaders: Record<string, () => Promise<unknown>> = {
 	'@deot/http-core': () => import('@deot/http-core'),
 	'@deot/http-hooks': () => import('@deot/http-hooks'),
 	'@deot/http': () => import('@deot/http'),
-	'@deot/vc': () => import('@deot/vc'),
-	'@deot/vc-components': () => import('@deot/vc-components'),
-	'@deot/vc-hooks': () => import('@deot/vc-hooks'),
+	'@deot/vc': async () => Vc,
+	'@deot/vc-components': async () => VcComponents,
+	'@deot/vc-hooks': async () => VcHooks,
 	'@deot/vc-locale': () => import('@deot/vc-locale'),
 	'lodash-es': () => import('lodash-es'),
 	'echarts': () => import('echarts'),
@@ -37,7 +43,7 @@ const loaders: Record<string, () => Promise<unknown>> = {
 
 const cache = new Map<string, Promise<unknown>>();
 
-/** 直接渲染可从宿主包注入的说明符。用到时再加载，避免预览启动时执行全部副作用。 */
+/** 直接渲染可从宿主包注入的说明符；与 Vue 无关的大型依赖按需加载。 */
 export const localBuiltinIds = new Set(Object.keys(loaders));
 
 export const ensureLocalBuiltin = (id: string): Promise<unknown> => {

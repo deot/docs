@@ -118,7 +118,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useLocale } from '@deot/docs-locale';
 import { Sandbox } from '@vue/repl';
 import { Editor } from '../../editor';
@@ -173,8 +173,8 @@ import {
 } from '../store';
 import { whenSassReady } from '../scss';
 import { isIgnoredFilename } from './local/compile/files';
-
-const LocalSandbox = defineAsyncComponent(() => import('./local/local-sandbox.vue'));
+// 宿主组件必须与 Runtime 使用同一份 Vue；编译器仍在 LocalSandbox 内按需加载。
+import LocalSandbox from './local/local-sandbox.vue';
 
 const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<PlaygroundViewsProps> & {
 	options: PlaygroundOptions;
