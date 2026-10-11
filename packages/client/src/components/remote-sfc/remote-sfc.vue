@@ -143,6 +143,8 @@ const loadFiles = async () => {
 		const activeLoads = new Set<string>();
 		const visit = async (url: string, logicalSource?: string) => {
 			if (current !== generation || visited.has(url)) return;
+			// 入队时就占用 URL，避免并发分支重复加载、解析和订阅同一个依赖。
+			visited.add(url);
 
 			const type = getResourceType(url);
 			const source = logicalSource || toLogicalResourceSource(config, langSnapshot, url);
@@ -162,11 +164,13 @@ const loadFiles = async () => {
 					priority: 100,
 					signal: activeController.signal
 				});
+			} catch (reason) {
+				visited.delete(url);
+				throw reason;
 			} finally {
 				activeLoads.delete(key);
 			}
 			if (current !== generation) return;
-			visited.add(url);
 			subscriptions.push(Gateway.subscribe(identity, reload));
 			let content = github && type === 'module' ? await github.expandGlob(record.content, url) : record.content;
 			if (!github && type !== 'style') assertResolvableSourceGlobs(content, url);

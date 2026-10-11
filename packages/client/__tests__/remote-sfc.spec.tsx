@@ -108,6 +108,28 @@ describe('RemoteSfc', () => {
 		expect(signals[0].aborted).toBe(true);
 	});
 
+	it('loads shared dependencies once while waiting for their complete graph', async () => {
+		const base = 'https://assets.example.com/demo/';
+		const sources: Record<string, string> = {
+			[`${base}App.vue`]: `<script>import './left.js'; import './right.js';</script>`,
+			[`${base}left.js`]: `import './shared.js';`,
+			[`${base}right.js`]: `import './shared.js';`,
+			[`${base}shared.js`]: `import './App.vue'; import './leaf.js';`,
+			[`${base}leaf.js`]: 'export const value = 1;'
+		};
+		load.mockImplementation(async (_identity: any, options: any) => {
+			if (options.url === `${base}shared.js`) await new Promise(resolve => setTimeout(resolve, 20));
+			return { content: sources[options.url] };
+		});
+		const wrapper = mount(RemoteSfc, { props: { source: `${base}App.vue`, lang: 'zh-CN' } });
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		expect(load).toHaveBeenCalledTimes(5);
+		expect(subscribe).toHaveBeenCalledTimes(5);
+		expect(wrapper.findComponent({ name: 'Playground' }).props('files')).toEqual(
+			Object.fromEntries(Object.entries(sources).map(([url, content]) => [new URL(url).pathname.slice(1), content]))
+		);
+	});
+
 	it('loads extensionless remote modules, nested Vue files and Sass partials', async () => {
 		const root = 'https://raw.githubusercontent.com/deot/vc/refs/heads/main/packages/components/theme/examples/';
 		const sources: Record<string, string> = {

@@ -4,6 +4,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp, defineComponent } from 'vue';
+import { flushPromises } from '@vue/test-utils';
 import { defineRendererModule } from '@deot/docs-renderer';
 import { createDocsConfig, createDocsRuntime } from './fixtures/docs';
 
@@ -36,9 +37,9 @@ const {
 	stopLanguagePersistence: vi.fn(),
 	router: {
 		name: 'router',
-		currentRoute: { value: { params: { lang: 'zh-CN' } } },
+		currentRoute: { value: { params: { lang: 'zh-CN' }, meta: {} as Record<string, unknown> } },
 		isReady: vi.fn(async () => undefined),
-		afterEach: vi.fn(() => stopLanguagePersistence),
+		afterEach: vi.fn<(listener: (to: any) => void) => () => void>(() => stopLanguagePersistence),
 		push: vi.fn(async () => undefined)
 	}
 }));
@@ -126,8 +127,60 @@ describe('client entry', () => {
 		instance.disconnect();
 		instance.disconnect();
 		expect(disconnectEvents).toHaveBeenCalled();
-		expect(stopLanguagePersistence).toHaveBeenCalledOnce();
+		expect(stopLanguagePersistence).toHaveBeenCalledTimes(2);
 		expect(stopPrefetch).toHaveBeenCalled();
+	});
+
+	it.each(['docsPreview', 'docsPreviewConfigGenerate'])('pauses site prefetch on %s and resumes on document routes', async (flag) => {
+		const client = await import('../src');
+		startIdlePrefetch.mockClear();
+		stopPrefetch.mockClear();
+		router.afterEach.mockClear();
+		router.currentRoute.value.meta = { [flag]: true };
+		const explicit = createDocsConfig();
+		const instance = await client.bootstrap(explicit);
+		try {
+			await flushPromises();
+			expect(startIdlePrefetch).not.toHaveBeenCalled();
+			const navigate = (meta: Record<string, unknown>) => {
+				router.currentRoute.value.meta = meta;
+				router.afterEach.mock.calls.forEach(([listener]) => listener(router.currentRoute.value));
+			};
+			navigate({});
+			navigate({});
+			expect(startIdlePrefetch).toHaveBeenCalledExactlyOnceWith(explicit);
+			navigate({ [flag]: true });
+			expect(stopPrefetch).toHaveBeenCalledOnce();
+			navigate({});
+			expect(startIdlePrefetch).toHaveBeenCalledTimes(2);
+		} finally {
+			instance.disconnect();
+			router.currentRoute.value.meta = {};
+		}
+		expect(stopPrefetch).toHaveBeenCalledTimes(2);
+	});
+
+	it('skips site prefetch after restoring a preview deep link', async () => {
+		const previous = `${location.pathname}${location.search}${location.hash}`;
+		window.history.replaceState({}, '', '/docs/');
+		sessionStorage.setItem('@deot/docs:redirect', '/docs/__docs/preview?url=demo.vue');
+		startIdlePrefetch.mockClear();
+		router.afterEach.mockClear();
+		router.push.mockImplementationOnce(async () => {
+			router.currentRoute.value.meta = { docsPreview: true };
+		});
+		const client = await import('../src');
+		const instance = await client.bootstrap(createDocsConfig());
+		try {
+			await flushPromises();
+			expect(startIdlePrefetch).not.toHaveBeenCalled();
+			expect(sessionStorage.getItem('@deot/docs:redirect')).toBeNull();
+		} finally {
+			instance.disconnect();
+			router.currentRoute.value.meta = {};
+			sessionStorage.removeItem('@deot/docs:redirect');
+			window.history.replaceState({}, '', previous || '/');
+		}
 	});
 
 	it('consumes the @deot/docs:redirect session convention', async () => {

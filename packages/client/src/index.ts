@@ -1,4 +1,5 @@
 import { computed, createApp, watch } from 'vue';
+import type { RouteLocationNormalized } from 'vue-router';
 import { provideLocale, resolveLocale } from '@deot/docs-locale';
 import '../../../node_modules/@deot/style/dist/index.normalize-only.css';
 import '../../../node_modules/@deot/vc-components/dist/index.style.css';
@@ -97,14 +98,26 @@ export const bootstrap = async (config?: DocsConfig) => {
 	app.mount('#app');
 	const disconnectEvents = connectResourceEvents();
 	let disconnected = false;
-	let stopPrefetch = () => {};
+	let stopPrefetch: (() => void) | undefined;
+	let stopPrefetchRoutes = () => {};
 	// 首屏路由和插槽先完成加载，再让低优先级资源进入空闲队列。
 	void (async () => {
 		try {
 			await router.isReady();
 			if (disconnected) return;
 			await consumeStoredRedirect(router, config);
-			if (!disconnected) stopPrefetch = Resource.prefetch.start(config);
+			if (disconnected) return;
+			const syncPrefetch = (to: RouteLocationNormalized) => {
+				// 独立预览只加载自身资源，避免整站预取与源码下载、编译争用资源。
+				if (to.meta.docsPreview || to.meta.docsPreviewConfigGenerate) {
+					stopPrefetch?.();
+					stopPrefetch = undefined;
+				} else {
+					stopPrefetch ??= Resource.prefetch.start(config);
+				}
+			};
+			syncPrefetch(router.currentRoute.value);
+			stopPrefetchRoutes = router.afterEach(syncPrefetch);
 		} catch {
 			// Router 启动失败时应用本身会呈现错误，不再启动后台预加载。
 		}
@@ -114,7 +127,8 @@ export const bootstrap = async (config?: DocsConfig) => {
 		disconnected = true;
 		disconnectEvents();
 		stopLanguagePersistence();
-		stopPrefetch();
+		stopPrefetchRoutes();
+		stopPrefetch?.();
 		stopDocumentLanguage();
 		stopPlaygroundResource();
 		stopContentWidth();
