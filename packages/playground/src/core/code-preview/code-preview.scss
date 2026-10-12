@@ -40,7 +40,7 @@
 		pointer-events: none;
 		cursor: pointer;
 		background: var(--docs-background-color-soft, var(--vc-background-color, #f7f8fa));
-		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #d4d4d8));
+		border: 1px solid var(--docs-border-color, var(--vc-border-color, #d4d4d8));
 		border-radius: 8px;
 		opacity: 0;
 		transition: opacity 0.15s ease, background-color 0.15s ease;
@@ -48,7 +48,7 @@
 		align-items: center;
 
 		&:hover {
-			background: var(--docs-background-color, var(--vc-background-color-light, #fff));
+			background: var(--docs-background-color, var(--vc-background-color-lightest, #fff));
 		}
 
 		&:focus-visible {

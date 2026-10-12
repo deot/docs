@@ -481,7 +481,7 @@ watch(normalizedViewportOptions, (options) => {
 		display: inline-block;
 		width: 1px;
 		height: 16px;
-		background: var(--docs-border-color, var(--vc-color-light-deeper, #e2e8f0));
+		background: var(--docs-border-color, var(--vc-border-color, #e2e8f0));
 		flex: 0 0 1px;
 	}
 
@@ -522,7 +522,7 @@ watch(normalizedViewportOptions, (options) => {
 
 		@include when(active) {
 			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
-			background: var(--docs-background-color, var(--vc-background-color-light, #fff));
+			background: var(--docs-background-color, var(--vc-background-color-lightest, #fff));
 			box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
 		}
 	}
@@ -558,7 +558,7 @@ watch(normalizedViewportOptions, (options) => {
 
 		@include when(active) {
 			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
-			background: var(--docs-background-color, var(--vc-background-color-light, #fff));
+			background: var(--docs-background-color, var(--vc-background-color-lightest, #fff));
 			box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
 		}
 	}

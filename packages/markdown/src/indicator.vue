@@ -737,8 +737,8 @@ onBeforeUnmount(() => {
 		line-height: 1.5;
 		color: var(--docs-foreground-color, var(--vc-foreground-color, #17233d));
 		pointer-events: none;
-		background: var(--docs-background-color, var(--vc-background-color-light, #fff));
-		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #dcdee2));
+		background: var(--docs-background-color, var(--vc-background-color-lightest, #fff));
+		border: 1px solid var(--docs-border-color, var(--vc-border-color, #dcdee2));
 		border-radius: 8px;
 		transform: translateY(-50%);
 		box-shadow: 0 2px 8px var(--docs-shadow-color, rgb(0 0 0 / 10%));

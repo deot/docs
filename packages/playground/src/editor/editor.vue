@@ -361,8 +361,8 @@ onBeforeUnmount(() => {
 		color: var(--docs-foreground-color-light, var(--vc-color-dark-lighter));
 		white-space: nowrap;
 		cursor: pointer;
-		background: var(--docs-background-color, var(--vc-background-color-light));
-		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper));
+		background: var(--docs-background-color, var(--vc-background-color-lightest));
+		border: 1px solid var(--docs-border-color, var(--vc-border-color));
 		border-radius: 8px;
 
 		&:disabled {
@@ -382,7 +382,7 @@ onBeforeUnmount(() => {
 		overflow: hidden;
 		font-size: 13px;
 		color: var(--docs-foreground-color-light, var(--vc-color-dark-lighter));
-		background: var(--docs-background-color, var(--vc-background-color-light));
+		background: var(--docs-background-color, var(--vc-background-color-lightest));
 		border-radius: 8px;
 		opacity: 1;
 		box-shadow: 0 0 50px rgb(0 0 0 / 20%);
@@ -408,8 +408,8 @@ onBeforeUnmount(() => {
 		padding: 6px 8px;
 		overflow: hidden;
 		background: var(--docs-background-color-soft, var(--vc-background-color));
-		border-top: 1px solid var(--docs-border-color, var(--vc-color-light-deeper));
-		border-bottom: 1px solid var(--docs-border-color, var(--vc-color-light-deeper));
+		border-top: 1px solid var(--docs-border-color, var(--vc-border-color));
+		border-bottom: 1px solid var(--docs-border-color, var(--vc-border-color));
 		box-sizing: border-box;
 		gap: 8px;
 		justify-content: space-between;
@@ -449,8 +449,8 @@ onBeforeUnmount(() => {
 		line-height: 18px;
 		white-space: nowrap;
 		cursor: pointer;
-		background: var(--docs-background-color, var(--vc-background-color-light));
-		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper));
+		background: var(--docs-background-color, var(--vc-background-color-lightest));
+		border: 1px solid var(--docs-border-color, var(--vc-border-color));
 		border-radius: 8px;
 		box-sizing: border-box;
 		gap: 5px;
@@ -470,8 +470,8 @@ onBeforeUnmount(() => {
 		font: inherit;
 		line-height: 16px;
 		color: var(--docs-foreground-color-light, var(--vc-color-dark-lighter));
-		background: var(--docs-background-color, var(--vc-background-color-light));
-		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper));
+		background: var(--docs-background-color, var(--vc-background-color-lightest));
+		border: 1px solid var(--docs-border-color, var(--vc-border-color));
 		box-sizing: border-box;
 	}
 

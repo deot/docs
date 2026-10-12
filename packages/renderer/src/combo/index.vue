@@ -694,14 +694,14 @@ defineExpose({
 	.vc-input-number,
 	.vc-select,
 	.vc-textarea {
-		--vc-input-background-color-light: var(--docs-background-color);
+		--vc-input-background-color-lightest: var(--docs-background-color);
 		--vc-input-color-dark-light: var(--docs-foreground-color);
 		--vc-input-color-disabled: transparent;
-		--vc-input-color-light-deeper: var(--docs-border-color);
+		--vc-input-border-color: var(--docs-border-color);
 		--vc-input-color-primary: var(--docs-primary-color);
-		--vc-textarea-background-color-light: var(--docs-code-background);
+		--vc-textarea-background-color-lightest: var(--docs-code-background);
 		--vc-textarea-color-dark-light: var(--docs-foreground-color);
-		--vc-textarea-color-light-deeper: var(--docs-border-color);
+		--vc-textarea-border-color: var(--docs-border-color);
 		--vc-textarea-color-primary: var(--docs-primary-color);
 
 		min-width: 0;

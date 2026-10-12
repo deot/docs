@@ -620,7 +620,7 @@ defineExpose({
 		height: 100%;
 
 		// 覆盖 @vue/repl 的 iframe `#fff` / `.dark` `#1e1e1e`，与 sandbox 画布对齐。
-		background: var(--vc-background-color-light, var(--docs-background-color, #fff)) !important;
+		background: var(--vc-background-color-lightest, var(--docs-background-color, #fff)) !important;
 	}
 
 	.iframe-container iframe {
@@ -632,8 +632,8 @@ defineExpose({
 		position: relative;
 		min-height: 0;
 		overflow: hidden;
-		background: var(--vc-background-color-light, var(--docs-background-color, #fff));
-		border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e2e8f0));
+		background: var(--vc-background-color-lightest, var(--docs-background-color, #fff));
+		border: 1px solid var(--docs-border-color, var(--vc-border-color, #e2e8f0));
 		border-radius: 12px;
 
 		// 保持 border-box：高度已含上下描边。content-box 会让 expand 看起来撑开预览。
@@ -656,7 +656,7 @@ defineExpose({
 		padding: 0;
 		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
 		cursor: pointer;
-		background: var(--vc-background-color-light, var(--docs-background-color, #fff));
+		background: var(--vc-background-color-lightest, var(--docs-background-color, #fff));
 		border: 0;
 		border-radius: 8px;
 		transform: translateX(-50%);

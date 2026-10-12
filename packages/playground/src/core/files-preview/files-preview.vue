@@ -65,7 +65,7 @@ const handleActive = (filename: string) => {
 	min-height: 0;
 	overflow: hidden;
 	background: var(--docs-code-background, var(--vc-background-color, #f6f8fa));
-	border: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e2e8f0));
+	border: 1px solid var(--docs-border-color, var(--vc-border-color, #e2e8f0));
 	border-radius: 12px;
 	box-sizing: border-box;
 	flex: 1 1 auto;
@@ -75,7 +75,7 @@ const handleActive = (filename: string) => {
 		display: flex;
 		overflow: hidden;
 		background: transparent;
-		border-bottom: 1px solid var(--docs-border-color, var(--vc-color-light-deeper, #e2e8f0));
+		border-bottom: 1px solid var(--docs-border-color, var(--vc-border-color, #e2e8f0));
 		box-sizing: border-box;
 		flex: 0 0 40px;
 	}
