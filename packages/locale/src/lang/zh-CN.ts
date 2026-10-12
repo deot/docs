@@ -15,22 +15,29 @@ const zhCN = {
 			previewUrlUnsupported: '仅支持 HTTP(S) 或相对地址的 .vue、page.json 和 *.page.json 资源',
 			yes: '是'
 		},
-		previewConfigGenerate: {
-			title: '预览链接生成器',
-			description: '配置远程 Vue 或 page.json，实时生成可分享的预览链接。',
-			importLabel: '已有预览链接',
-			parseHint: '粘贴 /__docs/preview?raw=... 或 ?url=... 链接',
+		rawEditor: {
+			title: 'Raw 编辑器',
+			description: '编辑 JSON，生成带 raw 参数的链接。',
+			importLabel: '已有链接',
+			parseHint: '粘贴带 raw 或 url 参数的链接',
 			parse: '解析链接',
-			urlHint: '远程 .vue、page.json 或 *.page.json 地址',
-			stylesHint: 'JSON 数组；按顺序填写 CSS URL，支持 HTTP(S) 和站点根路径。',
-			modulesHint: 'JSON 对象；模块名 → ESM URL，覆盖当前预览的 import 映射。',
-			playgroundHint: 'JSON 对象；支持 local、styleless、views、viewport、previewInset、expandable、previewScroller、title。',
-			language: 'lang · 预览语言',
-			defaultLanguage: '站点默认语言',
-			link: '实时生成的链接',
+			target: '目标地址',
+			json: 'JSON 内容',
+			link: '生成的链接',
 			copy: '复制链接',
-			preview: '打开预览',
-			configuration: '查看编码前的配置'
+			open: '打开链接',
+			invalid: '输入无效：{message}'
+		},
+		markdownEditor: {
+			title: 'Markdown 编辑器',
+			source: 'Markdown 原文',
+			open: '打开',
+			copy: '复制',
+			pdf: '导出 PDF',
+			reset: '重置',
+			sync: '同步滚动',
+			resize: '调整原文和预览宽度',
+			confirmReset: '确定恢复初始内容？当前修改将被覆盖。'
 		},
 		footer: {
 			resources: '资源',

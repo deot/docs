@@ -131,7 +131,7 @@ describe('client entry', () => {
 		expect(stopPrefetch).toHaveBeenCalled();
 	});
 
-	it.each(['docsPreview', 'docsPreviewConfigGenerate'])('pauses site prefetch on %s and resumes on document routes', async (flag) => {
+	it.each(['docsPreview', 'docsRawEditor', 'docsMarkdownEditor'])('pauses site prefetch on %s and resumes on document routes', async (flag) => {
 		const client = await import('../src');
 		startIdlePrefetch.mockClear();
 		stopPrefetch.mockClear();

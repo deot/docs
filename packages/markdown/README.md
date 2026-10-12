@@ -167,6 +167,10 @@ Playground 只在页面出现 fence 或 `:::playground` 时动态加载。使用
 
 类型：`MarkdownSearchDocument`、`MarkdownSearchSection`、`MarkdownIndicatorConfig`、`MarkdownIndicatorOptions`、`MarkdownPlaygroundConfig`、`MarkdownPlaygroundMountProps`、`MarkdownTabQueryAdapter`。
 
+`Markdown` 提供 `rendered(source, sourceLines)` 事件；`sourceLines` 与预览内容的顶层元素一一对应，记录从 1 开始的原文行号，供编辑器同步滚动。
+`rendered` 在本次 Markdown、Tabs、CodePreview 和 Playground 容器挂载并完成 Vue 更新后发出，
+不表示 Playground iframe 的编译、网络资源或动态运行内容已经就绪。旧渲染和卸载后的任务不会发出事件。
+
 底层 markdown-it 实例和内部指令不是包入口的公共导出。搜索解析结果不会包含代码围栏和 HTML 内容。
 
 ## 仓库内 examples

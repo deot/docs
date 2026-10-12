@@ -1,4 +1,4 @@
-import { createApp, h } from 'vue';
+import { createApp, h, nextTick } from 'vue';
 import type { App, DirectiveBinding } from 'vue';
 import type { Language } from '@deot/docs-locale';
 import type { PlaygroundFiles } from '@deot/docs-playground';
@@ -31,6 +31,7 @@ const resolveBlockLanguage = (block: Element) => {
 };
 
 interface MarkdownDirectiveValue {
+	onRendered?: (source: string, sourceLines: number[]) => void;
 	source?: string;
 	locale: Language;
 	/**
@@ -82,16 +83,28 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirecti
 	cleanup(el);
 	const version = (renderVersions.get(el) || 0) + 1;
 	renderVersions.set(el, version);
-	el.innerHTML = binding.value.source ? Markdown.render(binding.value.source) : '';
+	const env = {};
+	const tokens = Markdown.parse(binding.value.source || '', env);
+	el.innerHTML = Markdown.renderer.render(tokens, Markdown.options, env);
+	const sourceLines = tokens.filter(token => token.level === 0 && token.map && !token.hidden && token.nesting !== -1)
+		.flatMap((token) => {
+			const line = token.map![0] + 1;
+			if (token.type !== 'html_block') return [line];
+			const template = document.createElement('template');
+			template.innerHTML = token.content;
+			return [...template.content.children].map(() => line);
+		});
 
 	const apps: App[] = [];
+	mountedApps.set(el, apps);
 	const adapter = binding.value.tabQuery || defaultTabQuery;
 	mountTabs(el, apps, binding.value.locale, adapter);
 
 	const blocks = el.querySelectorAll('pre code');
 	const playgrounds = el.querySelectorAll<HTMLElement>('div[data-playground]');
 	if (!blocks.length && !playgrounds.length) {
-		mountedApps.set(el, apps);
+		await nextTick();
+		if (renderVersions.get(el) === version) binding.value.onRendered?.(binding.value.source || '', sourceLines);
 		return;
 	}
 	const DocsPlayground = await loadPlayground();
@@ -137,7 +150,8 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirecti
 		apps.push(app);
 	});
 
-	mountedApps.set(el, apps);
+	await nextTick();
+	if (renderVersions.get(el) === version) binding.value.onRendered?.(binding.value.source || '', sourceLines);
 };
 
 const update = (el: HTMLElement, binding: DirectiveBinding<MarkdownDirectiveValue>) => {

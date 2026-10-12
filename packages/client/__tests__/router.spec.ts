@@ -22,10 +22,12 @@ describe('docs router', () => {
 		const paths = createDocsRouter(config).getRoutes().map(route => route.path);
 		expect(paths).not.toContain('/__docs/renderer');
 		expect(paths).not.toContain('/__docs/renderer-generate');
+		expect(paths).not.toContain('/__docs/preview-config-generate');
 	});
 
 	it.each([
-		['/', 'preview'], ['/', 'preview-config-generate'], ['/docs/site/', 'preview'], ['/docs/site/', 'preview-config-generate']
+		['/', 'preview'], ['/', 'raw-editor'], ['/', 'markdown-editor'],
+		['/docs/site/', 'preview'], ['/docs/site/', 'raw-editor'], ['/docs/site/', 'markdown-editor']
 	])('boots the preview page under deployment %s at %s', async (base, page) => {
 		const previous = `${location.pathname}${location.search}${location.hash}`;
 		window.history.replaceState({}, '', `${base}__docs/${page}?url=demo.vue`);
@@ -40,12 +42,20 @@ describe('docs router', () => {
 		}
 	});
 
-	it.each(['preview', 'preview-config-generate'])('uses the language encoded in raw at %s', async (page) => {
+	it.each(['preview', 'raw-editor', 'markdown-editor'])('uses the language encoded in raw at %s', async (page) => {
 		const router = createDocsRouter({ ...config });
 		await router.push({ path: `/__docs/${page}`, query: { raw: encode(JSON.stringify({ url: 'demo.vue', lang: 'en-US' })) } });
 		expect(router.currentRoute.value.params.lang).toBe('en-US');
 		await router.push({ path: `/__docs/${page}`, query: { raw: 'invalid' } });
 		expect(router.currentRoute.value.path).toBe(`/__docs/${page}`);
+		expect(router.currentRoute.value.params.lang).toBe('zh-CN');
+	});
+
+	it('accepts raw-editor language in arbitrary JSON without a PreviewConfig URL', async () => {
+		const router = createDocsRouter({ ...config });
+		await router.push({ path: '/__docs/raw-editor', query: { raw: encode(JSON.stringify({ lang: 'en-US', custom: 1 })) } });
+		expect(router.currentRoute.value.params.lang).toBe('en-US');
+		await router.push({ path: '/__docs/raw-editor', query: { raw: encode(JSON.stringify(['en-US'])) } });
 		expect(router.currentRoute.value.params.lang).toBe('zh-CN');
 	});
 

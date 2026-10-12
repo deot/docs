@@ -183,6 +183,34 @@ vi.mock('@deot/docs-playground', async () => {
 });
 
 describe('markdown', () => {
+	it('reports completion after code previews mount and ignores superseded rendering', async () => {
+		const onRendered = vi.fn();
+		const wrapper = mount(Markdown, { props: { modelValue: '# Old\n\n```js\nold();\n```', indicator: false, onRendered } });
+		await wrapper.setProps({ modelValue: '# New\n\n```js\nlatest();\n```' });
+		await flushPromises();
+		expect(wrapper.emitted('rendered')?.at(-1)).toEqual(['# New\n\n```js\nlatest();\n```', [1, 3]]);
+		expect(wrapper.find('pre').text()).toContain('latest');
+		const completed = onRendered.mock.calls.length;
+		void wrapper.setProps({ modelValue: '# Detached' });
+		wrapper.unmount();
+		await flushPromises();
+		expect(onRendered).toHaveBeenCalledTimes(completed);
+	});
+
+	it('reports source lines for rendered blocks including containers and raw HTML', async () => {
+		const source = [
+			'# Title', '', '<!-- comment -->', '', '<div>HTML</div><p>HTML paragraph</p>', '',
+			':::tip', 'Tip', ':::', '',
+			':::tabs', '```markdown First', 'Panel', '```', ':::', '',
+			':::playground', '```js', 'example();', '```', ':::', '',
+			'End'
+		].join('\n');
+		const wrapper = mount(Markdown, { props: { modelValue: source, indicator: false } });
+		await flushPromises();
+		expect(wrapper.emitted('rendered')?.at(-1)?.[1]).toEqual([1, 5, 5, 7, 11, 17, 23]);
+		expect(wrapper.findAll('.docs-markdown-reset > *')).toHaveLength(7);
+	});
+
 	it('extracts searchable sections with renderer heading anchors', () => {
 		const parsed = parseMarkdownSearchSections([
 			'# 文档标题',

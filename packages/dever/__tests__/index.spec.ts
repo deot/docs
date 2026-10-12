@@ -510,12 +510,12 @@ describe('dever configuration', () => {
 				headers: { 'If-None-Match': String(markdown.headers.get('etag')) }
 			})).status).toBe(304);
 			expect((await fetch(`${base}/__docs/events`)).status).toBe(404);
-			for (const endpoint of ['renderer', 'renderer-generate']) {
+			for (const endpoint of ['renderer', 'renderer-generate', 'preview-config-generate']) {
 				expect((await fetch(`${base}/__docs/${endpoint}`, {
 					headers: { Accept: 'text/html' }
 				})).status).toBe(404);
 			}
-			for (const endpoint of ['preview', 'preview-config-generate']) {
+			for (const endpoint of ['preview', 'raw-editor', 'markdown-editor']) {
 				const previewPage = await fetch(`${base}/__docs/${endpoint}?url=https%3A%2F%2Fexample.com%2Fdemo.vue`, {
 					headers: { Accept: 'text/html' }
 				});
@@ -711,7 +711,7 @@ describe('dever configuration', () => {
 			}, rendererResponse, vi.fn());
 			expect(rendererResponse.end).toHaveBeenCalledWith('<div id="site-docs"></div>');
 			const generatorResponse = { ...response, setHeader: vi.fn(), end: vi.fn() };
-			await middleware!({ url: '/__docs/preview-config-generate?raw=test', headers: { accept: 'text/html' } }, generatorResponse, vi.fn());
+			await middleware!({ url: '/__docs/raw-editor?raw=test', headers: { accept: 'text/html' } }, generatorResponse, vi.fn());
 			expect(generatorResponse.end).toHaveBeenCalledWith('<div id="site-docs"></div>');
 
 			const next = vi.fn();
@@ -918,7 +918,7 @@ describe('dever configuration', () => {
 			}, createResponse(), rendererNext);
 			expect(rendererNext).toHaveBeenCalledOnce();
 			const generatorNext = vi.fn();
-			rawMiddleware({ url: '/__docs/preview-config-generate?raw=test', headers: { accept: 'text/html' } }, createResponse(), generatorNext);
+			rawMiddleware({ url: '/__docs/raw-editor?raw=test', headers: { accept: 'text/html' } }, createResponse(), generatorNext);
 			expect(generatorNext).toHaveBeenCalledOnce();
 			const rendererSource = createResponse();
 			rawMiddleware({ url: '/__docs/preview', headers: { accept: 'text/plain' } }, rendererSource, vi.fn());

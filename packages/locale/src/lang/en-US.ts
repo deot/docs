@@ -15,22 +15,29 @@ const enUS = {
 			previewUrlUnsupported: 'Only .vue, page.json and *.page.json resources at HTTP(S) or relative URLs are supported',
 			yes: 'Yes'
 		},
-		previewConfigGenerate: {
-			title: 'Preview link generator',
-			description: 'Configure a remote Vue or page.json resource and generate a shareable preview link.',
-			importLabel: 'Existing preview link',
-			parseHint: 'Paste a /__docs/preview?raw=... or ?url=... link',
+		rawEditor: {
+			title: 'Raw editor',
+			description: 'Edit JSON and generate a link with a raw parameter.',
+			importLabel: 'Existing link',
+			parseHint: 'Paste a link with a raw or url parameter',
 			parse: 'Parse link',
-			urlHint: 'Remote .vue, page.json or *.page.json URL',
-			stylesHint: 'JSON array of CSS URLs in order; HTTP(S) URLs and site root paths are supported.',
-			modulesHint: 'JSON object mapping module names to ESM URLs; overrides imports in this preview.',
-			playgroundHint: 'JSON object supporting local, styleless, views, viewport, previewInset, expandable, previewScroller and title.',
-			language: 'lang · Preview language',
-			defaultLanguage: 'Site default language',
+			target: 'Target URL',
+			json: 'JSON content',
 			link: 'Generated link',
 			copy: 'Copy link',
-			preview: 'Open preview',
-			configuration: 'Show decoded configuration'
+			open: 'Open link',
+			invalid: 'Invalid input: {message}'
+		},
+		markdownEditor: {
+			title: 'Markdown editor',
+			source: 'Markdown source',
+			open: 'Open',
+			copy: 'Copy',
+			pdf: 'Export PDF',
+			reset: 'Reset',
+			sync: 'Sync scroll',
+			resize: 'Resize source and preview panes',
+			confirmReset: 'Restore the initial content? Your changes will be overwritten.'
 		},
 		footer: {
 			resources: 'Resources',

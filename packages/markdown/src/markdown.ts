@@ -279,6 +279,8 @@ md.core.ruler.after('block', 'markdown-tabs', (state) => {
 		const fences = innerTokens.filter(token => token.type === 'fence');
 		const placeholder = new state.Token('html_block', '', 0);
 		placeholder.block = true;
+		placeholder.map = openToken.map;
+		placeholder.level = openToken.level;
 
 		if (!fences.length) {
 			placeholder.content = renderTabsError('至少需要声明一个分栏');
@@ -327,6 +329,8 @@ md.core.ruler.after('markdown-tabs', 'runtime-files', (state) => {
 		const fences = innerTokens.filter(token => token.type === 'fence');
 		const placeholder = new state.Token('html_block', '', 0);
 		placeholder.block = true;
+		placeholder.map = openToken.map;
+		placeholder.level = openToken.level;
 		const propsData = parseRuntimeProps(innerTokens);
 		const propsError = validateRuntimeViews(propsData)
 			|| validateRuntimeViewport(propsData)

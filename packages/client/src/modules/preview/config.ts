@@ -1,4 +1,4 @@
-import { encode, decode } from '@deot/helper-unicode';
+import { createRawUrl, readRaw } from './raw';
 import type { ComputedRef, InjectionKey } from 'vue';
 import type { LocationQuery } from 'vue-router';
 import type { DocsPlaygroundComponentOptions } from '../../types';
@@ -61,8 +61,7 @@ export const normalizePreviewConfig = (value: unknown): PreviewConfig => {
  */
 export const readPreviewConfig = (query: LocationQuery): PreviewConfig => {
 	if (query.raw !== undefined) {
-		if (typeof query.raw !== 'string' || !query.raw) throw new TypeError('raw must be a single encoded configuration');
-		return normalizePreviewConfig(JSON.parse(decode(query.raw)));
+		return normalizePreviewConfig(readRaw(query.raw));
 	}
 	const styles = Array.isArray(query.styles) ? query.styles : typeof query.styles === 'string' ? query.styles.split(',') : [];
 	return {
@@ -80,9 +79,7 @@ export const readPreviewConfig = (query: LocationQuery): PreviewConfig => {
  * @returns 可直接分享的预览链接。
  */
 export const createPreviewUrl = (config: PreviewConfig, base: string): string => {
-	const url = new URL('__docs/preview', base);
-	url.searchParams.set('raw', encode(JSON.stringify(config)));
-	return url.href;
+	return createRawUrl(config, '__docs/preview', base);
 };
 
 /**

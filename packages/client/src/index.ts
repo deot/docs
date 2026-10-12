@@ -109,7 +109,7 @@ export const bootstrap = async (config?: DocsConfig) => {
 			if (disconnected) return;
 			const syncPrefetch = (to: RouteLocationNormalized) => {
 				// 独立预览只加载自身资源，避免整站预取与源码下载、编译争用资源。
-				if (to.meta.docsPreview || to.meta.docsPreviewConfigGenerate) {
+				if (to.meta.docsPreview || to.meta.docsRawEditor || to.meta.docsMarkdownEditor) {
 					stopPrefetch?.();
 					stopPrefetch = undefined;
 				} else {

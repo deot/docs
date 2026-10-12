@@ -243,9 +243,24 @@ const href = `/__docs/preview?${query}`;
 这里只检查 `playground` 是对象，并提取上述展示参数；具体参数由 Playground 自身处理，
 `files`、`entry` 等源码数据不接受链接覆盖。
 
-`/__docs/preview-config-generate` 提供表单实时生成链接、一键复制和打开预览。
-访问 `/__docs/preview-config-generate?raw=...` 自动解析并回填；也可粘贴现有
-`?raw=...` 或 `?url=...&styles=...` 预览链接进行解析。JSON 或字段无效时显示错误并停用复制。
+`/__docs/raw-editor` 提供通用 JSON 编辑器和目标地址，实时生成带 `raw` 的链接，支持复制和打开。
+JSON 可以是对象、数组或其他 JSON 值；目标页面负责验证自己的配置。默认目标为 preview，
+也可选择 markdown-editor 或输入 HTTP(S) / 相对地址，原有查询参数和 hash 会保留。
+访问 `?raw=...&target=...` 自动解码回填；粘贴已有 `?raw=...` 或 `?url=...&styles=...`
+链接也能导入。JSON 或目标地址无效时保留输入并停用链接操作。
+
+`/__docs/markdown-editor` 使用本仓库的 `Markdown` 组件实时预览，支持 `?url=...` 和相同的
+`?raw=...` 配置协议。`styles` 加载预览 CSS，`modules` 覆盖当前 Markdown Playground 的模块映射，
+`playground` 提供块级配置可覆盖的默认展示参数。相对图片和链接以实际加载的 Markdown 地址为基准。
+编辑区保留行号与撤销，编辑和预览都使用 `Scroller`；支持打开本地 Markdown、复制原文、
+重置初始内容、按 Markdown 块双向同步滚动及主题切换。同步默认关闭并保存设置。
+两栏之间的分隔线可拖动调整宽度，也可聚焦后使用左右方向键；窄屏继续上下排列。
+显式链接优先于草稿；裸路由恢复最近草稿，否则使用示例。重置远程/本地文件时恢复其初始内容，
+裸路由恢复示例；只有编辑、打开本地文件及重置会写入草稿。
+
+PDF 使用浏览器打印对话框，可另存为 PDF；正文、代码和表格保留文字，原始图片/SVG 保留其内容。
+最新 Markdown 和代码块挂载完成后可以导出，默认 A4 纵向、10mm 页边距及浅色打印排版。
+Playground iframe 的运行态与正文挂载完成不同，具体动态内容输出受浏览器打印能力影响。
 
 相对资源地址沿用现有 Resolver；源码依赖相对于源文件解析。
 缺失参数、不支持的资源以及加载或解析失败会显示页面错误。

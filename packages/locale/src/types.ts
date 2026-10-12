@@ -10,7 +10,8 @@ export interface ClientLocaleMessages {
 	search: Record<string, string>;
 	database: Record<string, string>;
 	playgroundResource: Record<string, string>;
-	previewConfigGenerate: Record<string, string>;
+	rawEditor: Record<string, string>;
+	markdownEditor: Record<string, string>;
 	paging: Record<string, string>;
 }
 

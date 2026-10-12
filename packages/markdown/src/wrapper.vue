@@ -26,9 +26,10 @@ import type {
 } from './types';
 
 // 后续再处理内容变更。
-defineEmits<{
+const emit = defineEmits<{
 	'update:modelValue': [value: string];
 	'change': [value: string];
+	'rendered': [source: string, sourceLines: number[]];
 }>();
 const props = withDefaults(defineProps<{
 	indicator?: MarkdownIndicatorConfig;
@@ -76,6 +77,7 @@ const source = computed(() => typeof props.modelValue === 'string'
 	: props.value);
 const markdownBinding = computed(() => ({
 	source: source.value,
+	onRendered: (value: string, sourceLines: number[]) => emit('rendered', value, sourceLines),
 	locale: locale.value,
 	playground: props.playground,
 	tabQuery: resolvedTabQuery.value

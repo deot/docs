@@ -301,7 +301,7 @@ const configureWorkspaceServer = (
 		let realResourceRoot = realWorkspace;
 		try {
 			const rawPathname = getRawPathname(req.url || '/');
-			if (/^\/__docs\/preview(?:-config-generate)?$/.test(rawPathname) && String(req.headers.accept || '').includes('text/html')) {
+			if (/^\/__docs\/(?:preview|raw-editor|markdown-editor)$/.test(rawPathname) && String(req.headers.accept || '').includes('text/html')) {
 				return next();
 			}
 			if (!options.preview && rawPathname.startsWith('/__docs/module/')) {
@@ -530,7 +530,7 @@ const createHistoryPlugin = (
 			const requestUrl = req.url || '/';
 			const url = requestUrl.replace(/\/+/g, '/').replace(/[?#].*$/s, '') || '';
 			const accept = String(req.headers?.accept || 'text/html');
-			const isPreviewPage = /^\/__docs\/preview(?:-config-generate)?$/.test(url) && accept.includes('text/html');
+			const isPreviewPage = /^\/__docs\/(?:preview|raw-editor|markdown-editor)$/.test(url) && accept.includes('text/html');
 			const candidate = path.resolve(root, `.${url}`);
 			const isFile = fs.existsSync(candidate) && fs.statSync(candidate).isFile();
 			if (options.preview && url.startsWith('/__docs/') && !isPreviewPage) {

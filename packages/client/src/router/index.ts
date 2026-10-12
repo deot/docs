@@ -6,8 +6,10 @@ import EditorDemosPage from '../pages/renderer-editor-demos/index.vue';
 import EditorPage from '../pages/renderer-editor/index.vue';
 import HomePage from '../pages/home/index.vue';
 import PlaygroundResourcePage from '../pages/playground-resource/index.vue';
-import PreviewConfigGeneratePage from '../pages/preview-config-generate/index.vue';
+import RawEditorPage from '../pages/raw-editor/index.vue';
+import MarkdownEditorPage from '../pages/markdown-editor/index.vue';
 import { readPreviewConfig } from '../modules/preview/config';
+import { readRaw } from '../modules/preview/raw';
 import {
 	getDefaultLanguage,
 	getDocsDeploymentBase
@@ -137,9 +139,14 @@ export const createDocsRouter = (
 	const isDevelopment = config.runtime?.mode === 'development';
 	const routes: RouteRecordRaw[] = [
 		{
-			path: '/__docs/preview-config-generate',
-			component: PreviewConfigGeneratePage,
-			meta: { docsPreviewConfigGenerate: true, docsRoute: { layout: 'none', content: null } }
+			path: '/__docs/raw-editor',
+			component: RawEditorPage,
+			meta: { docsRawEditor: true, docsRoute: { layout: 'none', content: null } }
+		},
+		{
+			path: '/__docs/markdown-editor',
+			component: MarkdownEditorPage,
+			meta: { docsMarkdownEditor: true, docsRoute: { layout: 'none', content: null } }
 		},
 		{
 			path: '/__docs/preview',
@@ -267,12 +274,15 @@ export const createDocsRouter = (
 	const historyBase = new URL(deploymentBase).pathname;
 	const router = createRouter({ history: createWebHistory(historyBase), routes });
 	router.beforeEach((to) => {
-		if (to.meta.docsPreview || to.meta.docsPreviewConfigGenerate) {
+		if (to.meta.docsPreview || to.meta.docsRawEditor || to.meta.docsMarkdownEditor) {
 			let language = '';
 			try {
-				language = readPreviewConfig(to.query).lang || '';
+				if (to.meta.docsRawEditor) {
+					const value = to.query.raw !== undefined ? readRaw(to.query.raw) : to.query;
+					if (value && typeof value === 'object' && 'lang' in value && typeof value.lang === 'string') language = value.lang;
+				} else language = readPreviewConfig(to.query).lang || '';
 			} catch {
-				// 无效配置由预览或生成器展示；语言先回退默认值。
+				// 无效输入由工具页展示；语言先回退默认值。
 			}
 			to.params.lang = hasConfiguredLanguage(config, language) ? language : defaultLanguage;
 			return true;
