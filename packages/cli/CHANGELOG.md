@@ -1,5 +1,17 @@
 # @deot/docs-cli ChangeLog
 
+## v1.1.5
+
+_2026-10-13_
+
+### Bugfixes
+
+- fix: migrate VC background and border variables ([28f3c3c](https://github.com/deot/docs/commit/28f3c3c351d44e21f5e743aa6434612f303d0e10))
+
+### Features
+
+- feat: add markdown and raw editors ([eb7e7c0](https://github.com/deot/docs/commit/eb7e7c0547a46d1a7f1db4e0cfdd1f647c9bb44d))
+
 ## v1.1.4
 
 _2026-10-10_

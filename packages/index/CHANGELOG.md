@@ -1,5 +1,24 @@
 # @deot/docs ChangeLog
 
+## v1.1.7
+
+_2026-10-13_
+
+### Bugfixes
+
+- fix: migrate VC background and border variables ([28f3c3c](https://github.com/deot/docs/commit/28f3c3c351d44e21f5e743aa6434612f303d0e10))
+- fix(client,playground): preserve import maps and delegate local defaults ([6be18ac](https://github.com/deot/docs/commit/6be18ac7de71bd290f6836b31502e8d370ac59d3))
+- fix(client): preserve preview module override precedence ([c47be16](https://github.com/deot/docs/commit/c47be16db455a10077b0b25f1e3641255b67ea44))
+- fix(playground): honor local module overrides and preview Vue runtimes ([6655fd2](https://github.com/deot/docs/commit/6655fd2f07f43c22967c36608da6237d1f39aade))
+
+### Features
+
+- feat: add markdown and raw editors ([eb7e7c0](https://github.com/deot/docs/commit/eb7e7c0547a46d1a7f1db4e0cfdd1f647c9bb44d))
+
+### Updates
+
+- perf(client): optimize standalone preview loading ([810b8df](https://github.com/deot/docs/commit/810b8df375add41cce22fb5e4cbf21058de87676))
+
 ## v1.1.6
 
 _2026-10-10_
