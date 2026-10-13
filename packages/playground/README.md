@@ -53,7 +53,7 @@ const files = ref({
 | `id` | `string` | `''` | 标题锚点 id；未传时从 `title` 自动生成。仅挂在内联 runtime 标题上，弹窗不重复。 |
 | `expandable` | `true \| number` | `undefined` | 开启预览高度展开；未传不显示控件；`true` 展开到剩余视口；正数为目标高度（px）。 |
 | `previewScroller` | `boolean` | `false` | 在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条；开启后会动态探测 `Scroller`，不存在则回退原生滚动。 |
-| `local` | `boolean` | `false` | 在当前文档编译并挂载，不使用 iframe。`vue` 使用宿主同一份实例；其余 import map 仍是 URL，加载后作为模块变量。 |
+| `local` | `boolean` | `true` | 在当前文档编译并挂载。内置模块默认继承宿主，可通过 import map 逐个覆盖；预览使用所选 Vue 运行时挂载。 |
 | `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项；`cdnURL` 会同时作用于预览样式和默认 import map。 |
 | `previewOptions` | `SandboxProps['previewOptions']` | `undefined` | 传给当前 iframe 的 preview 选项。 |
 | `locale` | `Language` | `en-US` | 界面语言；未传入时使用上层 Locale Provider。 |
@@ -149,18 +149,18 @@ const handleMessage = async () => {
 
 同时导出 `PlaygroundFiles`、`PlaygroundView`、`PlaygroundViewport`、`PlaygroundOptions`、`PlaygroundPreviewOptions`、`EditorFilesChange` 和 `EditorFilesChangeAction` 类型。
 
-站点级 Playground 模块与预览 CSS 默认由 Client 的 `$docs.modules` 与 `$docs.styles` 管理（见 [`@deot/docs-client`](../client/README.md)）。独立嵌入 Playground 时，可通过 `options.builtinImportMap` 与 `options.cdnURL` 覆盖实例级配置。
+站点级 Playground 模块与预览 CSS 默认由 Client 的 `$docs.modules` 与 `$docs.styles` 管理（见 [`@deot/docs-client`](../client/README.md)）。模块地址优先级由低到高为：内置默认 → `$docs.modules` → 管理页覆盖 → 实例 `options.builtinImportMap.imports`。实例只覆盖声明的模块，其余继承默认配置；也可通过 `options.cdnURL` 调整默认 CDN。
 
 ## 运行环境
 
-- Playground 运行时通过公共 CDN 加载 Vue 和默认 import map 中的依赖，手工预览需要网络访问。
+- iframe 运行时通过公共 CDN 加载 Vue 和默认 import map 中的依赖；local 运行时加载 URL 覆盖或宿主未提供的模块时也需要网络访问。
 - 默认 CDN 为 `https://cdn.jsdelivr.net/npm`，可通过 `options.cdnURL` 换成 unpkg 等兼容 `/{package}/{file}` 路径的镜像；该地址用于预览样式和内置 import map。
 - `lodash-es` 和在线 Sass 编译器使用 jsDelivr 的 `/+esm` 入口；unpkg 等 CDN 不支持该路径。
-- 直接渲染时，未配置的 npm 模块（含作用域包和子路径）自动从 jsDelivr 的 `/+esm` 入口加载；组件包的传递依赖也适用，`import()` 在调用时加载。`@deot/vc` 的组件、hooks 和 locale 走远程模块加载器，Vue 保持与宿主共用。可用 `options.builtinImportMap.imports` 指定依赖的版本和 URL。
+- 直接渲染时，宿主未提供且未配置的 npm 模块（含作用域包和子路径）自动从 jsDelivr 的 `/+esm` 入口加载；组件包的传递依赖也适用，`import()` 在调用时加载。可用 `options.builtinImportMap.imports` 指定依赖的版本和 URL。
 - Vue SFC 的 `<style lang="scss">` / `lang="sass"` 以及独立 `.scss` / `.sass` 文件会在浏览器里编译；`_partial.scss` 只作为 `@use` 依赖。
-- `options.builtinImportMap.imports` 可以覆盖默认模块 URL。Vue 运行时仍从 `play.vuejs.org` 加载。
+- local 模式按模块识别显式 URL 覆盖，即使地址与内置默认相同也会加载该 URL。覆盖 `vue` 时，预览的编译产物、挂载、组件引用和注入使用这份 Vue；内置组件、hooks、locale、Pinia 和 vue-router 随之重新加载以匹配 Vue，未覆盖的普通工具模块继续复用宿主。不同预览的覆盖互不影响，显式覆盖的模块在各自预览内执行。
 - 每个 Playground 实例都使用自己的 preview 配置和 iframe 消息来源校验。
-- `local` 默认开启：同一份 `files` 在当前文档里编译。内置依赖默认用宿主副本；`modules` 里与默认 CDN 不同的地址会覆盖，包括 `vue` 和 `vue/server-renderer`。直接渲染不撑开预览高度，`expandable` 固定为关闭，`docs:playground.run` 不会申请临时高度；`<DocsLink>` 仍通过 `docs:navigate` 通知。`local: false` 改回 iframe Sandbox。
+- `local` 默认开启：同一份 `files` 在当前文档里编译。直接渲染不撑开预览高度，`expandable` 固定为关闭，`docs:playground.run` 不会申请临时高度；`<DocsLink>` 仍通过 `docs:navigate` 通知。`local: false` 改回 iframe Sandbox。
 
 ## 仓库内 examples
 

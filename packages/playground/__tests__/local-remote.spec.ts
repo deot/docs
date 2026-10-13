@@ -1,6 +1,7 @@
 import * as Vue from 'vue';
 import { createBuiltinImports } from '../src/cdn';
 import { createRemoteLoader } from '../src/core/runtime/local/remote';
+import { ensureLocalBuiltin } from '../src/core/runtime/local/builtins';
 
 describe('local remote modules', () => {
 	const vueUrl = 'https://example.test/vue.js';
@@ -24,13 +25,13 @@ describe('local remote modules', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('keeps the host vue when the import map uses the default cdn url', async () => {
+	it('keeps the host vue when only other modules are overridden', async () => {
 		const loader = createRemoteLoader({
 			'vue': createBuiltinImports().vue,
 			'@deot/helper': helperUrl,
 			'@deot/vc': buttonUrl,
 			'lodash-es': 'https://example.test/lodash.js'
-		}, { vue: Vue, vueRouter: {} });
+		}, { vue: Vue, vueRouter: {} }, new Set(['@deot/helper', '@deot/vc', 'lodash-es']));
 		const loaded = await loader.load(buttonUrl) as { Button: { value: string } };
 		expect(loaded.Button.value).toBe('helper');
 		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).not.toContain(vueUrl);
@@ -44,6 +45,60 @@ describe('local remote modules', () => {
 		const loaded = await loader.load(helperUrl) as { mark: string };
 		expect(loaded.mark).toBe('cdn-vue');
 		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toContain(vueUrl);
+	});
+
+	it('loads transitive builtin components with the custom Vue runtime', async () => {
+		const imports = { ...createBuiltinImports(), vue: vueUrl };
+		vi.mocked(fetch).mockImplementation(async url => ({
+			ok: true,
+			text: async () => url === vueUrl
+				? `export const ref = () => 'cdn-vue';`
+				: url === imports['@deot/vc']
+					? `export { Scroller } from '@deot/vc-components';`
+					: `import { ref } from 'vue'; export const Scroller = ref();`
+		} as Response));
+		const loader = createRemoteLoader(imports, { vue: Vue, vueRouter: {} });
+		await expect(loader.load(imports['@deot/vc'])).resolves.toMatchObject({ Scroller: 'cdn-vue' });
+		expect(fetch).toHaveBeenCalledWith(imports['@deot/vc-components']);
+	});
+
+	it('binds Vue imports in CDN ESM bundles to the custom runtime', async () => {
+		const entry = 'https://cdn.jsdelivr.net/npm/example/+esm';
+		vi.mocked(fetch).mockImplementation(async url => ({
+			ok: true,
+			text: async () => url === vueUrl
+				? `export const ref = () => 'cdn-vue';`
+				: `import { ref } from '/npm/vue@3.5.39/+esm'; export const value = ref();`
+		} as Response));
+		const native = vi.fn();
+		const loader = createRemoteLoader({ vue: vueUrl }, { vue: Vue, vueRouter: {} }, undefined, native);
+		await expect(loader.load(entry)).resolves.toMatchObject({ value: 'cdn-vue' });
+		expect(native).not.toHaveBeenCalled();
+		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toEqual([entry, vueUrl]);
+	});
+
+	it('applies individual overrides to pinned CDN dependencies while inheriting host Vue', async () => {
+		const entry = 'https://cdn.jsdelivr.net/npm/example/+esm';
+		const imports = createBuiltinImports();
+		vi.mocked(fetch).mockImplementation(async url => ({
+			ok: true,
+			text: async () => url === entry
+				? `import { ref } from '/npm/vue@3.5.39/+esm';
+					import { mark } from '/npm/@deot/helper@1.0.0/+esm';
+					import { debounce } from 'lodash-es';
+					export const value = ref(mark); export const inherited = debounce;
+					export const lazy = () => import('/npm/@deot/helper@1.0.0/+esm');`
+				: `export const mark = 'preview-helper';`
+		} as Response));
+		const native = vi.fn();
+		const loader = createRemoteLoader(imports, { vue: Vue, vueRouter: {} }, new Set(['@deot/helper']), native);
+		const result = await loader.load(entry) as { value: unknown; inherited: unknown; lazy: () => Promise<unknown> };
+		expect(Vue.isRef(result.value)).toBe(true);
+		expect(result.value).toMatchObject({ value: 'preview-helper' });
+		expect(result.inherited).toBe((await ensureLocalBuiltin('lodash-es') as { debounce: unknown }).debounce);
+		await expect(result.lazy()).resolves.toMatchObject({ mark: 'preview-helper' });
+		expect(native).not.toHaveBeenCalled();
+		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toEqual([entry, imports['@deot/helper']]);
 	});
 
 	it('executes minified derived classes with native fields and a comma after super', async () => {
@@ -119,6 +174,23 @@ describe('local remote modules', () => {
 		await expect(result.vue()).resolves.toMatchObject({ ref: Vue.ref });
 		expect(fetch).toHaveBeenCalledWith(mapped);
 		expect(fetch).toHaveBeenCalledWith(child);
+	});
+
+	it('resolves relative dependencies of root-relative module overrides', async () => {
+		vi.stubGlobal('location', new URL('https://docs.test/guide'));
+		vi.mocked(fetch).mockImplementation(async url => ({
+			ok: true,
+			text: async () => String(url).endsWith('/widget.js')
+				? `export { label } from './child.js'; export const lazy = () => import('feature');`
+				: `export const label = 'local-module';`
+		} as Response));
+		const loader = createRemoteLoader({ widget: '/modules/widget.js', feature: '/feature.js' }, { vue: Vue, vueRouter: {} });
+		const result = await loader.load('/modules/widget.js') as { label: string; lazy: () => Promise<unknown> };
+		expect(result.label).toBe('local-module');
+		await expect(result.lazy()).resolves.toMatchObject({ label: 'local-module' });
+		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toEqual([
+			'https://docs.test/modules/widget.js', 'https://docs.test/modules/child.js', 'https://docs.test/feature.js'
+		]);
 	});
 
 	it('follows relative files and reports missing modules', async () => {

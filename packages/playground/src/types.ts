@@ -49,7 +49,7 @@ export type PlaygroundOptions = Omit<Partial<StoreState>,
 	 */
 	cdnURL?: string;
 	/**
-	 * 实例层 import，合并时高于站点默认、低于管理页覆盖。
+	 * 实例层 import，合并时高于站点默认和管理页覆盖。
 	 * `files` / `mainFile` 仍由 playground 自己管理。
 	 */
 	builtinImportMap?: ImportMap;

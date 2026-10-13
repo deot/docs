@@ -340,7 +340,8 @@ describe('Playground', () => {
 		expect(headHTML).not.toContain('cdn.jsdelivr.net');
 	});
 
-	it('applies site-level import map overrides above instance imports', () => {
+	it('lets instance imports override site-level management defaults', () => {
+		setPlaygroundSiteModules({ custom: 'https://site.test/custom.js', inherited: '/inherited.js' });
 		applyPlaygroundImportMapOverride('vue', 'https://cdn.example.com/vue.js');
 		applyPlaygroundImportMapOverride('custom', 'https://cdn.example.com/custom.js');
 		const wrapper = mountPlayground({
@@ -357,8 +358,9 @@ describe('Playground', () => {
 			}
 		});
 		const imports = store.options.builtinImportMap.value.imports;
-		expect(imports.vue).toBe('https://cdn.example.com/vue.js');
-		expect(imports.custom).toBe('https://cdn.example.com/custom.js');
+		expect(imports.vue).toBe('/vue.js');
+		expect(imports.custom).toBe('/custom.js');
+		expect(imports.inherited).toBe('/inherited.js');
 		expect(imports['@deot/vc']).toBe(`${DEFAULT_CDN_URL}/@deot/vc/dist/index.js`);
 
 		removePlaygroundImportMapOverride('vue');

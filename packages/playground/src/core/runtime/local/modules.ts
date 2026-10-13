@@ -1,4 +1,4 @@
-import { createBuiltinImports, resolveNpmImport } from '../../../cdn';
+import { resolveNpmImport } from '../../../cdn';
 import { ensureLocalBuiltin, localBuiltinIds } from './builtins';
 
 type HostModule = Record<string | symbol, unknown>;
@@ -94,6 +94,10 @@ export const resolveHostModule = (
 };
 
 const HOST_VUE_SPECIFIERS = new Set(['vue', 'vue/server-renderer']);
+const VUE_DEPENDENT_BUILTINS = new Set([
+	'vue/server-renderer', 'vue-router', 'pinia',
+	'@deot/vc', '@deot/vc-components', '@deot/vc-hooks', '@deot/vc-locale'
+]);
 
 export interface LoadLocalModulesResult {
 	modules: Record<string, unknown>;
@@ -127,27 +131,26 @@ export const resolveImportTarget = (
 	}
 };
 
-// 默认 CDN 地址仍用宿主副本。import map 里另给的 URL 会覆盖，包括 vue。
+// 未覆盖的模块继承宿主；覆盖 Vue 时，只联动重新加载依赖 Vue 的内置模块。
 export const prefersLocalBuiltin = (
 	id: string,
 	imports: Record<string, string>,
-	cdnURL?: string
+	overrides: ReadonlySet<string> = new Set(Object.keys(imports))
 ): boolean => {
 	if (!localBuiltinIds.has(id) && !HOST_VUE_SPECIFIERS.has(id)) return false;
-	const url = imports[id];
-	if (!url) return true;
-	return url === createBuiltinImports(cdnURL)[id];
+	if (overrides.has(id)) return false;
+	return !VUE_DEPENDENT_BUILTINS.has(id) || !overrides.has('vue');
 };
 
 /**
- * 内置依赖先注入宿主副本。import map 里与默认 CDN 不同的地址会覆盖，包括 `vue`。
+ * 内置依赖默认注入宿主副本，显式 URL 按模块覆盖，包括与默认 CDN 相同的地址。
  * @param specifiers 本次预览用到的裸模块说明符。
  * @param imports 合并后的 import map。
  * @param builtins 宿主 Vue 与 vue-router。
  * @param builtins.vue 当前页面的 Vue 模块。
  * @param builtins.vueRouter 打包进来的 vue-router，可被 import map 覆盖。
  * @param loader 按 URL 加载远程模块。
- * @param cdnURL 当前 CDN 根，用来识别默认地址。
+ * @param overrides 显式配置的模块名，与自动补齐的默认地址区分。
  * @returns 模块表和加载错误。
  */
 export const loadLocalModules = async (
@@ -155,7 +158,7 @@ export const loadLocalModules = async (
 	imports: Record<string, string>,
 	builtins: { vue: unknown; vueRouter: unknown },
 	loader: ModuleLoader,
-	cdnURL?: string
+	overrides: ReadonlySet<string> = new Set(Object.keys(imports))
 ): Promise<LoadLocalModulesResult> => {
 	const modules: Record<string, unknown> = {
 		'vue': builtins.vue,
@@ -167,14 +170,14 @@ export const loadLocalModules = async (
 
 	specifiers.forEach((specifier) => {
 		let local = false;
-		if (prefersLocalBuiltin(specifier, imports, cdnURL)) localIds.add(specifier);
+		if (prefersLocalBuiltin(specifier, imports, overrides)) localIds.add(specifier);
 		else {
 			let cursor = specifier;
 			while (true) {
 				const slash = cursor.lastIndexOf('/');
 				if (slash <= 0) break;
 				const parent = cursor.slice(0, slash);
-				if (prefersLocalBuiltin(parent, imports, cdnURL)) {
+				if (prefersLocalBuiltin(parent, imports, overrides)) {
 					localIds.add(parent);
 					local = true;
 					break;
@@ -182,12 +185,8 @@ export const loadLocalModules = async (
 				cursor = parent;
 			}
 		}
-		if (specifier === 'vue-router') {
-			if (imports['vue-router']) targets.add('vue-router');
-			return;
-		}
 		const target = resolveImportTarget(specifier, imports);
-		if (target && prefersLocalBuiltin(target, imports, cdnURL)) localIds.add(target);
+		if (target && prefersLocalBuiltin(target, imports, overrides)) localIds.add(target);
 		else if (target) targets.add(target);
 		else if (!local && !localIds.has(specifier)) {
 			imports[specifier] = resolveNpmImport(specifier);
@@ -206,7 +205,7 @@ export const loadLocalModules = async (
 
 	for (const id of targets) {
 		const url = imports[id];
-		if (!url || prefersLocalBuiltin(id, imports, cdnURL)) continue;
+		if (!url || prefersLocalBuiltin(id, imports, overrides)) continue;
 		try {
 			modules[id] = await loader(url);
 		} catch (error: unknown) {

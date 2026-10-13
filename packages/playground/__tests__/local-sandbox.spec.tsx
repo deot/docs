@@ -1,15 +1,23 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { nextTick, ref, type Ref } from 'vue';
 import { mount } from '@vue/test-utils';
 import LocalSandbox from '../src/core/runtime/local/local-sandbox.vue';
 import PopupPreview from '../src/core/runtime/alone/wrapper.vue';
 import { createLocalPlayground } from '../src/core/runtime/local/playground';
 import { preloadLocalPlayground } from './preload-local';
+import { createBuiltinImports } from '../src/cdn';
+import { applyPlaygroundImportMapOverride, clearPlaygroundMaps, setPlaygroundSiteModules } from '../src/import-map';
+
+const require = createRequire(import.meta.url);
+const previewVueSource = readFileSync(require.resolve('vue/dist/vue.runtime.esm-browser.prod.js'), 'utf8');
 
 describe('LocalSandbox', () => {
 	beforeAll(async () => {
 		await preloadLocalPlayground();
 	}, 20_000);
+	afterEach(() => clearPlaygroundMaps());
 
 	it('runs the injected handler without requesting preview height', async () => {
 		const service = createLocalPlayground({
@@ -87,6 +95,118 @@ const handleClick = playground.run(560, { visible: isActive })
 		expect(messages).toEqual([]);
 		window.removeEventListener('message', onMessage);
 		wrapper.unmount();
+	});
+
+	it.each(['App.vue', 'main.js'])('uses a custom Vue runtime for template refs and %s entry mounting', async (entry) => {
+		const vueURL = createBuiltinImports().vue;
+		const fetchRequest = vi.spyOn(globalThis, 'fetch').mockImplementation(async url => ({
+			ok: true,
+			text: async () => url === vueURL
+				? previewVueSource
+				: `import { defineComponent, h, ref } from 'vue';
+export const Scroller = defineComponent({ setup(_, { slots, expose }) {
+	const element = ref();
+	expose({ tag: () => element.value.tagName });
+	return () => h('section', { ref: element }, slots.default?.());
+} });`
+		} as Response));
+		const errors: string[] = [];
+		const wrapper = mount(LocalSandbox, {
+			props: {
+				files: {
+					'main.js': `import { createApp } from 'vue';
+import App from './App.vue';
+createApp(App).provide('entry-label', 'entry').mount('#app');`,
+					'App.vue': `<script setup>
+import { inject, onMounted, ref } from 'vue';
+import { Scroller } from '@deot/vc';
+const target = ref();
+const label = ref('pending');
+const playground = inject('docs:playground');
+const entryLabel = inject('entry-label', 'sfc');
+onMounted(() => { label.value = playground && target.value ? entryLabel + ':' + target.value.tag() : 'missing'; });
+const update = () => { label.value += '!'; };
+</script>
+<template><Scroller ref="target"><button @click="update">{{ label }}</button></Scroller><DocsLink to="/guide">go</DocsLink></template>`
+				},
+				entry,
+				options: { builtinImportMap: { imports: { vue: vueURL } } },
+				previewScroller: true,
+				onError: (payload: { compile: string; runtime: string }) => {
+					errors.push(...[payload.compile, payload.runtime].filter(Boolean));
+				}
+			},
+			attachTo: document.body
+		});
+		try {
+			const label = entry === 'main.js' ? 'entry:SECTION' : 'sfc:SECTION';
+			await vi.waitFor(() => {
+				expect(errors).toEqual([]);
+				expect(wrapper.get('button').text()).toBe(label);
+			});
+			await wrapper.get('button').trigger('click');
+			await vi.waitFor(() => expect(wrapper.get('button').text()).toBe(`${label}!`));
+			expect(wrapper.get('a').attributes('href')).toBe('/guide');
+			expect(wrapper.findAll('section')).toHaveLength(2);
+			expect(fetchRequest).toHaveBeenCalledWith('https://cdn.jsdelivr.net/npm/@deot/vc/dist/index.js');
+			(wrapper.vm as unknown as { refresh: () => void }).refresh();
+			await vi.waitFor(() => expect(wrapper.get('button').text()).toBe(label));
+			expect(errors).toEqual([]);
+		} finally {
+			wrapper.unmount();
+			fetchRequest.mockRestore();
+		}
+	});
+
+	it('isolates module overrides and reactive state across host and custom Vue previews', async () => {
+		const defaults = createBuiltinImports();
+		setPlaygroundSiteModules({ 'lodash-es': 'https://site.test/lodash.js' });
+		applyPlaygroundImportMapOverride('lodash-es', 'https://management.test/lodash.js');
+		const fetchRequest = vi.spyOn(globalThis, 'fetch').mockImplementation(async url => ({
+			ok: true,
+			text: async () => url === defaults.vue
+				? previewVueSource
+				: `
+				import { ref } from 'vue';
+				export const state = ref(0);
+				export const label = '${url === defaults['lodash-es'] ? 'instance' : 'management'}';`
+		} as Response));
+		const errors: string[] = [];
+		const wrappers = [
+			{ 'vue': defaults.vue, 'lodash-es': defaults['lodash-es'] },
+			{ 'lodash-es': defaults['lodash-es'] },
+			{}
+		].map(imports => mount(LocalSandbox, {
+			props: {
+				files: { 'App.vue': `<script setup>
+import { label, state } from 'lodash-es';
+</script><template><button @click="state++">{{ label }}:{{ state }}</button></template>` },
+				entry: 'App.vue',
+				options: { builtinImportMap: { imports } },
+				onError: (payload: { compile: string; runtime: string }) => {
+					errors.push(...[payload.compile, payload.runtime].filter(Boolean));
+				}
+			},
+			attachTo: document.body
+		}));
+		const labels = () => wrappers.map(wrapper => wrapper.get('button').text());
+		try {
+			await vi.waitFor(() => {
+				expect(errors).toEqual([]);
+				expect(labels()).toEqual(['instance:0', 'instance:0', 'management:0']);
+			});
+			await wrappers[0].get('button').trigger('click');
+			await wrappers[1].get('button').trigger('click');
+			await wrappers[1].get('button').trigger('click');
+			await vi.waitFor(() => expect(labels()).toEqual(['instance:1', 'instance:2', 'management:0']));
+			(wrappers[0].vm as unknown as { refresh: () => void }).refresh();
+			await vi.waitFor(() => expect(labels()).toEqual(['instance:0', 'instance:2', 'management:0']));
+			expect(errors).toEqual([]);
+			expect(fetchRequest).not.toHaveBeenCalledWith('https://site.test/lodash.js');
+		} finally {
+			wrappers.forEach(wrapper => wrapper.unmount());
+			fetchRequest.mockRestore();
+		}
 	});
 
 	it('reports compile failures and DocsLink navigation', async () => {

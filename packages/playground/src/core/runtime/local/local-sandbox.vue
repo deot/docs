@@ -18,13 +18,9 @@
 </template>
 <script setup lang="ts">
 import {
-	defineComponent,
-	h,
 	nextTick,
 	onBeforeUnmount,
-	onErrorCaptured,
 	onMounted,
-	provide,
 	ref,
 	shallowRef,
 	watch
@@ -32,14 +28,13 @@ import {
 import type { App, Component } from 'vue';
 import * as Vue from 'vue';
 import * as VueRouter from 'vue-router';
-import { Scroller } from '@deot/vc';
 import type {
 	PlaygroundFiles,
 	PlaygroundOptions,
 	PlaygroundPreviewScroller
 } from '../../../types';
 import { createLocalPlayground } from './playground';
-import { createRuntimeImports } from '../../store';
+import { createRuntimeImports, createRuntimeImportOverrides } from '../../store';
 import { PREVIEW_SCROLL_CONTENT_CLASS } from '../../preview-scroll';
 import {
 	installLocalBridge,
@@ -80,7 +75,13 @@ const messageSource = shallowRef<Window | null>(null);
 let port: LocalPreviewPort | null = null;
 let previewApp: App<Element> | null = null;
 let version = 0;
-let pendingMount: { component: Component; css: string[]; version: number } | null = null;
+let pendingMount: {
+	component: Component;
+	vue: typeof Vue;
+	scroller?: Component;
+	css: string[];
+	version: number;
+} | null = null;
 const styleId = `docs-local-${Math.random().toString(36).slice(2, 10)}`;
 
 const publishError = () => {
@@ -92,13 +93,13 @@ const publishError = () => {
 
 watch([compileError, runtimeError], publishError);
 
-const createDocsLink = (preview: LocalPreviewPort) => defineComponent({
+const createDocsLink = (preview: LocalPreviewPort, vue: typeof Vue) => vue.defineComponent({
 	name: 'DocsLink',
 	props: {
 		to: { type: String, default: '' }
 	},
 	setup(linkProps, { slots }) {
-		return () => h('a', {
+		return () => vue.h('a', {
 			href: linkProps.to,
 			style: { color: 'inherit', textDecoration: 'none' },
 			onClick(event: MouseEvent) {
@@ -115,27 +116,27 @@ const destroyPreview = () => {
 	removeStyle(styleId);
 };
 
-const mountPreview = (component: Component, preview: LocalPreviewPort, css: string[]) => {
+const mountPreview = (job: NonNullable<typeof pendingMount>, preview: LocalPreviewPort) => {
 	if (!mountEl.value) return;
+	const { component, vue, scroller, css } = job;
 	destroyPreview();
 	injectStyle(styleId, css);
 	if (props.clearConsole) console.clear();
-	const useScroller = props.previewScroller === true;
-	const app = Vue.createApp({
+	const app = vue.createApp({
 		name: 'LocalSandboxRoot',
 		setup() {
-			const service = createLocalPlayground(Vue);
-			provide('docs:playground', service);
-			onErrorCaptured((error) => {
+			const service = createLocalPlayground(vue);
+			vue.provide('docs:playground', service);
+			vue.onErrorCaptured((error) => {
 				const message = formatPlaygroundRuntimeError(error);
 				if (message) runtimeError.value = message;
 				return false;
 			});
-			onBeforeUnmount(() => service.dispose());
+			vue.onBeforeUnmount(() => service.dispose());
 			return () => {
-				const content = h(component);
-				if (!useScroller) return content;
-				return h(Scroller, {
+				const content = vue.h(component);
+				if (!scroller) return content;
+				return vue.h(scroller, {
 					height: '100%',
 					native: false,
 					autoResize: true,
@@ -145,7 +146,7 @@ const mountPreview = (component: Component, preview: LocalPreviewPort, css: stri
 			};
 		}
 	});
-	app.component('DocsLink', createDocsLink(preview));
+	app.component('DocsLink', createDocsLink(preview, vue));
 	app.config.errorHandler = (error) => {
 		const message = formatPlaygroundRuntimeError(error);
 		if (message) runtimeError.value = message;
@@ -178,7 +179,7 @@ const tryMount = async () => {
 	/* istanbul ignore if -- 桥接 iframe 尚未就绪或编译已被取代 */
 	if (pendingMount !== job || !mountEl.value) return;
 	pendingMount = null;
-	mountPreview(job.component, preview, job.css);
+	mountPreview(job, preview);
 };
 
 const run = async () => {
@@ -202,21 +203,24 @@ const run = async () => {
 			return;
 		}
 		const imports = createRuntimeImports(props.options.cdnURL, props.options.builtinImportMap);
+		const overrides = new Set(Object.keys(createRuntimeImportOverrides(props.options.builtinImportMap)));
 		const specifiers = collectBareSpecifiers(
 			props.files,
 			collectReachableFilenames(props.files, compiled.entry)
 		);
+		specifiers.push('vue');
+		if (props.previewScroller === true) specifiers.push('@deot/vc');
 		const remote = createRemoteLoader(
 			imports,
 			{ vue: Vue, vueRouter: VueRouter },
-			props.options.cdnURL
+			overrides
 		);
 		const loaded = await loadLocalModules(
 			specifiers,
 			imports,
 			{ vue: Vue, vueRouter: VueRouter },
 			url => remote.load(url),
-			props.options.cdnURL
+			overrides
 		);
 		/* istanbul ignore if -- 并发编译时只保留最后一次 */
 		if (current !== version) return;
@@ -237,6 +241,10 @@ const run = async () => {
 		}
 		pendingMount = {
 			component: linked.component as Component,
+			vue: loaded.modules.vue as typeof Vue,
+			scroller: props.previewScroller === true
+				? (loaded.modules['@deot/vc'] as { Scroller?: Component }).Scroller
+				: undefined,
 			css: linked.css,
 			version: current
 		};

@@ -112,7 +112,20 @@ export const createReplFile = (filename: string, code: string) => {
 };
 
 /**
- * 默认 CDN → 站点 modules → 实例 builtinImportMap → 管理页覆盖。
+ * 保留显式配置的模块，供 local 区分宿主默认与 URL 覆盖。
+ * @param builtinImportMap 实例层 import map。
+ * @returns 按优先级合并的显式模块地址。
+ */
+export const createRuntimeImportOverrides = (
+	builtinImportMap?: PlaygroundOptions['builtinImportMap']
+): Record<string, string> => ({
+	...getPlaygroundSiteModules(),
+	...getPlaygroundImportMapOverrides(),
+	...filterSafeHrefs(builtinImportMap?.imports)
+});
+
+/**
+ * 默认 CDN → 站点 modules → 管理页覆盖 → 实例 builtinImportMap。
  * iframe import map 与直接渲染加载的是同一份地址表。
  * @param cdnURL
  * @param builtinImportMap
@@ -122,9 +135,7 @@ export const createRuntimeImports = (
 	builtinImportMap?: PlaygroundOptions['builtinImportMap']
 ): Record<string, string> => ({
 	...createBuiltinImports(cdnURL),
-	...getPlaygroundSiteModules(),
-	...filterSafeHrefs(builtinImportMap?.imports),
-	...getPlaygroundImportMapOverrides()
+	...createRuntimeImportOverrides(builtinImportMap)
 });
 
 export const createRuntimeStore = (
