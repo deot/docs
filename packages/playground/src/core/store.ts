@@ -102,7 +102,7 @@ export const createRuntimePreviewOptions = (
 		}
 	};
 };
-export const toReplFilename = (filename: string) => filename.startsWith('src/')
+export const toReplFilename = (filename: string) => filename === 'import-map.json' || filename.startsWith('src/')
 	? filename
 	: `src/${filename}`;
 
@@ -150,6 +150,8 @@ export const createRuntimeStore = (
 			return [file.filename, file];
 		})
 	));
+	// REPL 初始化会先读取 import map，再合并内置地址；文件必须提前存在。
+	replFiles.value['import-map.json'] ??= new ReplFile('import-map.json', '{}');
 	const mainFile = ref(toReplFilename(entry));
 	const activeFilename = ref(toReplFilename(entry));
 	const imports = createRuntimeImports(cdnURL, builtinImportMap);
@@ -168,6 +170,11 @@ export const createRuntimeStore = (
 		})
 	});
 	bindPlaygroundScss(store);
+	const setFiles = store.setFiles.bind(store);
+	store.setFiles = (nextFiles, nextEntry) => setFiles({
+		'import-map.json': store.files['import-map.json'].code,
+		...nextFiles
+	}, nextEntry);
 	bindReplModules(store);
 	whenSassReady(files, () => {
 		const specifiers = collectBareSpecifiers(files, Object.keys(files));

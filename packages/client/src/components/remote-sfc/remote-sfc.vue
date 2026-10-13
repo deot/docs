@@ -80,7 +80,7 @@ const playgroundProps = computed(() => {
 		locale: locale.value,
 		styleless: true,
 		...overrides,
-		local: overrides.local ?? site.local ?? true,
+		local: overrides.local ?? site.local,
 		...(previewStyleHead.value
 			? { previewOptions: {
 					...site.previewOptions,
@@ -91,7 +91,7 @@ const playgroundProps = computed(() => {
 	};
 });
 const useIframeViewport = computed(() => (
-	!!preview?.value && !playgroundProps.value.local && playgroundProps.value.styleless
+	!!preview?.value && playgroundProps.value.local === false && playgroundProps.value.styleless
 	&& !Array.isArray(playgroundProps.value.viewport)
 ));
 

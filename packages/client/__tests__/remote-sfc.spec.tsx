@@ -38,7 +38,11 @@ vi.mock('../src/modules/gateway', () => ({
 vi.mock('@deot/docs-playground', async () => ({
 	Playground: (await import('vue')).defineComponent({
 		name: 'Playground',
-		props: ['files', 'entry', 'options', 'styleless', 'previewInset', 'expandable', 'local', 'viewport', 'views', 'previewOptions'],
+		props: {
+			files: null, entry: null, options: null, styleless: null,
+			previewInset: null, expandable: null, viewport: null, views: null, previewOptions: null,
+			local: { type: Boolean, default: true }
+		},
 		emits: ['navigate'],
 		setup: props => () => <div class="playground">{props.entry}</div>
 	})
@@ -201,6 +205,37 @@ describe('RemoteSfc', () => {
 			'demo/widgets/index.tsx': sources[`${base}widgets/index.tsx`],
 			'demo/_theme.scss': '$color: red;'
 		});
+	});
+
+	it.each([false, true])('leaves the default local mode to Playground with standalone preview=%s', async (standalone) => {
+		const config = shallowRef<PreviewConfig>({ url: './components/index.vue', modules: {}, styles: [] });
+		const wrapper = mount(RemoteSfc, {
+			props: { source: config.value.url, lang: 'zh-CN' },
+			global: { provide: standalone ? { [previewConfigKey as symbol]: config } : {} }
+		});
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		const playground = wrapper.findComponent({ name: 'Playground' });
+		expect(playground.vm.$.vnode.props?.local).toBeUndefined();
+		expect(playground.props('local')).toBe(true);
+		expect(wrapper.classes()).not.toContain('docs-remote-sfc--viewport');
+	});
+
+	it.each([
+		{ siteLocal: false, previewLocal: undefined, expected: false },
+		{ siteLocal: true, previewLocal: false, expected: false },
+		{ siteLocal: false, previewLocal: true, expected: true }
+	])('forwards configured local=$expected and applies layout only to iframe previews', async ({ siteLocal, previewLocal, expected }) => {
+		window.$docs.components = { playground: { local: siteLocal } };
+		const config = shallowRef<PreviewConfig>({
+			url: './components/index.vue', modules: {}, styles: [], playground: { local: previewLocal }
+		});
+		const wrapper = mount(RemoteSfc, {
+			props: { source: config.value.url, lang: 'zh-CN' },
+			global: { provide: { [previewConfigKey as symbol]: config } }
+		});
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		expect(wrapper.findComponent({ name: 'Playground' }).props('local')).toBe(expected);
+		expect(wrapper.classes().includes('docs-remote-sfc--viewport')).toBe(!expected);
 	});
 
 	it('forwards site playground defaults while keeping remote sfc styleless', async () => {

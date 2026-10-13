@@ -2,6 +2,7 @@
 
 import { createRuntimeStore } from '../src/core/store';
 import { resolveReplImports } from '../src/core/repl-modules';
+import { watch } from 'vue';
 
 describe('iframe runtime modules', () => {
 	afterEach(() => vi.unstubAllGlobals());
@@ -22,15 +23,19 @@ describe('iframe runtime modules', () => {
 	});
 
 	it('initializes the preview after remote dependency discovery and retains the module override', async () => {
-		vi.stubGlobal('fetch', vi.fn(async () => ({
-			ok: true,
-			text: async () => `export const label = 'widget'; export const optional = () => import('optional-pkg');`
-		})));
+		let complete!: (response: Response) => void;
+		vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => { complete = resolve; })));
 		const store = createRuntimeStore({
 			'App.vue': `<script setup>import { label } from 'widget';</script><template>{{ label }}</template>`
 		}, 'App.vue', { builtinImportMap: { imports: { widget: 'https://example.test/widget.js' } } });
 		expect(store.loading).toBe(true);
+		expect(store.errors).toEqual([]);
 		expect(store.files['src/App.vue'].compiled.js).toBe('');
+		expect(store.getImportMap().imports?.widget).toBe('https://example.test/widget.js');
+		complete({
+			ok: true,
+			text: async () => `export const label = 'widget'; export const optional = () => import('optional-pkg');`
+		} as Response);
 		await vi.waitFor(() => {
 			expect(store.loading).toBe(false);
 			expect(store.files['src/App.vue'].compiled.js).toContain('widget');
@@ -39,6 +44,7 @@ describe('iframe runtime modules', () => {
 				'optional-pkg': 'https://cdn.jsdelivr.net/npm/optional-pkg/+esm'
 			});
 		});
+		expect(store.errors).toEqual([]);
 	});
 
 	it('reports failed remote dependencies without starting an empty preview', async () => {
@@ -50,7 +56,43 @@ describe('iframe runtime modules', () => {
 			expect(store.loading).toBe(false);
 			expect(store.errors.map(String).join('\n')).toContain('404 https://example.test/missing.js');
 		});
+		expect(store.errors.map(String).join('\n')).not.toContain('reading \'code\'');
 		expect(store.files['src/App.vue'].compiled.js).toBe('');
+	});
+
+	it('retains the current import map when replacing source files without transient syntax errors', async () => {
+		const store = createRuntimeStore({ 'App.vue': '<template>initial</template>' }, 'App.vue', {});
+		await vi.waitFor(() => expect(store.files['src/App.vue'].compiled.js).toContain('initial'));
+		store.setImportMap({ imports: { feature: 'https://example.test/feature.js' } }, true);
+		const errors: string[] = [];
+		const stop = watch(() => store.errors.map(String), value => errors.push(...value), { flush: 'sync' });
+		try {
+			await store.setFiles({ 'App.vue': '<template>updated</template>' }, 'App.vue');
+			expect(store.getImportMap().imports?.feature).toBe('https://example.test/feature.js');
+			expect(errors).toEqual([]);
+			await store.setFiles({
+				'App.vue': '<template>next</template>',
+				'import-map.json': JSON.stringify({ imports: { feature: 'https://example.test/next.js' } })
+			}, 'App.vue');
+			expect(store.getImportMap().imports?.feature).toBe('https://example.test/next.js');
+			expect(errors).toEqual([]);
+		} finally {
+			stop();
+		}
+	});
+
+	it('uses an existing import-map file and still reports genuinely invalid JSON', async () => {
+		const store = createRuntimeStore({
+			'App.vue': '<template>ready</template>',
+			'import-map.json': JSON.stringify({ imports: { feature: 'https://example.test/feature.js' } })
+		}, 'App.vue', {});
+		await vi.waitFor(() => expect(store.files['src/App.vue'].compiled.js).toContain('ready'));
+		expect(store.getImportMap().imports?.feature).toBe('https://example.test/feature.js');
+		expect(store.files['src/import-map.json']).toBeUndefined();
+		store.files['import-map.json'].code = '{';
+		store.getImportMap();
+		expect(store.errors.map(String).join('\n')).toContain('Syntax error in import-map.json:');
+		expect(store.errors.map(String).join('\n')).not.toContain('reading \'code\'');
 	});
 
 	it('resolves nested Vue, TS and dynamic imports from their importer without changing source', async () => {

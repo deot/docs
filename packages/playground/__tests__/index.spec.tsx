@@ -978,7 +978,9 @@ describe('Playground', () => {
 
 		await wrapper.setProps({ files: { 'App.vue': 'changed', 'child.ts': 'child' }, entry: 'App.vue' });
 		await nextTick();
-		expect(setFiles).toHaveBeenCalledWith({ 'App.vue': 'changed', 'child.ts': 'child' }, 'App.vue');
+		expect(setFiles).toHaveBeenCalledWith({
+			'App.vue': 'changed', 'child.ts': 'child', 'import-map.json': expect.any(String)
+		}, 'App.vue');
 
 		await wrapper.setProps({ entry: 'child.ts' });
 		await nextTick();
