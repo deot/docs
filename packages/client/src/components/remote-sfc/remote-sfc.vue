@@ -64,7 +64,7 @@ const playgroundOptions = computed(() => {
 			...siteImportMap,
 			imports: {
 				...siteImportMap.imports,
-				...config.modules,
+				// $docs.modules 由运行时按站点层合并，不能在这里提升为实例覆盖。
 				...JSON.parse(previewModules.value)
 			}
 		}

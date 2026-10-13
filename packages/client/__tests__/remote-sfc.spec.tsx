@@ -6,6 +6,9 @@ import RemoteSfc from '../src/components/remote-sfc/remote-sfc.vue';
 import { computed, shallowRef } from 'vue';
 import { previewConfigKey } from '../src/modules/preview/config';
 import type { PreviewConfig } from '../src/modules/preview/config';
+import { createBuiltinImports } from '../../playground/src/cdn';
+import { createRuntimeImports } from '../../playground/src/core/store';
+import { clearPlaygroundMaps, setPlaygroundImportMapOverrides, setPlaygroundSiteModules } from '../../playground/src/import-map';
 
 const { load, subscribe, release, push, listeners, notifyOnLoad } = vi.hoisted(() => ({
 	load: vi.fn(),
@@ -16,7 +19,10 @@ const { load, subscribe, release, push, listeners, notifyOnLoad } = vi.hoisted((
 	notifyOnLoad: { value: false }
 }));
 enableAutoUnmount(afterEach);
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+	vi.unstubAllGlobals();
+	clearPlaygroundMaps();
+});
 
 vi.mock('vue-router', () => ({ useRouter: () => ({ push }) }));
 vi.mock('../src/modules/gateway', () => ({
@@ -75,7 +81,7 @@ describe('RemoteSfc', () => {
 		});
 	});
 
-	it('loads recursive SFC dependencies and maps bare modules', async () => {
+	it('loads recursive SFC dependencies without promoting site modules to instance overrides', async () => {
 		notifyOnLoad.value = true;
 		const wrapper = mount(() => (
 			<RemoteSfc source="./components/index.vue" lang="zh-CN" />
@@ -92,7 +98,7 @@ describe('RemoteSfc', () => {
 			'components/base.css'
 		]);
 		expect(playground.props('options')).toEqual({
-			builtinImportMap: { imports: { lodash: 'https://esm.sh/lodash' } }
+			builtinImportMap: { imports: {} }
 		});
 		expect(subscribe).toHaveBeenCalledTimes(6);
 		expect(load).toHaveBeenCalledTimes(6);
@@ -220,11 +226,45 @@ describe('RemoteSfc', () => {
 		expect(playground.props('options')).toEqual({
 			builtinImportMap: {
 				imports: {
-					vue: 'https://cdn.example.com/vue.js',
-					lodash: 'https://esm.sh/lodash'
+					vue: 'https://cdn.example.com/vue.js'
 				}
 			}
 		});
+	});
+
+	it.each([true, false])('preserves instance > management > site > builtin imports with local=%s', async (local) => {
+		window.$docs.modules = {
+			'lodash': 'https://site.test/lodash.js',
+			'@deot/helper': 'https://site.test/helper.js',
+			'site-only': 'https://site.test/extra.js'
+		};
+		setPlaygroundSiteModules(window.$docs.modules);
+		setPlaygroundImportMapOverrides({
+			'lodash': 'https://management.test/lodash.js',
+			'@deot/helper': 'https://management.test/helper.js'
+		});
+		const config = shallowRef<PreviewConfig>({
+			url: './components/index.vue',
+			styles: [],
+			modules: { lodash: 'https://preview.test/lodash.js' },
+			playground: { local }
+		});
+		const wrapper = mount(RemoteSfc, {
+			props: { source: config.value.url, lang: 'zh-CN' },
+			global: { provide: { [previewConfigKey as symbol]: config } }
+		});
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		const playground = wrapper.findComponent({ name: 'Playground' });
+		expect(playground.props('local')).toBe(local);
+		const options = playground.props('options');
+		const imports = createRuntimeImports(options.cdnURL, options.builtinImportMap);
+		expect(imports).toMatchObject({
+			'lodash': 'https://preview.test/lodash.js',
+			'@deot/helper': 'https://management.test/helper.js',
+			'site-only': 'https://site.test/extra.js',
+			'vue': createBuiltinImports().vue
+		});
+		expect(options.builtinImportMap.imports).toEqual(config.value.modules);
 	});
 
 	it('applies preview modules and local props without reloading sources for CSS changes', async () => {

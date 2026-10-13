@@ -234,8 +234,9 @@ const query = new URLSearchParams({ raw: encode(JSON.stringify(config)) });
 const href = `/__docs/preview?${query}`;
 ```
 
-`modules` 是模块说明符到 ESM URL 的映射，在当前远程 SFC 的导入表中覆盖站点默认，
-不修改全站配置。`playground` 复用现有组件参数，作用于 `.vue` 和 page.json 内的
+`modules` 是模块说明符到 ESM URL 的映射，仅覆盖当前远程 SFC 的导入表。
+`local: true` 与 `local: false` 均按「实例配置 > 管理页覆盖 > `$docs.modules` > 内置默认」合并，不修改全站配置。
+`playground` 复用现有组件参数，作用于 `.vue` 和 page.json 内的
 `docs:sfc` 块；省略时沿用站点默认，`styleless` 默认 `true`。
 支持 `local`、`styleless`、`previewScroller`（布尔值）、`views`（`runtime` / `files` 数组）、
 `viewport`（`auto`、宽度或宽高数组）、`previewInset`（数值或垂直/水平数组）、

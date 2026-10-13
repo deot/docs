@@ -331,8 +331,8 @@ export interface DocsConfig {
 	 */
 	namespace?: string;
 	/**
-	 * 远程 SFC 的 Playground import 映射，也会作为全站 Playground 的 import 默认。
-	 * 同名 key 覆盖内置 CDN，也可追加。远程 SFC 会再把它传给实例 `builtinImportMap`。
+	 * 全站 Playground 的模块默认映射（含远程 SFC）。
+	 * 同名 key 覆盖内置 CDN，也可追加；优先级低于管理页覆盖和实例配置。
 	 */
 	modules?: Record<string, string>;
 	/**
