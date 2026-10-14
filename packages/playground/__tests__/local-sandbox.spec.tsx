@@ -7,6 +7,7 @@ import LocalSandbox from '../src/core/runtime/local/local-sandbox.vue';
 import PopupPreview from '../src/core/runtime/alone/wrapper.vue';
 import { createLocalPlayground } from '../src/core/runtime/local/playground';
 import { preloadLocalPlayground } from './preload-local';
+import { clearRemoteModuleCache } from '../src/core/runtime/local/remote';
 import { createBuiltinImports } from '../src/cdn';
 import { applyPlaygroundImportMapOverride, clearPlaygroundMaps, setPlaygroundSiteModules } from '../src/import-map';
 
@@ -18,6 +19,7 @@ describe('LocalSandbox', () => {
 		await preloadLocalPlayground();
 	}, 20_000);
 	afterEach(() => clearPlaygroundMaps());
+	beforeEach(() => clearRemoteModuleCache());
 
 	it('runs the injected handler without requesting preview height', async () => {
 		const service = createLocalPlayground({

@@ -1,7 +1,8 @@
 import * as Vue from 'vue';
 import { createBuiltinImports } from '../src/cdn';
-import { createRemoteLoader } from '../src/core/runtime/local/remote';
+import { clearRemoteModuleCache, createRemoteLoader } from '../src/core/runtime/local/remote';
 import { ensureLocalBuiltin } from '../src/core/runtime/local/builtins';
+import * as Sucrase from 'sucrase';
 
 describe('local remote modules', () => {
 	const vueUrl = 'https://example.test/vue.js';
@@ -9,6 +10,7 @@ describe('local remote modules', () => {
 	const buttonUrl = 'https://example.test/button.js';
 
 	beforeEach(() => {
+		clearRemoteModuleCache();
 		vi.stubGlobal('fetch', vi.fn(async (url: string) => {
 			const files: Record<string, string> = {
 				[helperUrl]: `import { ref } from 'vue';\nexport const mark = ref('helper');\n`,
@@ -23,6 +25,127 @@ describe('local remote modules', () => {
 
 	afterEach(() => {
 		vi.unstubAllGlobals();
+		vi.restoreAllMocks();
+	});
+
+	it('shares downloads and transforms across concurrent previews while isolating module state', async () => {
+		const entry = 'https://assets.test/shared/entry.js';
+		const child = 'https://assets.test/shared/child.js';
+		let complete!: () => void;
+		const pending = new Promise<void>((resolve) => { complete = resolve; });
+		vi.mocked(fetch).mockImplementation(async (url) => {
+			await pending;
+			return {
+				ok: true,
+				text: async () => url === entry
+					? `import { label } from './child.js'; let count = 0; export const next = () => label + ++count; export const context = this;`
+					: `export const label = 'preview:';`
+			} as Response;
+		});
+		const transform = vi.spyOn(Sucrase, 'transform');
+		const tasks = Array.from({ length: 8 }, () => createRemoteLoader({ widget: entry }, { vue: Vue, vueRouter: {} }).load(entry));
+		complete();
+		const results = await Promise.all(tasks) as Array<{ next: () => string; context: unknown }>;
+		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toEqual([entry, child]);
+		expect(transform).toHaveBeenCalledTimes(2);
+		expect(results.map(result => result.next())).toEqual(Array(8).fill('preview:1'));
+		expect(results.every(result => result.context === undefined)).toBe(true);
+		expect(results[0].next()).toBe('preview:2');
+		expect(results[1].next()).toBe('preview:2');
+	});
+
+	it('resolves cached source dependencies against each preview import map', async () => {
+		const entry = 'https://assets.test/maps/entry.js';
+		const first = 'https://assets.test/maps/first.js';
+		const second = 'https://assets.test/maps/second.js';
+		vi.mocked(fetch).mockImplementation(async url => ({
+			ok: true,
+			text: async () => url === entry
+				? `import { label } from 'feature'; export const value = label;`
+				: `export const label = '${url === first ? 'first' : 'second'}';`
+		} as Response));
+		await expect(createRemoteLoader({ feature: first }, { vue: Vue, vueRouter: {} }).load(entry)).resolves.toMatchObject({ value: 'first' });
+		await expect(createRemoteLoader({ feature: second }, { vue: Vue, vueRouter: {} }).load(entry)).resolves.toMatchObject({ value: 'second' });
+		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toEqual([entry, first, second]);
+	});
+
+	it('retries failed downloads and transformations in later previews', async () => {
+		const entry = 'https://assets.test/retry/entry.js';
+		vi.mocked(fetch)
+			.mockResolvedValueOnce({ ok: false, status: 503 } as Response)
+			.mockResolvedValueOnce({ ok: true, text: async () => 'export const = ;' } as Response)
+			.mockResolvedValueOnce({ ok: true, text: async () => 'export const value = 42;' } as Response);
+		const load = () => createRemoteLoader({ widget: entry }, { vue: Vue, vueRouter: {} }).load(entry);
+		await expect(load()).rejects.toThrow('503');
+		await expect(load()).rejects.toThrow();
+		await expect(load()).resolves.toMatchObject({ value: 42 });
+		expect(fetch).toHaveBeenCalledTimes(3);
+	});
+
+	it('keeps different module versions separate and rereads same-origin development modules', async () => {
+		vi.stubGlobal('location', new URL('https://docs.test/guide'));
+		let value = 1;
+		vi.mocked(fetch).mockImplementation(async () => ({ ok: true, text: async () => `export const value = ${value};` } as Response));
+		const load = (url: string) => createRemoteLoader({ widget: url }, { vue: Vue, vueRouter: {} }).load(url);
+		await expect(load('https://assets.test/version/1.js')).resolves.toMatchObject({ value: 1 });
+		await expect(load('/__docs/module/widget')).resolves.toMatchObject({ value: 1 });
+		value = 2;
+		await expect(load('https://assets.test/version/2.js')).resolves.toMatchObject({ value: 2 });
+		await expect(load('https://assets.test/version/1.js')).resolves.toMatchObject({ value: 1 });
+		await expect(load('/__docs/module/widget')).resolves.toMatchObject({ value: 2 });
+		expect(fetch).toHaveBeenCalledTimes(4);
+	});
+
+	it('evicts old sources while retaining recently reused modules', async () => {
+		vi.mocked(fetch).mockResolvedValue({ ok: true, text: async () => 'export const value = 42;' } as Response);
+		const load = (index: number) => {
+			const url = `https://assets.test/bounded/${index}.js`;
+			return createRemoteLoader({ widget: url }, { vue: Vue, vueRouter: {} }).load(url);
+		};
+		for (let index = 0; index < 128; index++) await load(index);
+		await load(0);
+		await load(128);
+		await load(0);
+		expect(fetch).toHaveBeenCalledTimes(129);
+		await expect(load(1)).resolves.toMatchObject({ value: 42 });
+		expect(fetch).toHaveBeenCalledTimes(130);
+	});
+
+	it('preserves cyclic module graphs across previews', async () => {
+		const left = 'https://assets.test/cycle/left.js';
+		vi.mocked(fetch).mockImplementation(async url => ({
+			ok: true,
+			text: async () => url === left
+				? `import { readLeft } from './right.js'; export const value = 42; export const read = () => readLeft();`
+				: `import { value } from './left.js'; export const readLeft = () => value;`
+		} as Response));
+		for (let index = 0; index < 2; index++) {
+			const result = await createRemoteLoader({ widget: left }, { vue: Vue, vueRouter: {} }).load(left) as { read: () => number };
+			expect(result.read()).toBe(42);
+		}
+		expect(fetch).toHaveBeenCalledTimes(2);
+	});
+
+	it('waits for shared dependencies when loading multiple entry graphs concurrently', async () => {
+		vi.stubGlobal('location', new URL('https://assets.test/guide'));
+		const left = 'https://assets.test/concurrent/left.js';
+		const right = 'https://assets.test/concurrent/right.js';
+		const child = 'https://assets.test/concurrent/child.js';
+		let complete!: () => void;
+		const pending = new Promise<void>((resolve) => { complete = resolve; });
+		vi.mocked(fetch).mockImplementation(async url => ({
+			ok: true,
+			text: async () => {
+				if (url !== child) return `import { value } from './child.js'; export const result = value;`;
+				await pending;
+				return 'export const value = 42;';
+			}
+		} as Response));
+		const loader = createRemoteLoader({ widget: left }, { vue: Vue, vueRouter: {} });
+		const tasks = Promise.all([loader.load(left), loader.load(right)]);
+		complete();
+		await expect(tasks).resolves.toEqual([{ result: 42 }, { result: 42 }]);
+		expect(vi.mocked(fetch).mock.calls.map(call => call[0]).filter(url => url === child)).toHaveLength(1);
 	});
 
 	it('keeps the host vue when only other modules are overridden', async () => {

@@ -14,6 +14,64 @@ export interface RemoteBuiltins {
 const HOST_VUE = new Set(['vue', 'vue/server-renderer']);
 const moduleUrl = (url: string) => new URL(url, globalThis.location?.href).href;
 
+type ModuleRunner = (
+	require: (id: string) => unknown,
+	module: { exports: Record<string, unknown> },
+	exports: Record<string, unknown>,
+	importModule: (id: string) => Promise<unknown>
+) => void;
+
+interface RemoteSource {
+	dependencies: string[];
+	run: ModuleRunner;
+}
+
+const REMOTE_SOURCE_CACHE_LIMIT = 128;
+const sourceCache = new Map<string, Promise<RemoteSource>>();
+
+export const clearRemoteModuleCache = () => sourceCache.clear();
+
+const prepareRemoteSource = async (url: string): Promise<RemoteSource> => {
+	const response = await fetch(url);
+	if (!response.ok) throw new Error(`${response.status} ${url}`);
+	const text = await response.text();
+	await init();
+	const [specifiers] = parse(text);
+	// 按语法位置替换 import()，避免误改字符串、注释或对象的 import 方法。
+	let source = text;
+	for (const item of [...specifiers].reverse()) {
+		if (item.type === 'dynamic') source = source.slice(0, item.importStart) + '__import' + source.slice(item.importStart + 6);
+	}
+	const cjs = transform(rewriteImportMeta(source, url), {
+		transforms: ['imports'],
+		disableESTransforms: true,
+		production: true,
+		filePath: url
+	}).code;
+	return {
+		dependencies: specifiers.filter(item => item.type === 'static' || item.type === 'reexport-star').map(item => item.specifier!),
+		run: new Function('require', 'module', 'exports', '__import', cjs) as ModuleRunner
+	};
+};
+
+const readRemoteSource = (url: string): Promise<RemoteSource> => {
+	// 同源模块可能来自开发服务器，必须保留实时读取；只共享外部模块的下载和转换成果。
+	if (new URL(url).origin === globalThis.location?.origin) return prepareRemoteSource(url);
+	const cached = sourceCache.get(url);
+	if (cached) {
+		sourceCache.delete(url);
+		sourceCache.set(url, cached);
+		return cached;
+	}
+	const task = prepareRemoteSource(url).catch((error) => {
+		if (sourceCache.get(url) === task) sourceCache.delete(url);
+		throw error;
+	});
+	sourceCache.set(url, task);
+	if (sourceCache.size > REMOTE_SOURCE_CACHE_LIMIT) sourceCache.delete(sourceCache.keys().next().value!);
+	return task;
+};
+
 /**
  * 把 CDN 上的 ESM 先拉完整张依赖图，再在当前页面里执行。
  * 裸导入优先走 import map，缺失的 npm 依赖回退到 CDN ESM；import() 按需加载。
@@ -34,9 +92,9 @@ export const createRemoteLoader = (
 		'vue-router': builtins.vueRouter
 	};
 	const pendingBuiltins = new Set<string>();
-	const texts = new Map<string, string>();
+	const sources = new Map<string, RemoteSource>();
+	const pendingSources = new Map<string, Promise<RemoteSource>>();
 	const evaluated = new Map<string, unknown>();
-	const crawled = new Set<string>();
 	const nativeModules = new Map<string, Promise<unknown>>();
 	const loadNative = (url: string) => {
 		let pending = nativeModules.get(url);
@@ -102,30 +160,23 @@ export const createRemoteLoader = (
 		return moduleUrl(imports[target]);
 	};
 
-	const crawl = async (url: string) => {
+	const crawl = async (url: string, visited = new Set<string>()) => {
 		if (!overrides.size && /\/\+esm(?:[?#]|$)/.test(url)) {
 			await loadNative(url);
 			return;
 		}
-		if (crawled.has(url)) return;
-		crawled.add(url);
-		const response = await fetch(url);
-		if (!response.ok) {
-			throw new Error(`${response.status} ${url}`);
+		if (visited.has(url)) return;
+		visited.add(url);
+		let pending = pendingSources.get(url);
+		if (!pending) {
+			pending = readRemoteSource(url);
+			pendingSources.set(url, pending);
 		}
-		const text = await response.text();
-		await init();
-		const [specifiers] = parse(text);
-		// 按语法位置替换 import()，避免误改字符串、注释或对象的 import 方法。
-		let source = text;
-		for (const item of [...specifiers].reverse()) {
-			if (item.type === 'dynamic') source = source.slice(0, item.importStart) + '__import' + source.slice(item.importStart + 6);
-		}
-		texts.set(url, source);
-		await Promise.all(specifiers.map(async (item) => {
-			if (item.type !== 'static' && item.type !== 'reexport-star') return;
-			const next = dependencyUrl(url, item.specifier);
-			if (next) await crawl(next);
+		const source = await pending;
+		sources.set(url, source);
+		await Promise.all(source.dependencies.map(async (specifier) => {
+			const next = dependencyUrl(url, specifier);
+			if (next) await crawl(next, visited);
 		}));
 	};
 
@@ -153,22 +204,11 @@ export const createRemoteLoader = (
 
 	const evaluate = (url: string): unknown => {
 		if (evaluated.has(url)) return evaluated.get(url);
-		const text = texts.get(url);
-		if (text == null) throw new Error(`[Playground] 远程模块尚未下载: ${url}`);
-		const cjs = transform(rewriteImportMeta(text, url), {
-			transforms: ['imports'],
-			disableESTransforms: true,
-			production: true,
-			filePath: url
-		}).code;
+		const source = sources.get(url);
+		if (!source) throw new Error(`[Playground] 远程模块尚未下载: ${url}`);
 		const module = { exports: {} as Record<string, unknown> };
 		evaluated.set(url, module.exports);
-		const runner = new Function('require', 'module', 'exports', '__import', cjs) as (
-			require: (id: string) => unknown,
-			module: { exports: Record<string, unknown> },
-			exports: Record<string, unknown>,
-			importModule: (id: string) => Promise<unknown>
-		) => void;
+		const runner = source.run;
 		runner(requireFrom(url), module, module.exports, async (id) => {
 			const next = dependencyUrl(url, id);
 			if (next) await load(next);

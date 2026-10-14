@@ -159,6 +159,7 @@ const handleMessage = async () => {
 - 直接渲染时，宿主未提供且未配置的 npm 模块（含作用域包和子路径）自动从 jsDelivr 的 `/+esm` 入口加载；组件包的传递依赖也适用，`import()` 在调用时加载。可用 `options.builtinImportMap.imports` 指定依赖的版本和 URL。
 - Vue SFC 的 `<style lang="scss">` / `lang="sass"` 以及独立 `.scss` / `.sass` 文件会在浏览器里编译；`_partial.scss` 只作为 `@use` 依赖。
 - local 模式按模块识别显式 URL 覆盖，即使地址与内置默认相同也会加载该 URL。覆盖 `vue` 时，预览的编译产物、挂载、组件引用和注入使用这份 Vue；内置组件、hooks、locale、Pinia 和 vue-router 随之重新加载以匹配 Vue，未覆盖的普通工具模块继续复用宿主。不同预览的覆盖互不影响，显式覆盖的模块在各自预览内执行。
+- local 模式在当前页面按 URL 缓存外部模块的下载和转换成果，并合并并发请求；切换文档时可复用，最多保留最近使用的 128 个模块。各预览仍独立执行模块并解析依赖覆盖；失败的加载不缓存，同源模块实时读取，刷新页面会清空缓存。
 - 每个 Playground 实例都使用自己的 preview 配置和 iframe 消息来源校验。
 - `local` 默认开启：同一份 `files` 在当前文档里编译。直接渲染不撑开预览高度，`expandable` 固定为关闭，`docs:playground.run` 不会申请临时高度；`<DocsLink>` 仍通过 `docs:navigate` 通知。`local: false` 改回 iframe Sandbox。
 
