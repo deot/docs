@@ -1,5 +1,13 @@
 # @deot/docs-markdown ChangeLog
 
+## v1.1.8
+
+_2026-10-14_
+
+### Updates
+
+- perf(playground): cache remote module preparation across previews ([f8442a1](https://github.com/deot/docs/commit/f8442a1a673e5a67047f5599f24b0f86ca0d12de))
+
 ## v1.1.7
 
 _2026-10-13_

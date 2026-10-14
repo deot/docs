@@ -1,6 +1,6 @@
 {
   "name": "@deot/docs-client",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "type": "module",
   "main": "dist/index.js",
   "style": "dist/index.style.css",
@@ -26,8 +26,8 @@
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.14",
     "@deot/docs-locale": "^1.1.4",
-    "@deot/docs-markdown": "^1.1.7",
-    "@deot/docs-playground": "^1.1.6",
+    "@deot/docs-markdown": "^1.1.8",
+    "@deot/docs-playground": "^1.1.7",
     "@deot/docs-renderer": "^1.1.4",
     "@deot/docs-theme": "^1.1.4",
     "@deot/helper": "^1.1.21",
