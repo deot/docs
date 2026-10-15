@@ -1,5 +1,13 @@
 # @deot/docs-markdown ChangeLog
 
+## v1.1.9
+
+_2026-10-15_
+
+### Features
+
+- feat: add cached CDN probing and unified loading ([42dbb72](https://github.com/deot/docs/commit/42dbb72986af00822e137c45140fd1605f86277e))
+
 ## v1.1.8
 
 _2026-10-14_
