@@ -1,5 +1,13 @@
 # @deot/docs ChangeLog
 
+## v1.1.10
+
+_2026-10-15_
+
+### Bugfixes
+
+- fix(launch,playground): use explicit UNPKG entries and retry failed CDNs ([43b2414](https://github.com/deot/docs/commit/43b24143e7aa375819816a31979eb26e30611beb))
+
 ## v1.1.9
 
 _2026-10-15_
