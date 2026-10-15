@@ -21,6 +21,7 @@
 | [`@deot/docs`](packages/index/README.md) | 聚合入口，导出 Dever、Locale、Renderer 和 Theme。 |
 | [`@deot/docs-cli`](packages/cli/README.md) | 提供 `doc dev`、`doc build` 和 `doc preview` 命令。 |
 | [`@deot/docs-dever`](packages/dever/README.md) | Development、build 和 preview 的运行层。 |
+| [`@deot/docs-launch`](packages/launch/README.md) | 探测最快 CDN，注入样式并启动 Client 的轻量浏览器入口。 |
 | [`@deot/docs-client`](packages/client/README.md) | Vue 应用壳、Router、布局、搜索和 ResourceGateway。 |
 | [`@deot/docs-renderer`](packages/renderer/README.md) | 页面文档协议、只读 Renderer 和装修 Combo。 |
 | [`@deot/docs-markdown`](packages/markdown/README.md) | Markdown 渲染、指示器、代码高亮与 Playground 容器。 |
@@ -82,10 +83,6 @@ site/
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-renderer/dist/index.style.css">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-markdown/dist/index.style.css">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-playground/dist/index.style.css">
 	<title>My Docs</title>
 </head>
 <body>
@@ -121,7 +118,7 @@ site/
 			styles: {}
 		};
 	</script>
-	<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js"></script>
+	<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-launch/+esm"></script>
 </body>
 </html>
 ```
@@ -201,6 +198,8 @@ const routes = {
 | `renderers` | 业务自定义 Renderer 模块注册项。 |
 | `resolve.markdown` | 根据 `lang`、路由值和当前路由产生 Markdown 逻辑地址。 |
 | `resolve.resource` | 将任意逻辑资源转换为最终请求 URL。 |
+| `cdns` | launch 的候选 CDN；缺省或为空时使用 jsDelivr 与 ESM UNPKG，选中前缀写入 `runtime.cdn`。 |
+| `resolve.cdn` | 同步处理内置 CDN 转换后的 `{ url }`，空结果保留转换后的地址。 |
 | `resolve.link` | 将 Markdown 链接转换为外链或本地化 Router 地址。 |
 
 完整 Client 配置、Gateway API 和资源状态模型请查看 [`@deot/docs-client`](packages/client/README.md)。

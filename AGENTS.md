@@ -8,6 +8,7 @@ This is a **pnpm monorepo** for `@deot/docs`, a Vue 3 documentation toolchain. I
 
 | Directory | Package | Responsibility |
 |---|---|---|
+| `packages/launch` | `@deot/docs-launch` | Tiny browser CDN probe and application loader |
 | `packages/client` | `@deot/docs-client` | Vue application shell and router |
 | `packages/cli` | `@deot/docs-cli` | `doc dev` / `doc build` command entry |
 | `packages/dever` | `@deot/docs-dever` | Vite dev-server and build implementation used by the CLI |
@@ -37,7 +38,7 @@ The sample documentation workspace uses the repository root `index.html` (README
 | Serve the sample documentation site | `npm run cli:dev` |
 | Preview the sample site (production runtime) | `npm run cli:preview` |
 
-Valid package folder names for targeted tests and builds are `cli`, `client`, `dever`, `index`, `locale`, `markdown`, `playground`, `renderer`, and `theme`. Use `--include '<pattern>'` for a narrower Vitest run. For example, validate Markdown with `npm run test -- --package-name markdown` and `npm run build -- --package-name markdown`. Tests collect coverage by default. The CI-equivalent checks are typecheck, all-package tests, and build.
+Valid package folder names for targeted tests and builds are `cli`, `client`, `dever`, `index`, `launch`, `locale`, `markdown`, `playground`, `renderer`, and `theme`. Use `--include '<pattern>'` for a narrower Vitest run. For example, validate Markdown with `npm run test -- --package-name markdown` and `npm run build -- --package-name markdown`. Tests collect coverage by default. The CI-equivalent checks are typecheck, all-package tests, and build.
 
 ### Development notes
 

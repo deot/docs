@@ -213,7 +213,9 @@ const run = async () => {
 		const remote = createRemoteLoader(
 			imports,
 			{ vue: Vue, vueRouter: VueRouter },
-			overrides
+			overrides,
+			undefined,
+			props.options.cdnURL
 		);
 		const loaded = await loadLocalModules(
 			specifiers,

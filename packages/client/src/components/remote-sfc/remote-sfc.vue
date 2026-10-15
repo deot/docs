@@ -15,6 +15,7 @@
 import { computed, inject, markRaw, onBeforeUnmount, ref, watch } from 'vue';
 import type { Component } from 'vue';
 import { useLocale } from '@deot/docs-locale';
+import { resolveCdnURL } from '@deot/docs-playground';
 import { useRouter } from 'vue-router';
 import { Gateway } from '../../modules/gateway';
 import { resolveDocsPlaygroundComponent } from '../../utils/components';
@@ -99,6 +100,7 @@ const useIframeViewport = computed(() => (
 const previewStyleHead = computed(() => {
 	try {
 		return parsePreviewStyleUrls(preview?.value?.styles, location.href)
+			.map(url => resolveCdnURL(url))
 			.map(url => `<link rel="stylesheet" href="${url.replaceAll('&', '&amp;').replaceAll('"', '&quot;')}">`).join('');
 	} catch {
 		return '';
@@ -174,7 +176,7 @@ const loadFiles = async () => {
 			subscriptions.push(Gateway.subscribe(identity, reload));
 			let content = github && type === 'module' ? await github.expandGlob(record.content, url) : record.content;
 			if (!github && type !== 'style') assertResolvableSourceGlobs(content, url);
-			if (github && type === 'style') content = rewritePackageStyleImports(content);
+			if (github && type === 'style') content = rewritePackageStyleImports(content, resolveCdnURL);
 			nextFiles[getFilename(url, langSnapshot)] = content;
 			const imports = /\.json(?:$|[?#])/i.test(url) ? [] : await collectResourceImports(content, type);
 			const styles = collectResourceStyleImports(content, type);

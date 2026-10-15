@@ -8,7 +8,8 @@ export { DEFAULT_CDN_URL } from './constants';
 export {
 	createBuiltinImports,
 	createBuiltinStyles,
-	normalizeCdnURL
+	normalizeCdnURL,
+	resolveCdnURL
 } from './cdn';
 export {
 	createRuntimePreviewOptions,

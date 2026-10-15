@@ -61,7 +61,9 @@ vi.mock('@deot/vc', async () => {
 });
 vi.mock('@deot/docs-playground', async () => {
 	const { defineComponent } = await import('vue');
+	const { resolveCdnURL } = await import('../../playground/src/cdn');
 	return {
+		resolveCdnURL,
 		CodePreview: defineComponent({ props: ['code'], setup: props => () => <pre class="code-preview">{props.code}</pre> }),
 		Playground: defineComponent({ props: ['options', 'viewport'], setup: () => () => <div class="playground" /> })
 	};

@@ -103,7 +103,7 @@ preview 与 production 不提供该入口；`/__docs/*` 在 preview 下返回 40
 - 原始源码中间件会校验真实路径，拒绝目录穿越和逃逸 workspace 的符号链接。
 - preview 不启动 Vite、watcher、HMR 或 SSE，不注入开发 runtime，且 `/__docs/*`（含页面保存入口）返回 404。
 - 根 workspace 构建会跳过隐藏目录、`node_modules`、`coverage`、常见构建缓存目录和当前 outDir。
-- 在本仓库预览时会复用统一 DDC 构建，并按 `@deot/docs-client[@version]/dist/index.*` 与 jsDelivr `/+esm`（映射到 `dist/index.js`）改写成本地 Client，本地地址保留 `dist/`；不限制 unpkg、jsDelivr 等 CDN 域名；其他项目保留 HTML 中声明的发布包 URL。
+- 在本仓库预览时会复用统一 DDC 构建，提供本地 launch 与 Client。HTML 的 launch 地址映射到本地适配入口，先调用用户 CDN 钩子，再将动态生成的 Client JS/CSS 地址映射到当前 dist；支持 jsDelivr `/+esm` 和 ESM UNPKG 包根入口。已有 Client `dist/index.*` 地址仍直接改写，本地地址保留 `dist/`。其他项目保留 HTML 中声明的发布包 URL。
 
 ## 仓库内验证
 

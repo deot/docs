@@ -209,6 +209,16 @@ describe('resource resolver', () => {
 		}
 	});
 
+	it('retains the selected CDN while taking environment fields from the server', () => {
+		window.$docs = createConfig({ runtime: { mode: 'production', cdn: 'https://esm.unpkg.com/' } });
+		window.__DOCS_RUNTIME__ = { mode: 'development', workspace: '/custom/', events: '/__docs/events' };
+		expect(initializeDocsRuntime()).toEqual({
+			mode: 'development', workspace: '/custom/', events: '/__docs/events', cdn: 'https://esm.unpkg.com/'
+		});
+		expect(Object.isFrozen(getDocsRuntime())).toBe(true);
+		delete window.__DOCS_RUNTIME__;
+	});
+
 	it('initializes development and production runtime on window.$docs', () => {
 		window.$docs = createConfig();
 		delete window.__DOCS_RUNTIME__;

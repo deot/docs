@@ -136,6 +136,9 @@ importers:
       '@deot/docs-dever':
         specifier: ^1.1.5
         version: link:../dever
+      '@deot/docs-launch':
+        specifier: ^1.0.0
+        version: link:../launch
       '@deot/docs-locale':
         specifier: ^1.1.4
         version: link:../locale
@@ -151,6 +154,8 @@ importers:
       '@deot/docs-theme':
         specifier: ^1.1.4
         version: link:../theme
+
+  packages/launch: {}
 
   packages/locale:
     devDependencies:

@@ -12,10 +12,15 @@ export interface PreviewRequestHandlerOptions {
 	 * 本地 `@deot/docs-client` 的 dist 目录。缺省时按包路径解析，用来改写预览 HTML 里的 CDN 地址。
 	 */
 	clientDist?: string;
+	/** 本仓库 launch 的构建产物目录。 */
+	launchDist?: string;
 }
 
 const CLIENT_PREFIX = '/@deot/docs-client/';
+const LAUNCH_PREFIX = '/@deot/docs-launch/';
+const LAUNCH_ASSET_PATTERN = /https?:\/\/[^/"'\s<>]+(?:\/[^/"'\s<>?#]+)*\/@deot\/docs-launch(?:@[^/"'\s<>?#]+)?(?:\/\+esm|\/dist\/index\.js)?(?=["'\s<>?#]|$)/gu;
 const CLIENT_ENTRY = 'dist/index.js';
+const UNPKG_CLIENT_ENTRY_PATTERN = /https?:\/\/esm\.unpkg\.com\/@deot\/docs-client(?:@[^/"'\x60\s<>?#]+)?(?=["'\x60\s<>?#]|$)/gu;
 const CLIENT_ASSET_PATTERN = new RegExp([
 	String.raw`(?:https?:)?//[^/"'\x60\s<>]+`,
 	String.raw`(?:/[^/"'\x60\s<>?#]+)*/@deot/docs-client`,
@@ -138,9 +143,39 @@ const rewriteLocalClient = (html: Buffer, clientDist?: string) => (
 				(_url, asset: string, suffix: string) => (
 					`${CLIENT_PREFIX}${asset === '/+esm' ? CLIENT_ENTRY : asset.slice(1)}${suffix}`
 				)
-			))
+			).replace(UNPKG_CLIENT_ENTRY_PATTERN, `${CLIENT_PREFIX}${CLIENT_ENTRY}`))
 		: html
 );
+
+const ensureLocalLaunchDist = async (cwd: string) => {
+	const source = path.resolve(cwd, 'packages/launch/src');
+	if (!fs.existsSync(source)) return undefined;
+	const dist = path.resolve(cwd, 'packages/launch/dist');
+	const output = path.join(dist, 'index.js');
+	const inputTime = Math.max(...[
+		source,
+		path.resolve(cwd, 'packages/launch/package.json'),
+		path.resolve(cwd, 'z.build.config.ts')
+	].map(getLatestModification));
+	if (getLatestModification(output) < inputTime) {
+		await Shell.spawn('npm', ['run', 'build', '--', '--package-name', 'launch'], { cwd });
+	}
+	if (!fs.existsSync(output)) throw new Error(`Local launch build did not create: ${output}`);
+	return dist;
+};
+
+// 只在本仓库预览入口安装映射，先调用用户钩子，再把 Client 指向待审 dist。
+const localLaunchEntry = [
+	'const config = window.$docs ||= {};',
+	'const custom = config.resolve?.cdn;',
+	`const pattern = new RegExp(${JSON.stringify(CLIENT_ASSET_PATTERN.source)}, 'gu');`,
+	`const unpkg = new RegExp(${JSON.stringify(UNPKG_CLIENT_ENTRY_PATTERN.source)}, 'gu');`,
+	'config.resolve = {...config.resolve, cdn(context) {',
+	'const url = custom?.(context) || context.url;',
+	`return url.replace(pattern, (_url, asset, suffix) => ${JSON.stringify(CLIENT_PREFIX)} + (asset === '/+esm' ? ${JSON.stringify(CLIENT_ENTRY)} : asset.slice(1)) + suffix).replace(unpkg, ${JSON.stringify(CLIENT_PREFIX + CLIENT_ENTRY)});`,
+	'}};',
+	`import('${LAUNCH_PREFIX}dist/index.js');`
+].join('\n');
 
 const createEtag = (content: Buffer) => `W/"${createHash('sha1').update(content).digest('hex')}"`;
 
@@ -149,7 +184,8 @@ const sendFile = (
 	res: http.ServerResponse,
 	filename: string,
 	root: string,
-	clientDist?: string
+	clientDist?: string,
+	launchDist?: string
 ) => {
 	if (!fs.existsSync(filename) || !fs.statSync(filename).isFile()) return false;
 	const realRoot = fs.realpathSync(root);
@@ -162,9 +198,12 @@ const sendFile = (
 	const stat = fs.statSync(realFilename);
 	const extension = path.extname(realFilename).toLowerCase();
 	const rawContent = fs.readFileSync(realFilename);
-	const content = extension === '.html'
+	let content = extension === '.html'
 		? rewriteLocalClient(rawContent, clientDist)
 		: rawContent;
+	if (extension === '.html' && launchDist) {
+		content = Buffer.from(content.toString('utf8').replace(LAUNCH_ASSET_PATTERN, `${LAUNCH_PREFIX}+esm`));
+	}
 	const etag = createEtag(content);
 	const lastModified = stat.mtime.toUTCString();
 	res.setHeader('Cache-Control', 'no-cache');
@@ -202,6 +241,7 @@ const sendFile = (
 export const createPreviewRequestHandler = (options: PreviewRequestHandlerOptions) => {
 	const workspace = path.resolve(options.workspace);
 	const clientDist = options.clientDist && path.resolve(options.clientDist);
+	const launchDist = options.launchDist && path.resolve(options.launchDist);
 	return (req: http.IncomingMessage, res: http.ServerResponse) => {
 		try {
 			if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -211,6 +251,12 @@ export const createPreviewRequestHandler = (options: PreviewRequestHandlerOption
 				return;
 			}
 			const pathname = decodeRequestPath(req.url || '/');
+			if (launchDist && pathname === `${LAUNCH_PREFIX}+esm`) {
+				res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+				res.setHeader('Cache-Control', 'no-cache');
+				res.end(req.method === 'HEAD' ? undefined : localLaunchEntry);
+				return;
+			}
 			const isPreviewPage = /^\/__docs\/(?:preview|raw-editor|markdown-editor)$/.test(pathname)
 				&& String(req.headers.accept || '').includes('text/html');
 			if (pathname.startsWith('/__docs/') && !isPreviewPage) {
@@ -226,6 +272,10 @@ export const createPreviewRequestHandler = (options: PreviewRequestHandlerOption
 				const rest = pathname.slice(CLIENT_PREFIX.length);
 				relative = rest === '+esm' ? 'index.js' : rest.replace(/^dist\//u, '');
 			}
+			if (launchDist && pathname.startsWith(LAUNCH_PREFIX)) {
+				root = launchDist;
+				relative = pathname.slice(LAUNCH_PREFIX.length).replace(/^dist\//u, '');
+			}
 			let filename = path.resolve(root, relative || 'index.html');
 			if (!isInside(root, filename)) {
 				res.statusCode = 403;
@@ -235,7 +285,7 @@ export const createPreviewRequestHandler = (options: PreviewRequestHandlerOption
 			if (fs.existsSync(filename) && fs.statSync(filename).isDirectory()) {
 				filename = path.join(filename, 'index.html');
 			}
-			if (sendFile(req, res, filename, root, clientDist)) return;
+			if (sendFile(req, res, filename, root, clientDist, launchDist)) return;
 
 			// 仅浏览器导航返回 SPA 入口。ResourceGateway 请求 text/plain，
 			// 因此缺失的 Markdown/SFC 资源仍返回真实 404。
@@ -245,7 +295,8 @@ export const createPreviewRequestHandler = (options: PreviewRequestHandlerOption
 					res,
 					path.join(workspace, 'index.html'),
 					workspace,
-					clientDist
+					clientDist,
+					launchDist
 				)) return;
 			}
 			res.statusCode = 404;
@@ -279,9 +330,11 @@ export const startPreviewServer = async (options: DeverOptions) => {
 	// 源码仓库必须预览当前待审代码，而不是 CDN 上的任意软件包版本。
 	// 复用仓库统一 DDC build，仅在相关源码更新时重新构建。
 	const clientDist = await ensureLocalClientDist(cwd);
+	const launchDist = await ensureLocalLaunchDist(cwd);
 	const server = http.createServer(createPreviewRequestHandler({
 		workspace: workspace.root,
-		clientDist
+		clientDist,
+		launchDist
 	}));
 	const port = Number(options.port ?? 4173);
 	const host = String(options.host || '0.0.0.0');

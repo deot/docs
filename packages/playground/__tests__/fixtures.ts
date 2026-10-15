@@ -23,4 +23,5 @@ export interface PlaygroundStoreStub {
 	addFile: ReturnType<typeof vi.fn>;
 	renameFile: ReturnType<typeof vi.fn>;
 	setFiles: ReturnType<typeof vi.fn>;
+	getImportMap?: ReturnType<typeof vi.fn>;
 }

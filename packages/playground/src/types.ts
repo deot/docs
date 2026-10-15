@@ -44,8 +44,8 @@ export type PlaygroundOptions = Omit<Partial<StoreState>,
 > & {
 	/**
 	 * npm CDN 前缀，用于默认 import map 和预览样式。
-	 * 例如 `https://cdn.jsdelivr.net/npm` 或 `https://unpkg.com`。
-	 * jsDelivr 专有的 `/+esm` 资源（`lodash-es`、Sass）仍走默认 jsDelivr。
+	 * 例如 `https://cdn.jsdelivr.net/npm` 或 `https://esm.unpkg.com`。
+	 * launch 已选定节点时使用 `$docs.runtime.cdn`，否则使用此配置。
 	 */
 	cdnURL?: string;
 	/**

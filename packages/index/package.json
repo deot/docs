@@ -14,6 +14,7 @@
     "@deot/docs-cli": "^1.1.5",
     "@deot/docs-client": "^1.1.8",
     "@deot/docs-dever": "^1.1.5",
+    "@deot/docs-launch": "^1.0.0",
     "@deot/docs-locale": "^1.1.4",
     "@deot/docs-markdown": "^1.1.8",
     "@deot/docs-playground": "^1.1.7",

@@ -1,6 +1,6 @@
 import { watch } from 'vue';
 import type { ReplStore } from '@vue/repl';
-import { SASS_CDN_URL } from '../cdn';
+import { resolveCdnURL, SASS_CDN_URL } from '../cdn';
 
 const SCHEME = 'docs-playground';
 const STYLE_EXTS = ['.scss', '.sass'] as const;
@@ -83,7 +83,7 @@ const resolveSassModule = async (url: string): Promise<SassCompiler> => {
 };
 
 export const loadSass = () => {
-	loadPromise ??= (testLoader ?? (() => resolveSassModule(SASS_CDN_URL)))().then((sass) => {
+	loadPromise ??= (testLoader ?? (() => resolveSassModule(resolveCdnURL(SASS_CDN_URL))))().then((sass) => {
 		loadedSass = sass;
 		return sass;
 	});

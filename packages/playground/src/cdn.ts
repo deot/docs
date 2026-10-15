@@ -39,7 +39,6 @@ export const normalizeCdnURL = (cdnURL = DEFAULT_CDN_URL) => {
 	return origin || DEFAULT_CDN_URL;
 };
 
-// jsDelivr `/{package}/+esm`；unpkg 等 CDN 不支持该路径。
 const cdnJoin = (origin: string, asset: string) => (
 	`${origin}/${asset.replace(/^\/+/u, '')}`
 );
@@ -69,7 +68,77 @@ export const createBuiltinStyles = (
 	PREVIEW_STYLE_ASSETS.map(asset => [asset, cdnAsset(cdnURL, asset)])
 );
 
-// 没有 import map 的 npm 依赖交给 jsDelivr 转成浏览器可加载的 ESM。
+// 仅生成原始 ESM 地址；实际加载时再转换到选中节点并执行用户钩子。
 export const resolveNpmImport = (specifier: string) => (
 	/^https?:\/\//.test(specifier) ? specifier : jsdelivrEsmURL(`${specifier}/+esm`)
 );
+
+export interface CdnConfig {
+	runtime?: { cdn?: string };
+	resolve?: { cdn?: (context: { url: string }) => string | null | undefined };
+}
+
+const docsCdnConfig = (): CdnConfig => (
+	(globalThis as typeof globalThis & { window?: { $docs?: CdnConfig } }).window?.$docs || {}
+);
+
+const npmCdnUrl = (value: string) => {
+	if (!/^https?:\/\//i.test(value)) return null;
+	const url = new URL(value);
+	const prefix = /(?:^|\.)jsdelivr\.net$/u.test(url.hostname) && url.pathname.startsWith('/npm/')
+		? '/npm/'
+		: /^(?:esm\.)?unpkg\.com$/u.test(url.hostname) ? '/' : null;
+	if (!prefix) return null;
+	const asset = url.pathname.slice(prefix.length);
+	const match = asset.match(/^((?:@[^/]+\/)?[^/]+)(.*)$/u);
+	return match ? { url, asset, name: match[1].replace(/@[^/@]+$/u, ''), path: match[2] } : null;
+};
+
+// 将转换服务写回的包入口还原成模块名，继续应用 Vue / 内置模块覆盖。
+export const cdnModuleName = (url: string) => {
+	const parsed = npmCdnUrl(url);
+	return parsed && (!parsed.path || parsed.path === '/+esm'
+		|| /^\/(?:es\d+|esnext)\/[^/]+\.m?js$/u.test(parsed.path))
+		? parsed.name
+		: null;
+};
+
+export const isCdnEsmURL = (url: string) => (
+	/\/\+esm(?:[?#]|$)/u.test(url) || npmCdnUrl(url)?.url.hostname === 'esm.unpkg.com'
+);
+
+// 内置转换先行，用户钩子最后执行；不修改配置或缓存里的原始 URL。
+export const resolveCdnURL = (
+	url: string,
+	cdnURL?: string,
+	config: CdnConfig = docsCdnConfig()
+) => {
+	const parsed = npmCdnUrl(url);
+	const target = config.runtime?.cdn || cdnURL;
+	let converted = url;
+	if (parsed && target) {
+		const origin = normalizeCdnURL(target);
+		const unpkg = new URL(origin).hostname === 'esm.unpkg.com';
+		let asset = parsed.asset;
+		if (unpkg) asset = asset.replace(/\/\+esm$/u, '');
+		else if (!parsed.path.endsWith('/+esm') && (!parsed.path || !/\.[^/]+$/u.test(parsed.path)
+			|| (/unpkg\.com$/u.test(parsed.url.hostname) && /\.[cm]?[jt]sx?$/u.test(parsed.path)))) {
+			asset = `${asset.replace(/\/+$/u, '')}/+esm`;
+		}
+		converted = `${origin}/${asset}${parsed.url.search}${parsed.url.hash}`;
+	}
+	return config.resolve?.cdn?.({ url: converted }) || converted;
+};
+
+// 一次预览共用转换结果，依赖图重访和 REPL 重读不重复执行用户钩子。
+export const createCdnResolver = (cdnURL?: string) => {
+	const resolved = new Map<string, string>();
+	return (url: string) => {
+		if (!resolved.has(url)) {
+			const target = resolveCdnURL(url, cdnURL);
+			resolved.set(url, target);
+			resolved.set(target, target);
+		}
+		return resolved.get(url)!;
+	};
+};

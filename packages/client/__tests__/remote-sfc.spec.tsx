@@ -36,6 +36,7 @@ vi.mock('../src/modules/gateway', () => ({
 	}
 }));
 vi.mock('@deot/docs-playground', async () => ({
+	resolveCdnURL: (await import('../../playground/src/cdn')).resolveCdnURL,
 	Playground: (await import('vue')).defineComponent({
 		name: 'Playground',
 		props: {

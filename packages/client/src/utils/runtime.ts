@@ -11,7 +11,10 @@ export const initializeDocsRuntime = (
 	target: Window = window,
 	config: DocsConfig = target.$docs || { locales: {}, routes: {} }
 ) => {
-	const runtime = Object.freeze(target.__DOCS_RUNTIME__ || PRODUCTION_RUNTIME);
+	const serverRuntime = target.__DOCS_RUNTIME__ || PRODUCTION_RUNTIME;
+	const runtime = Object.freeze(config.runtime?.cdn
+		? { ...serverRuntime, cdn: config.runtime.cdn }
+		: serverRuntime);
 	config.runtime = runtime;
 	target.$docs = config;
 	return runtime;

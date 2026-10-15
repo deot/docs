@@ -79,9 +79,9 @@ export const createGithubSourceResolver = (rootUrl: string, signal?: AbortSignal
 	};
 };
 
-export const rewritePackageStyleImports = (code: string) => code.replace(
+export const rewritePackageStyleImports = (code: string, resolve = (url: string) => url) => code.replace(
 	/@import\s+(['"])([^.'"/][^'"]*\.css)\1/g,
 	(statement, quote: string, path: string) => (
-		/^[a-z][a-z\d+.-]*:/i.test(path) ? statement : `@import ${quote}https://cdn.jsdelivr.net/npm/${path}${quote}`
+		/^[a-z][a-z\d+.-]*:/i.test(path) ? statement : `@import ${quote}${resolve(`https://cdn.jsdelivr.net/npm/${path}`)}${quote}`
 	)
 );

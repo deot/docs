@@ -1,4 +1,5 @@
 import type { LocationQuery } from 'vue-router';
+import { resolveCdnURL } from '@deot/docs-playground';
 
 /**
  * 单个 styles 参数按逗号分隔；重复参数各自是一条完整 URL。
@@ -39,7 +40,7 @@ const sharedStyles = new Map<string, SharedStyle>();
 export const acquirePreviewStyles = (urls: string[], onError: (url: string) => void): (() => void) => {
 	// 每次 acquire 使用独立引用，即使调用者复用了同一个回调函数。
 	const listener = (url: string) => onError(url);
-	const records = [...new Set(urls)].map((url) => {
+	const records = [...new Set(urls.map(url => resolveCdnURL(url)))].map((url) => {
 		let record = sharedStyles.get(url);
 		if (!record) {
 			const existing = [...document.querySelectorAll<HTMLLinkElement>('link[rel~="stylesheet"]')]

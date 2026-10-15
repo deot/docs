@@ -1,5 +1,6 @@
 import { getDocsConfig } from '../../utils/runtime';
 import { resolveResource, resourceIdentityKey } from '../../utils/resolver';
+import { resolveCdnURL } from '@deot/docs-playground';
 import type { ResourceIdentity } from '../../types';
 import { IndexedDBResourceCache } from './cache';
 import {
@@ -722,10 +723,11 @@ export class ResourceGateway {
 	): Promise<ResourceContentRecord> {
 		const key = resourceIdentityKey(identity);
 		const current = await this.readRecord(key, token);
-		const url = options.url || await withAbort(
+		const sourceUrl = options.url || await withAbort(
 			async () => resolveResource(getDocsConfig(), identity),
 			options.signal
 		);
+		const url = resolveCdnURL(sourceUrl);
 		const headers: Record<string, string> = {};
 		if (current?.etag) headers['If-None-Match'] = current.etag;
 		if (current?.lastModified) headers['If-Modified-Since'] = current.lastModified;

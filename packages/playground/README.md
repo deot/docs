@@ -145,6 +145,7 @@ const handleMessage = async () => {
 | `slugifyPlaygroundTitle(title)` / `resolvePlaygroundTitleId(title, id?)` | 标题锚点 id，规则对齐 markdown-it-anchor。 |
 | `DEFAULT_CDN_URL` | 默认 CDN 根地址（jsDelivr）。 |
 | `createBuiltinImports(cdnURL?)` / `createBuiltinStyles(cdnURL?)` | 按 CDN 生成内置 import map 与预览样式表 URL。 |
+| `resolveCdnURL(url, cdnURL?, config?)` | 内置转换后调用可选 `resolve.cdn`；默认读取当前站点配置。 |
 | `normalizeCdnURL(value?)` | 规范化 CDN 根地址。 |
 
 同时导出 `PlaygroundFiles`、`PlaygroundView`、`PlaygroundViewport`、`PlaygroundOptions`、`PlaygroundPreviewOptions`、`EditorFilesChange` 和 `EditorFilesChangeAction` 类型。
@@ -154,9 +155,9 @@ const handleMessage = async () => {
 ## 运行环境
 
 - iframe 运行时通过公共 CDN 加载 Vue 和默认 import map 中的依赖；local 运行时加载 URL 覆盖或宿主未提供的模块时也需要网络访问。
-- 默认 CDN 为 `https://cdn.jsdelivr.net/npm`，可通过 `options.cdnURL` 换成 unpkg 等兼容 `/{package}/{file}` 路径的镜像；该地址用于预览样式和内置 import map。
-- `lodash-es` 和在线 Sass 编译器使用 jsDelivr 的 `/+esm` 入口；unpkg 等 CDN 不支持该路径。
-- 直接渲染时，宿主未提供且未配置的 npm 模块（含作用域包和子路径）自动从 jsDelivr 的 `/+esm` 入口加载；组件包的传递依赖也适用，`import()` 在调用时加载。可用 `options.builtinImportMap.imports` 指定依赖的版本和 URL。
+- 默认 CDN 为 `https://cdn.jsdelivr.net/npm`；未使用 launch 时可通过 `options.cdnURL` 调整默认节点。launch 已选点时统一使用 `$docs.runtime.cdn`，优先于实例 `cdnURL`。
+- jsDelivr npm、旧 `unpkg.com` 和 `esm.unpkg.com` 地址在实际加载时转换，再经过可选 `$docs.resolve.cdn({ url })`。jsDelivr 转换入口使用 `/+esm`，ESM UNPKG 使用包或文件入口。预览 CSS、import map、裸包回退和 Sass 共用该规则；原始映射与缓存不被改写。
+- 直接渲染时，宿主未提供且未配置的 npm 模块（含作用域包和子路径）自动通过上述 ESM 规则加载；组件包的传递依赖也适用，`import()` 在调用时加载。可用 `options.builtinImportMap.imports` 指定依赖的版本和 URL。
 - Vue SFC 的 `<style lang="scss">` / `lang="sass"` 以及独立 `.scss` / `.sass` 文件会在浏览器里编译；`_partial.scss` 只作为 `@use` 依赖。
 - local 模式按模块识别显式 URL 覆盖，即使地址与内置默认相同也会加载该 URL。覆盖 `vue` 时，预览的编译产物、挂载、组件引用和注入使用这份 Vue；内置组件、hooks、locale、Pinia 和 vue-router 随之重新加载以匹配 Vue，未覆盖的普通工具模块继续复用宿主。不同预览的覆盖互不影响，显式覆盖的模块在各自预览内执行。
 - local 模式在当前页面按 URL 缓存外部模块的下载和转换成果，并合并并发请求；切换文档时可复用，最多保留最近使用的 128 个模块。各预览仍独立执行模块并解析依赖覆盖；失败的加载不缓存，同源模块实时读取，刷新页面会清空缓存。

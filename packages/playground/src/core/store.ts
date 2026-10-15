@@ -1,11 +1,12 @@
-import { ref } from 'vue';
+import { ref, unref } from 'vue';
 import { File as ReplFile, useStore } from '@vue/repl';
 import type { SandboxProps } from '@vue/repl';
 import {
 	createBuiltinImports,
-	createBuiltinStyles
+	createBuiltinStyles,
+	createCdnResolver
 } from '../cdn';
-import { DEFAULT_CDN_URL, NEW_SFC_CODE } from '../constants';
+import { NEW_SFC_CODE } from '../constants';
 import {
 	filterSafeHrefs,
 	getPlaygroundImportMapOverrides,
@@ -68,15 +69,16 @@ export interface CreateRuntimePreviewOptions {
 
 // 预览 head：内置 CSS → 站点 styles 内存 → 覆盖内存。
 export const createRuntimePreviewOptions = (
-	cdnURL = DEFAULT_CDN_URL,
+	cdnURL?: string,
 	options: CreateRuntimePreviewOptions = {}
 ): NonNullable<SandboxProps['previewOptions']> => {
 	const previewScroller = options.previewScroller === true;
+	const resolve = createCdnResolver(cdnURL);
 	const hrefs = Object.values({
 		...createBuiltinStyles(cdnURL),
 		...getPlaygroundSiteStyles(),
 		...getPlaygroundStyleOverrides()
-	});
+	}).map(resolve);
 	const styleBlocks = [
 		`html,body{height:auto;min-height:0;background:${PLAYGROUND_RUNTIME_CANVAS_BACKGROUND}}`,
 		'body{color:var(--vc-foreground-color,#080f20)}',
@@ -131,7 +133,7 @@ export const createRuntimeImportOverrides = (
  * @param builtinImportMap
  */
 export const createRuntimeImports = (
-	cdnURL = DEFAULT_CDN_URL,
+	cdnURL?: string,
 	builtinImportMap?: PlaygroundOptions['builtinImportMap']
 ): Record<string, string> => ({
 	...createBuiltinImports(cdnURL),
@@ -155,8 +157,15 @@ export const createRuntimeStore = (
 	const mainFile = ref(toReplFilename(entry));
 	const activeFilename = ref(toReplFilename(entry));
 	const imports = createRuntimeImports(cdnURL, builtinImportMap);
+	const resolve = createCdnResolver(cdnURL);
+	const resourceLinks = unref(storeOptions.resourceLinks);
 	const store = useStore({
 		...storeOptions,
+		resourceLinks: ref({
+			...resourceLinks,
+			esModuleShims: resolve(resourceLinks?.esModuleShims
+				|| 'https://cdn.jsdelivr.net/npm/es-module-shims@1.5.18/dist/es-module-shims.wasm.js?raw')
+		}),
 		files: replFiles,
 		mainFile,
 		activeFilename,
@@ -175,7 +184,21 @@ export const createRuntimeStore = (
 		'import-map.json': store.files['import-map.json'].code,
 		...nextFiles
 	}, nextEntry);
-	bindReplModules(store);
+	const getImportMap = store.getImportMap.bind(store);
+	bindReplModules(store, getImportMap, resolve);
+	store.getImportMap = () => {
+		const map = getImportMap();
+		const convert = (items: Record<string, string | undefined> = {}) => Object.fromEntries(
+			Object.entries(items).filter((item): item is [string, string] => typeof item[1] === 'string')
+				.map(([id, url]) => [id, resolve(url)])
+		);
+		return {
+			...map,
+			imports: convert(map.imports),
+			scopes: map.scopes && Object.fromEntries(Object.entries(map.scopes)
+				.map(([scope, items]) => [resolve(scope), convert(items)]))
+		};
+	};
 	whenSassReady(files, () => {
 		const specifiers = collectBareSpecifiers(files, Object.keys(files));
 		if (!specifiers.length) {
@@ -183,8 +206,9 @@ export const createRuntimeStore = (
 			return;
 		}
 		store.loading = true;
-		void resolveReplImports(imports, specifiers).then((resolved) => {
-			if (Object.keys(resolved).length !== Object.keys(imports).length) store.setImportMap({ imports: resolved }, true);
+		const currentImports = { ...imports, ...filterSafeHrefs(getImportMap().imports) };
+		void resolveReplImports(currentImports, specifiers, resolve).then((resolved) => {
+			if (Object.keys(resolved).length !== Object.keys(currentImports).length) store.setImportMap({ imports: resolved }, true);
 			store.init();
 		}).catch((error) => { store.errors.push(error); }).finally(() => { store.loading = false; });
 	});

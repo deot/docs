@@ -1,7 +1,7 @@
 import { watch } from 'vue';
 import type { ReplStore } from '@vue/repl';
 import { parse, type Import } from 'es-module-lexer';
-import { resolveNpmImport } from '../cdn';
+import { createCdnResolver, isCdnEsmURL, resolveNpmImport } from '../cdn';
 import { createFileIndex, isRelativeSpecifier, resolveModulePath } from './runtime/local/compile/files';
 import { rewriteImportMeta, transformScript } from './runtime/local/compile/script';
 import * as VueCompiler from '@vue/compiler-sfc/dist/compiler-sfc.esm-browser.js';
@@ -16,16 +16,22 @@ const moduleSpecifier = (item: Import) => (
  * 发现自定义 ESM 的传递引用；缺失的 npm 包映射到 CDN，动态依赖只登记地址。
  * @param imports 当前预览的模块覆盖。
  * @param specifiers 源文件实际引用的模块。
+ * @param resolve 本次预览共用的最终 URL 转换。
  * @returns 补齐后的 import map。
  */
-export const resolveReplImports = async (imports: Record<string, string>, specifiers: string[]) => {
+export const resolveReplImports = async (
+	imports: Record<string, string>,
+	specifiers: string[],
+	resolve = createCdnResolver()
+) => {
 	const resolved = { ...imports };
 	const visited = new Set<string>();
 	const visit = async (specifier: string, importer?: string): Promise<void> => {
-		const url = isRelativeSpecifier(specifier) || /^https?:\/\//.test(specifier)
+		const source = isRelativeSpecifier(specifier) || /^https?:\/\//.test(specifier)
 			? new URL(specifier, importer || location.href).href
 			: (resolved[specifier] ||= resolveNpmImport(specifier));
-		if (visited.has(url) || /\/\+esm(?:[?#]|$)/.test(url)) return;
+		const url = resolve(source);
+		if (visited.has(url) || isCdnEsmURL(source)) return;
 		visited.add(url);
 		const response = await fetch(url);
 		if (!response.ok) throw new Error(`${response.status} ${url}`);
@@ -95,13 +101,19 @@ const rewriteImportedExports = (code: string) => {
 /**
  * REPL 将 ./ 引用按 src 根目录解析，编译结果需要先转成文件表中的完整路径。
  * @param store iframe 预览的文件和编译结果。
+ * @param getImportMap 未转换的原始 import map。
+ * @param resolve 本次预览共用的最终 URL 转换。
  */
-export const bindReplModules = (store: ReplStore) => {
+export const bindReplModules = (
+	store: ReplStore,
+	getImportMap = store.getImportMap.bind(store),
+	resolve = createCdnResolver()
+) => {
 	watch(
 		() => Object.values(store.files).map(file => [file.filename, file.code, file.compiled.js, file.compiled.ssr]),
 		() => {
 			const files = createFileIndex(Object.fromEntries(Object.entries(store.files).map(([name, file]) => [name, file.code])));
-			const importMap = store.getImportMap();
+			const importMap = getImportMap();
 			const imports = { ...importMap.imports };
 			let importsChanged = false;
 			for (const file of Object.values(store.files)) {
@@ -121,7 +133,11 @@ export const bindReplModules = (store: ReplStore) => {
 								const target = `./${resolved.replace(/^\/?src\//, '')}`;
 								const text = item.type === 'dynamic' ? JSON.stringify(target) : target;
 								code = code.slice(0, item.start) + text + code.slice(item.end);
-							} else if (!/^https?:\/\//.test(specifier) && !imports[specifier]) {
+							} else if (/^https?:\/\//.test(specifier)) {
+								const target = resolve(specifier);
+								const text = item.type === 'dynamic' ? JSON.stringify(target) : target;
+								code = code.slice(0, item.start) + text + code.slice(item.end);
+							} else if (!imports[specifier]) {
 								imports[specifier] = resolveNpmImport(specifier);
 								importsChanged = true;
 							}

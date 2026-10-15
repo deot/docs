@@ -181,6 +181,7 @@ vi.mock('@vue/repl', () => ({
 		store.mainFile = options.mainFile.value;
 		store.activeFilename = options.activeFilename.value;
 		store.errors = [];
+		store.getImportMap = vi.fn(() => ({ ...options.builtinImportMap.value }));
 		store.init = vi.fn();
 		store.setActive = vi.fn((filename: string) => (store.activeFilename = filename));
 		store.addFile = vi.fn((file: { filename: string; code: string }) => {

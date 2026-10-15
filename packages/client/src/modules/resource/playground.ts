@@ -6,6 +6,7 @@ import {
 	createBuiltinImports,
 	createBuiltinStyles,
 	isSafePlaygroundHref,
+	resolveCdnURL,
 	setPlaygroundImportMapOverrides,
 	setPlaygroundSiteModules,
 	setPlaygroundSiteStyles,
@@ -533,7 +534,7 @@ export class PlaygroundResourceRuntime {
 		const controller = new AbortController();
 		const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
 		try {
-			const response = await fetch(url, {
+			const response = await fetch(resolveCdnURL(url), {
 				method: 'GET',
 				signal: controller.signal,
 				cache: 'no-store'

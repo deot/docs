@@ -437,6 +437,46 @@ describe('dever configuration', () => {
 		}
 	});
 
+	it('previews local launch and maps dynamic Client entries after the user CDN hook', async () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-launch-preview-'));
+		const launchDist = path.join(root, 'launch');
+		const clientDist = path.join(root, 'client');
+		fs.mkdirSync(launchDist);
+		fs.mkdirSync(clientDist);
+		fs.writeFileSync(path.join(root, 'index.html'), '<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-launch/+esm"></script>');
+		fs.writeFileSync(path.join(launchDist, 'index.js'), 'export const launch = true;');
+		fs.writeFileSync(path.join(clientDist, 'index.js'), 'export const client = true;');
+		const server = http.createServer(createPreviewRequestHandler({ workspace: root, launchDist, clientDist }));
+		await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+		try {
+			const address = server.address() as import('node:net').AddressInfo;
+			const base = `http://127.0.0.1:${address.port}`;
+			const html = await (await fetch(base)).text();
+			expect(html).toContain('/@deot/docs-launch/+esm');
+			expect(html).not.toContain('https://cdn.jsdelivr.net');
+			const response = await fetch(`${base}/@deot/docs-launch/+esm`);
+			expect(response.headers.get('content-type')).toContain('text/javascript');
+			const source = await response.text();
+			expect(source).toContain(`import('/@deot/docs-launch/dist/index.js')`);
+			const cdn = vi.fn(({ url }: { url: string }) => `${url}?custom=1`);
+			const target = { $docs: { resolve: { cdn } } };
+			vm.runInNewContext(source.replace(/^import\(.*$/mu, ''), { window: target });
+			for (const url of [
+				'https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm',
+				'https://esm.unpkg.com/@deot/docs-client'
+			]) {
+				expect(target.$docs.resolve.cdn({ url })).toBe('/@deot/docs-client/dist/index.js?custom=1');
+			}
+			expect(cdn).toHaveBeenCalledTimes(2);
+			expect(await (await fetch(`${base}/@deot/docs-launch/dist/index.js`)).text()).toContain('launch = true');
+			expect(await (await fetch(`${base}/@deot/docs-client/dist/index.js?custom=1`)).text()).toContain('client = true');
+			expect((await fetch(`${base}/@deot/docs-launch/dist/%2e%2e%2fsecret.js`)).status).toBe(403);
+		} finally {
+			await new Promise<void>(resolve => server.close(() => resolve()));
+			fs.rmSync(root, { recursive: true, force: true });
+		}
+	});
+
 	it('previews static resources without Vite runtime, SSE or a generated site dist', async () => {
 		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-preview-'));
 		const workspace = path.join(root, 'site');
@@ -622,6 +662,11 @@ describe('dever configuration', () => {
 				'https://cdn.jsdelivr.net/npm/@deot/docs-markdown/dist/index.style.css',
 				'https://cdn.jsdelivr.net/npm/@deot/docs-playground/dist/index.style.css'
 			]);
+			const launchTags = htmlTagsOf(pluginHook(
+				createRuntimePlugin({ workspace: '.' }).transformIndexHtml,
+				'transformIndexHtml'
+			)('<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-launch/+esm"></script>'));
+			expect(launchTags).toHaveLength(1);
 		} finally {
 			restoreCwd.mockRestore();
 			fs.rmSync(root, { recursive: true, force: true });

@@ -226,7 +226,7 @@ export const createRuntimePlugin = (
 		? undefined
 		: {
 				order: 'pre',
-				handler() {
+				handler(html = '') {
 					const workspace = (resolvedWorkspace || resolveDocsWorkspace(
 						process.cwd(),
 						options.workspace
@@ -241,7 +241,7 @@ export const createRuntimePlugin = (
 						workspace,
 						events: '/__docs/events'
 					}).replace(/</g, '\\u003c');
-					const styles = fs.existsSync(localClientEntry)
+					const styles = fs.existsSync(localClientEntry) || html.includes('@deot/docs-launch')
 						? []
 						: [
 								'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css',
