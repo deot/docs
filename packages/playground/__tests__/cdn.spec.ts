@@ -26,6 +26,17 @@ describe('CDN address resolution', () => {
 		expect(resolveCdnURL(url, undefined, { runtime: { cdn } })).toBe(expected);
 	});
 
+	it.each(['client', 'locale', 'markdown', 'playground', 'renderer', 'theme'])('uses the explicit JS entry for docs-%s on UNPKG', (name) => {
+		const asset = `@deot/docs-${name}@1.1.8`;
+		const cdn = vi.fn(({ url }: { url: string }) => url);
+		const config = { runtime: { cdn: unpkg }, resolve: { cdn } };
+		const expected = `${unpkg}${asset}/dist/index.js?target=es2022#entry`;
+		expect(resolveCdnURL(`${jsdelivr}${asset}/+esm?target=es2022#entry`, undefined, config)).toBe(expected);
+		expect(resolveCdnURL(`${unpkg}${asset}?target=es2022#entry`, undefined, config)).toBe(expected);
+		expect(cdn).toHaveBeenNthCalledWith(1, { url: expected });
+		expect(cdnModuleName(expected)).toBe(`@deot/docs-${name}`);
+	});
+
 	it('applies the hook after builtin conversion and retains a custom final address', () => {
 		const cdn = vi.fn(({ url }: { url: string }) => `https://private.test/?source=${encodeURIComponent(url)}`);
 		const url = `${jsdelivr}sass/+esm`;

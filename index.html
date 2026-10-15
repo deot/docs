@@ -343,12 +343,37 @@
 		}
 	</script>
 	<script>
-		const script = document.createElement('script');
-		script.type = 'module';
-		script.src = window.__DOCS_RUNTIME__?.mode === 'development'
-			? '/packages/client/src/index.ts'
-			: 'https://cdn.jsdelivr.net/npm/@deot/docs-launch/+esm';
-		document.body.appendChild(script);
+		const entries = window.__DOCS_RUNTIME__?.mode === 'development'
+			? ['/packages/client/src/index.ts']
+			: [
+				'https://cdn.jsdelivr.net/npm/@deot/docs-launch/+esm',
+				'https://esm.unpkg.com/@deot/docs-launch/dist/index.js'
+			];
+		const loadEntry = () => {
+			const url = entries.shift();
+			if (!url) {
+				document.querySelector('#app').textContent = '文档入口加载失败，请刷新重试。';
+				return;
+			}
+			const script = document.createElement('script');
+			let done = false;
+			const timer = setTimeout(() => finish(false), 15000);
+			const finish = (success) => {
+				if (done) return;
+				done = true;
+				clearTimeout(timer);
+				if (!success) {
+					script.remove();
+					loadEntry();
+				}
+			};
+			script.type = 'module';
+			script.src = url;
+			script.onload = () => finish(true);
+			script.onerror = () => finish(false);
+			document.body.appendChild(script);
+		};
+		loadEntry();
 	</script>
 </body>
 </html>

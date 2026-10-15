@@ -1,5 +1,8 @@
 import { DEFAULT_CDN_URL } from './constants';
 
+// ESM UNPKG 会将带 style 字段的包根地址重定向到 CSS，Docs 使用已知 JS 入口。
+const DOCS_ESM_ENTRY = /^@deot\/docs-(?:client|locale|markdown|playground|renderer|theme)$/u;
+
 const PREVIEW_STYLE_ASSETS = [
 	'@deot/style/dist/index.normalize-only.css',
 	'@deot/vc-components/dist/index.style.css',
@@ -98,6 +101,7 @@ const npmCdnUrl = (value: string) => {
 export const cdnModuleName = (url: string) => {
 	const parsed = npmCdnUrl(url);
 	return parsed && (!parsed.path || parsed.path === '/+esm'
+		|| (DOCS_ESM_ENTRY.test(parsed.name) && parsed.path === '/dist/index.js')
 		|| /^\/(?:es\d+|esnext)\/[^/]+\.m?js$/u.test(parsed.path))
 		? parsed.name
 		: null;
@@ -120,8 +124,12 @@ export const resolveCdnURL = (
 		const origin = normalizeCdnURL(target);
 		const unpkg = new URL(origin).hostname === 'esm.unpkg.com';
 		let asset = parsed.asset;
-		if (unpkg) asset = asset.replace(/\/\+esm$/u, '');
-		else if (!parsed.path.endsWith('/+esm') && (!parsed.path || !/\.[^/]+$/u.test(parsed.path)
+		if (unpkg) {
+			asset = asset.replace(/\/\+esm$/u, '');
+			if (DOCS_ESM_ENTRY.test(parsed.name) && (!parsed.path || parsed.path === '/+esm')) {
+				asset += '/dist/index.js';
+			}
+		} else if (!parsed.path.endsWith('/+esm') && (!parsed.path || !/\.[^/]+$/u.test(parsed.path)
 			|| (/unpkg\.com$/u.test(parsed.url.hostname) && /\.[cm]?[jt]sx?$/u.test(parsed.path)))) {
 			asset = `${asset.replace(/\/+$/u, '')}/+esm`;
 		}

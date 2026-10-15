@@ -463,11 +463,12 @@ describe('dever configuration', () => {
 			vm.runInNewContext(source.replace(/^import\(.*$/mu, ''), { window: target });
 			for (const url of [
 				'https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm',
-				'https://esm.unpkg.com/@deot/docs-client'
+				'https://esm.unpkg.com/@deot/docs-client',
+				'https://esm.unpkg.com/@deot/docs-client/dist/index.js'
 			]) {
 				expect(target.$docs.resolve.cdn({ url })).toBe('/@deot/docs-client/dist/index.js?custom=1');
 			}
-			expect(cdn).toHaveBeenCalledTimes(2);
+			expect(cdn).toHaveBeenCalledTimes(3);
 			expect(await (await fetch(`${base}/@deot/docs-launch/dist/index.js`)).text()).toContain('launch = true');
 			expect(await (await fetch(`${base}/@deot/docs-client/dist/index.js?custom=1`)).text()).toContain('client = true');
 			expect((await fetch(`${base}/@deot/docs-launch/dist/%2e%2e%2fsecret.js`)).status).toBe(403);

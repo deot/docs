@@ -5,18 +5,29 @@ import type { DocsConfig } from '../../client/src/types';
 
 const roots = ['https://cdn.jsdelivr.net/npm/', 'https://esm.unpkg.com/'];
 const cacheKey = '@deot/docs-launch:cdn';
-const host = (config: Partial<DocsConfig> = {}) => ({
-	document: document.implementation.createHTMLDocument(),
-	localStorage,
-	$docs: { locales: {}, routes: {}, ...config }
-}) as unknown as Window;
+const targets: Window[] = [];
+const host = (config: Partial<DocsConfig> = {}) => {
+	const target = {
+		document: document.implementation.createHTMLDocument(),
+		localStorage,
+		sessionStorage,
+		location: { reload: vi.fn() },
+		$docs: { locales: {}, routes: {}, ...config }
+	} as unknown as Window;
+	targets.push(target);
+	return target;
+};
+const loaded = (target: Window) => target.document.querySelectorAll('link,script')
+	.forEach(node => node.dispatchEvent(new Event('load')));
 
 describe('docs launch', () => {
 	beforeEach(() => {
 		localStorage.clear();
+		sessionStorage.clear();
 	});
 
 	afterEach(() => {
+		targets.splice(0).forEach(loaded);
 		vi.unstubAllGlobals();
 		vi.useRealTimers();
 		vi.restoreAllMocks();
@@ -73,6 +84,8 @@ describe('docs launch', () => {
 
 		requests[1].resolve(new Response('{}'));
 		await vi.waitFor(() => expect(localStorage.getItem(cacheKey)).toBe(roots[1]));
+		loaded(target);
+		expect(localStorage.getItem(cacheKey)).toBe(roots[1]);
 		expect(requests.every(request => request.signal.aborted)).toBe(true);
 		expect(target.$docs.runtime?.cdn).toBe(roots[0]);
 		expect(target.document.querySelectorAll('link,script')).toHaveLength(5);
@@ -81,7 +94,7 @@ describe('docs launch', () => {
 		const next = host();
 		await launch(next);
 		expect(next.$docs.runtime?.cdn).toBe(roots[1]);
-		expect(next.document.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client`);
+		expect(next.document.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/index.js`);
 		requests[3].resolve(new Response('{}'));
 		await vi.waitFor(() => expect(requests[2].signal.aborted).toBe(true));
 	});
@@ -146,7 +159,7 @@ describe('docs launch', () => {
 		const target = host();
 		await launch(target);
 		expect(target.$docs.runtime?.cdn).toBe(roots[1]);
-		expect(target.document.body.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client`);
+		expect(target.document.body.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/index.js`);
 		expect(signals.every(signal => signal.aborted)).toBe(true);
 		finish('{}');
 	});
@@ -163,7 +176,7 @@ describe('docs launch', () => {
 		expect(cdn).toHaveBeenCalledTimes(5);
 		expect(target.$docs.resolve?.cdn).toBe(cdn);
 		expect(target.$docs.cdns).toEqual(config.cdns);
-		expect(target.document.body.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client?custom=1`);
+		expect(target.document.body.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/index.js?custom=1`);
 	});
 
 	it.each([null, undefined, ''])('keeps resource addresses when the hook returns %s', async (value) => {
@@ -187,50 +200,172 @@ describe('docs launch', () => {
 		expect(target.$docs.runtime?.cdn).toBe(roots[1]);
 	});
 
-	it('stops when every probe fails', async () => {
+	it('tries actual resources in candidate order when all metadata probes fail', async () => {
 		vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 404 })));
 		const target = host();
-		await expect(launch(target)).rejects.toBeInstanceOf(AggregateError);
-		expect(target.document.querySelector('link,script')).toBeNull();
+		await launch(target);
+		expect(target.$docs.runtime?.cdn).toBe(roots[0]);
+		expect(target.document.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/+esm`);
+		loaded(target);
+		expect(localStorage.getItem(cacheKey)).toBe(roots[0]);
 	});
 
-	it('aborts a stalled probe after five seconds without a fallback node', async () => {
+	it('aborts a stalled probe after five seconds and still tries the actual resources', async () => {
 		vi.useFakeTimers();
 		vi.stubGlobal('fetch', vi.fn((_url: string, options: RequestInit) => new Promise((_resolve, reject) => {
 			options.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
 		})));
 		const target = host({ cdns: [roots[0]] });
-		const assertion = expect(launch(target)).rejects.toBeInstanceOf(AggregateError);
+		const task = launch(target);
 		await vi.advanceTimersByTimeAsync(5000);
-		await assertion;
-		expect(target.document.querySelector('link,script')).toBeNull();
+		await task;
+		expect(target.document.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/+esm`);
 	});
 
-	it('reports resource load failures without switching away from the selected node', async () => {
+	it.each(['script', 'link'])('retries the whole page on %s failure and excludes the failed node', async (selector) => {
+		localStorage.setItem(cacheKey, roots[0]);
 		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
-		const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const target = host();
 		await launch(target);
-		target.document.querySelector('link')!.dispatchEvent(new Event('error'));
-		target.document.querySelector('script')!.dispatchEvent(new Event('error'));
-		expect(error.mock.calls).toEqual([
-			[`[docs-launch] Failed to load ${roots[0]}@deot/docs-client/dist/index.style.css`],
-			[`[docs-launch] Failed to load ${roots[0]}@deot/docs-client/+esm`]
-		]);
-		expect(target.$docs.runtime?.cdn).toBe(roots[0]);
-		expect(fetch).toHaveBeenCalledTimes(2);
+		target.document.querySelector(selector)!.dispatchEvent(new Event('error'));
+		target.document.querySelector(selector)!.dispatchEvent(new Event('error'));
+		expect(target.location.reload).toHaveBeenCalledTimes(1);
+		expect(JSON.parse(sessionStorage.getItem(cacheKey)!)).toEqual([roots[0]]);
+		expect(localStorage.getItem(cacheKey)).toBe(roots[1]);
+
+		const next = host();
+		await launch(next);
+		expect(next.$docs.runtime?.cdn).toBe(roots[1]);
+		expect(next.document.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/index.js`);
+		expect(sessionStorage.getItem(cacheKey)).toBeNull();
+		expect(fetch).toHaveBeenCalledTimes(3);
 	});
 
-	it('reports cold-start probe failures from the automatic entry', async () => {
+	it('reloads on a late CSS failure even when the Client module has already loaded', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
+		const target = host();
+		await launch(target);
+		target.document.querySelector('script')!.dispatchEvent(new Event('load'));
+		target.document.querySelector('link')!.dispatchEvent(new Event('error'));
+		expect(target.location.reload).toHaveBeenCalledTimes(1);
+	});
+
+	it('reloads after thirty seconds and ignores late events from the old attempt', async () => {
+		vi.useFakeTimers();
+		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
+		const target = host();
+		await launch(target);
+		await vi.advanceTimersByTimeAsync(30000);
+		loaded(target);
+		target.document.querySelector('script')!.dispatchEvent(new Event('error'));
+		expect(target.location.reload).toHaveBeenCalledTimes(1);
+	});
+
+	it('stops the timeout after all five resources load', async () => {
+		vi.useFakeTimers();
+		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
+		const target = host();
+		await launch(target);
+		loaded(target);
+		await vi.advanceTimersByTimeAsync(35000);
+		expect(target.location.reload).not.toHaveBeenCalled();
+	});
+
+	it('shows a visible failure after every node is exhausted without a reload loop', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
+		const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const first = host();
+		await launch(first);
+		first.document.querySelector('script')!.dispatchEvent(new Event('error'));
+		const last = host();
+		last.document.body.innerHTML = '<div id="app"></div>';
+		await launch(last);
+		last.document.querySelector('script')!.dispatchEvent(new Event('error'));
+		expect(first.location.reload).toHaveBeenCalledTimes(1);
+		expect(last.location.reload).not.toHaveBeenCalled();
+		expect(last.document.querySelector('#app')?.textContent).toContain('加载失败');
+		expect(localStorage.getItem(cacheKey)).toBe('');
+		expect(sessionStorage.getItem(cacheKey)).toBeNull();
+		expect(error).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not overwrite an already mounted app when the last node fails', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+		const target = host({ cdns: [roots[0]] });
+		target.document.body.innerHTML = '<div id="app" data-v-app>mounted</div>';
+		await launch(target);
+		target.document.querySelector('link')!.dispatchEvent(new Event('error'));
+		expect(target.document.querySelector('#app')?.textContent).toBe('mounted');
+	});
+
+	it('does not reload if retry state cannot be saved', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+		const target = host();
+		Object.defineProperty(target, 'sessionStorage', { get: () => { throw new DOMException('Blocked', 'SecurityError'); } });
+		await launch(target);
+		target.document.querySelector('script')!.dispatchEvent(new Event('error'));
+		expect(target.location.reload).not.toHaveBeenCalled();
+	});
+
+	it('ignores corrupt retry state', async () => {
+		sessionStorage.setItem(cacheKey, 'invalid');
+		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
+		const target = host();
+		await launch(target);
+		expect(target.$docs.runtime?.cdn).toBe(roots[0]);
+	});
+
+	it('never restores a failed node from a late silent probe', async () => {
+		localStorage.setItem(cacheKey, roots[0]);
+		let finish!: (response: Response) => void;
+		vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => { finish = resolve; })));
+		const target = host({ cdns: [roots[0]] });
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+		await launch(target);
+		target.document.querySelector('script')!.dispatchEvent(new Event('error'));
+		finish(new Response('{}'));
+		await new Promise(resolve => setTimeout(resolve, 0));
+		expect(localStorage.getItem(cacheKey)).toBe('');
+	});
+
+	it('rejects invalid retry state that leaves no candidates', async () => {
+		sessionStorage.setItem(cacheKey, JSON.stringify(roots));
+		await expect(launch(host())).rejects.toThrow('No CDN available');
+	});
+
+	it('reports resource failures from the automatic entry', async () => {
 		vi.resetModules();
-		vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 404 })));
+		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
+		vi.stubGlobal('$docs', { locales: {}, routes: {}, cdns: [roots[0]] });
 		const error = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const app = document.createElement('div');
 		app.id = 'app';
 		document.body.appendChild(app);
 		try {
 			await import('../src');
-			await vi.waitFor(() => expect(error).toHaveBeenCalledWith('[docs-launch] Failed to launch', expect.any(AggregateError)));
+			await vi.waitFor(() => expect(document.querySelector(`script[src="${roots[0]}@deot/docs-client/+esm"]`)).not.toBeNull());
+			document.querySelector('script')!.dispatchEvent(new Event('error'));
+			expect(error).toHaveBeenCalledWith('[docs-launch] Failed to load', roots[0], expect.any(Event));
+		} finally {
+			app.remove();
+			document.querySelectorAll('link,script').forEach(node => node.remove());
+			Reflect.deleteProperty(window, Symbol.for('@deot/docs-launch'));
+		}
+	});
+
+	it('reports initialization failures from the automatic entry', async () => {
+		vi.resetModules();
+		sessionStorage.setItem(cacheKey, JSON.stringify(roots));
+		vi.stubGlobal('$docs', { locales: {}, routes: {} });
+		const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const app = document.createElement('div');
+		app.id = 'app';
+		document.body.appendChild(app);
+		try {
+			await import('../src');
+			await vi.waitFor(() => expect(error).toHaveBeenCalledWith('[docs-launch] Failed to launch', expect.any(Error)));
 		} finally {
 			app.remove();
 			Reflect.deleteProperty(window, Symbol.for('@deot/docs-launch'));
