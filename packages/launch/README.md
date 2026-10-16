@@ -24,7 +24,7 @@
 
 启动器先插入 Client stylesheet link，再插入 Client module script；Client 浏览器 CSS 已包含主应用使用的 Renderer、Markdown、Playground 和延迟页面样式，无需再加载三个子包的 CSS。不等待 CSS load 事件才请求 JS。所有地址先按选中节点生成，再经过用户可选的同步 `resolve.cdn({ url })`。返回 `null`、`undefined` 或空字符串时保留原地址，钩子本身不会被启动器替换，探针不经过钩子。
 
-jsDelivr 的 Client 入口使用 `/@deot/docs-client/+esm`，ESM UNPKG 显式使用 `/@deot/docs-client/dist/index.js`。不使用 UNPKG 包根入口，因为带 `style` 字段的包可能重定向到 CSS。
+两个 CDN 都显式加载 `/@deot/docs-client/dist/bundle/index.js` 和 `/@deot/docs-client/dist/bundle/index.style.css`。Bundle 由 `--bundle-package client` 生成，普通 ES 继续供项目打包器使用。
 
 Client 与 Playground 内置 jsDelivr / UNPKG 地址转换，继续使用选中的同一节点，再调用用户钩子。原配置与缓存保留原始地址。转换服务内部模块引用及重定向仍交给浏览器处理。
 
@@ -34,6 +34,6 @@ Client 与 Playground 内置 jsDelivr / UNPKG 地址转换，继续使用选中�
 
 包没有运行时依赖，通过 `--minify-package 'launch'` 生成单个自包含的普通压缩 ESM，体积预算为 3 KiB、gzip 后 1.5 KiB。无需 eval 或解压器。聚合包不会重导出自动启动入口。
 
-HTML 统一声明双 CDN launch 入口。本仓库 `doc dev` 确认 Client 包名、源码入口及真实路径边界后，将两条 launch 地址改写到本地 Client 源码，交给 Vite 编译；`doc preview` 构建并映射本地 launch 和 Client，预览适配会先调用用户钩子，再映射本地 Client URL。消费项目仍使用声明的发布地址。
+HTML 统一声明双 CDN launch 入口。本仓库 `doc dev` 确认 Client 包名、源码入口及真实路径边界后，将两条 launch 地址改写到本地 Client 源码，交给 Vite 编译；`doc preview` 映射预先构建的本地 launch 和 Client Bundle，先执行 `npm run build`，预览适配会先调用用户钩子，再映射本地 Client URL。消费项目仍使用声明的发布地址。
 
 发布顺序：先发布包含完整 CSS 的 Client，确认两个 CDN 均能提供新产物，再发布只加载 Client CSS/JS 的 launch，最后发布开发服务与聚合包。回滚时先恢复 launch 的四份 CSS 加载；完整 Client CSS 可以保留。

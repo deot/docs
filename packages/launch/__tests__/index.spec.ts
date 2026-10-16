@@ -55,9 +55,9 @@ describe('docs launch', () => {
 		expect(fetcher.mock.calls.map(call => call[0])).toEqual(roots.map(root => `${root}@deot/docs-theme@1.1.4/package.json?raw`));
 		expect(order).toEqual(['LINK', 'SCRIPT']);
 		expect([...head.querySelectorAll('link')].map(link => link.href)).toEqual(
-			[`${roots[0]}@deot/docs-client/dist/index.style.css`]
+			[`${roots[0]}@deot/docs-client/dist/bundle/index.style.css`]
 		);
-		expect(body.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/+esm`);
+		expect(body.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/dist/bundle/index.js`);
 		expect(body.querySelector('script')?.type).toBe('module');
 		expect(localStorage.getItem(cacheKey)).toBe(roots[0]);
 	});
@@ -78,7 +78,7 @@ describe('docs launch', () => {
 		expect(requests.every(request => !request.signal.aborted)).toBe(true);
 		expect(target.$docs.runtime?.cdn).toBe(roots[0]);
 		expect(target.document.querySelectorAll('link')).toHaveLength(1);
-		expect(target.document.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/+esm`);
+		expect(target.document.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/dist/bundle/index.js`);
 		expect(fetcher).toHaveBeenCalledTimes(2);
 		expect(cdn).toHaveBeenCalledTimes(2);
 
@@ -94,7 +94,7 @@ describe('docs launch', () => {
 		const next = host();
 		await launch(next);
 		expect(next.$docs.runtime?.cdn).toBe(roots[1]);
-		expect(next.document.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/index.js`);
+		expect(next.document.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/bundle/index.js`);
 		requests[3].resolve(new Response('{}'));
 		await vi.waitFor(() => expect(requests[2].signal.aborted).toBe(true));
 	});
@@ -159,7 +159,7 @@ describe('docs launch', () => {
 		const target = host();
 		await launch(target);
 		expect(target.$docs.runtime?.cdn).toBe(roots[1]);
-		expect(target.document.body.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/index.js`);
+		expect(target.document.body.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/bundle/index.js`);
 		expect(signals.every(signal => signal.aborted)).toBe(true);
 		finish('{}');
 	});
@@ -176,14 +176,14 @@ describe('docs launch', () => {
 		expect(cdn).toHaveBeenCalledTimes(2);
 		expect(target.$docs.resolve?.cdn).toBe(cdn);
 		expect(target.$docs.cdns).toEqual(config.cdns);
-		expect(target.document.body.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/index.js?custom=1`);
+		expect(target.document.body.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/bundle/index.js?custom=1`);
 	});
 
 	it.each([null, undefined, ''])('keeps resource addresses when the hook returns %s', async (value) => {
 		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
 		const target = host({ cdns: [], resolve: { cdn: () => value } });
 		await launch(target);
-		expect(target.document.body.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/+esm`);
+		expect(target.document.body.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/dist/bundle/index.js`);
 	});
 
 	it('ignores a quick 404 and never loads resources before a successful probe', async () => {
@@ -205,7 +205,7 @@ describe('docs launch', () => {
 		const target = host();
 		await launch(target);
 		expect(target.$docs.runtime?.cdn).toBe(roots[0]);
-		expect(target.document.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/+esm`);
+		expect(target.document.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/dist/bundle/index.js`);
 		loaded(target);
 		expect(localStorage.getItem(cacheKey)).toBe(roots[0]);
 	});
@@ -219,7 +219,7 @@ describe('docs launch', () => {
 		const task = launch(target);
 		await vi.advanceTimersByTimeAsync(5000);
 		await task;
-		expect(target.document.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/+esm`);
+		expect(target.document.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/dist/bundle/index.js`);
 	});
 
 	it.each(['script', 'link'])('retries the whole page on %s failure and excludes the failed node', async (selector) => {
@@ -236,7 +236,7 @@ describe('docs launch', () => {
 		const next = host();
 		await launch(next);
 		expect(next.$docs.runtime?.cdn).toBe(roots[1]);
-		expect(next.document.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/index.js`);
+		expect(next.document.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/bundle/index.js`);
 		expect(sessionStorage.getItem(cacheKey)).toBeNull();
 		expect(fetch).toHaveBeenCalledTimes(3);
 	});
@@ -345,7 +345,7 @@ describe('docs launch', () => {
 		document.body.appendChild(app);
 		try {
 			await import('../src');
-			await vi.waitFor(() => expect(document.querySelector(`script[src="${roots[0]}@deot/docs-client/+esm"]`)).not.toBeNull());
+			await vi.waitFor(() => expect(document.querySelector(`script[src="${roots[0]}@deot/docs-client/dist/bundle/index.js"]`)).not.toBeNull());
 			document.querySelector('script')!.dispatchEvent(new Event('error'));
 			expect(error).toHaveBeenCalledWith('[docs-launch] Failed to load', roots[0], expect.any(Event));
 		} finally {

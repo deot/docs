@@ -9,7 +9,6 @@ import { isInside, resolveDocsWorkspace } from '../workspace';
 import { respondWorkspaceModule } from '../workspace-module';
 import { findLocalClientWorkspace, LOCAL_CLIENT_ENTRY } from '../local-client';
 import { rewriteLaunchUrls } from '../local-assets';
-import { createOptionalDependenciesPlugin } from './optional-dependencies';
 import type { ResolvedDocsWorkspace } from '../workspace';
 import type { DocsPluginOptions } from '../types';
 
@@ -239,7 +238,7 @@ export const createRuntimePlugin = (
 					}).replace(/</g, '\\u003c');
 					const styles = localClient || html.includes('@deot/docs-launch')
 						? []
-						: ['https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css'];
+						: ['https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/bundle/index.style.css'];
 					return {
 						html: localClient ? rewriteLaunchUrls(html, LOCAL_CLIENT_ENTRY) : html,
 						tags: [
@@ -626,7 +625,6 @@ export default (
 	resolvedWorkspace?: ResolvedDocsWorkspace
 ) => defineConfig({
 	plugins: [
-		createOptionalDependenciesPlugin(),
 		createRuntimePlugin(options, resolvedWorkspace),
 		createWorkspacePlugin(options, resolvedWorkspace),
 		createHistoryPlugin(options, resolvedWorkspace),

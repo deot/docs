@@ -93,6 +93,10 @@ development 开放 `PUT /__docs/page`，JSON body 为 `{ lang, source, document 
 
 preview 与 production 不提供该入口；`/__docs/*` 在 preview 下返回 404。
 
+## 构建与依赖
+
+构建使用 `@deot/dev` 的原生 Bundle 能力，无自定义构建配置、Node `process` 替身或 optional peer CDN 兜底。依赖按包声明安装，修改内部依赖后先重新构建；开发与预览不自动补包。
+
 ## 配置与安全边界
 
 - 配置文件查找顺序为 `z.doc.config`、`doc.config`、`vite.config`，支持 `.js` 和 `.ts`。
@@ -103,7 +107,7 @@ preview 与 production 不提供该入口；`/__docs/*` 在 preview 下返回 40
 - 原始源码中间件会校验真实路径，拒绝目录穿越和逃逸 workspace 的符号链接。
 - preview 不启动 Vite、watcher、HMR 或 SSE，不注入开发 runtime，且 `/__docs/*`（含页面保存入口）返回 404。
 - 根 workspace 构建会跳过隐藏目录、`node_modules`、`coverage`、常见构建缓存目录和当前 outDir。
-- 在本仓库预览时会复用统一 DDC 构建，提供本地 launch 与 Client。HTML 的 launch 地址映射到本地适配入口，先调用用户 CDN 钩子，再将动态生成的 Client JS/CSS 地址映射到当前 dist；支持 jsDelivr `/+esm` 和 ESM UNPKG 包根入口。已有 Client `dist/index.*` 地址仍直接改写，并与动态地址共用映射规则；支持带版本入口，并保留 query 和 hash。本地地址保留 `dist/`。Client 构建直接收集工作区源码和完整 CSS，避免混用子包旧 dist；CJS 构建不会覆盖 ES 的完整 CSS。其他项目保留 HTML 中声明的发布包 URL。本地预览仍执行 launch 的 CDN 探测，Playground 及可选远程依赖继续沿用原有加载规则。
+- 本仓库先执行 `npm run build`，再执行 `doc preview`。预览直接提供 `packages/launch/dist` 和 `packages/client/dist/bundle`；缺少产物时明确报错，不扫描源码时间或自动构建。HTML 的 launch 地址映射到本地适配入口，先调用用户 CDN 钩子，再将 Client JS/CSS 地址映射到当前 Bundle；保留 query/hash 和旧 Client 入口兼容。消费项目保留发布地址。预览仍执行 launch 的 CDN 探测，Playground 的远程依赖规则保持原样。
 
 ## 仓库内验证
 

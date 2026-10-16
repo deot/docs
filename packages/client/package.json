@@ -8,10 +8,11 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     },
-    "./dist/index.style.css": "./dist/index.style.css"
+    "./dist/index.style.css": "./dist/index.style.css",
+    "./dist/bundle/index.js": "./dist/bundle/index.js",
+    "./dist/bundle/index.style.css": "./dist/bundle/index.style.css"
   },
   "files": [
     "dist"

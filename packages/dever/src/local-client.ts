@@ -19,7 +19,7 @@ export const findLocalClientWorkspace = (cwd: string) => {
 			&& isInside(projectRoot, fs.realpathSync(entry))
 			? entry
 			: undefined;
-		return { packageFile, source, clientDist: path.join(packageDir, 'dist') };
+		return { source, clientDist: path.join(packageDir, 'dist') };
 	} catch {
 		return undefined;
 	}

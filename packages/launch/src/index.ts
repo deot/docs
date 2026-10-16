@@ -77,10 +77,10 @@ export const launch = (target: Window = window): Promise<void> => {
 		const doc = host.document;
 		const link = doc.createElement('link');
 		link.rel = 'stylesheet';
-		link.href = resolve('@deot/docs-client/dist/index.style.css');
+		link.href = resolve('@deot/docs-client/dist/bundle/index.style.css');
 		const script = doc.createElement('script');
 		script.type = 'module';
-		script.src = resolve(`@deot/docs-client${new URL(cdn).hostname === 'esm.unpkg.com' ? '/dist/index.js' : '/+esm'}`);
+		script.src = resolve('@deot/docs-client/dist/bundle/index.js');
 		const resources = [link, script];
 		let pending = resources.length;
 		let done = false;

@@ -42,9 +42,9 @@ it('loads both Client resources locally through the unchanged HTML startup and r
 		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
 		await launch(target as unknown as Window);
 		const style = doc.querySelector<HTMLLinkElement>('link[rel="stylesheet"]')!;
-		const script = doc.querySelector<HTMLScriptElement>('script[src$="/@deot/docs-client/dist/index.js"]')!;
-		expect(style.href).toBe(`${base}/@deot/docs-client/dist/index.style.css`);
-		expect(script.src).toBe(`${base}/@deot/docs-client/dist/index.js`);
+		const script = doc.querySelector<HTMLScriptElement>('script[src$="/@deot/docs-client/dist/bundle/index.js"]')!;
+		expect(style.href).toBe(`${base}/@deot/docs-client/dist/bundle/index.style.css`);
+		expect(script.src).toBe(`${base}/@deot/docs-client/dist/bundle/index.js`);
 		expect(doc.querySelectorAll('link[rel="stylesheet"]')).toHaveLength(1);
 		expect(await (await fetcher(style.href)).text()).toContain('display: grid');
 		expect(await (await fetcher(script.src)).text()).toContain('current = true');

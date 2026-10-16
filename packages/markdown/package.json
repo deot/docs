@@ -1,14 +1,14 @@
 {
   "name": "@deot/docs-markdown",
   "version": "1.1.10",
+  "type": "module",
   "main": "dist/index.js",
   "style": "dist/index.style.css",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     },
     "./dist/index.style.css": "./dist/index.style.css"
   },

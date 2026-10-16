@@ -45,9 +45,10 @@ jobs:
       - name: Run typecheck
         run: npm run typecheck
 
-      - name: Run unit tests
-        run: npm run test -- --package-name '*'
-
       - name: Run build
         run: npm run build
+
+      # Client 入口引用内部包的构建 CSS，测试与 coverage 扫描前需先生成。
+      - name: Run unit tests
+        run: npm run test -- --package-name '*'
 

@@ -12,7 +12,7 @@ import {
 	isNotModified,
 	resolvePageSaveTarget
 } from '../src/plugins';
-import { createPreviewRequestHandler } from '../src/preview';
+import { createPreviewRequestHandler, startPreviewServer } from '../src/preview';
 import { resolveDocsWorkspace } from '../src/workspace';
 import { findPlugin, htmlTagsOf, pluginHook } from './fixtures';
 
@@ -438,6 +438,17 @@ describe('dever configuration', () => {
 		}
 	});
 
+	it('requires local Bundle outputs before previewing the source repository', async () => {
+		const root = createSiteProject('docs-preview-unbuilt-');
+		const restore = vi.spyOn(process, 'cwd').mockReturnValue(root);
+		try {
+			await expect(startPreviewServer({ workspace: 'site' })).rejects.toThrow('Run npm run build before preview');
+		} finally {
+			restore.mockRestore();
+			fs.rmSync(root, { recursive: true, force: true });
+		}
+	});
+
 	it('previews local launch and maps dynamic Client entries after the user CDN hook', async () => {
 		const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-launch-preview-'));
 		const launchDist = path.join(root, 'launch');
@@ -465,13 +476,13 @@ describe('dever configuration', () => {
 			for (const url of [
 				'https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm',
 				'https://esm.unpkg.com/@deot/docs-client',
-				'https://esm.unpkg.com/@deot/docs-client/dist/index.js'
+				'https://esm.unpkg.com/@deot/docs-client/dist/bundle/index.js'
 			]) {
-				expect(target.$docs.resolve.cdn({ url })).toBe('/@deot/docs-client/dist/index.js?custom=1');
+				expect(target.$docs.resolve.cdn({ url })).toBe('/@deot/docs-client/dist/bundle/index.js?custom=1');
 			}
 			expect(cdn).toHaveBeenCalledTimes(3);
 			expect(await (await fetch(`${base}/@deot/docs-launch/dist/index.js`)).text()).toContain('launch = true');
-			expect(await (await fetch(`${base}/@deot/docs-client/dist/index.js?custom=1`)).text()).toContain('client = true');
+			expect(await (await fetch(`${base}/@deot/docs-client/dist/bundle/index.js?custom=1`)).text()).toContain('client = true');
 			expect((await fetch(`${base}/@deot/docs-launch/dist/%2e%2e%2fsecret.js`)).status).toBe(403);
 		} finally {
 			await new Promise<void>(resolve => server.close(() => resolve()));
@@ -488,13 +499,13 @@ describe('dever configuration', () => {
 		fs.writeFileSync(path.join(workspace, 'index.html'), [
 			'<!DOCTYPE html>',
 			'<link href="https://cdn.jsdelivr.net/npm/@deot/docs-client@1.0.0/dist/index.style.css?theme=docs#style">',
-			'<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js"></script>',
+			'<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/bundle/index.js"></script>',
 			'<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm"></script>',
 			'<script>const client = "http://cdn.example.com/vendor/npm/@deot/docs-client@next/dist/index.js?module#entry";</script>',
 			'<script>const esm = "https://cdn.jsdelivr.net/npm/@deot/docs-client@next/+esm?module#entry";</script>',
-			'<script>const style = "https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css";</script>',
-			'<script>const sourceMap = "https://cdn.example.com/@deot/docs-client/dist/index.js.map";</script>',
-			'<script>const bareText = "@deot/docs-client/dist/index.js";</script>',
+			'<script>const style = "https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/bundle/index.style.css";</script>',
+			'<script>const sourceMap = "https://cdn.example.com/@deot/docs-client/dist/bundle/index.js.map";</script>',
+			'<script>const bareText = "@deot/docs-client/dist/bundle/index.js";</script>',
 			'<script>const module = "https://esm.sh/@deot/docs-client";</script>',
 			'<script>const other = "https://cdn.example.com/@deot/docs-client-extra/dist/index.js";</script>'
 		].join(''));
@@ -520,27 +531,27 @@ describe('dever configuration', () => {
 			});
 			const html = await page.text();
 			expect(page.status).toBe(200);
-			expect(html).toContain('/@deot/docs-client/dist/index.js');
-			expect(html).toContain('/@deot/docs-client/dist/index.style.css?theme=docs#style');
-			expect(html).toContain('/@deot/docs-client/dist/index.js?module#entry');
-			expect(html).toContain('/@deot/docs-client/dist/index.style.css');
-			expect(html).toContain('https://cdn.example.com/@deot/docs-client/dist/index.js.map');
-			expect(html).toContain('@deot/docs-client/dist/index.js');
+			expect(html).toContain('/@deot/docs-client/dist/bundle/index.js');
+			expect(html).toContain('/@deot/docs-client/dist/bundle/index.style.css?theme=docs#style');
+			expect(html).toContain('/@deot/docs-client/dist/bundle/index.js?module#entry');
+			expect(html).toContain('/@deot/docs-client/dist/bundle/index.style.css');
+			expect(html).toContain('https://cdn.example.com/@deot/docs-client/dist/bundle/index.js.map');
+			expect(html).toContain('@deot/docs-client/dist/bundle/index.js');
 			expect(html).toContain('https://esm.sh/@deot/docs-client');
 			expect(html).toContain('https://cdn.example.com/@deot/docs-client-extra/dist/index.js');
 			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client@1.0.0/dist/index.style.css');
-			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js');
+			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/bundle/index.js');
 			expect(html).not.toContain('http://cdn.example.com/vendor/npm/@deot/docs-client@next/dist/index.js');
-			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css');
+			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/bundle/index.style.css');
 			expect(html).not.toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm');
 			expect(html).not.toContain('@deot/docs-client@next/+esm');
 			expect(html).not.toContain('/@vite/client');
 			expect(html).not.toContain('__DOCS_RUNTIME__');
-			expect(await (await fetch(`${base}/@deot/docs-client/dist/index.js`)).text())
+			expect(await (await fetch(`${base}/@deot/docs-client/dist/bundle/index.js`)).text())
 				.toContain('./chunks/lazy.js');
 			expect(await (await fetch(`${base}/@deot/docs-client/+esm`)).text())
 				.toContain('./chunks/lazy.js');
-			const stylesheet = await fetch(`${base}/@deot/docs-client/dist/index.style.css`);
+			const stylesheet = await fetch(`${base}/@deot/docs-client/dist/bundle/index.style.css`);
 			expect(stylesheet.status).toBe(200);
 			expect(stylesheet.headers.get('content-type')).toContain('text/css');
 			expect(await stylesheet.text()).toContain('.docs {}');
@@ -562,7 +573,7 @@ describe('dever configuration', () => {
 					headers: { Accept: 'text/html' }
 				});
 				expect(previewPage.status).toBe(200);
-				expect(await previewPage.text()).toContain('/@deot/docs-client/dist/index.js');
+				expect(await previewPage.text()).toContain('/@deot/docs-client/dist/bundle/index.js');
 				expect((await fetch(`${base}/__docs/${endpoint}`, {
 					headers: { Accept: 'text/plain' }
 				})).status).toBe(404);
@@ -589,7 +600,7 @@ describe('dever configuration', () => {
 				expect(remoteHtml).toContain(
 					'https://cdn.jsdelivr.net/npm/@deot/docs-client@1.0.0/dist/index.style.css?theme=docs#style'
 				);
-				expect(remoteHtml).toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js');
+				expect(remoteHtml).toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/bundle/index.js');
 				expect(remoteHtml).toContain('https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm');
 				expect(remoteHtml).not.toContain('="/@deot/docs-client/');
 			} finally {
@@ -659,7 +670,7 @@ describe('dever configuration', () => {
 			)());
 			expect(rootTags[0].children).toContain('"workspace":"/"');
 			expect(rootTags.slice(1).map(tag => tag.attrs?.href)).toEqual([
-				'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css'
+				'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/bundle/index.style.css'
 			]);
 			const launchTags = htmlTagsOf(pluginHook(
 				createRuntimePlugin({ workspace: '.' }).transformIndexHtml,

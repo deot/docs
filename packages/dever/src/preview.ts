@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as http from 'node:http';
 import * as path from 'node:path';
-import { Shell } from '@deot/dev-shared';
 import type { DeverOptions } from './types';
 import { isInside, resolveDocsWorkspace } from './workspace';
 import { findLocalClientWorkspace } from './local-client';
@@ -10,9 +9,7 @@ import { CLIENT_ASSET_REPLACEMENTS, CLIENT_PREFIX, LAUNCH_PREFIX, rewriteClientA
 
 export interface PreviewRequestHandlerOptions {
 	workspace: string;
-	/**
-	 * 本地 `@deot/docs-client` 的 dist 目录。缺省时按包路径解析，用来改写预览 HTML 里的 CDN 地址。
-	 */
+	/** 本地 Client Bundle 目录，用来改写预览 HTML 里的 CDN 地址。 */
 	clientDist?: string;
 	/** 本仓库 launch 的构建产物目录。 */
 	launchDist?: string;
@@ -61,79 +58,11 @@ const decodeRequestPath = (requestUrl: string) => {
 	return decoded;
 };
 
-const getLatestModification = (filename: string) => {
-	if (!fs.existsSync(filename)) return 0;
-	const stat = fs.statSync(filename);
-	if (!stat.isDirectory()) return stat.mtimeMs;
-	return fs.readdirSync(filename).reduce((latest, entry) => (
-		Math.max(latest, getLatestModification(path.join(filename, entry)))
-	), stat.mtimeMs);
-};
-
-const ensureLocalClientDist = async (cwd: string) => {
-	const localClient = findLocalClientWorkspace(cwd);
-	if (!localClient) return undefined;
-	const output = path.join(localClient.clientDist, 'index.js');
-	const stylesheet = path.join(localClient.clientDist, 'index.style.css');
-	const inputs = [
-		localClient.packageFile,
-		path.resolve(cwd, 'packages/locale/package.json'),
-		path.resolve(cwd, 'packages/markdown/package.json'),
-		path.resolve(cwd, 'packages/playground/package.json'),
-		path.resolve(cwd, 'packages/renderer/package.json'),
-		path.resolve(cwd, 'packages/theme/package.json'),
-		path.resolve(cwd, 'packages/shims.d.ts'),
-		path.resolve(cwd, 'z.build.config.ts'),
-		path.resolve(cwd, 'packages/dever/src/local-client.ts'),
-		path.resolve(cwd, 'tsconfig.json'),
-		path.resolve(cwd, 'pnpm-lock.yaml'),
-		path.resolve(cwd, 'packages/client/src'),
-		path.resolve(cwd, 'packages/locale/src'),
-		path.resolve(cwd, 'packages/markdown/src'),
-		path.resolve(cwd, 'packages/playground/src'),
-		path.resolve(cwd, 'packages/renderer/src'),
-		path.resolve(cwd, 'packages/theme/src')
-	];
-	const outputTime = getLatestModification(output);
-	const inputTime = Math.max(...inputs.map(getLatestModification));
-	if (!outputTime || !fs.existsSync(stylesheet) || inputTime > outputTime) {
-		console.log('Building local @deot/docs-client for preview...');
-		await Shell.spawn('npm', [
-			'run',
-			'build',
-			'--',
-			'--package-name',
-			'client'
-		], { cwd });
-	}
-	if (!fs.existsSync(output)) {
-		throw new Error(`Local client build did not create: ${output}`);
-	}
-	return localClient.clientDist;
-};
-
 const rewriteLocalClient = (html: Buffer, clientDist?: string) => (
 	clientDist
 		? Buffer.from(rewriteClientAssets(html.toString('utf8')))
 		: html
 );
-
-const ensureLocalLaunchDist = async (cwd: string) => {
-	const source = path.resolve(cwd, 'packages/launch/src');
-	if (!fs.existsSync(source)) return undefined;
-	const dist = path.resolve(cwd, 'packages/launch/dist');
-	const output = path.join(dist, 'index.js');
-	const inputTime = Math.max(...[
-		source,
-		path.resolve(cwd, 'packages/launch/package.json'),
-		path.resolve(cwd, 'z.build.config.ts')
-	].map(getLatestModification));
-	if (getLatestModification(output) < inputTime) {
-		await Shell.spawn('npm', ['run', 'build', '--', '--package-name', 'launch'], { cwd });
-	}
-	if (!fs.existsSync(output)) throw new Error(`Local launch build did not create: ${output}`);
-	return dist;
-};
 
 // 只在本仓库预览入口安装映射，先调用用户钩子，再把 Client 指向待审 dist。
 const localLaunchEntry = [
@@ -240,7 +169,7 @@ export const createPreviewRequestHandler = (options: PreviewRequestHandlerOption
 			if (clientDist && pathname.startsWith(CLIENT_PREFIX)) {
 				root = clientDist;
 				const rest = pathname.slice(CLIENT_PREFIX.length);
-				relative = rest === '+esm' ? 'index.js' : rest.replace(/^dist\//u, '');
+				relative = rest === '+esm' ? 'index.js' : rest.replace(/^dist\/(?:bundle\/)?/u, '');
 			}
 			if (launchDist && pathname.startsWith(LAUNCH_PREFIX)) {
 				root = launchDist;
@@ -286,26 +215,31 @@ export const createPreviewRequestHandler = (options: PreviewRequestHandlerOption
 /**
  * 启动生产模式预览，但不生成站点输出目录。
  *
- * docs 仓库源码在需要时构建并提供本地 client；消费项目不存在对应的软件包
+ * docs 仓库提供预先构建的本地 Client Bundle；消费项目不存在对应的软件包
  * 工作区，因此继续使用 HTML 中声明的远程发布地址。本地替换识别
- * `@deot/docs-client[/@version]/dist/index.*`，以及 jsDelivr 的 `/+esm`
- * （映射到 `dist/index.js`），不绑定具体 CDN 域名。本地地址保留 `dist/`，
- * 与 package.json 的 `main` / `style` 一致。
+ * Client Bundle 的 JS/CSS 地址，也兼容原 Client 入口；不绑定具体 CDN 域名。
+ * 本地地址保留 `dist/bundle/`，构建由开发者显式执行。
  * @param options CLI/dever 选项。
  * @returns 已开始监听的 HTTP 服务器。
  */
 export const startPreviewServer = async (options: DeverOptions) => {
 	const cwd = process.cwd();
 	const workspace = resolveDocsWorkspace(cwd, options.workspace);
-	// 源码仓库必须预览当前待审代码，而不是 CDN 上的任意软件包版本。
-	// 复用仓库统一 DDC build，仅在相关源码更新时重新构建。
-	const clientDist = await ensureLocalClientDist(cwd);
-	const launchDist = await ensureLocalLaunchDist(cwd);
-	const server = http.createServer(createPreviewRequestHandler({
-		workspace: workspace.root,
-		clientDist,
-		launchDist
-	}));
+	const localClient = findLocalClientWorkspace(cwd);
+	const local = localClient && {
+		clientDist: path.join(localClient.clientDist, 'bundle'),
+		launchDist: path.resolve(cwd, 'packages/launch/dist')
+	};
+	if (local) {
+		for (const filename of [
+			path.join(local.clientDist, 'index.js'),
+			path.join(local.clientDist, 'index.style.css'),
+			path.join(local.launchDist, 'index.js')
+		]) {
+			if (!fs.existsSync(filename)) throw new Error(`Run npm run build before preview: missing ${filename}`);
+		}
+	}
+	const server = http.createServer(createPreviewRequestHandler({ workspace: workspace.root, ...local }));
 	const port = Number(options.port ?? 4173);
 	const host = String(options.host || '0.0.0.0');
 	if (!Number.isInteger(port) || port < 0 || port > 65535) {
