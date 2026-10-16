@@ -170,6 +170,36 @@ describe('RemoteSfc', () => {
 		expect(Object.keys(files).some(key => key.endsWith('/catalogue.ts'))).toBe(true);
 	});
 
+	it.each([
+		{ github: false, extension: 'ts' },
+		{ github: false, extension: 'js' },
+		{ github: true, extension: 'ts' },
+		{ github: true, extension: 'js' }
+	])('loads parent directory index.$extension imports with github=$github', async ({ github, extension }) => {
+		const base = github
+			? 'https://raw.githubusercontent.com/deot/vc/refs/heads/main/demo/'
+			: 'https://assets.example.com/demo/';
+		const sources: Record<string, string> = {
+			[`${base}nested/examples/App.vue`]: `<script setup>import { value } from '..'; import '../..';</script><template>{{ value }}</template>`,
+			[`${base}nested/index.${extension}`]: `export { value } from '..';`,
+			[`${base}index.${extension}`]: 'export const value = 42;'
+		};
+		vi.stubGlobal('fetch', vi.fn(async () => ({
+			ok: true,
+			json: async () => ({ tree: Object.keys(sources).map(url => ({ type: 'blob', path: url.split('/refs/heads/main/')[1] })) })
+		})));
+		load.mockImplementation(async (_identity: any, options: any) => {
+			if (!(options.url in sources)) throw new ResourceRequestError(404);
+			return { content: sources[options.url] };
+		});
+		const wrapper = mount(RemoteSfc, { props: { source: `${base}nested/examples/App.vue`, lang: 'zh-CN' } });
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		expect(wrapper.findComponent({ name: 'Playground' }).props('files')).toEqual(
+			Object.fromEntries(Object.entries(sources).map(([url, content]) => [new URL(url).pathname.slice(1), content]))
+		);
+		expect(subscribe).toHaveBeenCalledTimes(3);
+	});
+
 	it('continues loading relative files when the GitHub file tree is rate limited', async () => {
 		const base = 'https://raw.githubusercontent.com/deot/vc/refs/heads/main/demo/';
 		const sources: Record<string, string> = {

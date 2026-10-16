@@ -46,6 +46,22 @@ describe('resource graph helpers', () => {
 		]);
 	});
 
+	it.each(['.', '..', '../..', '../../..', '..?raw', '../..#entry'])('keeps directory imports in the source graph: %s', (specifier) => {
+		expect(isSupportedDependency(specifier)).toBe(true);
+		const candidates = dependencyUrlCandidates(specifier, 'https://example.com/demo/nested/examples/App.vue');
+		const directory = new URL(specifier, 'https://example.com/demo/nested/examples/App.vue');
+		for (const extension of ['ts', 'js']) {
+			const entry = new URL(`index.${extension}`, directory);
+			entry.search = directory.search;
+			entry.hash = directory.hash;
+			expect(candidates).toContain(entry.href);
+		}
+	});
+
+	it.each(['./image.png?path=/..', './image.png#../..'])('does not classify asset parameters as directory imports: %s', (specifier) => {
+		expect(isSupportedDependency(specifier)).toBe(false);
+	});
+
 	it.each([
 		`import type { Props } from './types'`,
 		`import type Props from './types'`,

@@ -13,9 +13,15 @@ export const getResourceType = (url: string): DocsResourceType => {
 	return 'module';
 };
 
-export const isSupportedDependency = (value: string) => (
-	value.startsWith('.') && (SUPPORTED_DEPENDENCY_RE.test(value) || /\.m(?:$|[?#])/.test(value) || !/\.[^/]+$/.test(value.split(/[?#]/)[0]))
-);
+export const isSupportedDependency = (value: string) => {
+	const path = value.split(/[?#]/)[0];
+	return value.startsWith('.') && (
+		/(?:^|\/)\.{1,2}$/.test(path)
+		|| SUPPORTED_DEPENDENCY_RE.test(value)
+		|| /\.m(?:$|[?#])/.test(value)
+		|| !/\.[^/]+$/.test(path)
+	);
+};
 
 export const resolveDependencyUrl = (specifier: string, importer: string) => {
 	const fallbackBase = typeof location === 'undefined' ? 'http://localhost/' : location.href;
