@@ -288,6 +288,11 @@ import { label, state } from 'lodash-es';
 	});
 
 	it('wraps local preview content in a scroller and reports render errors', async () => {
+		const fetchRequest = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+			ok: true,
+			text: async () => `import { h } from 'vue';
+				export const Scroller = { setup(_, { slots }) { return () => h('section', slots.default()); } };`
+		} as Response);
 		const errors: string[] = [];
 		const wrapper = mount(LocalSandbox, {
 			props: {
@@ -311,6 +316,7 @@ const fail = () => { throw new Error('render-fail') }
 		await wrapper.get('button').trigger('click');
 		await vi.waitFor(() => expect(errors.join('\n')).toContain('render-fail'));
 		wrapper.unmount();
+		fetchRequest.mockRestore();
 	});
 
 	it('reports a remote module that cannot be loaded', async () => {

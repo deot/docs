@@ -206,7 +206,8 @@ const run = async () => {
 		const overrides = new Set(Object.keys(createRuntimeImportOverrides(props.options.builtinImportMap)));
 		const specifiers = collectBareSpecifiers(
 			props.files,
-			collectReachableFilenames(props.files, compiled.entry)
+			collectReachableFilenames(props.files, compiled.entry),
+			false
 		);
 		specifiers.push('vue');
 		if (props.previewScroller === true) specifiers.push('@deot/vc');
@@ -214,7 +215,6 @@ const run = async () => {
 			imports,
 			{ vue: Vue, vueRouter: VueRouter },
 			overrides,
-			undefined,
 			props.options.cdnURL
 		);
 		const loaded = await loadLocalModules(
@@ -231,7 +231,7 @@ const run = async () => {
 			publishError();
 			return;
 		}
-		const linked = linkPlayground(compiled, props.files, { modules: loaded.modules });
+		const linked = linkPlayground(compiled, props.files, { modules: loaded.modules, loadModule: remote.loadModule });
 		/* istanbul ignore if -- 并发编译时只保留最后一次 */
 		if (current !== version) return;
 		if (linked.errors.length || !linked.component) {

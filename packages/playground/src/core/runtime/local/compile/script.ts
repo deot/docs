@@ -1,7 +1,20 @@
 import { transform } from 'sucrase';
 import * as VueCompiler from '@vue/compiler-sfc/dist/compiler-sfc.esm-browser.js';
 
-const { babelParse, walkIdentifiers, MagicString } = VueCompiler as typeof import('@vue/compiler-sfc');
+const { babelParse, walk, walkIdentifiers, MagicString } = VueCompiler as typeof import('@vue/compiler-sfc');
+
+const rewriteDynamicImports = (code: string) => {
+	if (!code.includes('import')) return code;
+	const source = new MagicString(code);
+	walk(babelParse(code, { sourceType: 'module' }), {
+		enter(node: { type: string; start: number; callee?: { type: string } }) {
+			if (node.type === 'ImportExpression' || (node.type === 'CallExpression' && node.callee?.type === 'Import')) {
+				source.overwrite(node.start, node.start + 6, '__docs_import');
+			}
+		}
+	});
+	return source.toString();
+};
 
 // Sucrase 的 JSX parser 不接受 Vue 的 onUpdate:modelValue 属性，转为等价展开属性。
 const rewriteJsxAttributes = (code: string) => {
@@ -110,6 +123,7 @@ export const transformScript = (
 			: script;
 		const result = transform(source, {
 			transforms,
+			preserveDynamicImport: true,
 			disableESTransforms: true,
 			production: true,
 			jsxRuntime: 'classic',
@@ -117,7 +131,8 @@ export const transformScript = (
 			jsxFragmentPragma: '__docs_Fragment',
 			filePath: filename
 		});
-		return `${rewriteImportMeta(result.code, filename)}\n//# sourceURL=playground://${filename}`;
+		const scriptCode = options.esm ? result.code : rewriteDynamicImports(result.code);
+		return `${rewriteImportMeta(scriptCode, filename)}\n//# sourceURL=playground://${filename}`;
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : String(error);
 		throw new Error(`[Playground] 脚本转换失败 ${filename}: ${message}`, { cause: error });

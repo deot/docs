@@ -1,9 +1,8 @@
 import { transform } from 'sucrase';
 import { init, parse } from 'es-module-lexer';
-import { cdnModuleName, createCdnResolver, isCdnEsmURL, resolveNpmImport } from '../../../cdn';
+import { cdnModuleName, createCdnResolver, resolveNpmImport } from '../../../cdn';
 import { isRelativeSpecifier } from './compile/files';
-import { ensureLocalBuiltin, localBuiltinIds } from './builtins';
-import { prefersLocalBuiltin, resolveHostModule, resolveImportTarget, toHostModule, type ModuleLoader } from './modules';
+import { usesHostRuntime, resolveHostModule, resolveImportTarget, toHostModule } from './modules';
 import { rewriteImportMeta } from './compile/script';
 
 export interface RemoteBuiltins {
@@ -11,7 +10,6 @@ export interface RemoteBuiltins {
 	vueRouter: unknown;
 }
 
-const HOST_VUE = new Set(['vue', 'vue/server-renderer']);
 const moduleUrl = (url: string) => new URL(url, globalThis.location?.href).href;
 
 type ModuleRunner = (
@@ -78,7 +76,6 @@ const readRemoteSource = (url: string): Promise<RemoteSource> => {
  * @param imports 合并后的 import map。
  * @param builtins 宿主 Vue 与 vue-router。
  * @param overrides 显式配置的模块名，与自动补齐的默认地址区分。
- * @param importModule 浏览器原生 ESM 加载器。
  * @param cdnURL 没有 launch 选点结果时使用的实例 CDN。
  * @returns 按 URL 加载并执行远程模块的加载器。
  */
@@ -86,52 +83,25 @@ export const createRemoteLoader = (
 	imports: Record<string, string>,
 	builtins: RemoteBuiltins,
 	overrides: ReadonlySet<string> = new Set(Object.keys(imports)),
-	importModule: ModuleLoader = url => import(/* @vite-ignore */ url),
 	cdnURL?: string
 ) => {
 	const resolve = createCdnResolver(cdnURL);
 	const resolveUrl = (url: string) => resolve(moduleUrl(url));
 	const hostModules: Record<string, unknown> = {
 		'vue': builtins.vue,
+		'vue/server-renderer': builtins.vue,
 		'vue-router': builtins.vueRouter
 	};
-	const pendingBuiltins = new Set<string>();
 	const sources = new Map<string, RemoteSource>();
 	const pendingSources = new Map<string, Promise<RemoteSource>>();
 	const evaluated = new Map<string, unknown>();
-	const nativeModules = new Map<string, Promise<unknown>>();
-	const loadNative = (url: string) => {
-		let pending = nativeModules.get(url);
-		if (!pending) {
-			pending = importModule(url).then((module) => {
-				const exports = toHostModule(module);
-				evaluated.set(url, exports);
-				return exports;
-			});
-			nativeModules.set(url, pending);
-		}
-		return pending;
-	};
-
-	const localBuiltinId = (id: string) => {
-		if (imports[id] && !prefersLocalBuiltin(id, imports, overrides)) return null;
-		if (prefersLocalBuiltin(id, imports, overrides)) return id;
-		let cursor = id;
-		while (true) {
-			const slash = cursor.lastIndexOf('/');
-			if (slash <= 0) return null;
-			const parent = cursor.slice(0, slash);
-			if (prefersLocalBuiltin(parent, imports, overrides)) return parent;
-			cursor = parent;
-		}
-	};
 
 	const dependencySpecifier = (from: string, specifier: string) => {
 		if (isRelativeSpecifier(specifier) || /^https?:\/\//.test(specifier)) {
 			const url = new URL(specifier, from);
 			// +esm 把裸依赖写成带版本的 CDN 地址，还原包名才能应用当前预览的覆盖。
 			const name = cdnModuleName(url.href);
-			if (name && (imports[name] || localBuiltinIds.has(name))) return name;
+			if (name && (overrides.has(name) || usesHostRuntime(name, imports, overrides))) return name;
 			return url.href;
 		}
 		return specifier;
@@ -140,38 +110,26 @@ export const createRemoteLoader = (
 	const dependencyUrl = (from: string, id: string) => {
 		const specifier = dependencySpecifier(from, id);
 		if (/^https?:\/\//.test(specifier)) return resolveUrl(specifier);
-		if (imports[specifier] && !prefersLocalBuiltin(specifier, imports, overrides)) {
+		if (imports[specifier] && !usesHostRuntime(specifier, imports, overrides)) {
 			return resolveUrl(imports[specifier]);
 		}
-		if (HOST_VUE.has(specifier) && prefersLocalBuiltin(specifier, imports, overrides)) return null;
-		let cursor = specifier;
-		while (cursor) {
-			if (localBuiltinIds.has(cursor) && prefersLocalBuiltin(cursor, imports, overrides)) {
-				pendingBuiltins.add(cursor);
-				return null;
-			}
-			const slash = cursor.lastIndexOf('/');
-			if (slash <= 0) break;
-			cursor = cursor.slice(0, slash);
-		}
+		if (usesHostRuntime(specifier, imports, overrides)) return null;
 		const target = imports[specifier] ? specifier : resolveImportTarget(specifier, imports);
 		if (!target) {
-			imports[specifier] = resolveNpmImport(specifier);
-			return resolveUrl(imports[specifier]);
+			return resolveUrl(resolveNpmImport(specifier));
 		}
 		return resolveUrl(imports[target]);
 	};
 
 	const crawl = async (url: string, visited = new Set<string>()) => {
-		if (!overrides.size && isCdnEsmURL(url)) {
-			await loadNative(url);
-			return;
-		}
 		if (visited.has(url)) return;
 		visited.add(url);
 		let pending = pendingSources.get(url);
 		if (!pending) {
-			pending = readRemoteSource(url);
+			pending = readRemoteSource(url).catch((error) => {
+				pendingSources.delete(url);
+				throw error;
+			});
 			pendingSources.set(url, pending);
 		}
 		const source = await pending;
@@ -184,16 +142,12 @@ export const createRemoteLoader = (
 
 	const requireFrom = (from: string) => (specifier: string) => {
 		const id = dependencySpecifier(from, specifier);
-		if (HOST_VUE.has(id) && prefersLocalBuiltin(id, imports, overrides)) {
-			return toHostModule(builtins.vue);
+		if (usesHostRuntime(id, imports, overrides)) {
+			return toHostModule(hostModules[id]);
 		}
-		const builtinId = localBuiltinId(id);
-		if (builtinId) return toHostModule(hostModules[builtinId]);
 		if (isRelativeSpecifier(id) || /^https?:\/\//.test(id)) return evaluate(dependencyUrl(from, id)!);
 		const target = imports[id] ? id : resolveImportTarget(id, imports);
-		if (!target || !imports[target]) {
-			throw new Error(`[Playground] 未注册的模块 "${id}"`);
-		}
+		if (!target) return evaluate(dependencyUrl(from, id)!);
 		const loaded = evaluate(resolveUrl(imports[target]));
 		if (target === id) return loaded;
 		if (!resolveHostModule(id, { [target]: loaded })) {
@@ -208,18 +162,18 @@ export const createRemoteLoader = (
 		if (evaluated.has(url)) return evaluated.get(url);
 		const source = sources.get(url);
 		if (!source) throw new Error(`[Playground] 远程模块尚未下载: ${url}`);
-		const module = { exports: {} as Record<string, unknown> };
+		// CDN 可能显式导出 __esModule，预先保留可写属性，避免与转换器的标记冲突。
+		const module = { exports: Object.defineProperty({}, '__esModule', { value: true, writable: true }) as Record<string, unknown> };
 		evaluated.set(url, module.exports);
 		const runner = source.run;
-		runner(requireFrom(url), module, module.exports, async (id) => {
-			const next = dependencyUrl(url, id);
-			if (next) await load(next);
-			else {
-				const builtinId = localBuiltinId(dependencySpecifier(url, id));
-				if (builtinId && !(builtinId in hostModules)) hostModules[builtinId] = await ensureLocalBuiltin(builtinId);
-			}
-			return requireFrom(url)(id);
-		});
+		try {
+			runner(requireFrom(url), module, module.exports, id => loadModule(id, url));
+		} catch (error) {
+			evaluated.delete(url);
+			throw error;
+		}
+		// ESM 的 default 已由转换器保留，不再按 CDN 导出的同名 CJS 标记二次包装。
+		module.exports.__esModule = true;
 		evaluated.set(url, module.exports);
 		return module.exports;
 	};
@@ -231,14 +185,18 @@ export const createRemoteLoader = (
 		if (pending) return pending;
 		const task = (async () => {
 			await crawl(url);
-			await Promise.all([...pendingBuiltins].map(async (id) => {
-				if (id === 'vue' || id === 'vue-router') return;
-				hostModules[id] = await ensureLocalBuiltin(id);
-			}));
 			return evaluate(url);
-		})();
+		})().catch((error) => {
+			loading.delete(url);
+			throw new Error(`[Playground] 无法加载模块 (${url}): ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+		});
 		loading.set(url, task);
 		return task;
 	};
-	return { load };
+	const loadModule = async (id: string, from = globalThis.location?.href): Promise<unknown> => {
+		const url = dependencyUrl(from, id);
+		if (url) await load(url);
+		return requireFrom(from)(id);
+	};
+	return { load, loadModule };
 };

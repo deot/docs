@@ -95,7 +95,7 @@ preview 与 production 不提供该入口；`/__docs/*` 在 preview 下返回 40
 
 ## 构建与依赖
 
-构建使用 `@deot/dev` 的原生 Bundle 能力，无自定义构建配置或 optional peer CDN 兜底。依赖按包声明安装，修改内部依赖后先重新构建；开发与预览不自动补包。
+构建使用 `@deot/dev` 的原生 Bundle 能力，不在编译阶段将缺失依赖改写为 CDN。Playground 通过运行时加载器读取业务包的 ESM，未配置的 npm 模块及传递依赖自动从 CDN 加载，无需登记包名，见 [Playground 模块加载](../playground/README.md#运行时模块加载)。文档应用自身的构建依赖仍按包声明安装，修改内部依赖后先重新构建；开发与预览不自动补包。
 
 ## 配置与安全边界
 

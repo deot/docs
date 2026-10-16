@@ -53,7 +53,7 @@ const files = ref({
 | `id` | `string` | `''` | 标题锚点 id；未传时从 `title` 自动生成。仅挂在内联 runtime 标题上，弹窗不重复。 |
 | `expandable` | `true \| number` | `undefined` | 开启预览高度展开；未传不显示控件；`true` 展开到剩余视口；正数为目标高度（px）。 |
 | `previewScroller` | `boolean` | `false` | 在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条；开启后会动态探测 `Scroller`，不存在则回退原生滚动。 |
-| `local` | `boolean` | `true` | 在当前文档编译并挂载。内置模块默认继承宿主，可通过 import map 逐个覆盖；预览使用所选 Vue 运行时挂载。 |
+| `local` | `boolean` | `true` | 在当前文档编译并挂载。业务模块通过运行时 ESM 加载，可通过 import map 逐个覆盖；预览使用所选 Vue 运行时挂载。 |
 | `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项；`cdnURL` 会同时作用于预览样式和默认 import map。 |
 | `previewOptions` | `SandboxProps['previewOptions']` | `undefined` | 传给当前 iframe 的 preview 选项。 |
 | `locale` | `Language` | `en-US` | 界面语言；未传入时使用上层 Locale Provider。 |
@@ -154,16 +154,24 @@ const handleMessage = async () => {
 
 ## 运行环境
 
-- iframe 运行时通过公共 CDN 加载 Vue 和默认 import map 中的依赖；local 运行时加载 URL 覆盖或宿主未提供的模块时也需要网络访问。
+- iframe 运行时通过公共 CDN 加载 Vue 和默认 import map 中的依赖；local 运行时默认复用宿主 Vue 和 vue-router，业务包通过 ESM 加载，需要网络访问或配置可访问的本地 ESM 地址。
 - iframe 模式初始化时会补齐宿主页缺失的 `globalThis.process` 和 `process.env`，兼容 `@vue/repl` 的 JSX/TSX 编译；已有对象及环境值保持不变，不模拟其他 Node API。
 - 默认 CDN 为 `https://cdn.jsdelivr.net/npm`；未使用 launch 时可通过 `options.cdnURL` 调整默认节点。launch 已选点时统一使用 `$docs.runtime.cdn`，优先于实例 `cdnURL`。
 - jsDelivr npm、旧 `unpkg.com` 和 `esm.unpkg.com` 地址在实际加载时转换，再经过可选 `$docs.resolve.cdn({ url })`。jsDelivr 转换入口使用 `/+esm`，ESM UNPKG 使用包或文件入口。预览 CSS、import map、裸包回退和 Sass 共用该规则；原始映射与缓存不被改写。
-- 直接渲染时，宿主未提供且未配置的 npm 模块（含作用域包和子路径）自动通过上述 ESM 规则加载；组件包的传递依赖也适用，`import()` 在调用时加载。可用 `options.builtinImportMap.imports` 指定依赖的版本和 URL。
+- 直接渲染时，未配置的 npm 模块（含作用域包、版本和子路径）自动通过上述 ESM 规则加载，无需预先登记包名。组件包的传递依赖也适用，预览文件和远程模块中的 `import()` 在调用时加载。可用 `options.builtinImportMap.imports` 指定依赖的版本和 URL；显式 URL 加载失败会直接报错。
 - Vue SFC 的 `<style lang="scss">` / `lang="sass"` 以及独立 `.scss` / `.sass` 文件会在浏览器里编译；`_partial.scss` 只作为 `@use` 依赖。
-- local 模式按模块识别显式 URL 覆盖，即使地址与内置默认相同也会加载该 URL。覆盖 `vue` 时，预览的编译产物、挂载、组件引用和注入使用这份 Vue；内置组件、hooks、locale、Pinia 和 vue-router 随之重新加载以匹配 Vue，未覆盖的普通工具模块继续复用宿主。不同预览的覆盖互不影响，显式覆盖的模块在各自预览内执行。
+- local 模式按模块识别显式 URL 覆盖，即使地址与内置默认相同也会加载该 URL。组件包和工具包统一经运行时加载器读取 ESM，不复用宿主的业务包副本。远程模块的 Vue 导入统一绑定到所选运行时；覆盖 `vue` 时，编译产物、挂载、组件引用、注入和 vue-router 使用对应的远程运行时。不同预览的覆盖互不影响，各预览独立执行远程模块。
 - local 模式在当前页面按 URL 缓存外部模块的下载和转换成果，并合并并发请求；切换文档时可复用，最多保留最近使用的 128 个模块。各预览仍独立执行模块并解析依赖覆盖；失败的加载不缓存，同源模块实时读取，刷新页面会清空缓存。
 - 每个 Playground 实例都使用自己的 preview 配置和 iframe 消息来源校验。
 - `local` 默认开启：同一份 `files` 在当前文档里编译。直接渲染不撑开预览高度，`expandable` 固定为关闭，`docs:playground.run` 不会申请临时高度；`<DocsLink>` 仍通过 `docs:navigate` 通知。`local: false` 改回 iframe Sandbox。
+
+## 运行时模块加载
+
+加载器按模块说明符解析依赖，不识别组件名，不维护可选依赖白名单。静态导入在挂载前准备，动态导入在实际调用时准备；组件库内部的可选依赖沿用组件自身的加载时机。因此普通示例不会因加载组件包而预先下载所有动态依赖，也无需给组件额外增加异步包装。
+
+显式模块地址优先于默认 CDN。CDN 返回的带版本依赖地址会保留版本；同名显式覆盖可以替换该依赖。失败后可再次调用动态导入或刷新预览重试，错误包含请求地址与原因；模块自身的执行异常继续报错。
+
+依赖须能作为浏览器 ESM 执行。若 CDN 转换产物无法正常运行，可通过现有模块配置指定包的原始 ESM 文件，无需增加包名适配。加载器不猜测 npm 包对应的全局变量名，也不向 `window` 写入依赖；若库自身优先读取已有全局实现，该行为由库保留。已在宿主页其他位置执行的原生 `import()` 不受接管，iframe Sandbox 继续使用自己的 import map 机制。
 
 ## 仓库内 examples
 

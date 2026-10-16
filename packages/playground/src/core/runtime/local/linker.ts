@@ -9,11 +9,12 @@ import {
 	normalizeVirtualPath,
 	resolveModulePath
 } from './compile/files';
-import { resolveHostModule } from './modules';
+import { resolveHostModule, toHostModule, type ModuleLoader } from './modules';
 import { createGuardedVue, type VueGuardCapture } from './vue-guard';
 
 export interface LinkOptions {
 	modules?: Record<string, unknown>;
+	loadModule?: ModuleLoader;
 }
 
 /**
@@ -80,12 +81,17 @@ export const linkPlayground = (
 		cache.set(key, module.exports);
 		visiting.add(key);
 		try {
-			const runner = new Function('require', 'module', 'exports', mod.js) as (
+			const runner = new Function('require', 'module', 'exports', '__docs_import', mod.js) as (
 				require: (id: string) => unknown,
 				module: { exports: Record<string, unknown> },
-				exports: Record<string, unknown>
+				exports: Record<string, unknown>,
+				importModule: ModuleLoader
 			) => void;
-			runner(requireFn(key), module, module.exports);
+			runner(requireFn(key), module, module.exports, async (id) => {
+				if (isRelativeSpecifier(id) || resolveHostModule(id, modules)) return requireFn(key)(id);
+				if (options.loadModule) return toHostModule(await options.loadModule(id));
+				return requireFn(key)(id);
+			});
 			cache.set(key, module.exports);
 			return module.exports;
 		} catch (error: unknown) {

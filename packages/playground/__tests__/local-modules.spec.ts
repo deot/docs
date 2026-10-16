@@ -5,8 +5,7 @@ import * as VueRouter from 'vue-router';
 import { formatPlaygroundRuntimeError } from '../src/core/runtime/local/format-error';
 import { createGuardedVue, type VueGuardCapture } from '../src/core/runtime/local/vue-guard';
 import { createBuiltinImports } from '../src/cdn';
-import { ensureLocalBuiltin, localBuiltinIds } from '../src/core/runtime/local/builtins';
-import { loadLocalModules, prefersLocalBuiltin, resolveHostModule, resolveImportTarget, toHostModule } from '../src/core/runtime/local/modules';
+import { loadLocalModules, usesHostRuntime, resolveHostModule, resolveImportTarget, toHostModule } from '../src/core/runtime/local/modules';
 
 describe('local playground modules', () => {
 	it('loads custom Vue and other import-map urls as values', async () => {
@@ -61,7 +60,7 @@ describe('local playground modules', () => {
 			.toBe('@deot/vc');
 	});
 
-	it('reloads Vue-dependent builtins with custom Vue and inherits ordinary host utilities', async () => {
+	it('loads business packages through ESM alongside custom Vue', async () => {
 		const imports = { ...createBuiltinImports(), vue: 'https://example.test/vue.js' };
 		const loader = vi.fn(async (url: string) => ({ url }));
 		const result = await loadLocalModules(
@@ -77,9 +76,9 @@ describe('local playground modules', () => {
 		expect(result.modules['@deot/vc-components']).toEqual({ url: imports['@deot/vc-components'] });
 		expect(result.modules['vue-router']).toEqual({ url: 'https://cdn.jsdelivr.net/npm/vue-router/+esm' });
 		for (const id of ['@deot/helper', 'lodash-es', 'dayjs']) {
-			expect(result.modules[id]).toBe(await ensureLocalBuiltin(id));
+			expect(result.modules[id]).toMatchObject({ url: expect.any(String) });
 		}
-		expect(loader).toHaveBeenCalledTimes(4);
+		expect(loader).toHaveBeenCalledTimes(7);
 	});
 
 	it('honors explicit overrides even when their urls equal builtin defaults', async () => {
@@ -91,9 +90,10 @@ describe('local playground modules', () => {
 		);
 		expect(result.errors).toEqual([]);
 		expect(result.modules.vue).toBe(Vue);
-		expect(result.modules['lodash-es']).toBe(await ensureLocalBuiltin('lodash-es'));
+		expect(result.modules['lodash-es']).toEqual({ url: imports['lodash-es'] });
 		expect(result.modules['@deot/helper']).toEqual({ url: imports['@deot/helper'] });
-		expect(loader).toHaveBeenCalledExactlyOnceWith(imports['@deot/helper']);
+		expect(loader).toHaveBeenCalledTimes(2);
+		expect(loader).toHaveBeenCalledWith(imports['@deot/helper']);
 	});
 
 	it('surfaces remote load failures and normalizes host module shapes', async () => {
@@ -115,15 +115,15 @@ describe('local playground modules', () => {
 		expect(resolveImportTarget('vue/server-renderer/extra', {})).toBeNull();
 		expect(resolveImportTarget('foo/bar/baz', {})).toBeNull();
 		const defaults = createBuiltinImports();
-		expect(prefersLocalBuiltin('pinia', {})).toBe(true);
-		expect(prefersLocalBuiltin('@deot/vc', defaults, new Set())).toBe(true);
-		expect(prefersLocalBuiltin('@deot/vc', { '@deot/vc': defaults['@deot/vc'] })).toBe(false);
-		expect(prefersLocalBuiltin('@deot/vc', { '@deot/vc': 'https://example.test/vc.js' })).toBe(false);
-		expect(prefersLocalBuiltin('not-builtin', {})).toBe(false);
-		expect(prefersLocalBuiltin('vue', defaults, new Set())).toBe(true);
-		expect(prefersLocalBuiltin('vue', { vue: defaults.vue })).toBe(false);
-		expect(prefersLocalBuiltin('vue', { vue: 'https://example.test/vue.js' })).toBe(false);
-		expect(prefersLocalBuiltin('vue/server-renderer', defaults, new Set())).toBe(true);
+		expect(usesHostRuntime('pinia', {})).toBe(false);
+		expect(usesHostRuntime('@deot/vc', defaults, new Set())).toBe(false);
+		expect(usesHostRuntime('@deot/vc', { '@deot/vc': defaults['@deot/vc'] })).toBe(false);
+		expect(usesHostRuntime('@deot/vc', { '@deot/vc': 'https://example.test/vc.js' })).toBe(false);
+		expect(usesHostRuntime('not-builtin', {})).toBe(false);
+		expect(usesHostRuntime('vue', defaults, new Set())).toBe(true);
+		expect(usesHostRuntime('vue', { vue: defaults.vue })).toBe(false);
+		expect(usesHostRuntime('vue', { vue: 'https://example.test/vue.js' })).toBe(false);
+		expect(usesHostRuntime('vue/server-renderer', defaults, new Set())).toBe(true);
 		const kept = await loadLocalModules(
 			['@deot/vc', 'pinia', 'dayjs'],
 			{ '@deot/vc': defaults['@deot/vc'] },
@@ -131,24 +131,17 @@ describe('local playground modules', () => {
 			async () => ({ remote: true }),
 			new Set()
 		);
-		expect(kept.modules['@deot/vc']).toBe(await ensureLocalBuiltin('@deot/vc'));
-		expect(kept.modules.pinia).toBeTruthy();
-		expect(kept.modules.dayjs).toBeTypeOf('function');
+		expect(kept.modules['@deot/vc']).toEqual({ remote: true });
+		expect(kept.modules.pinia).toEqual({ remote: true });
+		expect(kept.modules.dayjs).toEqual({ remote: true });
 		const nested = await loadLocalModules(
 			['lodash-es/debounce'],
 			{},
 			{ vue: Vue, vueRouter: VueRouter },
-			async () => {
-				throw new Error('should stay local');
-			}
+			async url => ({ url })
 		);
 		expect(nested.errors).toEqual([]);
-		expect(nested.modules['lodash-es']).toBeTruthy();
-		for (const id of localBuiltinIds) {
-			const loaded = await ensureLocalBuiltin(id);
-			expect(loaded).toBeTruthy();
-			await expect(ensureLocalBuiltin(id)).resolves.toBe(loaded);
-		}
+		expect(nested.modules['lodash-es/debounce']).toEqual({ url: 'https://cdn.jsdelivr.net/npm/lodash-es/debounce/+esm' });
 
 		const capture: VueGuardCapture = {
 			mountedComponent: null,

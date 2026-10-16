@@ -1,7 +1,6 @@
 import * as Vue from 'vue';
 import { createBuiltinImports } from '../src/cdn';
 import { clearRemoteModuleCache, createRemoteLoader } from '../src/core/runtime/local/remote';
-import { ensureLocalBuiltin } from '../src/core/runtime/local/builtins';
 import * as Sucrase from 'sucrase';
 
 describe('local remote modules', () => {
@@ -193,10 +192,8 @@ describe('local remote modules', () => {
 				? `export const ref = () => 'cdn-vue';`
 				: `import { ref } from '/npm/vue@3.5.39/+esm'; export const value = ref();`
 		} as Response));
-		const native = vi.fn();
-		const loader = createRemoteLoader({ vue: vueUrl }, { vue: Vue, vueRouter: {} }, undefined, native);
+		const loader = createRemoteLoader({ vue: vueUrl }, { vue: Vue, vueRouter: {} });
 		await expect(loader.load(entry)).resolves.toMatchObject({ value: 'cdn-vue' });
-		expect(native).not.toHaveBeenCalled();
 		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toEqual([entry, vueUrl]);
 	});
 
@@ -211,17 +208,17 @@ describe('local remote modules', () => {
 					import { debounce } from 'lodash-es';
 					export const value = ref(mark); export const inherited = debounce;
 					export const lazy = () => import('/npm/@deot/helper@1.0.0/+esm');`
-				: `export const mark = 'preview-helper';`
+				: url === imports['lodash-es']
+					? `export const debounce = () => 'remote-lodash';`
+					: `export const mark = 'preview-helper';`
 		} as Response));
-		const native = vi.fn();
-		const loader = createRemoteLoader(imports, { vue: Vue, vueRouter: {} }, new Set(['@deot/helper']), native);
+		const loader = createRemoteLoader(imports, { vue: Vue, vueRouter: {} }, new Set(['@deot/helper']));
 		const result = await loader.load(entry) as { value: unknown; inherited: unknown; lazy: () => Promise<unknown> };
 		expect(Vue.isRef(result.value)).toBe(true);
 		expect(result.value).toMatchObject({ value: 'preview-helper' });
-		expect(result.inherited).toBe((await ensureLocalBuiltin('lodash-es') as { debounce: unknown }).debounce);
+		expect((result.inherited as () => string)()).toBe('remote-lodash');
 		await expect(result.lazy()).resolves.toMatchObject({ mark: 'preview-helper' });
-		expect(native).not.toHaveBeenCalled();
-		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toEqual([entry, imports['@deot/helper']]);
+		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toEqual([entry, imports['@deot/helper'], imports['lodash-es']]);
 	});
 
 	it('executes minified derived classes with native fields and a comma after super', async () => {
@@ -234,47 +231,47 @@ describe('local remote modules', () => {
 		expect(new result.Child(2).value).toBe(3);
 	});
 
-	it('loads transitive npm dependencies and defers dynamic imports until invoked', async () => {
+	it('loads arbitrary transitive npm dependencies and defers computed imports until invoked', async () => {
 		const entry = 'https://example.test/lazy.js';
-		vi.mocked(fetch).mockImplementation(async () => ({
+		const encoder = 'https://cdn.jsdelivr.net/npm/encoder/+esm';
+		const feature = 'https://cdn.jsdelivr.net/npm/@example/feature/helpers/+esm';
+		vi.mocked(fetch).mockImplementation(async url => ({
 			ok: true,
-			text: async () => `
+			text: async () => url === entry
+				? `
 				import { encode } from 'encoder';
 				export const value = encode('hello');
 				export const optional = id => import(id);
 				export const text = "import('ignored')";
 				// import('also-ignored')
 			`
+				: url === encoder ? `export const encode = value => value.toUpperCase();` : `export default 'optional';`
 		} as Response));
-		const native = vi.fn(async (url: string) => url.includes('encoder/')
-			? { encode: (value: string) => value.toUpperCase() }
-			: { default: 'optional' });
-		const loader = createRemoteLoader({}, { vue: Vue, vueRouter: {} }, undefined, native);
+		const loader = createRemoteLoader({}, { vue: Vue, vueRouter: {} });
 		const result = await loader.load(entry) as { value: string; optional: (id: string) => Promise<unknown>; text: string };
 		expect(result.value).toBe('HELLO');
 		expect(result.text).toBe('import(\'ignored\')');
-		expect(native).toHaveBeenCalledTimes(1);
-		await expect(result.optional('@example/feature')).resolves.toMatchObject({ default: 'optional' });
-		await result.optional('@example/feature');
-		expect(native).toHaveBeenCalledTimes(2);
-		expect(native).toHaveBeenLastCalledWith('https://cdn.jsdelivr.net/npm/@example/feature/+esm');
+		expect(fetch).toHaveBeenCalledTimes(2);
+		await expect(Promise.all([result.optional('@example/feature/helpers'), result.optional('@example/feature/helpers')]))
+			.resolves.toEqual([{ default: 'optional' }, { default: 'optional' }]);
+		expect(vi.mocked(fetch).mock.calls.map(call => call[0])).toEqual([entry, encoder, feature]);
 	});
 
-	it('calls default exports from native npm dependencies and reuses them for dynamic imports', async () => {
+	it('calls ESM default exports and reuses them for dynamic imports', async () => {
 		const entry = 'https://example.test/default.js';
-		vi.mocked(fetch).mockResolvedValue({
+		vi.mocked(fetch).mockImplementation(async url => ({
 			ok: true,
-			text: async () => `import factory, { label } from 'factory-pkg';
-				export const value = factory(label);
-				export const lazy = async () => (await import('factory-pkg')).default('lazy');`
-		} as Response);
-		const factory = vi.fn((value: string) => `created:${value}`);
-		const native = vi.fn(async () => Object.freeze({ default: factory, label: 'static' }));
-		const loader = createRemoteLoader({}, { vue: Vue, vueRouter: {} }, undefined, native);
+			text: async () => url === entry
+				? `import factory, { label } from 'factory-pkg';
+					export const value = factory(label);
+					export const lazy = async () => (await import('factory-pkg')).default('lazy');`
+				: `export const label = 'static'; export default value => 'created:' + value;`
+		} as Response));
+		const loader = createRemoteLoader({}, { vue: Vue, vueRouter: {} });
 		const result = await loader.load(entry) as { value: string; lazy: () => Promise<string> };
 		expect(result.value).toBe('created:static');
 		await expect(result.lazy()).resolves.toBe('created:lazy');
-		expect(native).toHaveBeenCalledOnce();
+		expect(fetch).toHaveBeenCalledTimes(2);
 	});
 
 	it('uses import-map overrides for lazy relative and npm imports', async () => {
@@ -343,6 +340,7 @@ describe('local remote modules', () => {
 
 		const piniaUrl = 'https://example.test/pinia-entry.js';
 		vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+			if (url === 'https://cdn.jsdelivr.net/npm/pinia/+esm') return { ok: true, text: async () => 'export const createPinia = () => ({});' };
 			if (url !== piniaUrl) {
 				return { ok: false, status: 404, statusText: 'Not Found', text: async () => '' };
 			}
@@ -369,8 +367,8 @@ describe('local remote modules', () => {
 				text: async () => `import missing from 'missing-pkg';\nexport const value = missing;\n`
 			};
 		}));
-		const broken = createRemoteLoader({}, { vue: Vue, vueRouter: {} }, undefined, async () => { throw new Error('404 missing-pkg'); });
-		await expect(broken.load(brokenUrl)).rejects.toThrow('404 missing-pkg');
+		const broken = createRemoteLoader({}, { vue: Vue, vueRouter: {} });
+		await expect(broken.load(brokenUrl)).rejects.toThrow('https://cdn.jsdelivr.net/npm/missing-pkg/+esm');
 		await expect(loader.load('https://example.test/missing.js')).rejects.toThrow('404');
 	});
 });

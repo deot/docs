@@ -1,5 +1,4 @@
 import { resolveNpmImport } from '../../../cdn';
-import { ensureLocalBuiltin, localBuiltinIds } from './builtins';
 
 type HostModule = Record<string | symbol, unknown>;
 
@@ -93,11 +92,7 @@ export const resolveHostModule = (
 	return null;
 };
 
-const HOST_VUE_SPECIFIERS = new Set(['vue', 'vue/server-renderer']);
-const VUE_DEPENDENT_BUILTINS = new Set([
-	'vue/server-renderer', 'vue-router', 'pinia',
-	'@deot/vc', '@deot/vc-components', '@deot/vc-hooks', '@deot/vc-locale'
-]);
+const HOST_MODULES = new Set(['vue', 'vue/server-renderer', 'vue-router']);
 
 export interface LoadLocalModulesResult {
 	modules: Record<string, unknown>;
@@ -131,19 +126,19 @@ export const resolveImportTarget = (
 	}
 };
 
-// 未覆盖的模块继承宿主；覆盖 Vue 时，只联动重新加载依赖 Vue 的内置模块。
-export const prefersLocalBuiltin = (
+// 仅复用挂载所需的 Vue 运行时；业务包统一通过 ESM 加载。
+export const usesHostRuntime = (
 	id: string,
 	imports: Record<string, string>,
 	overrides: ReadonlySet<string> = new Set(Object.keys(imports))
 ): boolean => {
-	if (!localBuiltinIds.has(id) && !HOST_VUE_SPECIFIERS.has(id)) return false;
+	if (!HOST_MODULES.has(id)) return false;
 	if (overrides.has(id)) return false;
-	return !VUE_DEPENDENT_BUILTINS.has(id) || !overrides.has('vue');
+	return id === 'vue' || !overrides.has('vue');
 };
 
 /**
- * 内置依赖默认注入宿主副本，显式 URL 按模块覆盖，包括与默认 CDN 相同的地址。
+ * Vue 运行时默认注入宿主副本，其他模块按显式 URL 或默认 CDN 加载。
  * @param specifiers 本次预览用到的裸模块说明符。
  * @param imports 合并后的 import map。
  * @param builtins 宿主 Vue 与 vue-router。
@@ -166,46 +161,20 @@ export const loadLocalModules = async (
 	};
 	const errors: string[] = [];
 	const targets = new Set<string>();
-	const localIds = new Set<string>();
 
-	specifiers.forEach((specifier) => {
-		let local = false;
-		if (prefersLocalBuiltin(specifier, imports, overrides)) localIds.add(specifier);
-		else {
-			let cursor = specifier;
-			while (true) {
-				const slash = cursor.lastIndexOf('/');
-				if (slash <= 0) break;
-				const parent = cursor.slice(0, slash);
-				if (prefersLocalBuiltin(parent, imports, overrides)) {
-					localIds.add(parent);
-					local = true;
-					break;
-				}
-				cursor = parent;
-			}
+	for (const specifier of specifiers) {
+		if (usesHostRuntime(specifier, imports, overrides)) {
+			if (specifier === 'vue/server-renderer') modules[specifier] = builtins.vue;
+			continue;
 		}
-		const target = resolveImportTarget(specifier, imports);
-		if (target && prefersLocalBuiltin(target, imports, overrides)) localIds.add(target);
-		else if (target) targets.add(target);
-		else if (!local && !localIds.has(specifier)) {
-			imports[specifier] = resolveNpmImport(specifier);
-			targets.add(specifier);
-		}
-	});
-
-	await Promise.all([...localIds].map(async (id) => {
-		if (id === 'vue' || id === 'vue-router') return;
-		if (id === 'vue/server-renderer') {
-			modules[id] = builtins.vue;
-			return;
-		}
-		modules[id] = await ensureLocalBuiltin(id);
-	}));
+		const target = resolveImportTarget(specifier, imports) || specifier;
+		imports[target] ||= resolveNpmImport(target);
+		targets.add(target);
+	}
 
 	for (const id of targets) {
 		const url = imports[id];
-		if (!url || prefersLocalBuiltin(id, imports, overrides)) continue;
+		if (!url || usesHostRuntime(id, imports, overrides)) continue;
 		try {
 			modules[id] = await loader(url);
 		} catch (error: unknown) {

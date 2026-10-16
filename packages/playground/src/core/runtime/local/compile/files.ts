@@ -184,12 +184,15 @@ export const isInsideRoot = (filename: string, root: string): boolean => {
 /**
  * 静态 import / export-from / import() 的模块说明符。
  * @param code 源码文本。
+ * @param includeDynamic 是否收集动态导入；local 运行时在调用时单独加载。
  * @returns 按出现顺序收集到的说明符。
  */
-export const listImportSpecifiers = (code: string): string[] => {
+export const listImportSpecifiers = (code: string, includeDynamic = true): string[] => {
 	const result: string[] = [];
 	const source = String(code || '');
-	const re = /(?:\bfrom\s+|import\s*\(\s*|import\s+)['"]([^'"]+)['"]/gu;
+	const re = includeDynamic
+		? /(?:\bfrom\s+|import\s*\(\s*|import\s+)['"]([^'"]+)['"]/gu
+		: /(?:\bfrom\s+|import\s+)['"]([^'"]+)['"]/gu;
 	for (const match of source.matchAll(re)) {
 		if (match[1]) result.push(match[1]);
 	}
@@ -232,13 +235,14 @@ export const collectReachableFilenames = (
 
 export const collectBareSpecifiers = (
 	files: PlaygroundFiles,
-	filenames: string[]
+	filenames: string[],
+	includeDynamic = true
 ): string[] => {
 	const index = createFileIndex(files);
 	const result: string[] = [];
 	const seen = new Set<string>();
 	filenames.forEach((filename) => {
-		listImportSpecifiers(index.get(normalizeVirtualPath(filename)) || '').forEach((specifier) => {
+		listImportSpecifiers(index.get(normalizeVirtualPath(filename)) || '', includeDynamic).forEach((specifier) => {
 			if (!specifier || isRelativeSpecifier(specifier) || seen.has(specifier)
 				|| /\.(?:css|scss|sass)(?:[?#]|$)/.test(specifier)) return;
 			seen.add(specifier);
