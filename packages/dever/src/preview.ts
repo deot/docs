@@ -5,6 +5,8 @@ import * as path from 'node:path';
 import { Shell } from '@deot/dev-shared';
 import type { DeverOptions } from './types';
 import { isInside, resolveDocsWorkspace } from './workspace';
+import { findLocalClientWorkspace } from './local-client';
+import { CLIENT_ASSET_REPLACEMENTS, CLIENT_PREFIX, LAUNCH_PREFIX, rewriteClientAssets, rewriteLaunchUrls } from './local-assets';
 
 export interface PreviewRequestHandlerOptions {
 	workspace: string;
@@ -15,19 +17,6 @@ export interface PreviewRequestHandlerOptions {
 	/** 本仓库 launch 的构建产物目录。 */
 	launchDist?: string;
 }
-
-const CLIENT_PREFIX = '/@deot/docs-client/';
-const LAUNCH_PREFIX = '/@deot/docs-launch/';
-const LAUNCH_ASSET_PATTERN = /https?:\/\/[^/"'\s<>]+(?:\/[^/"'\s<>?#]+)*\/@deot\/docs-launch(?:@[^/"'\s<>?#]+)?(?:\/\+esm|\/dist\/index\.js)?(?=["'\s<>?#]|$)/gu;
-const CLIENT_ENTRY = 'dist/index.js';
-const UNPKG_CLIENT_ENTRY_PATTERN = /https?:\/\/esm\.unpkg\.com\/@deot\/docs-client(?:@[^/"'\x60\s<>?#]+)?(?=["'\x60\s<>?#]|$)/gu;
-const CLIENT_ASSET_PATTERN = new RegExp([
-	String.raw`(?:https?:)?//[^/"'\x60\s<>]+`,
-	String.raw`(?:/[^/"'\x60\s<>?#]+)*/@deot/docs-client`,
-	String.raw`(?:@[^/"'\x60\s<>?#]+)?`,
-	String.raw`(/dist/index\.style\.css|/dist/index\.js|/\+esm)`,
-	String.raw`((?:[?#][^"'\x60\s<>]*)?)(?=["'\x60\s<>]|$)`
-].join(''), 'gu');
 
 const contentTypes: Record<string, string> = {
 	'.css': 'text/css; charset=utf-8',
@@ -72,20 +61,6 @@ const decodeRequestPath = (requestUrl: string) => {
 	return decoded;
 };
 
-const findLocalClientWorkspace = (cwd: string) => {
-	const packageFile = path.resolve(cwd, 'packages/client/package.json');
-	const clientDist = path.resolve(cwd, 'packages/client/dist');
-	if (!fs.existsSync(packageFile)) return undefined;
-	try {
-		const manifest = JSON.parse(fs.readFileSync(packageFile, 'utf8'));
-		return manifest.name === '@deot/docs-client'
-			? { clientDist, packageFile }
-			: undefined;
-	} catch {
-		return undefined;
-	}
-};
-
 const getLatestModification = (filename: string) => {
 	if (!fs.existsSync(filename)) return 0;
 	const stat = fs.statSync(filename);
@@ -109,6 +84,7 @@ const ensureLocalClientDist = async (cwd: string) => {
 		path.resolve(cwd, 'packages/theme/package.json'),
 		path.resolve(cwd, 'packages/shims.d.ts'),
 		path.resolve(cwd, 'z.build.config.ts'),
+		path.resolve(cwd, 'packages/dever/src/local-client.ts'),
 		path.resolve(cwd, 'tsconfig.json'),
 		path.resolve(cwd, 'pnpm-lock.yaml'),
 		path.resolve(cwd, 'packages/client/src'),
@@ -138,12 +114,7 @@ const ensureLocalClientDist = async (cwd: string) => {
 
 const rewriteLocalClient = (html: Buffer, clientDist?: string) => (
 	clientDist
-		? Buffer.from(html.toString('utf8').replace(
-				CLIENT_ASSET_PATTERN,
-				(_url, asset: string, suffix: string) => (
-					`${CLIENT_PREFIX}${asset === '/+esm' ? CLIENT_ENTRY : asset.slice(1)}${suffix}`
-				)
-			).replace(UNPKG_CLIENT_ENTRY_PATTERN, `${CLIENT_PREFIX}${CLIENT_ENTRY}`))
+		? Buffer.from(rewriteClientAssets(html.toString('utf8')))
 		: html
 );
 
@@ -168,11 +139,10 @@ const ensureLocalLaunchDist = async (cwd: string) => {
 const localLaunchEntry = [
 	'const config = window.$docs ||= {};',
 	'const custom = config.resolve?.cdn;',
-	`const pattern = new RegExp(${JSON.stringify(CLIENT_ASSET_PATTERN.source)}, 'gu');`,
-	`const unpkg = new RegExp(${JSON.stringify(UNPKG_CLIENT_ENTRY_PATTERN.source)}, 'gu');`,
+	`const replacements = ${JSON.stringify(CLIENT_ASSET_REPLACEMENTS.map(([pattern, replacement]) => [pattern.source, replacement]))};`,
 	'config.resolve = {...config.resolve, cdn(context) {',
 	'const url = custom?.(context) || context.url;',
-	`return url.replace(pattern, (_url, asset, suffix) => ${JSON.stringify(CLIENT_PREFIX)} + (asset === '/+esm' ? ${JSON.stringify(CLIENT_ENTRY)} : asset.slice(1)) + suffix).replace(unpkg, ${JSON.stringify(CLIENT_PREFIX + CLIENT_ENTRY)});`,
+	'return replacements.reduce((result, [pattern, replacement]) => result.replace(new RegExp(pattern, "gu"), replacement), url);',
 	'}};',
 	`import('${LAUNCH_PREFIX}dist/index.js');`
 ].join('\n');
@@ -202,7 +172,7 @@ const sendFile = (
 		? rewriteLocalClient(rawContent, clientDist)
 		: rawContent;
 	if (extension === '.html' && launchDist) {
-		content = Buffer.from(content.toString('utf8').replace(LAUNCH_ASSET_PATTERN, `${LAUNCH_PREFIX}+esm`));
+		content = Buffer.from(rewriteLaunchUrls(content.toString('utf8'), `${LAUNCH_PREFIX}+esm`));
 	}
 	const etag = createEtag(content);
 	const lastModified = stat.mtime.toUTCString();

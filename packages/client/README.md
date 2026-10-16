@@ -72,6 +72,8 @@ pnpm add @deot/docs-client
 <script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.js"></script>
 ```
 
+Client 的 ES 浏览器构建从本仓库的 locale、renderer、markdown、playground、theme 源码收集依赖，`dist/index.style.css` 提供完整主应用样式，包含延迟页面所需样式；使用 Client 时无需额外加载三个子包的 CSS。各子包仍保留独立 CSS 出口，Playground iframe 的样式由预览配置单独处理。
+
 入口模块检测到页面存在 `#app` 时会自动调用 `bootstrap()`。也可以在不触发自动启动的环境中导入并手动调用：
 
 ```ts

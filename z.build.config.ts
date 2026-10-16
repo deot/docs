@@ -3,6 +3,7 @@ import { mergeConfig } from 'vite';
 import type { Plugin, UserConfig } from 'vite';
 import configShared from './node_modules/@deot/dev-builder/shared.config.ts';
 import { createOptionalDependenciesPlugin } from './packages/dever/src/plugins/optional-dependencies.ts';
+import { createLocalDocsAliases } from './packages/dever/src/local-client.ts';
 
 interface BuildOptions {
 	format?: string;
@@ -20,7 +21,30 @@ const config = mergeConfig(
 	options.useVue ? configVue : {}
 ) as UserConfig;
 
+if (options.packageName === '@deot/docs-client' && options.format === 'cjs') {
+	config.plugins = [
+		...(config.plugins || []),
+		{
+			name: 'docs-client-preserve-browser-css',
+			enforce: 'post',
+			generateBundle: {
+				order: 'post',
+				handler(_options, bundle) {
+					// DDC 按 ES、CJS 顺序写入同一个 CSS 路径，保留 ES 收集的完整样式。
+					for (const [filename, output] of Object.entries(bundle)) {
+						if (output.type === 'asset' && filename.endsWith('.css')) delete bundle[filename];
+					}
+				}
+			}
+		}
+	];
+}
+
 if (isClientBrowserEntry) {
+	// 从工作区源码收集 JS 与完整 CSS，避免使用子包旧 dist。
+	config.resolve = mergeConfig(config, {
+		resolve: { alias: createLocalDocsAliases(process.cwd()) }
+	}).resolve;
 	const browserChunkPlugin: Plugin = {
 		name: 'docs-client-browser-chunks',
 		enforce: 'post',
@@ -67,6 +91,7 @@ if (isClientBrowserEntry) {
 	};
 	config.build = {
 		...config.build,
+		cssCodeSplit: false,
 		minify: true,
 		rolldownOptions: {
 			...config.build?.rolldownOptions,

@@ -27,6 +27,7 @@ describe('dever configuration', () => {
 		fs.writeFileSync(path.join(root, 'README.md'), '# Root');
 		fs.writeFileSync(path.join(root, 'packages/client/README.md'), '# Client');
 		fs.writeFileSync(path.join(root, 'packages/client/src/index.ts'), 'export {};');
+		fs.writeFileSync(path.join(root, 'packages/client/package.json'), JSON.stringify({ name: '@deot/docs-client' }));
 		fs.writeFileSync(path.join(root, 'package.json'), '{}');
 		return root;
 	};
@@ -658,10 +659,7 @@ describe('dever configuration', () => {
 			)());
 			expect(rootTags[0].children).toContain('"workspace":"/"');
 			expect(rootTags.slice(1).map(tag => tag.attrs?.href)).toEqual([
-				'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css',
-				'https://cdn.jsdelivr.net/npm/@deot/docs-renderer/dist/index.style.css',
-				'https://cdn.jsdelivr.net/npm/@deot/docs-markdown/dist/index.style.css',
-				'https://cdn.jsdelivr.net/npm/@deot/docs-playground/dist/index.style.css'
+				'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css'
 			]);
 			const launchTags = htmlTagsOf(pluginHook(
 				createRuntimePlugin({ workspace: '.' }).transformIndexHtml,

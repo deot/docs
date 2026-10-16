@@ -75,7 +75,14 @@ export const launch = (target: Window = window): Promise<void> => {
 			return config.resolve?.cdn?.({ url }) || url;
 		};
 		const doc = host.document;
-		let pending = 5;
+		const link = doc.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = resolve('@deot/docs-client/dist/index.style.css');
+		const script = doc.createElement('script');
+		script.type = 'module';
+		script.src = resolve(`@deot/docs-client${new URL(cdn).hostname === 'esm.unpkg.com' ? '/dist/index.js' : '/+esm'}`);
+		const resources = [link, script];
+		let pending = resources.length;
 		let done = false;
 		const timer = setTimeout(() => finish(), 30000);
 		const finish = (event?: Event) => {
@@ -100,19 +107,11 @@ export const launch = (target: Window = window): Promise<void> => {
 			const app = doc.querySelector('#app:not([data-v-app])');
 			if (app) app.textContent = '文档资源加载失败，请刷新重试。';
 		};
-		for (const name of ['client', 'renderer', 'markdown', 'playground']) {
-			const link = doc.createElement('link');
-			link.rel = 'stylesheet';
-			link.href = resolve(`@deot/docs-${name}/dist/index.style.css`);
-			link.addEventListener('load', finish);
-			link.addEventListener('error', finish);
-			doc.head.appendChild(link);
+		for (const resource of resources) {
+			resource.addEventListener('load', finish);
+			resource.addEventListener('error', finish);
 		}
-		const script = doc.createElement('script');
-		script.type = 'module';
-		script.src = resolve(`@deot/docs-client${new URL(cdn).hostname === 'esm.unpkg.com' ? '/dist/index.js' : '/+esm'}`);
-		script.addEventListener('load', finish);
-		script.addEventListener('error', finish);
+		doc.head.appendChild(link);
 		doc.body.appendChild(script);
 	})();
 };

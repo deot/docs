@@ -33,7 +33,7 @@ describe('docs launch', () => {
 		vi.restoreAllMocks();
 	});
 
-	it('uses the default candidates and inserts four CSS links before requesting Client JS', async () => {
+	it('uses the default candidates and inserts Client CSS before requesting Client JS', async () => {
 		const fetcher = vi.fn<typeof fetch>(async () => new Response('{}'));
 		vi.stubGlobal('fetch', fetcher);
 		const target = host();
@@ -53,9 +53,9 @@ describe('docs launch', () => {
 		});
 		await launch(target);
 		expect(fetcher.mock.calls.map(call => call[0])).toEqual(roots.map(root => `${root}@deot/docs-theme@1.1.4/package.json?raw`));
-		expect(order).toEqual(['LINK', 'LINK', 'LINK', 'LINK', 'SCRIPT']);
+		expect(order).toEqual(['LINK', 'SCRIPT']);
 		expect([...head.querySelectorAll('link')].map(link => link.href)).toEqual(
-			['client', 'renderer', 'markdown', 'playground'].map(name => `${roots[0]}@deot/docs-${name}/dist/index.style.css`)
+			[`${roots[0]}@deot/docs-client/dist/index.style.css`]
 		);
 		expect(body.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/+esm`);
 		expect(body.querySelector('script')?.type).toBe('module');
@@ -77,10 +77,10 @@ describe('docs launch', () => {
 		await task;
 		expect(requests.every(request => !request.signal.aborted)).toBe(true);
 		expect(target.$docs.runtime?.cdn).toBe(roots[0]);
-		expect(target.document.querySelectorAll('link')).toHaveLength(4);
+		expect(target.document.querySelectorAll('link')).toHaveLength(1);
 		expect(target.document.querySelector('script')?.src).toBe(`${roots[0]}@deot/docs-client/+esm`);
 		expect(fetcher).toHaveBeenCalledTimes(2);
-		expect(cdn).toHaveBeenCalledTimes(5);
+		expect(cdn).toHaveBeenCalledTimes(2);
 
 		requests[1].resolve(new Response('{}'));
 		await vi.waitFor(() => expect(localStorage.getItem(cacheKey)).toBe(roots[1]));
@@ -88,8 +88,8 @@ describe('docs launch', () => {
 		expect(localStorage.getItem(cacheKey)).toBe(roots[1]);
 		expect(requests.every(request => request.signal.aborted)).toBe(true);
 		expect(target.$docs.runtime?.cdn).toBe(roots[0]);
-		expect(target.document.querySelectorAll('link,script')).toHaveLength(5);
-		expect(cdn).toHaveBeenCalledTimes(5);
+		expect(target.document.querySelectorAll('link,script')).toHaveLength(2);
+		expect(cdn).toHaveBeenCalledTimes(2);
 
 		const next = host();
 		await launch(next);
@@ -109,7 +109,7 @@ describe('docs launch', () => {
 		await new Promise(resolve => setTimeout(resolve, 0));
 		expect(target.$docs.runtime?.cdn).toBe(roots[1]);
 		expect(localStorage.getItem(cacheKey)).toBe(roots[1]);
-		expect(target.document.querySelectorAll('link,script')).toHaveLength(5);
+		expect(target.document.querySelectorAll('link,script')).toHaveLength(2);
 		expect(error).not.toHaveBeenCalled();
 	});
 
@@ -132,7 +132,7 @@ describe('docs launch', () => {
 		const target = host();
 		await launch(target);
 		expect(target.$docs.runtime?.cdn).toBe(roots[0]);
-		expect(target.document.querySelectorAll('link,script')).toHaveLength(5);
+		expect(target.document.querySelectorAll('link,script')).toHaveLength(2);
 	});
 
 	it('still launches when access to localStorage is blocked', async () => {
@@ -141,7 +141,7 @@ describe('docs launch', () => {
 		Object.defineProperty(target, 'localStorage', { get: () => { throw new DOMException('Blocked', 'SecurityError'); } });
 		await launch(target);
 		expect(target.$docs.runtime?.cdn).toBe(roots[0]);
-		expect(target.document.querySelectorAll('link,script')).toHaveLength(5);
+		expect(target.document.querySelectorAll('link,script')).toHaveLength(2);
 	});
 
 	it('waits for a complete successful body, chooses UNPKG, and cancels the slower probe', async () => {
@@ -164,7 +164,7 @@ describe('docs launch', () => {
 		finish('{}');
 	});
 
-	it('normalizes candidates, reuses the task, and invokes the existing hook only for five resources', async () => {
+	it('normalizes candidates, reuses the task, and invokes the existing hook only for two resources', async () => {
 		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
 		const cdn = vi.fn(({ url }: { url: string }) => `${url}?custom=1`);
 		const config = { cdns: [' https://esm.unpkg.com/// ', roots[1]], resolve: { cdn } };
@@ -173,7 +173,7 @@ describe('docs launch', () => {
 		expect(launch(target)).toBe(task);
 		await task;
 		expect(fetch).toHaveBeenCalledTimes(1);
-		expect(cdn).toHaveBeenCalledTimes(5);
+		expect(cdn).toHaveBeenCalledTimes(2);
 		expect(target.$docs.resolve?.cdn).toBe(cdn);
 		expect(target.$docs.cdns).toEqual(config.cdns);
 		expect(target.document.body.querySelector('script')?.src).toBe(`${roots[1]}@deot/docs-client/dist/index.js?custom=1`);
@@ -261,7 +261,7 @@ describe('docs launch', () => {
 		expect(target.location.reload).toHaveBeenCalledTimes(1);
 	});
 
-	it('stops the timeout after all five resources load', async () => {
+	it('stops the timeout after both resources load', async () => {
 		vi.useFakeTimers();
 		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
 		const target = host();

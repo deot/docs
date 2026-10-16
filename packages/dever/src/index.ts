@@ -5,6 +5,7 @@ import fs from 'fs-extra';
 import type { InlineConfig } from 'vite';
 import { build as createBuild, createServer, mergeConfig } from 'vite';
 import createPlugins from './plugins';
+import { createLocalDocsAliases, findLocalClientWorkspace } from './local-client';
 import { startPreviewServer } from './preview';
 import type { DeverMode, DeverOptions } from './types';
 import { isInside, resolveDocsWorkspace } from './workspace';
@@ -61,22 +62,7 @@ export const createDeverConfig = (options: DeverOptions): InlineConfig => {
 	const workspaceRoot = workspace.root;
 	const outDir = path.resolve(cwd, String(options.outDir || 'dist'));
 	if (build) assertSafeBuildOutDir(workspaceRoot, outDir);
-	const localAliases = ['locale', 'renderer', 'markdown', 'playground', 'theme'].reduce<Record<string, string>>((result, name) => {
-		const source = path.resolve(cwd, `packages/${name}/src/index.ts`);
-		if (fs.existsSync(source)) {
-			if (name === 'theme') {
-				// SCSS 子路径必须在根入口别名之前声明，避免被拼接为 index.ts/functions。
-				for (const resource of ['functions', 'mixins', 'theme', 'variables']) {
-					result[`@deot/docs-theme/${resource}`] = path.resolve(
-						cwd,
-						`packages/theme/src/${resource}.scss`
-					);
-				}
-			}
-			result[`@deot/docs-${name}`] = source;
-		}
-		return result;
-	}, {});
+	const localAliases = findLocalClientWorkspace(cwd)?.source ? createLocalDocsAliases(cwd) : {};
 	const server = preview
 		? undefined
 		: {

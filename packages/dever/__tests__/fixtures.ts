@@ -31,12 +31,15 @@ export const pluginHook = (
 	throw new Error(`missing ${name}`);
 };
 
-export const htmlTagsOf = (value: unknown) => {
+type HtmlTag = {
+	tag?: string;
+	injectTo?: string;
+	children?: string;
+	attrs?: Record<string, string | undefined>;
+};
+
+export const htmlTagsOf = (value: unknown): HtmlTag[] => {
+	if (value && typeof value === 'object' && 'tags' in value) return htmlTagsOf(value.tags);
 	if (!Array.isArray(value)) throw new TypeError('expected html tags');
-	return value as Array<{
-		tag?: string;
-		injectTo?: string;
-		children?: string;
-		attrs?: Record<string, string | undefined>;
-	}>;
+	return value as HtmlTag[];
 };

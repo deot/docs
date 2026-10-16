@@ -208,6 +208,8 @@ const routes = {
 
 上方「快速开始」面向**新建文档站点**的通用 `site/` 模板（含 `sidebar.json`、`index.md` 等）。本仓库自带的演示是 **README 聚合**：根目录 [`index.html`](index.html) 内联 Sidebar 与首页 Renderer 文档，开发模式下读取根目录与各子包 README；因此克隆后找不到 `site/zh-CN/index.md` 或 `sidebar.json` 是预期行为。未指定 `--workspace` 时 CLI 仍优先探测 `site/index.html`，本仓库没有 `site/` 时回退到根 `index.html`。
 
+HTML 统一使用双 CDN launch 入口。本仓库 `doc dev` 由开发服务将入口改写为本地 Client 源码；`doc preview` 构建并映射本地 launch、Client JS 和完整 CSS。消费项目开发时保留线上应用入口，文档仍从本地读取并通过 SSE 更新。launch 只加载 Client JS/CSS，子包独立 CSS 和 Playground iframe 样式继续按各自使用方式加载。
+
 静态托管若不能做 HTML history fallback，请同时托管 [`404.html`](404.html)。它会把当前 URL 写入 `sessionStorage['@deot/docs:redirect']` 再跳转入口，由 [`@deot/docs-client`](packages/client/README.md) 按约定还原深链。本仓库这份 `404.html` 跳转到 `/docs/`（当前演示的部署目录）；新建站点应改成自己的入口。`doc dev` 与 `doc preview` 已自带 history fallback，不必依赖该键。
 
 ```bash

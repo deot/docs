@@ -343,12 +343,10 @@
 		}
 	</script>
 	<script>
-		const entries = window.__DOCS_RUNTIME__?.mode === 'development'
-			? ['/packages/client/src/index.ts']
-			: [
-				'https://cdn.jsdelivr.net/npm/@deot/docs-launch/+esm',
-				'https://esm.unpkg.com/@deot/docs-launch/dist/index.js'
-			];
+		const entries = [
+			'https://cdn.jsdelivr.net/npm/@deot/docs-launch/+esm',
+			'https://esm.unpkg.com/@deot/docs-launch/dist/index.js'
+		];
 		const loadEntry = () => {
 			const url = entries.shift();
 			if (!url) {

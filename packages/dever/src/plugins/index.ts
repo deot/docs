@@ -7,6 +7,8 @@ import { defineConfig } from 'vite';
 import type { Plugin, ViteDevServer } from 'vite';
 import { isInside, resolveDocsWorkspace } from '../workspace';
 import { respondWorkspaceModule } from '../workspace-module';
+import { findLocalClientWorkspace, LOCAL_CLIENT_ENTRY } from '../local-client';
+import { rewriteLaunchUrls } from '../local-assets';
 import { createOptionalDependenciesPlugin } from './optional-dependencies';
 import type { ResolvedDocsWorkspace } from '../workspace';
 import type { DocsPluginOptions } from '../types';
@@ -227,43 +229,32 @@ export const createRuntimePlugin = (
 		: {
 				order: 'pre',
 				handler(html = '') {
-					const workspace = (resolvedWorkspace || resolveDocsWorkspace(
-						process.cwd(),
-						options.workspace
-					)).urlBase;
-					const localClientEntry = path.resolve(
-						process.cwd(),
-						'packages/client/src/index.ts'
-					);
+					const resolved = resolvedWorkspace || resolveDocsWorkspace(process.cwd(), options.workspace);
+					const localClient = findLocalClientWorkspace(resolved.projectRoot)?.source;
 					// 形状对齐 client DocsRuntime；workspace 是 urlBase。
 					const runtime = JSON.stringify({
 						mode: 'development',
-						workspace,
+						workspace: resolved.urlBase,
 						events: '/__docs/events'
 					}).replace(/</g, '\\u003c');
-					const styles = fs.existsSync(localClientEntry) || html.includes('@deot/docs-launch')
+					const styles = localClient || html.includes('@deot/docs-launch')
 						? []
-						: [
-								'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css',
-								'https://cdn.jsdelivr.net/npm/@deot/docs-renderer/dist/index.style.css',
-								'https://cdn.jsdelivr.net/npm/@deot/docs-markdown/dist/index.style.css',
-								'https://cdn.jsdelivr.net/npm/@deot/docs-playground/dist/index.style.css'
-							];
-					return [
-						{
-							tag: 'script',
-							children: `window.__DOCS_RUNTIME__ = Object.freeze(${runtime});`,
-							injectTo: 'head-prepend'
-						},
-						...styles.map(href => ({
-							tag: 'link',
-							attrs: {
-								rel: 'stylesheet',
-								href
+						: ['https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css'];
+					return {
+						html: localClient ? rewriteLaunchUrls(html, LOCAL_CLIENT_ENTRY) : html,
+						tags: [
+							{
+								tag: 'script',
+								children: `window.__DOCS_RUNTIME__ = Object.freeze(${runtime});`,
+								injectTo: 'head-prepend'
 							},
-							injectTo: 'head-prepend' as const
-						}))
-					];
+							...styles.map(href => ({
+								tag: 'link',
+								attrs: { rel: 'stylesheet', href },
+								injectTo: 'head-prepend' as const
+							}))
+						]
+					};
 				}
 			}
 });

@@ -53,7 +53,7 @@ development 和 preview 会保持服务运行；build 在 Vite 构建结束后�
 - 在 development 模式开放 `/__docs/events`，以及 `PUT /__docs/page`（只写工作区内、带语言前缀的 `.page.json`）；
 - 为客户端路由提供 HTML history fallback；静态托管若只能配置自定义 404 页，请改用 Client 的 [`@deot/docs:redirect`](../client/README.md) 约定。
 - 在 build 模式复制 Markdown、JSON（含 `.page.json`）、SFC 等静态内容资源；
-- 当当前仓库源码存在时，将 locale、renderer、markdown、playground、theme 包映射到本地入口。
+- 确认当前项目的 Client 包名、源码入口和真实路径边界后，将 HTML 中的 launch 地址改写到 `/packages/client/src/index.ts`，并将 locale、renderer、markdown、playground、theme 包映射到本地入口；消费项目保留 CDN 地址。旧入口需要补充样式时只注入完整的 Client CSS。
 - 在 development 模式提供 `GET /__docs/module/<包名>`，把工作区源码编成一份浏览器 ESM。preview 与 build 对该地址返回 404。
 
 ## 本地模块
@@ -103,7 +103,7 @@ preview 与 production 不提供该入口；`/__docs/*` 在 preview 下返回 40
 - 原始源码中间件会校验真实路径，拒绝目录穿越和逃逸 workspace 的符号链接。
 - preview 不启动 Vite、watcher、HMR 或 SSE，不注入开发 runtime，且 `/__docs/*`（含页面保存入口）返回 404。
 - 根 workspace 构建会跳过隐藏目录、`node_modules`、`coverage`、常见构建缓存目录和当前 outDir。
-- 在本仓库预览时会复用统一 DDC 构建，提供本地 launch 与 Client。HTML 的 launch 地址映射到本地适配入口，先调用用户 CDN 钩子，再将动态生成的 Client JS/CSS 地址映射到当前 dist；支持 jsDelivr `/+esm` 和 ESM UNPKG 包根入口。已有 Client `dist/index.*` 地址仍直接改写，本地地址保留 `dist/`。其他项目保留 HTML 中声明的发布包 URL。
+- 在本仓库预览时会复用统一 DDC 构建，提供本地 launch 与 Client。HTML 的 launch 地址映射到本地适配入口，先调用用户 CDN 钩子，再将动态生成的 Client JS/CSS 地址映射到当前 dist；支持 jsDelivr `/+esm` 和 ESM UNPKG 包根入口。已有 Client `dist/index.*` 地址仍直接改写，并与动态地址共用映射规则；支持带版本入口，并保留 query 和 hash。本地地址保留 `dist/`。Client 构建直接收集工作区源码和完整 CSS，避免混用子包旧 dist；CJS 构建不会覆盖 ES 的完整 CSS。其他项目保留 HTML 中声明的发布包 URL。本地预览仍执行 launch 的 CDN 探测，Playground 及可选远程依赖继续沿用原有加载规则。
 
 ## 仓库内验证
 
