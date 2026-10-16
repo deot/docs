@@ -1,5 +1,13 @@
 # @deot/docs-theme ChangeLog
 
+## v1.2.0
+
+_2026-10-16_
+
+### Force Update Package
+
+- `1.1.5` -> `1.2.0`
+
 ## v1.1.5
 
 _2026-10-15_

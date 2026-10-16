@@ -1,5 +1,15 @@
 # @deot/docs-launch ChangeLog
 
+## v1.2.0
+
+_2026-10-16_
+
+### Updates
+
+- refactor: select CDN in HTML and simplify startup ([a51a535](https://github.com/deot/docs/commit/a51a535c019df2729d521691399a352a9ac4fc83))
+- refactor: use native bundle builds and simplify preview ([a66cdba](https://github.com/deot/docs/commit/a66cdbab638b37c771c49fd382f465db80824163))
+- refactor: unify startup and local preview assets ([21af08a](https://github.com/deot/docs/commit/21af08a41078584f1bcb0ca41b1b643b93002447))
+
 ## v1.0.2
 
 _2026-10-15_

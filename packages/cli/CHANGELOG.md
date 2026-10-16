@@ -1,5 +1,14 @@
 # @deot/docs-cli ChangeLog
 
+## v1.2.0
+
+_2026-10-16_
+
+### Updates
+
+- refactor(client,dever,launch): use native bundle builds and simplify preview ([a66cdba](https://github.com/deot/docs/commit/a66cdbab638b37c771c49fd382f465db80824163))
+- refactor(client,dever,launch): unify startup and local preview assets ([21af08a](https://github.com/deot/docs/commit/21af08a41078584f1bcb0ca41b1b643b93002447))
+
 ## v1.1.6
 
 _2026-10-15_

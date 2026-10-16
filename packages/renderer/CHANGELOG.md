@@ -1,5 +1,13 @@
 # @deot/docs-renderer ChangeLog
 
+## v1.2.0
+
+_2026-10-16_
+
+### Updates
+
+- chore(theme): force-publish `1.1.5` -> `1.2.0`
+
 ## v1.1.5
 
 _2026-10-15_

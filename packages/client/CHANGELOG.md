@@ -1,5 +1,20 @@
 # @deot/docs-client ChangeLog
 
+## v1.2.0
+
+_2026-10-16_
+
+### Bugfixes
+
+- fix(playground): initialize process env for iframe JSX compilation ([73366ff](https://github.com/deot/docs/commit/73366ff8aa2ec787aa23d8dbfa2b38c715ed89e1))
+
+### Updates
+
+- refactor: use native bundle builds and simplify preview ([a66cdba](https://github.com/deot/docs/commit/a66cdbab638b37c771c49fd382f465db80824163))
+- refactor: unify startup and local preview assets ([21af08a](https://github.com/deot/docs/commit/21af08a41078584f1bcb0ca41b1b643b93002447))
+- refactor(playground): unify runtime ESM dependency loading ([66a6881](https://github.com/deot/docs/commit/66a6881f801cbb67970c8ade9cde4e6473c286fb))
+- chore(theme): force-publish `1.1.5` -> `1.2.0`
+
 ## v1.1.10
 
 _2026-10-15_

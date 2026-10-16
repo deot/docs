@@ -1,6 +1,6 @@
 {
   "name": "@deot/docs",
-  "version": "1.1.10",
+  "version": "1.2.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,14 +12,14 @@
     "access": "public"
   },
   "dependencies": {
-    "@deot/docs-cli": "^1.1.6",
-    "@deot/docs-client": "^1.1.10",
-    "@deot/docs-dever": "^1.1.6",
-    "@deot/docs-launch": "^1.0.2",
-    "@deot/docs-locale": "^1.1.5",
-    "@deot/docs-markdown": "^1.1.10",
-    "@deot/docs-playground": "^1.1.9",
-    "@deot/docs-renderer": "^1.1.5",
-    "@deot/docs-theme": "^1.1.5"
+    "@deot/docs-cli": "^1.2.0",
+    "@deot/docs-client": "^1.2.0",
+    "@deot/docs-dever": "^1.2.0",
+    "@deot/docs-launch": "^1.2.0",
+    "@deot/docs-locale": "^1.2.0",
+    "@deot/docs-markdown": "^1.2.0",
+    "@deot/docs-playground": "^1.2.0",
+    "@deot/docs-renderer": "^1.2.0",
+    "@deot/docs-theme": "^1.2.0"
   }
 }
