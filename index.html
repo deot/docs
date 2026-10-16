@@ -347,31 +347,24 @@
 			'https://cdn.jsdelivr.net/npm/@deot/docs-launch/+esm',
 			'https://esm.unpkg.com/@deot/docs-launch/dist/index.js'
 		];
-		const loadEntry = () => {
-			const url = entries.shift();
-			if (!url) {
-				document.querySelector('#app').textContent = '文档入口加载失败，请刷新重试。';
-				return;
-			}
-			const script = document.createElement('script');
-			let done = false;
-			const timer = setTimeout(() => finish(false), 15000);
-			const finish = (success) => {
-				if (done) return;
-				done = true;
-				clearTimeout(timer);
-				if (!success) {
-					script.remove();
-					loadEntry();
-				}
-			};
-			script.type = 'module';
-			script.src = url;
-			script.onload = () => finish(true);
-			script.onerror = () => finish(false);
-			document.body.appendChild(script);
+		const controller = new AbortController();
+		const timer = setTimeout(() => controller.abort(), 15000);
+		const fail = () => {
+			document.querySelector('#app').textContent = '文档入口加载失败，请刷新重试。';
 		};
-		loadEntry();
+		Promise.any(entries.map(async (src) => {
+			const response = await fetch(src, { signal: controller.signal });
+			if (!response.ok || !/(?:java|ecma)script/i.test(response.headers.get('content-type'))) {
+				throw new Error(`Invalid launch response: ${src}`);
+			}
+			return { cdn: src.match(/^https?:.*?(?=@deot\/docs-launch)/)?.[0], source: await response.text() };
+		})).finally(() => {
+			clearTimeout(timer);
+			controller.abort();
+		}).then(({ cdn, source }) => {
+			window.$docs.runtime = { mode: 'production', ...window.$docs.runtime, cdn };
+			document.body.appendChild(Object.assign(document.createElement('script'), { type: 'module', textContent: source, onerror: fail }));
+		}).catch(fail);
 	</script>
 </body>
 </html>

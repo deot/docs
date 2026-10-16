@@ -27,7 +27,7 @@ export type DocsResourceType = typeof DOCS_RESOURCE_TYPES[number];
  * @see packages/dever/src/plugins/index.ts
  */
 export interface DocsRuntime {
-	/** 本次由 launch 探测选中的 npm CDN 前缀。 */
+	/** HTML 启动入口选定的 npm CDN 前缀；launch 缺省使用 jsDelivr。 */
 	cdn?: string;
 	/**
 	 * 站点运行时模式。只有 development 会订阅资源热更新。
@@ -313,8 +313,6 @@ export interface DocsComponentsOptions {
 }
 
 export interface DocsConfig {
-	/** launch 的候选 npm CDN；缺省使用 jsDelivr 和 ESM UNPKG。 */
-	cdns?: string[];
 	locales: Record<string, DocsLocaleEntry>;
 	/**
 	 * 路径模式到路由配置。键为 Vue Router 风格 path，如 `/guide/:id`。
@@ -376,7 +374,7 @@ export interface DocsConfig {
 		link?: (context: DocsLinkContext) => string | null | undefined;
 	};
 	/**
-	 * 启动后写入的运行时快照。配置文件里不必手写。
+	 * 运行时快照；HTML 启动入口可预先写入选定的 cdn。
 	 */
 	runtime?: Readonly<DocsRuntime>;
 }

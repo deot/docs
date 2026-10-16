@@ -24,36 +24,34 @@ it('loads both Client resources locally through the unchanged HTML startup and r
 	const timers: ReturnType<typeof setTimeout>[] = [];
 	try {
 		doc.body.innerHTML = await (await fetch(base)).text();
-		vm.runInNewContext(doc.querySelector('script')!.textContent!, {
-			document: doc, clearTimeout,
+		const target = { document: doc, $docs: {} };
+		const requests: string[] = [];
+		await vm.runInNewContext(doc.querySelector('script')!.textContent!, {
+			window: target, document: doc, clearTimeout, AbortController,
+			fetch: (url: string, options: RequestInit) => {
+				requests.push(url);
+				return fetch(new URL(url, base), options);
+			},
 			setTimeout: (callback: () => void, delay: number) => {
 				const timer = setTimeout(callback, delay);
 				timers.push(timer);
 				return timer;
 			}
 		});
-		const entry = doc.querySelector<HTMLScriptElement>('script[src]')!;
-		expect(entry.src).toBe(`${base}/@deot/docs-launch/+esm`);
-		const adapter = await (await fetch(entry.src)).text();
-		entry.dispatchEvent(new Event('load'));
-		const target = { document: doc, localStorage, sessionStorage, $docs: {}, location: { reload: vi.fn() } };
+		expect(requests).toEqual(['/@deot/docs-launch/+esm', '/@deot/docs-launch/+esm']);
+		const adapter = doc.querySelector<HTMLScriptElement>('script[type="module"]')!.textContent!;
 		vm.runInNewContext(adapter.replace(/^import\(.*$/mu, ''), { window: target });
-		const fetcher = fetch;
-		vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')));
 		await launch(target as unknown as Window);
 		const style = doc.querySelector<HTMLLinkElement>('link[rel="stylesheet"]')!;
 		const script = doc.querySelector<HTMLScriptElement>('script[src$="/@deot/docs-client/dist/bundle/index.js"]')!;
 		expect(style.href).toBe(`${base}/@deot/docs-client/dist/bundle/index.style.css`);
 		expect(script.src).toBe(`${base}/@deot/docs-client/dist/bundle/index.js`);
 		expect(doc.querySelectorAll('link[rel="stylesheet"]')).toHaveLength(1);
-		expect(await (await fetcher(style.href)).text()).toContain('display: grid');
-		expect(await (await fetcher(script.src)).text()).toContain('current = true');
+		expect(await (await fetch(style.href)).text()).toContain('display: grid');
+		expect(await (await fetch(script.src)).text()).toContain('current = true');
 	} finally {
 		doc.querySelectorAll('link,script').forEach(node => node.dispatchEvent(new Event('load')));
 		timers.forEach(timer => clearTimeout(timer));
-		vi.unstubAllGlobals();
-		localStorage.clear();
-		sessionStorage.clear();
 		await new Promise<void>(resolve => server.close(() => resolve()));
 		fs.rmSync(root, { recursive: true, force: true });
 	}

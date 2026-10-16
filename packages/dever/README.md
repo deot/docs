@@ -107,7 +107,7 @@ preview 与 production 不提供该入口；`/__docs/*` 在 preview 下返回 40
 - 原始源码中间件会校验真实路径，拒绝目录穿越和逃逸 workspace 的符号链接。
 - preview 不启动 Vite、watcher、HMR 或 SSE，不注入开发 runtime，且 `/__docs/*`（含页面保存入口）返回 404。
 - 根 workspace 构建会跳过隐藏目录、`node_modules`、`coverage`、常见构建缓存目录和当前 outDir。
-- 本仓库先执行 `npm run build`，再执行 `doc preview`。预览直接提供 `packages/launch/dist` 和 `packages/client/dist/bundle`；缺少产物时明确报错，不扫描源码时间或自动构建。HTML 的 launch 地址映射到本地适配入口，先调用用户 CDN 钩子，再将 Client JS/CSS 地址映射到当前 Bundle；保留 query/hash 和旧 Client 入口兼容。消费项目保留发布地址。预览仍执行 launch 的 CDN 探测，Playground 的远程依赖规则保持原样。
+- 本仓库先执行 `npm run build`，再执行 `doc preview`。预览直接提供 `packages/launch/dist` 和 `packages/client/dist/bundle`；缺少产物时明确报错，不扫描源码时间或自动构建。HTML 的 launch 地址映射到本地适配入口，先调用用户 CDN 钩子，再将 Client JS/CSS 地址映射到当前 Bundle；保留 query/hash 和旧 Client 入口兼容。消费项目保留发布地址。HTML 与 launch 均不额外探测 CDN，Playground 的远程依赖规则保持原样。
 
 ## 仓库内验证
 

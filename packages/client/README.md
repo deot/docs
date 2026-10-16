@@ -117,7 +117,7 @@ const { app, router, disconnect } = await bootstrap(window.$docs);
 | `renderers` | 业务自定义 Renderer 模块注册项；type 必须使用非 `docs:` 的命名空间。 |
 | `resolve.markdown` | 根据 `lang`、`value` 和当前路由生成 Markdown 逻辑地址。 |
 | `resolve.resource` | 将任意逻辑资源转换为最终 URL。 |
-| `cdns` | launch 的候选 CDN；缺省或为空时使用 jsDelivr 与 ESM UNPKG，选中前缀写入 `runtime.cdn`。 |
+| `runtime.cdn` | HTML 启动入口选定的 npm CDN 前缀；launch 缺省使用 jsDelivr。 |
 | `resolve.cdn` | 同步处理内置 CDN 转换后的 `{ url }`，空结果保留转换后的地址。 |
 | `resolve.link` | 将 Markdown 原始链接同步转换为外链或包含语言的站内 Router 地址。 |
 
@@ -421,7 +421,7 @@ const resolve = {
 
 `resolve.link` 为同步 Resolver。返回 `null`、`undefined` 或空字符串时保留原地址；返回绝对 URL 时保持浏览器外链行为；其他结果交给 Vue Router。Client 会把 Router 生成的真实 `href` 写回元素，因此复制链接、使用 deployment subpath 或在新标签打开时也能得到正确地址。锚点不会进入该 Resolver。
 
-使用 [`@deot/docs-launch`](../launch/README.md) 时，启动器优先复用缓存中的有效 CDN，并静默探测更新缓存供下次使用；无缓存时先探测再启动，本次页面始终使用同一节点。Client 与 Playground 在实际加载时，将 jsDelivr npm、旧 UNPKG 和 ESM UNPKG 地址转换到该节点，再调用 `resolve.cdn`；未知地址原样进入钩子。`modules` / `styles` 配置和缓存保留原始地址，换节点不会把默认记录变成用户覆盖。钩子不参与探测，也不会被 launch 注册或覆盖。
+HTML 启动入口可在加载 [`@deot/docs-launch`](../launch/README.md) 前，将选定的 npm CDN 前缀写入 `$docs.runtime.cdn`；launch 缺省使用 jsDelivr，不执行探测或缓存选源结果。Client 与 Playground 在实际加载时，将 jsDelivr npm、旧 UNPKG 和 ESM UNPKG 地址转换到该节点，再调用 `resolve.cdn`；未知地址原样进入钩子。`modules` / `styles` 配置和缓存保留原始地址，换节点不会把默认记录变成用户覆盖。钩子不会被 launch 注册或覆盖。
 
 ## ResourceGateway
 
