@@ -74,8 +74,6 @@ pnpm add @deot/docs-client
 
 普通 ES 位于 `dist/index.js`，供项目打包器使用；浏览器直接加载使用 `--bundle-package client` 生成的 `dist/bundle/index.js`。Client 显式引入 Renderer、Markdown、Playground 的公开 CSS，`dist/bundle/index.style.css` 提供完整主应用样式。各子包保留独立 CSS 出口，Playground iframe 的样式由预览配置单独处理。
 
-当前 `@vue/repl@4.7.2` 的 JSX 分块仍引用 Node `process`，原生 Bundle 中的 iframe JSX/TSX 编译会报 `process is not defined`。依赖的浏览器构建修复前，这条路径存在兼容限制；本仓库不注入 `process` 替身。
-
 入口模块检测到页面存在 `#app` 时会自动调用 `bootstrap()`。也可以在不触发自动启动的环境中导入并手动调用：
 
 ```ts

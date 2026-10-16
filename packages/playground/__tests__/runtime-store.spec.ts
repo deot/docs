@@ -7,6 +7,30 @@ import { watch } from 'vue';
 describe('iframe runtime modules', () => {
 	afterEach(() => vi.unstubAllGlobals());
 
+	it.each([
+		['missing process', undefined],
+		['missing env', {}],
+		['existing env', { env: { DOCS_TEST: 'preserved' } }]
+	] as const)('initializes iframe compilation with %s without replacing host values', async (_name, existing) => {
+		const host = globalThis as { process?: { env?: Record<string, string | undefined> } };
+		const env = existing && 'env' in existing ? existing.env : undefined;
+		let initialized: typeof host.process;
+		let store: ReturnType<typeof createRuntimeStore>;
+		vi.stubGlobal('process', existing);
+		try {
+			store = createRuntimeStore({ 'App.vue': '<template>ready</template>' }, 'App.vue', {});
+			initialized = host.process;
+		} finally {
+			// Vitest 与 Node 仍需使用真实 process；编译结果在恢复后检查。
+			vi.unstubAllGlobals();
+		}
+		expect(initialized?.env).toEqual(env || {});
+		if (existing) expect(initialized).toBe(existing);
+		if (env) expect(initialized?.env).toBe(env);
+		await vi.waitFor(() => expect(store.files['src/App.vue'].compiled.js).toContain('ready'));
+		expect(store.errors).toEqual([]);
+	});
+
 	it('discovers transitive modules and registers dynamic npm imports without downloading them', async () => {
 		const fetcher = vi.fn(async (url: string) => ({
 			ok: true,

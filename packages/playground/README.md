@@ -155,6 +155,7 @@ const handleMessage = async () => {
 ## 运行环境
 
 - iframe 运行时通过公共 CDN 加载 Vue 和默认 import map 中的依赖；local 运行时加载 URL 覆盖或宿主未提供的模块时也需要网络访问。
+- iframe 模式初始化时会补齐宿主页缺失的 `globalThis.process` 和 `process.env`，兼容 `@vue/repl` 的 JSX/TSX 编译；已有对象及环境值保持不变，不模拟其他 Node API。
 - 默认 CDN 为 `https://cdn.jsdelivr.net/npm`；未使用 launch 时可通过 `options.cdnURL` 调整默认节点。launch 已选点时统一使用 `$docs.runtime.cdn`，优先于实例 `cdnURL`。
 - jsDelivr npm、旧 `unpkg.com` 和 `esm.unpkg.com` 地址在实际加载时转换，再经过可选 `$docs.resolve.cdn({ url })`。jsDelivr 转换入口使用 `/+esm`，ESM UNPKG 使用包或文件入口。预览 CSS、import map、裸包回退和 Sass 共用该规则；原始映射与缓存不被改写。
 - 直接渲染时，宿主未提供且未配置的 npm 模块（含作用域包和子路径）自动通过上述 ESM 规则加载；组件包的传递依赖也适用，`import()` 在调用时加载。可用 `options.builtinImportMap.imports` 指定依赖的版本和 URL。

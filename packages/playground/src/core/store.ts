@@ -145,6 +145,10 @@ export const createRuntimeStore = (
 	entry: string,
 	options: PlaygroundOptions
 ) => {
+	// @vue/repl 的 JSX 分块会读取宿主页 process.env，保留宿主已有对象和值。
+	const host = globalThis as { process?: { env?: Record<string, string | undefined> } };
+	const replProcess = host.process ??= {};
+	replProcess.env ??= {};
 	const { cdnURL, builtinImportMap, ...storeOptions } = options;
 	const replFiles = ref<Record<string, ReplFile>>(Object.fromEntries(
 		Object.entries(files).map(([filename, code]) => {

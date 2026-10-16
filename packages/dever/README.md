@@ -95,7 +95,7 @@ preview 与 production 不提供该入口；`/__docs/*` 在 preview 下返回 40
 
 ## 构建与依赖
 
-构建使用 `@deot/dev` 的原生 Bundle 能力，无自定义构建配置、Node `process` 替身或 optional peer CDN 兜底。依赖按包声明安装，修改内部依赖后先重新构建；开发与预览不自动补包。
+构建使用 `@deot/dev` 的原生 Bundle 能力，无自定义构建配置或 optional peer CDN 兜底。依赖按包声明安装，修改内部依赖后先重新构建；开发与预览不自动补包。
 
 ## 配置与安全边界
 
