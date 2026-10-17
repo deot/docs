@@ -1,5 +1,13 @@
 # @deot/docs-markdown ChangeLog
 
+## v1.2.1
+
+_2026-10-17_
+
+### Features
+
+- feat(renderer,locale): add configurable code showcase module ([5de58f9](https://github.com/deot/docs/commit/5de58f92efb982d5122c18dda816a087741d5cf0))
+
 ## v1.2.0
 
 _2026-10-16_

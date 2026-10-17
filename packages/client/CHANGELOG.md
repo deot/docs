@@ -1,5 +1,19 @@
 # @deot/docs-client ChangeLog
 
+## v1.2.1
+
+_2026-10-17_
+
+### Bugfixes
+
+- fix: resolve parent directory source imports ([732b761](https://github.com/deot/docs/commit/732b76169557dc7e8c324eee23bd03cfb6927c69))
+
+### Features
+
+- feat: support configurable router history ([283fca1](https://github.com/deot/docs/commit/283fca195a1c7fa806f093b8aad07e91856fcbe6))
+- feat: refine landing page presentation ([d2eeee1](https://github.com/deot/docs/commit/d2eeee16c999a956bf7b97376bc546d66b0d47d4))
+- feat(renderer,locale): add configurable code showcase module ([5de58f9](https://github.com/deot/docs/commit/5de58f92efb982d5122c18dda816a087741d5cf0))
+
 ## v1.2.0
 
 _2026-10-16_

@@ -1,5 +1,14 @@
 # @deot/docs-renderer ChangeLog
 
+## v1.2.1
+
+_2026-10-17_
+
+### Features
+
+- feat: add configurable code showcase module ([5de58f9](https://github.com/deot/docs/commit/5de58f92efb982d5122c18dda816a087741d5cf0))
+- feat: refine landing page presentation ([d2eeee1](https://github.com/deot/docs/commit/d2eeee16c999a956bf7b97376bc546d66b0d47d4))
+
 ## v1.2.0
 
 _2026-10-16_
