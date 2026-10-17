@@ -1,5 +1,13 @@
 # @deot/docs ChangeLog
 
+## v1.2.2
+
+_2026-10-17_
+
+### Bugfixes
+
+- fix(dever): serve installed docs packages in development ([19f90fb](https://github.com/deot/docs/commit/19f90fbb724ce16b74b22b3c40d5474fecf1d948))
+
 ## v1.2.1
 
 _2026-10-17_

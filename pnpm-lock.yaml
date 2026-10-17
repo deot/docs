@@ -15,7 +15,7 @@ importers:
   packages/cli:
     dependencies:
       '@deot/docs-dever':
-        specifier: ^1.2.0
+        specifier: ^1.2.1
         version: link:../dever
       commander:
         specifier: ^15.0.0
@@ -128,13 +128,13 @@ importers:
   packages/index:
     dependencies:
       '@deot/docs-cli':
-        specifier: ^1.2.0
+        specifier: ^1.2.1
         version: link:../cli
       '@deot/docs-client':
         specifier: ^1.2.1
         version: link:../client
       '@deot/docs-dever':
-        specifier: ^1.2.0
+        specifier: ^1.2.1
         version: link:../dever
       '@deot/docs-launch':
         specifier: ^1.2.0
