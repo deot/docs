@@ -7,8 +7,12 @@
 			:modules="rendererModules"
 			:context="rendererContext"
 			:fit="rendererFit"
-		/>
+		>
+			<template #after><slot name="after" /></template>
+		</Renderer>
 		<div v-else-if="loading" class="docs-home__loading">{{ t('client.common.loading') }}</div>
+		<div v-else class="docs-home__empty" />
+		<slot v-if="!document" name="after" />
 	</section>
 </template>
 <script setup lang="ts">
@@ -130,6 +134,10 @@ onBeforeUnmount(() => {
 @include block(docs-home) {
 	width: 100%;
 	min-height: 600px;
+
+	@include element(empty) {
+		min-height: 600px;
+	}
 
 	@include element(error) {
 		padding: 12px 16px;

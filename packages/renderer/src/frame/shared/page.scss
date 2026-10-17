@@ -1,0 +1,63 @@
+@use '../../../node_modules/@deot/docs-theme/src/functions' as *;
+
+.docs-renderer[data-renderer-mode='sortable'] .docs-renderer__viewport,
+.docs-renderer-frame--sortable .docs-renderer-frame__canvas {
+	container: docs-renderer-canvas / inline-size;
+}
+
+.docs-renderer-surface {
+	position: relative;
+	display: flow-root;
+	width: 100%;
+	max-width: var(--docs-renderer-page-width, none);
+	margin-inline: auto;
+
+	&.has-side-pattern {
+		width: calc(100% - 80px);
+		border-inline: 1px solid varfix(border-color-light);
+	}
+
+	&.has-side-pattern::before,
+	&.has-side-pattern::after {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 40px;
+		pointer-events: none;
+		background: repeating-linear-gradient(
+			-45deg,
+			transparent 0 5px,
+			color-mix(in srgb, varfix(foreground-color-light) 8%, transparent) 5px 6px
+		);
+		content: '';
+		box-sizing: border-box;
+	}
+
+	&.has-side-pattern::before {
+		left: -41px;
+		border-left: 1px solid varfix(border-color-light);
+	}
+
+	&.has-side-pattern::after {
+		right: -41px;
+		border-right: 1px solid varfix(border-color-light);
+	}
+}
+
+@container docs-renderer-canvas (width > 1199px) {
+	.docs-renderer-surface.has-side-pattern {
+		width: calc(100% - 160px);
+	}
+}
+
+@container docs-renderer-canvas (width <= 760px) {
+	.docs-renderer-surface.has-side-pattern {
+		width: 100%;
+		border-inline: 0;
+	}
+
+	.docs-renderer-surface.has-side-pattern::before,
+	.docs-renderer-surface.has-side-pattern::after {
+		display: none;
+	}
+}

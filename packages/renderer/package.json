@@ -19,7 +19,9 @@
   "dependencies": {
     "@deot/docs-locale": "^1.2.0",
     "@deot/docs-theme": "^1.2.0",
-    "@deot/helper": "^1.1.21"
+    "@deot/helper": "^1.1.21",
+    "highlight.js": "^11.12.0",
+    "markdown-it": "^15.0.2"
   },
   "peerDependencies": {
     "@deot/vc": "^1.2.3",

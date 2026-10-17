@@ -32,6 +32,45 @@ import {
 } from './fixtures';
 
 describe('Renderer and Combo', () => {
+	it('encloses trailing content in sortable pages and keeps it outside scaled canvases', async () => {
+		const document = createEmptyRendererDocument('sortable');
+		document.layout.sidePattern = true;
+		const wrapper = mount(Renderer, {
+			props: { document },
+			slots: { after: () => h('footer', 'Site footer') }
+		});
+		await flushPromises();
+		expect(wrapper.findAll('footer')).toHaveLength(1);
+		expect(wrapper.get('.docs-renderer-surface.has-side-pattern footer').text()).toBe('Site footer');
+		await wrapper.setProps({ document: createEmptyRendererDocument('draggable') });
+		await flushPromises();
+		expect(wrapper.findAll('footer')).toHaveLength(1);
+		expect(wrapper.find('.docs-renderer__viewport footer').exists()).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('shares optional content width and hatching between publishing and editing', async () => {
+		const document = createEmptyRendererDocument('sortable');
+		document.layout.contentWidth = 1200;
+		document.layout.sidePattern = true;
+		const preview = mount(Renderer, { props: { document } });
+		const combo = mount(Combo, { props: { modelValue: document } });
+		await flushPromises();
+		for (const wrapper of [preview, combo]) {
+			expect(wrapper.get('.docs-renderer-surface').classes()).toContain('has-side-pattern');
+			expect(htmlElementOf(wrapper.get('.docs-renderer-surface')).style.getPropertyValue('--docs-renderer-page-width')).toBe('1200px');
+		}
+		combo.findComponent(PageEditor).vm.$emit('update:modelValue', { ...document.layout, contentWidth: 960, sidePattern: false });
+		await flushPromises();
+		expect(combo.get('.docs-renderer-surface').classes()).not.toContain('has-side-pattern');
+		expect(comboVm(combo).getDocument().layout).toEqual(expect.objectContaining({ contentWidth: 960, sidePattern: false }));
+		comboVm(combo).undo();
+		await flushPromises();
+		expect(comboVm(combo).getDocument().layout).toEqual(document.layout);
+		preview.unmount();
+		combo.unmount();
+	});
+
 	it('renders siblings and isolates an unknown module', async () => {
 		const document = createEmptyRendererDocument('sortable');
 		document.blocks.push({

@@ -44,6 +44,24 @@
 		<Field :label="t('renderer.editor.showVisual')">
 			<Switch :model-value="modelValue.showVisual !== false" @update:model-value="value => update({ showVisual: value })" />
 		</Field>
+		<template v-if="modelValue.showVisual !== false">
+			<Field :label="t('renderer.editor.visualType')">
+				<Select :model-value="visual.type" :data="visualTypes" @update:model-value="value => updateVisual({ type: value })" />
+			</Field>
+			<Field :label="t('renderer.editor.visualTitle')">
+				<Input :model-value="visual.title" @update:model-value="value => updateVisual({ title: value })" />
+			</Field>
+			<Field v-if="visual.type === 'code'" wide :label="t('renderer.editor.visualLanguage')">
+				<Input
+					:model-value="visual.language"
+					placeholder="typescript / javascript / json / html / css / bash"
+					@update:model-value="value => updateVisual({ language: value })"
+				/>
+			</Field>
+			<Field wide :label="t('renderer.editor.visualContent')">
+				<Textarea :model-value="visual.content" :rows="10" @update:model-value="value => updateVisual({ content: value })" />
+			</Field>
+		</template>
 		<Field wide :label="t('renderer.editor.highlights')">
 			<ArrayEditor
 				:model-value="highlights"
@@ -91,16 +109,20 @@ import ActionsEditor from '../../shared/actions/editor.vue';
 import ArrayEditor from '../../../editor/array/index.vue';
 import Field from '../../../editor/common/field/index.vue';
 import NumberEditor from '../../../editor/common/number/index.vue';
-import { toRecord } from '../../shared/utils';
+import { SECTION_ALIGNMENTS, toRecord } from '../../shared/utils';
+import { HERO_VISUAL_TYPES, normalizeHeroVisual } from './visual';
 
 const props = defineProps<RendererModuleEditorProps>();
 const emit = defineEmits<{ 'update:modelValue': [value: Record<string, unknown>] }>();
 const { t } = useLocale(computed(() => props.context?.locale));
-const alignments = ['left', 'center'].map(value => ({ label: value, value }));
+const alignments = SECTION_ALIGNMENTS.map(value => ({ label: t(`renderer.editor.${value}`), value }));
+const visualTypes = HERO_VISUAL_TYPES.map(value => ({ label: t(`renderer.editor.visual${value === 'code' ? 'Code' : 'Markdown'}`), value }));
+const visual = computed(() => normalizeHeroVisual(props.modelValue.visual));
 const actionsValue = computed(() => ({ items: Array.isArray(props.modelValue.actions) ? props.modelValue.actions : [] }));
 const highlights = computed(() => (Array.isArray(props.modelValue.highlights) ? props.modelValue.highlights : []).map(toRecord));
 const createHighlight = () => ({ value: '99', label: 'Label', color: '' });
 const field = (item: unknown, key: string) => String(toRecord(item)[key] || '');
 const patchItem = (item: unknown, patch: Record<string, unknown>) => ({ ...toRecord(item), ...patch });
 const update = (patch: Record<string, unknown>) => emit('update:modelValue', { ...props.modelValue, ...patch });
+const updateVisual = (patch: Record<string, unknown>) => update({ visual: { ...visual.value, ...patch } });
 </script>

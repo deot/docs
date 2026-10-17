@@ -2,7 +2,14 @@
 	<div ref="host" class="docs-renderer" :data-renderer-mode="mode" :style="hostStyle">
 		<div v-if="fatalError" class="docs-renderer__error">{{ fatalError }}</div>
 		<div v-else-if="prepared" class="docs-renderer__viewport" :style="viewportStyle">
-			<div class="docs-renderer__canvas" :style="canvasStyle">
+			<div
+				class="docs-renderer__canvas"
+				:class="{
+					'docs-renderer-surface': mode === 'sortable',
+					'has-side-pattern': prepared.layout.mode === 'sortable' && prepared.layout.sidePattern === true
+				}"
+				:style="canvasStyle"
+			>
 				<NodeView
 					v-for="node in contentBlocks"
 					:key="node.id"
@@ -12,8 +19,10 @@
 					:frame-mode="mode"
 					:issue="nodeIssues.get(node.id)"
 				/>
+				<slot v-if="mode === 'sortable'" name="after" />
 			</div>
 		</div>
+		<slot v-if="fatalError || !prepared || mode !== 'sortable'" name="after" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -126,7 +135,10 @@ const hostStyle = computed<CSSProperties>(() => mode.value === 'draggable' && (p
 	? { minHeight: 0, height: '100%' }
 	: {});
 const viewportStyle = computed<CSSProperties>(() => {
-	if (!prepared.value || prepared.value.layout.mode !== 'draggable') return {};
+	if (!prepared.value) return {};
+	if (prepared.value.layout.mode === 'sortable') {
+		return { background: rendererPageBackgroundCss(prepared.value.layout.background) };
+	}
 	return {
 		width: `${prepared.value.layout.width * scale.value}px`,
 		height: `${prepared.value.layout.height * scale.value}px`
@@ -137,8 +149,9 @@ const canvasStyle = computed<CSSProperties>(() => {
 	const layout = prepared.value.layout;
 	if (layout.mode === 'sortable') {
 		const style: CSSProperties = {
-			width: '100%',
-			background: rendererPageBackgroundCss(layout.background)
+			'--docs-renderer-page-width': layout.contentWidth ? `${layout.contentWidth}px` : undefined,
+			'width': layout.sidePattern ? undefined : '100%',
+			'background': rendererPageBackgroundCss(layout.background)
 		};
 		if ((layout.minHeight || 0) > 0) style.minHeight = `${layout.minHeight}px`;
 		return style;
@@ -167,6 +180,7 @@ onBeforeUnmount(() => {
 </script>
 <style lang="scss">
 @use '../../../node_modules/@deot/docs-theme/src/functions' as *;
+@use '../../frame/shared/page';
 
 @media (prefers-reduced-motion: reduce) {
 	.docs-renderer * {
@@ -210,7 +224,11 @@ onBeforeUnmount(() => {
 }
 
 @media screen and (width <= 768px) {
-	.docs-renderer[data-renderer-mode="sortable"] .docs-renderer__canvas > .docs-renderer-node:not(.is-full-width) {
+	.docs-renderer[data-renderer-mode="sortable"] .docs-renderer__canvas > .docs-renderer-node:not(.is-full-width, :is(
+		.docs-renderer-node--features,
+		.docs-renderer-node--steps,
+		.docs-renderer-node--faq
+	)) {
 		width: calc(100% - 32px);
 	}
 

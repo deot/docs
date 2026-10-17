@@ -100,6 +100,8 @@ export const createRendererLayout = (
 				? source.maxWidth
 				: source?.mode === 'draggable' ? source.width : RENDERER_SORTABLE_CANVAS_WIDTH,
 			...(minHeight > 0 ? { minHeight } : {}),
+			...(source?.mode === 'sortable' && source.contentWidth !== undefined ? { contentWidth: source.contentWidth } : {}),
+			...(source?.mode === 'sortable' && source.sidePattern !== undefined ? { sidePattern: source.sidePattern } : {}),
 			background
 		};
 	}

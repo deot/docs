@@ -214,9 +214,9 @@ describe('dever configuration', () => {
 			.toEqual(['hero', 'features', 'steps', 'faq', 'cta']);
 		expect(home['zh-CN'].blocks[0].appearance).toEqual(expect.objectContaining({
 			fullWidth: true,
-			maxWidth: 1200
+			maxWidth: 1536
 		}));
-		expect(home['zh-CN'].blocks[0].module.props.title).toBe('你好 @deot/docs');
+		expect(home['zh-CN'].blocks[0].module.props.title).toBe('写好文档，轻松发布');
 		expect(home['en-US'].blocks[0].module.props.actions[0].to)
 			.toBe('/en-US/packages/guide');
 		expect(config.resolve.link({

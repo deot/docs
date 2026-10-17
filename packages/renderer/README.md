@@ -50,6 +50,11 @@ const document = {
 `layout.maxWidth` 是画布宽度（默认 1920）。发布页画布随实际容器铺开；Combo
 按该宽度绘制画板。
 
+排序页面还支持可选的 `layout.contentWidth`（正文区域最大宽度，省略或 `0` 为不限）
+和 `layout.sidePattern`（两侧淡斜纹，默认关闭）。两者在页面属性中可编辑；斜纹在
+不超过 760px 的容器中自动收起。正文区域内的 `fullWidth` 模块铺满该区域，模块自身
+的 `appearance.maxWidth` 仍控制内容宽度。旧文档无需增加这些字段。
+
 每个模块用 `appearance.fullWidth` 决定外框是否拉满画布，用 `appearance.maxWidth`
 限制正文宽。`0` 与未填写等价，渲染时都不限制，也不会回退到模块
 `capability.maxWidth`。`frames.sortable.fullWidth / maxWidth` 只用于**新建节点**：
@@ -86,6 +91,34 @@ const document = {
 `title` / `text` / `list` / `image` / `actions` 与双 Frame 内容模块同属 `modules/shared`。
 当前没有仅自由布局可用的内置模块。
 
+`features` / `steps` / `faq` / `cta` 的 `align` 支持 `left`、`center`、`right`，
+默认 `center`，同时控制标题和下方内容的对齐；标题与正文始终上下排列。
+居中布局维持紧凑比例：特性卡片、步骤和问答分别收在居中的内容区域内。
+左／右对齐在宽屏采用通栏分格：特性卡片搭配淡彩图示、步骤置于共享底色、问答分为三列。
+窄屏恢复单列。居中和窄屏问答默认展开第一项，宽屏左／右布局默认全部展开，仍可独立折叠。
+
+`features.items[].image` 可配置卡片下方的图片，支持 workspace 相对路径、URL 和 base64；
+编辑器支持填写地址或上传图片。留空时，左／右布局使用默认轻图示，居中布局保持简洁卡片。
+
+`hero` 默认左侧文字、右侧文档面板；居中或居右时上下排列。
+保留 `showVisual` 开关，并支持可选的 `visual` 配置（旧数据使用默认文档）：
+
+```json
+{
+  "visual": {
+    "type": "code",
+    "title": "home.tsx",
+    "content": "const page = { schemaVersion: 2 };",
+    "language": "typescript"
+  }
+}
+```
+
+`type` 可为 `markdown` 或 `code`。Markdown 支持常用语法，禁用原始 HTML；
+代码内置 JavaScript、TypeScript、JSON、HTML/XML、CSS 和 Bash 高亮，其他语言按纯文本展示。
+面板类型、标题、内容、代码语言均可在编辑器中修改。文档和代码区域使用 `Scroller` 虚拟滚动条。
+只读页面启用轻动效，遵循系统减少动态效果设置。
+
 与 `@deot/docs-client` 一起使用时，`docs:` 前缀留给 Client 的 `docs:markdown` 与
 `docs:sfc`，不要在 `$docs.renderers` 里注册同名前缀。
 
@@ -95,6 +128,9 @@ const document = {
 <Renderer :document="document" :modules="modules" />
 <Combo v-model="document" :modules="modules" @save="handleSave" />
 ```
+
+`Renderer` 的 `after` 插槽用于宿主页尾。排序页面将它放在正文之后，并纳入正文
+宽度和两侧斜纹；自由布局将它放在缩放画布之外。
 
 未传 `modules` 时使用 `BuiltinModules`；一旦显式传入，传入数组就是该实例的完整
 模块范围，不会隐式混入内置模块。

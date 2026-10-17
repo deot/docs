@@ -50,11 +50,12 @@ import { useLocale } from '@deot/docs-locale';
 import type { RendererModuleEditorProps } from '../../../types';
 import ActionsEditor from '../../shared/actions/editor.vue';
 import Field from '../../../editor/common/field/index.vue';
+import { SECTION_ALIGNMENTS } from '../../shared/utils';
 
 const props = defineProps<RendererModuleEditorProps>();
 const emit = defineEmits<{ 'update:modelValue': [value: Record<string, unknown>] }>();
 const { t } = useLocale(computed(() => props.context?.locale));
-const alignments = ['left', 'center'].map(value => ({ label: value, value }));
+const alignments = SECTION_ALIGNMENTS.map(value => ({ label: t(`renderer.editor.${value}`), value }));
 const actionsValue = computed(() => ({
 	items: Array.isArray(props.modelValue.actions) ? props.modelValue.actions : []
 }));

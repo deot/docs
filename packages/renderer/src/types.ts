@@ -42,6 +42,10 @@ export interface RendererSortableLayout {
 	 * 画布最小高度。省略或 `0` 表示随内容增高。
 	 */
 	minHeight?: number;
+	/** 正文区域最大宽度；省略或 `0` 时随画布铺开。 */
+	contentWidth?: number;
+	/** 在正文区域两侧显示淡斜纹，窄屏自动收起。 */
+	sidePattern?: boolean;
 	/**
 	 * 画布背景，任意 CSS 颜色或渐变。
 	 */

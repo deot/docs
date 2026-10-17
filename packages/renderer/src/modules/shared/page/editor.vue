@@ -26,6 +26,21 @@
 					@update:model-value="value => update({ minHeight: value })"
 				/>
 			</Field>
+			<Field :label="t('renderer.editor.contentWidth')">
+				<NumberEditor
+					prefix="W"
+					:model-value="layout.contentWidth || 0"
+					:min="0"
+					:max="3840"
+					@update:model-value="value => update({ contentWidth: value })"
+				/>
+			</Field>
+			<Field :label="t('renderer.editor.sidePattern')">
+				<Switch
+					:model-value="layout.sidePattern === true"
+					@update:model-value="value => update({ sidePattern: value })"
+				/>
+			</Field>
 		</template>
 		<template v-else>
 			<Field :label="t('renderer.editor.canvasWidth')">
@@ -58,7 +73,7 @@
 </template>
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ColorPicker, Select } from '@deot/vc';
+import { ColorPicker, Select, Switch } from '@deot/vc';
 import { useLocale } from '@deot/docs-locale';
 import type { RendererLayout, RendererModuleEditorProps } from '../../../types';
 import { createRendererLayout } from '../../../document';

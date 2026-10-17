@@ -101,7 +101,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 	border: 1px solid var(--docs-renderer-action-color);
 	border-radius: 10px;
 	box-sizing: border-box;
-	transition: transform 0.22s ease, filter 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+	transition: filter 0.16s ease, background 0.16s ease;
 	appearance: none;
 	user-select: none;
 	align-items: center;
@@ -114,10 +114,10 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 	}
 
 	&.is-large {
-		min-height: 48px;
+		min-height: 44px;
 		padding: 0 22px;
-		font-size: 15px;
-		border-radius: 12px;
+		font-size: 14px;
+		border-radius: 10px;
 	}
 
 	&.is-outline,
@@ -145,10 +145,12 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 
 	&:hover,
 	&:focus-visible {
-		outline: none;
 		filter: brightness(1.06);
-		transform: translateY(-1px);
-		box-shadow: 0 8px 18px color-mix(in srgb, var(--docs-renderer-action-color) 24%, transparent);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--docs-renderer-action-color);
+		outline-offset: 4px;
 	}
 
 	&.is-outline:hover,
@@ -173,6 +175,15 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 		filter: none;
 		transform: none;
 		box-shadow: none;
+	}
+}
+
+.docs-renderer-hero .docs-renderer-action,
+.docs-renderer-cta .docs-renderer-action {
+	gap: 15px;
+
+	&::after {
+		content: '→';
 	}
 }
 

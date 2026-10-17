@@ -47,6 +47,20 @@ describe('built-in home page', () => {
 		expect(wrapper.find('.docs-home__error').exists()).toBe(false);
 	});
 
+	it('keeps the site footer inside the home page boundary', async () => {
+		window.$docs.routes['/'] = { content: {
+			schemaVersion: 2,
+			meta: { id: 'home' },
+			layout: { ...layout, contentWidth: 1200, sidePattern: true },
+			blocks: []
+		} };
+		const wrapper = mount(HomePage, { slots: { after: '<footer>Site footer</footer>' } });
+		await flushPromises();
+		expect(wrapper.findAll('footer')).toHaveLength(1);
+		expect(wrapper.get('.docs-renderer-surface.has-side-pattern footer').text()).toBe('Site footer');
+		wrapper.unmount();
+	});
+
 	it('renders inline and cached page documents', async () => {
 		const page: RendererDocument = {
 			schemaVersion: 2,
@@ -157,8 +171,9 @@ describe('built-in home page', () => {
 		window.$docs.routes['/'] = { content: { 'zh-CN': './missing.page.json' } };
 		vi.spyOn(Gateway, 'subscribe').mockReturnValue(vi.fn());
 		vi.spyOn(Gateway, 'load').mockRejectedValue(new Error('Unavailable'));
-		const wrapper = mount(HomePage);
+		const wrapper = mount(HomePage, { slots: { after: '<footer>Site footer</footer>' } });
 		await vi.waitFor(() => expect(wrapper.text()).toContain('Unavailable'));
 		expect(wrapper.find('.docs-renderer').exists()).toBe(false);
+		expect(wrapper.findAll('footer')).toHaveLength(1);
 	});
 });

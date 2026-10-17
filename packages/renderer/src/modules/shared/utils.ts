@@ -44,7 +44,7 @@ export const toArrayValue = <T>(
 	Array.isArray(value) ? value.map(normalize) : []
 );
 
-export const SECTION_ALIGNMENTS = ['left', 'center'] as const;
+export const SECTION_ALIGNMENTS = ['left', 'center', 'right'] as const;
 export const TEXT_ALIGNMENTS = ['left', 'center', 'right'] as const;
 
 const UNSAFE_HREF = /^(?:data|javascript|vbscript):/iu;
@@ -71,7 +71,7 @@ export interface RendererSectionHeader {
 	title: string;
 	description: string;
 	/**
-	 * 标题组水平对齐。区块内正文对齐走各自 props。
+	 * 模块水平对齐；普通内容区的标题与正文始终上下排列。
 	 */
 	align: typeof SECTION_ALIGNMENTS[number];
 }

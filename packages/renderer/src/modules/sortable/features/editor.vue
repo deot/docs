@@ -45,6 +45,13 @@
 							:placeholder="t('renderer.editor.description')"
 							@update:model-value="value => updateItem(patchItem(item, { description: value }))"
 						/>
+						<Field :label="t('renderer.editor.cardImage')">
+							<ImageSource
+								:model-value="field(item, 'image')"
+								:placeholder="t('renderer.editor.cardImageHint')"
+								@update:model-value="value => updateItem(patchItem(item, { image: value }))"
+							/>
+						</Field>
 						<div class="docs-renderer-module-editor__row docs-renderer-module-editor__row--split">
 							<Select
 								searchable
@@ -112,6 +119,7 @@ const createItem = () => {
 		description: 'Describe this capability.',
 		badge: '',
 		icon: 'star',
+		image: '',
 		accent: FEATURE_ACCENTS[index % FEATURE_ACCENTS.length]
 	};
 };

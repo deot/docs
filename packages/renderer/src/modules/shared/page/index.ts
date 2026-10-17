@@ -5,6 +5,7 @@ import {
 	localeText,
 	toEnumValue,
 	toLength,
+	toBooleanValue,
 	toRecord,
 	toStringValue,
 	validateNumberRange
@@ -83,6 +84,8 @@ const toLayout = (value: unknown): RendererLayout => {
 		mode: 'sortable',
 		maxWidth: toLength(record.maxWidth, toLength(record.width, RENDERER_SORTABLE_CANVAS_WIDTH)),
 		...(minHeight > 0 ? { minHeight } : {}),
+		...(record.contentWidth !== undefined ? { contentWidth: Math.max(0, toLength(record.contentWidth, 0)) } : {}),
+		...(record.sidePattern !== undefined ? { sidePattern: toBooleanValue(record.sidePattern) } : {}),
 		background
 	};
 };
@@ -102,7 +105,8 @@ export const PageModule = defineRendererModule<RendererLayout>({
 			if (value.mode === 'sortable') {
 				return [
 					...validateNumberRange(value.maxWidth, '$.maxWidth', { min: 320, max: 3840 }),
-					...validateNumberRange(value.minHeight || 0, '$.minHeight', { min: 0, max: 2000 })
+					...validateNumberRange(value.minHeight || 0, '$.minHeight', { min: 0, max: 2000 }),
+					...validateNumberRange(value.contentWidth || 0, '$.contentWidth', { min: 0, max: 3840 })
 				];
 			}
 			return [

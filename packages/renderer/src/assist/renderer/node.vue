@@ -156,6 +156,7 @@ onErrorCaptured((reason) => {
 .docs-renderer-node {
 	min-width: 0;
 	box-sizing: border-box;
+	container-type: inline-size;
 
 	&.is-editing :is(a, button, input, textarea, select) {
 		pointer-events: none;

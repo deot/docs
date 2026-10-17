@@ -72,6 +72,9 @@ describe('built-in renderer modules', () => {
 		const definition = BuiltinModules.find(item => 'identity' in item && item.identity.type === 'page');
 		if (!definition || !('identity' in definition)) throw new Error('page unavailable');
 		expect(definition.widget.visible).toBe(false);
+		expect(definition.data.normalize?.({ mode: 'sortable', maxWidth: 1920, contentWidth: 1200, sidePattern: true })).toEqual({
+			mode: 'sortable', maxWidth: 1920, contentWidth: 1200, sidePattern: true, background: '#ffffff'
+		});
 		expect(definition.frames.sortable?.widget?.visible).toBe(false);
 		expect(definition.frames.draggable?.widget?.visible).toBe(false);
 		expect(definition.frames.sortable?.maxInstances).toBe(1);

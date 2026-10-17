@@ -268,7 +268,7 @@ describe('renderer editor surfaces', () => {
 		features.findAllComponents(Textarea).forEach(textarea => textarea.vm.$emit('update:modelValue', 'Description'));
 		const featureArray = features.findComponent(ArrayEditor);
 		featureArray.vm.$emit('update:modelValue', [{ title: 'Two' }]);
-		expect(features.emitted('update:modelValue')?.length).toBe(14);
+		expect(features.emitted('update:modelValue')?.length).toBe(15);
 
 		const hero = mount(HeroEditor, {
 			props: props({ actions: [], highlights: [{ value: '3', label: 'Themes' }] })
@@ -280,7 +280,7 @@ describe('renderer editor surfaces', () => {
 		hero.findComponent(Switch).vm.$emit('update:modelValue', false);
 		hero.findAllComponents(NumberEditor).forEach(editor => editor.vm.$emit('update:modelValue', 480));
 		hero.findComponent(ActionsEditor).vm.$emit('update:modelValue', { items: [{ label: 'Start' }] });
-		expect(hero.emitted('update:modelValue')?.length).toBe(13);
+		expect(hero.emitted('update:modelValue')?.length).toBe(14);
 
 		const steps = mount(StepsEditor, { props: props({ items: [{ title: 'One', description: 'Desc' }] }) });
 		steps.findAllComponents(NumberEditor).forEach(editor => editor.vm.$emit('update:modelValue', 2));
@@ -341,7 +341,11 @@ describe('renderer editor surfaces', () => {
 				context
 			}
 		});
-		expect(flow.findAllComponents(NumberEditor)).toHaveLength(2);
+		expect(flow.findAllComponents(NumberEditor)).toHaveLength(3);
+		flow.findComponent(Switch).vm.$emit('update:modelValue', true);
+		expect(flow.emitted('update:modelValue')?.at(-1)?.[0]).toEqual(expect.objectContaining({ sidePattern: true }));
+		flow.findAllComponents(NumberEditor)[2].vm.$emit('update:modelValue', 1200);
+		expect(flow.emitted('update:modelValue')?.at(-1)?.[0]).toEqual(expect.objectContaining({ contentWidth: 1200 }));
 		flow.findAllComponents(NumberEditor).forEach(editor => editor.vm.$emit('update:modelValue', 720));
 		flow.findComponent(ColorPicker).vm.$emit('update:modelValue', '#123456');
 		expect(flow.emitted('update:modelValue')?.length).toBeGreaterThan(0);

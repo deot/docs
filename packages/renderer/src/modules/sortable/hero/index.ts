@@ -18,6 +18,8 @@ import type { RendererActionValue, RendererSectionHeader } from '../../shared/ut
 import { sectionDraggableFrame, sectionSortableFrame } from '../../shared/canvas-frame';
 import Editor from './editor.vue';
 import Viewer from './viewer.vue';
+import { createHeroVisual, HERO_VISUAL_TYPES, normalizeHeroVisual } from './visual';
+import type { RendererHeroVisual } from './visual';
 
 export interface RendererHeroHighlight {
 	/**
@@ -54,6 +56,7 @@ export const HeroModule = defineRendererModule<RendererSectionHeader & {
 	accentSecondary: string;
 	background: string;
 	showVisual: boolean;
+	visual?: RendererHeroVisual;
 	minHeight: number;
 	highlights: RendererHeroHighlight[];
 }>({
@@ -75,6 +78,7 @@ export const HeroModule = defineRendererModule<RendererSectionHeader & {
 			accentSecondary: '#2d8cf0',
 			background: '',
 			showVisual: true,
+			visual: createHeroVisual(),
 			minHeight: 420,
 			highlights: createHighlights()
 		}),
@@ -87,6 +91,7 @@ export const HeroModule = defineRendererModule<RendererSectionHeader & {
 				accentSecondary: toStringValue(record.accentSecondary),
 				background: toStringValue(record.background),
 				showVisual: toBooleanValue(record.showVisual, true),
+				visual: normalizeHeroVisual(record.visual),
 				minHeight: toLength(record.minHeight, 420),
 				highlights: normalizeHighlights(record.highlights)
 			};
@@ -96,6 +101,7 @@ export const HeroModule = defineRendererModule<RendererSectionHeader & {
 				? []
 				: [moduleIssue('$.title', 'title.required', '首屏标题不能为空')]),
 			...validateEnum(value.align, '$.align', SECTION_ALIGNMENTS),
+			...(value.visual ? validateEnum(value.visual.type, '$.visual.type', HERO_VISUAL_TYPES) : []),
 			...validateNumberRange(value.minHeight, '$.minHeight', { min: 0, max: 960 }),
 			...validateActionValues(value.actions, '$.actions')
 		]
@@ -116,7 +122,9 @@ export const HeroModule = defineRendererModule<RendererSectionHeader & {
 			}).filter(Boolean).join(' ');
 			return [{
 				title: String(record.title || ''),
-				text: [record.eyebrow, record.description, extra].filter(Boolean).join(' ')
+				text: [record.eyebrow, record.description, extra, ...(record.showVisual !== false
+					? [toRecord(record.visual).title, toRecord(record.visual).content]
+					: [])].filter(Boolean).join(' ')
 			}];
 		}
 	}

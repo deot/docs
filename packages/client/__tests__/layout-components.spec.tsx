@@ -53,7 +53,12 @@ vi.mock('vue-router', async original => ({
 	}),
 	RouterView: (await import('vue')).defineComponent({
 		props: { name: String },
-		setup: props => () => <div data-view={props.name || 'default'} />
+		setup: (props, { slots }) => {
+			const Component = defineComponent({
+				setup: (_, { slots: viewSlots }) => () => <div data-view={props.name || 'default'}>{viewSlots.after?.()}</div>
+			});
+			return () => slots.default?.({ Component }) || <Component />;
+		}
 	})
 }));
 
@@ -171,6 +176,13 @@ describe('client layout components', () => {
 		route.meta = { docsHome: true };
 		const wrapper = mount(() => (<App />));
 		expect(wrapper.find('.docs-layout').classes()).toContain('docs-layout--home');
+		expect(wrapper.findAll('[data-fixed-slot="footer"]')).toHaveLength(1);
+		expect(wrapper.findAll('[data-view="default"] [data-fixed-slot]').map(slot => slot.attributes('data-fixed-slot')))
+			.toEqual(['extra', 'footer']);
+		route.meta = {};
+		await flushPromises();
+		expect(wrapper.findAll('[data-fixed-slot="footer"]')).toHaveLength(1);
+		expect(wrapper.find('[data-view="default"] [data-fixed-slot="footer"]').exists()).toBe(false);
 	});
 
 	it('uses the editor shell for the renderer editor and named demos only', () => {

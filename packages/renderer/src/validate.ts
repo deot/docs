@@ -88,6 +88,12 @@ const validateSortableLayout = (
 	if (typeof value.minHeight !== 'undefined') {
 		pushNumberIssue(value.minHeight, '$.layout.minHeight', issues, { nonNegative: true });
 	}
+	if (typeof value.contentWidth !== 'undefined') {
+		pushNumberIssue(value.contentWidth, '$.layout.contentWidth', issues, { nonNegative: true });
+	}
+	if (typeof value.sidePattern !== 'undefined' && typeof value.sidePattern !== 'boolean') {
+		issues.push({ path: '$.layout.sidePattern', code: 'layout.sidePattern', message: 'sidePattern 必须是布尔值', severity: 'error' });
+	}
 	if (typeof value.background !== 'string') {
 		issues.push({ path: '$.layout.background', code: 'layout.background', message: 'background 必须是字符串', severity: 'error' });
 	}

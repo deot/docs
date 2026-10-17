@@ -6,13 +6,19 @@
 					<div
 						ref="canvas"
 						class="docs-renderer-frame__canvas"
-						:style="canvasStyle"
+						:style="[canvasStyle, { '--docs-renderer-frame-width': `${canvasWidth}px` }]"
 						@dragover.prevent="handleCanvasDragOver"
 						@dragenter.prevent="handleCanvasDragEnter"
 						@dragleave="handleCanvasDragLeave"
 						@drop.prevent="handleWidgetDrop"
 					>
-						<TransitionGroup tag="div" name="docs-renderer-flip" class="docs-renderer-frame__list">
+						<TransitionGroup
+							tag="div"
+							name="docs-renderer-flip"
+							class="docs-renderer-frame__list docs-renderer-surface"
+							:class="{ 'has-side-pattern': layout?.sidePattern === true }"
+							:style="{ '--docs-renderer-page-width': layout?.contentWidth ? `${layout.contentWidth}px` : undefined }"
+						>
 							<div
 								v-for="(node, index) in blocks"
 								:key="node.id"
@@ -421,6 +427,7 @@ const handleWidgetDrop = (event: DragEvent) => {
 </script>
 <style lang="scss">
 @use '../../../node_modules/@deot/docs-theme/src/functions' as *;
+@use '../shared/page';
 
 .docs-renderer-frame {
 	position: relative;
@@ -527,7 +534,7 @@ const handleWidgetDrop = (event: DragEvent) => {
 	}
 
 	&__list {
-		display: block;
+		display: flow-root;
 	}
 
 	&__drop-slot {

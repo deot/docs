@@ -66,11 +66,18 @@
 			>
 				<div class="docs-layout__rail docs-layout__rail--start" aria-hidden="true"></div>
 				<main class="docs-layout__main">
-					<RouterView />
-					<RouterView name="extra" />
+					<RouterView v-slot="{ Component }">
+						<component :is="Component">
+							<template v-if="route.meta?.docsHome" #after>
+								<ResourceSlot name="extra" />
+								<div class="docs-layout__footer"><ResourceSlot name="footer" /></div>
+							</template>
+						</component>
+					</RouterView>
+					<RouterView v-if="!route.meta?.docsHome" name="extra" />
 				</main>
 				<div class="docs-layout__rail docs-layout__rail--end" aria-hidden="true"></div>
-				<div class="docs-layout__footer"><ResourceSlot name="footer" /></div>
+				<div v-if="!route.meta?.docsHome" class="docs-layout__footer"><ResourceSlot name="footer" /></div>
 			</Scroller>
 		</div>
 	</div>
@@ -296,6 +303,23 @@ a {
 	}
 
 	@include modifier(home) {
+		.docs-footer:has(.docs-footer__content),
+		.docs-footer__bar {
+			border-image: linear-gradient(varfix(pattern-fg) 0 0) 1;
+			border-image-outset: 0 100vw;
+		}
+
+		.docs-footer[data-content-width] {
+			.docs-footer__inner,
+			.docs-footer__bar-inner {
+				max-width: none;
+			}
+
+			.docs-footer__inner {
+				border-inline: 0;
+			}
+		}
+
 		@include element(main) {
 			padding: 0;
 		}

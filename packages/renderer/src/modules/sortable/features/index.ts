@@ -16,6 +16,7 @@ import { sectionDraggableFrame, sectionSortableFrame } from '../../shared/canvas
 import { featureAccentOf } from './palette';
 import Editor from './editor.vue';
 import Viewer from './viewer.vue';
+import { collectImageResources } from '../../shared/image-source';
 
 export interface RendererFeatureItem {
 	title: string;
@@ -29,6 +30,8 @@ export interface RendererFeatureItem {
 	 * 强调色，CSS 颜色。
 	 */
 	accent: string;
+	/** 卡片下方的可选图片；为空时使用当前布局的默认图示。 */
+	image?: string;
 }
 
 const createItems = (): RendererFeatureItem[] => [
@@ -44,7 +47,8 @@ const normalizeItem = (item: unknown, index: number): RendererFeatureItem => {
 		description: toStringValue(current.description),
 		badge: toStringValue(current.badge),
 		icon: toStringValue(current.icon),
-		accent: toStringValue(current.accent, featureAccentOf(index))
+		accent: toStringValue(current.accent, featureAccentOf(index)),
+		image: toStringValue(current.image)
 	};
 };
 
@@ -103,6 +107,10 @@ export const FeaturesModule = defineRendererModule<RendererSectionHeader & {
 		draggable: sectionDraggableFrame(720, 320)
 	},
 	integrations: {
+		collectResources: (props) => {
+			const items = toRecord(props).items;
+			return collectImageResources((Array.isArray(items) ? items : []).map(item => toRecord(item).image));
+		},
 		collectSearchText: (props) => {
 			const record = toRecord(props);
 			const section = {

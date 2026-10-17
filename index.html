@@ -72,9 +72,9 @@
 		const createHomeDocument = (lang) => {
 			const t = (zh, en) => (lang === 'zh-CN' ? zh : en);
 			const accent = '#873bf4';
-			const accentSecondary = '#2d8cf0';
-			const accents = [accent, accentSecondary, '#14b8a6'];
-			const title = t('你好 @deot/docs', 'Hello @deot/docs');
+			const accentSecondary = '#a78bda';
+			const accents = [accent, '#2d8cf0', '#14b8a6'];
+			const title = t('写好文档，轻松发布', 'Write clearly. Publish simply.');
 			const action = {
 				label: t('开始使用', 'Quick Start'),
 				to: `/${lang}/packages/guide`,
@@ -85,10 +85,10 @@
 			};
 			const stack = {
 				marginTop: 0,
-				marginBottom: 88,
+				marginBottom: 64,
 				paddingTop: 0,
 				paddingBottom: 0,
-				maxWidth: 1200
+				maxWidth: 1536
 			};
 			const block = (id, type, props, appearance = stack) => ({
 				id,
@@ -108,6 +108,8 @@
 					mode: 'sortable',
 					maxWidth: 1920,
 					minHeight: 600,
+					contentWidth: 1536,
+					sidePattern: true,
 					background: '#ffffff'
 				},
 				blocks: [
@@ -115,14 +117,23 @@
 						eyebrow: '@deot/docs',
 						title,
 						description: t(
-							'面向生产部署的文档工具链，支持实时资源与可扩展页面渲染。',
-							'A production-first documentation toolchain with live resources and extensible rendering.'
+							'用 Markdown 写作，用模块组织页面，从本地预览到静态发布。',
+							'Write in Markdown, compose pages with modules, and publish a static site.'
 						),
 						align: 'left',
 						accent,
 						accentSecondary,
 						background: '',
 						showVisual: true,
+						visual: {
+							type: 'markdown',
+							title: 'guide.md',
+							language: 'typescript',
+							content: t(
+								'# 从第一份文档开始\n写作、预览、发布，保持简单。\n\n## 编写内容\n用 Markdown 或模块组织页面。\n\n## 本地预览\n修改内容，实时查看更新。\n\n## 静态发布\n构建 workspace，部署到静态托管。',
+								'# Your first document\nWrite, preview and publish.\n\n## Write\nOrganize content with Markdown or page modules.\n\n## Preview\nSee your changes as you work.\n\n## Publish\nBuild a workspace and deploy it to static hosting.'
+							)
+						},
 						minHeight: 520,
 						highlights: [
 							{ value: t('静态', 'Static'), label: t('直接部署', 'Direct deploy') },
@@ -130,41 +141,43 @@
 							{ value: 'i18n', label: t('多语言内置', 'Built-in locales') }
 						],
 						actions: [action]
-					}, { ...stack, marginBottom: 72, fullWidth: true, maxWidth: 1200 }),
+					}, { ...stack, marginBottom: 40, fullWidth: true, maxWidth: 1536 }),
 
 					block('home-features', 'features', {
 						eyebrow: t('能力', 'Capabilities'),
 						title: t('从写作到发布，一次齐备', 'Everything from writing to shipping'),
 						description: t(
-							'部署、热更新与资源网关开箱即用，再按需扩展页面模块。',
-							'Deploy, live-update and gate resources out of the box, then extend the page with modules.'
+							'把部署、资源更新和缓存管理交给工具链，专注内容本身。',
+							'Let the toolchain handle deployment, updates and caching. Focus on your content.'
 						),
+						align: 'center',
+						accent,
 						columns: 3,
 						gap: 24,
 						items: cards([
 							{
-								title: t('直接部署', 'Production-first'),
+								title: t('静态部署', 'Static deployment'),
 								description: t(
-									'无需专用文档服务，即可直接部署静态 workspace。',
-									'Deploy a static workspace directly without a dedicated documentation server.'
+									'构建为静态站点，直接部署到现有托管平台。',
+									'Build a static site and deploy it to your existing hosting platform.'
 								),
 								badge: t('交付', 'Ship'),
 								icon: 'upload'
 							},
 							{
-								title: t('实时更新', 'Live Update'),
+								title: t('实时预览', 'Live preview'),
 								description: t(
-									'Markdown 与页面资源更新时，无需刷新整个应用。',
-									'Update loaded Markdown and page resources without refreshing the whole application.'
+									'修改 Markdown 和页面资源，开发时即时查看更新。',
+									'Edit Markdown and page resources, then see updates as you work.'
 								),
 								badge: t('同步', 'Live'),
 								icon: 'again'
 							},
 							{
-								title: t('资源网关', 'Resource Gateway'),
+								title: t('资源管理', 'Resource management'),
 								description: t(
-									'统一管理缓存、离线回退、预加载与后台校验。',
-									'Unify caching, offline fallback, prefetching and background validation.'
+									'统一处理缓存、预加载与离线回退，让阅读更连贯。',
+									'Keep reading smooth with caching, prefetching and offline fallback.'
 								),
 								badge: t('网关', 'Gateway'),
 								icon: 'link'
@@ -176,30 +189,32 @@
 						eyebrow: t('上手', 'Start'),
 						title: t('三步开始一份文档', 'Three steps to a live page'),
 						description: t(
-							'从写作、预览到静态发布，始终使用同一套页面模块。',
-							'Write, preview and ship with the same page modules.'
+							'写作、预览、发布，每一步都在熟悉的工作流里。',
+							'Write, preview and publish in one familiar workflow.'
 						),
+						align: 'center',
+						accent,
 						columns: 3,
 						items: cards([
 							{
 								title: t('编写', 'Write'),
 								description: t(
-									'用 Markdown 或可视化模块组织页面内容。',
-									'Compose pages with Markdown or visual modules.'
+									'用 Markdown 编写内容，按需组合页面模块。',
+									'Write Markdown and add page modules where you need them.'
 								)
 							},
 							{
 								title: t('预览', 'Preview'),
 								description: t(
-									'开发时热更新资源，不必刷新整个站点。',
-									'Hot-update resources in development without a full reload.'
+									'启动本地预览，在更新中检查内容和排版。',
+									'Preview locally and check your content and layout as they change.'
 								)
 							},
 							{
 								title: t('发布', 'Ship'),
 								description: t(
-									'构建为静态 workspace，直接部署到任意 CDN。',
-									'Build a static workspace and deploy it to any CDN.'
+									'构建静态 workspace，部署到熟悉的托管平台。',
+									'Build a static workspace and deploy it to your preferred host.'
 								)
 							}
 						])
@@ -209,9 +224,11 @@
 						eyebrow: t('问答', 'FAQ'),
 						title: t('常见问题', 'Questions we hear first'),
 						description: t(
-							'上线前最常被问到的几件事。',
-							'The few things teams ask before going live.'
+							'关于部署、更新和页面定制，你可能还想了解这些。',
+							'A few details about deployment, updates and customization.'
 						),
+						align: 'center',
+						accent,
 						items: [
 							{
 								question: t('需要单独的文档服务吗？', 'Do I need a dedicated documentation server?'),
@@ -239,21 +256,21 @@
 
 					block('home-cta', 'cta', {
 						eyebrow: t('下一步', 'Next'),
-						title: t('开始搭建你的文档站点', 'Start your documentation site'),
+						title: t('让下一份文档，从这里开始', 'Your next document starts here'),
 						description: t(
-							'用同一套模块写出首页、指南和组件说明。',
-							'Use the same modules for the home page, guides and component docs.'
+							'从一份 Markdown 开始，按需要补齐页面与模块。',
+							'Start with Markdown, then add pages and modules as you need them.'
 						),
 						align: 'center',
 						accent,
 						accentSecondary,
 						background: '',
 						actions: [action]
-					}, { ...stack, marginBottom: 0, fullWidth: true, maxWidth: 1200 })
+					}, { ...stack, marginBottom: 0, fullWidth: true, maxWidth: 1536 })
 				]
 			};
 		};
-		const logo = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="docs-logo" x1="12" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse"><stop stop-color="#873bf4"/><stop offset="1" stop-color="#2d8cf0"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#docs-logo)"/><path fill="#fff" fill-rule="evenodd" d="M18 13h12c10.5 0 19 8.5 19 19s-8.5 19-19 19H18V13zm12 9v20h1.5c5.8 0 10.5-4.5 10.5-10S37.3 22 31.5 22H30z"/></svg>')}`;
+		const logo = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#873bf4"/><path fill="#fff" fill-rule="evenodd" d="M18 13h12c10.5 0 19 8.5 19 19s-8.5 19-19 19H18V13zm12 9v20h1.5c5.8 0 10.5-4.5 10.5-10S37.3 22 31.5 22H30z"/></svg>')}`;
 		if (typeof document !== 'undefined') {
 			const favicon = document.createElement('link');
 			favicon.rel = 'icon';

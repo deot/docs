@@ -87,6 +87,19 @@ describe('renderer protocol', () => {
 		expect(validateRendererDocument(unbounded).valid).toBe(true);
 	});
 
+	it('preserves optional page styling while validating its values', () => {
+		const document = page();
+		document.layout.contentWidth = 1200;
+		document.layout.sidePattern = true;
+		expect(validateRendererDocument(document).document?.layout).toEqual(document.layout);
+		expect(createRendererLayout('sortable', document.layout)).toEqual(document.layout);
+		const invalidLayout = { ...document.layout, contentWidth: -1, sidePattern: 'yes' };
+		expect(validateRendererDocument({ ...document, layout: invalidLayout }).issues).toEqual(expect.arrayContaining([
+			expect.objectContaining({ path: '$.layout.contentWidth', code: 'number.nonNegative' }),
+			expect.objectContaining({ path: '$.layout.sidePattern', code: 'layout.sidePattern' })
+		]));
+	});
+
 	it('converts documents between frames and drops unsupported modules', async () => {
 		const catalog = createRendererModuleCatalog(BuiltinModules);
 		const sortable = createEmptyRendererDocument('sortable');
