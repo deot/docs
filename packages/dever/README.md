@@ -53,7 +53,7 @@ development 和 preview 会保持服务运行；build 在 Vite 构建结束后�
 - 在 development 模式开放 `/__docs/events`，以及 `PUT /__docs/page`（只写工作区内、带语言前缀的 `.page.json`）；
 - 为客户端路由提供 HTML history fallback；静态托管若只能配置自定义 404 页，请改用 Client 的 [`@deot/docs:redirect`](../client/README.md) 约定。
 - 在 build 模式复制 Markdown、JSON（含 `.page.json`）、SFC 等静态内容资源；
-- 确认当前项目的 Client 包名、源码入口和真实路径边界后，将 HTML 中的 launch 地址改写到 `/packages/client/src/index.ts`，并将 locale、renderer、markdown、playground、theme 包映射到本地入口；消费项目保留 CDN 地址。旧入口需要补充样式时只注入完整的 Client CSS。
+- 确认当前项目的 Client 包名、源码入口和真实路径边界后，将 HTML 中的 launch 地址改写到 `/packages/client/src/index.ts`，并将 locale、renderer、markdown、playground、theme 包映射到本地入口。消费项目优先使用已安装的 `@deot/docs-launch` 与 Client Bundle（兼容 `@deot/docs` 的非提升依赖），通过 `/@deot/docs-launch/` 和 `/@deot/docs-client/` 提供 JS、CSS 和分块；未安装完整产物时保留 CDN 地址。替换只作用于响应 HTML，不改写入口文件。旧入口需要补充样式时只注入完整的 Client CSS。
 - 在 development 模式提供 `GET /__docs/module/<包名>`，把工作区源码编成一份浏览器 ESM。preview 与 build 对该地址返回 404。
 
 ## 本地模块

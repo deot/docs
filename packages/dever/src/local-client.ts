@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { createRequire } from 'node:module';
 import { isInside } from './workspace.ts';
 
 export const LOCAL_CLIENT_ENTRY = '/packages/client/src/index.ts';
@@ -23,6 +24,25 @@ export const findLocalClientWorkspace = (cwd: string) => {
 	} catch {
 		return undefined;
 	}
+};
+
+export const findInstalledClientAssets = (cwd: string) => {
+	const projectRequire = createRequire(path.join(cwd, 'package.json'));
+	const resolvers = [projectRequire];
+	try {
+		// pnpm 非提升安装时，Client 与 launch 只能从聚合包内部解析。
+		resolvers.push(createRequire(projectRequire.resolve('@deot/docs')));
+	} catch { /* 项目可以只安装独立子包。 */ }
+	for (const resolver of resolvers) {
+		try {
+			const clientEntry = resolver.resolve('@deot/docs-client/dist/bundle/index.js');
+			const launchEntry = resolver.resolve('@deot/docs-launch');
+			const clientDist = path.dirname(clientEntry);
+			if (!fs.existsSync(path.join(clientDist, 'index.style.css'))) continue;
+			return { clientDist, launchDist: path.dirname(launchEntry) };
+		} catch { /* 没有完整安装时保留 HTML 中的 CDN 入口。 */ }
+	}
+	return undefined;
 };
 
 export const createLocalDocsAliases = (cwd: string) => (

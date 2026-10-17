@@ -11,7 +11,7 @@ export interface PreviewRequestHandlerOptions {
 	workspace: string;
 	/** 本地 Client Bundle 目录，用来改写预览 HTML 里的 CDN 地址。 */
 	clientDist?: string;
-	/** 本仓库 launch 的构建产物目录。 */
+	/** 本地 launch 的构建产物目录。 */
 	launchDist?: string;
 }
 
@@ -64,7 +64,7 @@ const rewriteLocalClient = (html: Buffer, clientDist?: string) => (
 		: html
 );
 
-// 只在本仓库预览入口安装映射，先调用用户钩子，再把 Client 指向待审 dist。
+// 本地 launch 入口先调用用户钩子，再把 Client 指向本地 dist。
 const localLaunchEntry = [
 	'const config = window.$docs ||= {};',
 	'const custom = config.resolve?.cdn;',

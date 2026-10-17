@@ -7,8 +7,9 @@ import { defineConfig } from 'vite';
 import type { Plugin, ViteDevServer } from 'vite';
 import { isInside, resolveDocsWorkspace } from '../workspace';
 import { respondWorkspaceModule } from '../workspace-module';
-import { findLocalClientWorkspace, LOCAL_CLIENT_ENTRY } from '../local-client';
-import { rewriteLaunchUrls } from '../local-assets';
+import { findInstalledClientAssets, findLocalClientWorkspace, LOCAL_CLIENT_ENTRY } from '../local-client';
+import { CLIENT_PREFIX, LAUNCH_PREFIX, rewriteClientAssets, rewriteLaunchUrls } from '../local-assets';
+import { createPreviewRequestHandler } from '../preview';
 import type { ResolvedDocsWorkspace } from '../workspace';
 import type { DocsPluginOptions } from '../types';
 
@@ -223,6 +224,22 @@ export const createRuntimePlugin = (
 	resolvedWorkspace?: ResolvedDocsWorkspace
 ): Plugin => ({
 	name: 'docs-runtime',
+	configureServer(server) {
+		if (options.build || options.preview) return;
+		const resolved = resolvedWorkspace || resolveDocsWorkspace(process.cwd(), options.workspace);
+		if (findLocalClientWorkspace(resolved.projectRoot)?.source) return;
+		const installed = findInstalledClientAssets(resolved.projectRoot);
+		if (!installed) return;
+		const handle = createPreviewRequestHandler({ workspace: resolved.root, ...installed });
+		server.middlewares.use((req, res, next) => {
+			const pathname = getRawPathname(req.url || '/');
+			if (pathname.startsWith(CLIENT_PREFIX) || pathname.startsWith(LAUNCH_PREFIX)) {
+				handle(req, res);
+				return;
+			}
+			next();
+		});
+	},
 	transformIndexHtml: options.build || options.preview
 		? undefined
 		: {
@@ -230,6 +247,7 @@ export const createRuntimePlugin = (
 				handler(html = '') {
 					const resolved = resolvedWorkspace || resolveDocsWorkspace(process.cwd(), options.workspace);
 					const localClient = findLocalClientWorkspace(resolved.projectRoot)?.source;
+					const installed = !localClient && findInstalledClientAssets(resolved.projectRoot);
 					// 形状对齐 client DocsRuntime；workspace 是 urlBase。
 					const runtime = JSON.stringify({
 						mode: 'development',
@@ -238,9 +256,13 @@ export const createRuntimePlugin = (
 					}).replace(/</g, '\\u003c');
 					const styles = localClient || html.includes('@deot/docs-launch')
 						? []
-						: ['https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/bundle/index.style.css'];
+						: [installed
+								? `${CLIENT_PREFIX}dist/bundle/index.style.css`
+								: 'https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/bundle/index.style.css'];
 					return {
-						html: localClient ? rewriteLaunchUrls(html, LOCAL_CLIENT_ENTRY) : html,
+						html: localClient
+							? rewriteLaunchUrls(html, LOCAL_CLIENT_ENTRY)
+							: installed ? rewriteClientAssets(rewriteLaunchUrls(html, `${LAUNCH_PREFIX}+esm`)) : html,
 						tags: [
 							{
 								tag: 'script',
