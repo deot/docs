@@ -44,31 +44,19 @@ import type { ComponentPublicInstance } from 'vue';
 import { Scroller } from '@deot/vc';
 import type { ScrollerExposed } from '@deot/vc';
 import MarkdownIt from 'markdown-it';
-import hljs from 'highlight.js/lib/core';
-import javascript from 'highlight.js/lib/languages/javascript';
-import typescript from 'highlight.js/lib/languages/typescript';
-import json from 'highlight.js/lib/languages/json';
-import xml from 'highlight.js/lib/languages/xml';
-import css from 'highlight.js/lib/languages/css';
-import bash from 'highlight.js/lib/languages/bash';
+import { highlightCode } from '../../shared/code-highlight';
 import type { RendererHeroVisual } from './visual';
 
 const props = defineProps<{ visual: RendererHeroVisual }>();
 const body = ref<HTMLElement>();
 const documentScroller = ref<ScrollerExposed & ComponentPublicInstance>();
 const md = new MarkdownIt({ html: false, breaks: true });
-Object.entries({ javascript, typescript, json, xml, css, bash }).forEach(([name, language]) => hljs.registerLanguage(name, language));
 const tokens = computed(() => md.parse(props.visual.content, {}));
 const headings = computed(() => tokens.value.flatMap((token, index) => (
 	token.type === 'heading_open' && token.tag === 'h2' ? [tokens.value[index + 1].content] : []
 )));
 const html = computed(() => md.renderer.render(tokens.value, md.options, {}));
-const code = computed(() => {
-	const { content, language } = props.visual;
-	return language && hljs.getLanguage(language)
-		? hljs.highlight(content, { language, ignoreIllegals: true }).value
-		: md.utils.escapeHtml(content);
-});
+const code = computed(() => highlightCode(props.visual.content, props.visual.language));
 const scrollToHeading = (index: number) => {
 	const heading = body.value?.querySelectorAll('h2')[index];
 	const wrapper = documentScroller.value?.$el as HTMLElement | undefined;
@@ -205,11 +193,11 @@ const scrollToHeading = (index: number) => {
 
 	&__code {
 		min-width: max-content;
-		padding: 24px;
+		padding: 18px 20px;
 		margin: 0;
 		font-family: SFMono-Regular, Consolas, monospace;
-		font-size: 11px;
-		line-height: 25px;
+		font-size: 10.5px;
+		line-height: 23px;
 		color: var(--docs-renderer-ink);
 		background: color-mix(in srgb, var(--docs-renderer-accent) 2%, var(--docs-renderer-paper));
 		box-sizing: border-box;
@@ -263,6 +251,14 @@ const scrollToHeading = (index: number) => {
 
 		&__document h1 {
 			font-size: 20px;
+		}
+
+		&__code {
+			min-width: 0;
+			padding: 16px;
+			font-size: 9px;
+			white-space: pre-wrap;
+			overflow-wrap: anywhere;
 		}
 	}
 }

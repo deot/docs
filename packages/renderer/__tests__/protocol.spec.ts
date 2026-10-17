@@ -418,7 +418,8 @@ describe('renderer protocol', () => {
 	it('exports a frozen built-in module list without global registration', () => {
 		expect(Object.isFrozen(BuiltinModules)).toBe(true);
 		expect(BuiltinModules.map(value => 'identity' in value ? value.identity.type : value.type)).toEqual([
-			'page', 'selection', 'space', 'title', 'text', 'list', 'image', 'area', 'actions', 'hero', 'features', 'steps', 'faq', 'cta', 'ads'
+			'page', 'selection', 'space', 'title', 'text', 'list', 'image', 'area', 'actions',
+			'hero', 'code', 'features', 'steps', 'faq', 'cta', 'ads'
 		]);
 	});
 

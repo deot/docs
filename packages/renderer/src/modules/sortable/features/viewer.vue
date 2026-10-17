@@ -99,7 +99,9 @@ const imageNode = (item: Record<string, unknown>, index: number): RendererSortab
 .docs-renderer-features {
 	@include landing.section;
 
-	border-top: 0;
+	@at-root .docs-renderer-node--hero + .docs-renderer-node--features #{&} {
+		border-top: 0;
+	}
 
 	&__grid {
 		display: grid;

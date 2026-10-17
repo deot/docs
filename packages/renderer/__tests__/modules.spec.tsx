@@ -65,7 +65,7 @@ const mountDefinition = async (definition: RendererModuleDefinition) => {
 describe('built-in renderer modules', () => {
 	it('keeps the draggable-only module bucket empty for the first release', () => {
 		expect(DraggableOnlyModules).toEqual([]);
-		expect(BuiltinModules).toHaveLength(15);
+		expect(BuiltinModules).toHaveLength(16);
 	});
 
 	it('keeps the default page module out of the widget library and document blocks', () => {

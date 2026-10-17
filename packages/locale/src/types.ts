@@ -31,6 +31,7 @@ export interface PlaygroundLocaleMessages {
 export interface RendererLocaleMessages {
 	common: Record<string, string>;
 	modules: Record<string, string>;
+	code?: Record<string, string>;
 	inspector: Record<string, string>;
 	editor: Record<string, string>;
 	canvas: Record<string, string>;

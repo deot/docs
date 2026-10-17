@@ -309,6 +309,7 @@ const enUS = {
 			area: 'Image hotspots',
 			actions: 'Actions',
 			hero: 'Hero',
+			code: 'Code showcase',
 			features: 'Features',
 			steps: 'Steps',
 			faq: 'FAQ',
@@ -318,6 +319,16 @@ const enUS = {
 			selection: 'Selection',
 			markdown: 'Markdown',
 			sfc: 'Remote SFC'
+		},
+		code: {
+			lines: '{count} lines',
+			copy: 'Copy complete code',
+			copyShort: 'Copy',
+			copied: 'Copied',
+			fold: 'Expand {count} lines',
+			expand: 'Expand complete code',
+			collapse: 'Collapse code',
+			copyNote: 'Copy includes all {count} lines, even when folded.'
 		},
 		inspector: {
 			title: 'Properties',
@@ -412,6 +423,13 @@ const enUS = {
 			visualLanguage: 'Code language',
 			visualMarkdown: 'Markdown document',
 			visualCode: 'Code',
+			codeFilename: 'Filename',
+			codeContent: 'Code content',
+			codeFolds: 'Folded line ranges',
+			codeStartLine: 'Start line',
+			codeEndLine: 'End line',
+			codeHighlightLines: 'Highlighted lines',
+			codeHighlightHint: 'Line numbers separated by commas, e.g. 12, 41',
 			cardImage: 'Card illustration',
 			cardImageHint: 'Image path, URL or upload; leave empty for the default illustration',
 			highlights: 'Highlights',

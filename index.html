@@ -74,7 +74,7 @@
 			const accent = '#873bf4';
 			const accentSecondary = '#a78bda';
 			const accents = [accent, '#2d8cf0', '#14b8a6'];
-			const title = t('写好文档，轻松发布', 'Write clearly. Publish simply.');
+			const title = t('一个 HTML，即可部署', 'One HTML file. Ready to deploy.');
 			const action = {
 				label: t('开始使用', 'Quick Start'),
 				to: `/${lang}/packages/guide`,
@@ -101,6 +101,53 @@
 				accent: item.accent || accents[index]
 			}));
 
+			// 示例中的 @ 使用 Unicode 转义，避免本地预览改写展示用的 CDN 入口。
+			const deploymentExample = [
+				'<!DOCTYPE html>',
+				'<html>',
+				'<head>',
+				'\t<meta charset="UTF-8">',
+				'\t<meta name="viewport" content="width=device-width,initial-scale=1">',
+				'\t<title>My Docs</title>',
+				'</head>',
+				'<body>',
+				'\t<div id="app"></div>',
+				'',
+				'\t<script>',
+				'\t\twindow.$docs = {',
+				'\t\t\tnamespace: \'my-docs\',',
+				'\t\t\tlocales: {',
+				'\t\t\t\t\'zh-CN\': { label: \'简体中文\' },',
+				'\t\t\t\t\'en-US\': { label: \'English\' }',
+				'\t\t\t},',
+				'\t\t\troutes: {',
+				'\t\t\t\t\'/guide/:name\': {',
+				'\t\t\t\t\tvalue: to => `guide/${to.params.name}`,',
+				'\t\t\t\t\tcontent: \'default\',',
+				'\t\t\t\t\tsidebar: \'./sidebar.json\',',
+				'\t\t\t\t\theader: \'default\',',
+				'\t\t\t\t\tfooter: \'default\',',
+				'\t\t\t\t\textra: null',
+				'\t\t\t\t},',
+				'\t\t\t\t\'*\': \'/guide/installation\'',
+				'\t\t\t},',
+				'\t\t\tresolve: {',
+				'\t\t\t\tmarkdown: ({ value }) => `./${value}.md`',
+				'\t\t\t},',
+				'\t\t\ttheme: { default: \'system\' },',
+				'\t\t\tprefetch: {',
+				'\t\t\t\tbatchSize: 2,',
+				'\t\t\t\tidleTimeout: 1500',
+				'\t\t\t},',
+				'\t\t\tmodules: {},',
+				'\t\t\tstyles: {}',
+				'\t\t};',
+				'\t<\/script>',
+				'\t<script type="module" src="https://cdn.jsdelivr.net/npm/\u0040deot/docs-launch/+esm"><\/script>',
+				'</body>',
+				'</html>'
+			].join('\n');
+
 			return {
 				schemaVersion: 2,
 				meta: { id: `docs-home-${lang}`, title },
@@ -117,8 +164,8 @@
 						eyebrow: '@deot/docs',
 						title,
 						description: t(
-							'用 Markdown 写作，用模块组织页面，从本地预览到静态发布。',
-							'Write in Markdown, compose pages with modules, and publish a static site.'
+							'把站点配置与 CDN 入口写进 HTML，接入你的 Markdown，直接发布。',
+							'Put your site configuration and CDN entry in one HTML file. Add Markdown and publish.'
 						),
 						align: 'left',
 						accent,
@@ -126,13 +173,20 @@
 						background: '',
 						showVisual: true,
 						visual: {
-							type: 'markdown',
-							title: 'guide.md',
-							language: 'typescript',
-							content: t(
-								'# 从第一份文档开始\n写作、预览、发布，保持简单。\n\n## 编写内容\n用 Markdown 或模块组织页面。\n\n## 本地预览\n修改内容，实时查看更新。\n\n## 静态发布\n构建 workspace，部署到静态托管。',
-								'# Your first document\nWrite, preview and publish.\n\n## Write\nOrganize content with Markdown or page modules.\n\n## Preview\nSee your changes as you work.\n\n## Publish\nBuild a workspace and deploy it to static hosting.'
-							)
+							type: 'code',
+							title: t('index.html · 核心入口摘录', 'index.html · Core excerpt'),
+							language: 'html',
+							content: [
+								'<div id="app"></div>',
+								'<script>',
+								'window.$docs = {',
+								'  namespace: \'my-docs\',',
+								'  // ' + t('语言、路由与资源配置', 'Locale, route and resource settings'),
+								'};',
+								'<\/script>',
+								'<script type="module"',
+								'  src="https://cdn.jsdelivr.net/npm/\u0040deot/docs-launch/+esm"><\/script>'
+							].join('\n')
 						},
 						minHeight: 520,
 						highlights: [
@@ -183,6 +237,27 @@
 								icon: 'link'
 							}
 						])
+					}),
+
+					block('home-code', 'code', {
+						eyebrow: t('示例', 'Example'),
+						title: t('从这份配置开始', 'Start with this configuration'),
+						description: t(
+							'复制完整入口文件，接入你的文档内容与路由。\n按需调整语言、主题和资源解析。',
+							'Copy the complete entry file and connect your documents and routes.\nCustomize locales, the theme and resource resolution as needed.'
+						),
+						align: 'center',
+						filename: 'index.html',
+						language: 'html',
+						content: deploymentExample,
+						accent: '',
+						background: '',
+						textColor: '',
+						folds: [
+							{ start: 3, end: 7, label: t('页面基础信息', 'Page metadata') },
+							{ start: 14, end: 38, label: t('语言、路由与资源配置', 'Locale, route and resource settings') }
+						],
+						highlightLines: [12, 41]
 					}),
 
 					block('home-steps', 'steps', {

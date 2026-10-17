@@ -308,6 +308,7 @@ const zhCN = {
 			area: '图片热区',
 			actions: '操作区',
 			hero: '首屏',
+			code: '代码展示',
 			features: '特性',
 			steps: '步骤',
 			faq: '问答',
@@ -317,6 +318,16 @@ const zhCN = {
 			selection: '组合',
 			markdown: 'Markdown',
 			sfc: '远程 SFC'
+		},
+		code: {
+			lines: '{count} 行',
+			copy: '复制完整代码',
+			copyShort: '复制',
+			copied: '已复制',
+			fold: '展开 {count} 行',
+			expand: '展开完整代码',
+			collapse: '收起代码',
+			copyNote: '复制包含全部 {count} 行，无需先展开。'
 		},
 		inspector: {
 			title: '属性',
@@ -411,6 +422,13 @@ const zhCN = {
 			visualLanguage: '代码语言',
 			visualMarkdown: 'Markdown 文档',
 			visualCode: '代码',
+			codeFilename: '文件名',
+			codeContent: '代码内容',
+			codeFolds: '折叠区间',
+			codeStartLine: '开始行',
+			codeEndLine: '结束行',
+			codeHighlightLines: '重点行',
+			codeHighlightHint: '使用逗号分隔行号，例如 12, 41',
 			cardImage: '卡片插图',
 			cardImageHint: '图片路径、URL 或上传；留空使用默认图示',
 			highlights: '数据要点',

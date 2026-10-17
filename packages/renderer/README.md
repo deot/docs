@@ -82,6 +82,7 @@ const document = {
 | `area` | `modules/sortable/area` | 是 | 图片热区 |
 | `actions` | `modules/shared/actions` | 是 | 操作区 |
 | `hero` | `modules/sortable/hero` | 是 | 首屏 |
+| `code` | `modules/sortable/code` | 是 | 代码展示、折叠、复制 |
 | `features` | `modules/sortable/features` | 是 | 特性 |
 | `steps` | `modules/sortable/steps` | 是 | 步骤 |
 | `faq` | `modules/sortable/faq` | 是 | 问答 |
@@ -118,6 +119,28 @@ const document = {
 代码内置 JavaScript、TypeScript、JSON、HTML/XML、CSS 和 Bash 高亮，其他语言按纯文本展示。
 面板类型、标题、内容、代码语言均可在编辑器中修改。文档和代码区域使用 `Scroller` 虚拟滚动条。
 只读页面启用轻动效，遵循系统减少动态效果设置。
+
+`code` 用于独立展示代码，标题与代码始终上下排列，`align` 默认 `center`，也支持 `left` / `right`。
+使用 `filename`、`language`、`content` 设置文件名、语言和完整源码；支持的高亮语言与 Hero 相同，其他语言安全转义为纯文本。
+代码区域使用 `Scroller` 虚拟滚动条，手机端自动换行。复制始终包含完整源码，包括折叠内容。
+
+```json
+{
+  "filename": "index.html",
+  "language": "html",
+  "content": "<main>\n  <h1>Hello, docs!</h1>\n</main>",
+  "accent": "",
+  "background": "",
+  "textColor": "",
+  "folds": [{ "start": 2, "end": 2, "label": "页面内容" }],
+  "highlightLines": [1, 3]
+}
+```
+
+`folds` 的行号从 1 开始，包含首尾两行，区间不能重叠或超出源码范围；默认折叠，可展开查看完整代码。
+`highlightLines` 指定重点行。上述字段均可在编辑器修改。
+`accent` 留空跟随站点主题色，语法高亮、按钮、淡彩底和边框由它派生，深色模式适度提亮以保持可读；
+`background` / `textColor` 留空适配站点明暗主题，也可单独设置代码面板底色与文字色。
 
 与 `@deot/docs-client` 一起使用时，`docs:` 前缀留给 Client 的 `docs:markdown` 与
 `docs:sfc`，不要在 `$docs.renderers` 里注册同名前缀。

@@ -8,6 +8,7 @@ import { SelectionModule } from './shared/selection';
 import { TextModule } from './shared/text';
 import { TitleModule } from './shared/title';
 import { AreaModule } from './sortable/area';
+import { CodeModule } from './sortable/code';
 import { CtaModule } from './sortable/cta';
 import { FaqModule } from './sortable/faq';
 import { FeaturesModule } from './sortable/features';
@@ -29,6 +30,7 @@ export const BuiltinModules = Object.freeze<readonly RendererModuleSource[]>([
 	AreaModule,
 	ActionsModule,
 	HeroModule,
+	CodeModule,
 	FeaturesModule,
 	StepsModule,
 	FaqModule,
