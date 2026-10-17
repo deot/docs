@@ -22,6 +22,21 @@ const createConfig = (overrides: Partial<DocsConfig> = {}): DocsConfig => ({
 });
 
 describe('resource resolver', () => {
+	it('keeps hash routes outside the physical deployment and resource paths', async () => {
+		const previous = `${location.pathname}${location.search}${location.hash}`;
+		window.history.replaceState({}, '', '/docs/en-US/index.html?embed=1#/zh-CN/guide');
+		try {
+			const config = createConfig({ history: 'hash' });
+			expect(getDocsDeploymentBase(config)).toBe(`${location.origin}/docs/en-US/`);
+			expect(await resolveResource(config, { source: './guide.md', type: 'markdown', lang: 'zh-CN' }))
+				.toBe(`${location.origin}/docs/en-US/zh-CN/guide.md`);
+			expect(getDocsBase(createConfig({ history: 'hash', base: 'https://cdn.example.com/docs/' })))
+				.toBe('https://cdn.example.com/docs/');
+		} finally {
+			window.history.replaceState({}, '', previous || '/');
+		}
+	});
+
 	it('resolves logical resources directly from the development workspace', async () => {
 		const config = createConfig({
 			runtime: { mode: 'development', workspace: '/site/' }

@@ -5,6 +5,7 @@ import type {
 	ResourceIdentity
 } from '../types';
 import { isExternalLink } from './link';
+import { getDocsHistoryMode } from './history';
 
 /**
  * 去掉路径两端的斜杠，便于拼接目录前缀。
@@ -38,6 +39,7 @@ const getEnvironmentBase = (config: DocsConfig) => {
 		return document.baseURI || fallback;
 	}
 	if (typeof location !== 'undefined') {
+		if (getDocsHistoryMode(config) === 'hash') return new URL('./', location.href).href;
 		const segments = location.pathname.split('/').filter(Boolean);
 		const configuredLanguages = Object.keys(config.locales);
 		const languages = configuredLanguages.length ? configuredLanguages : ['zh-CN'];
@@ -46,7 +48,7 @@ const getEnvironmentBase = (config: DocsConfig) => {
 			: segments.findIndex(segment => languages.includes(segment));
 		if (routeIndex >= 0) {
 			const deploymentSegments = segments.slice(0, routeIndex);
-			return new URL(`/${deploymentSegments.join('/')}${deploymentSegments.length ? '/' : ''}`, location.origin).href;
+			return new URL(`/${deploymentSegments.join('/')}${deploymentSegments.length ? '/' : ''}`, location.href).href;
 		}
 		return new URL('./', location.href).href;
 	}

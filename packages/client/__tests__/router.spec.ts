@@ -18,6 +18,40 @@ const config: DocsConfig = {
 };
 
 describe('docs router', () => {
+	it('preserves the physical entry and query while routing through the hash', async () => {
+		const previous = `${location.pathname}${location.search}${location.hash}`;
+		window.history.replaceState({}, '', '/docs/en-US/index.html?embed=1#/zh-CN/components/button?tab=api#usage');
+		const router = createDocsRouter({ ...config, history: 'hash', base: 'https://cdn.example.com/resources/' });
+		try {
+			await router.push(router.options.history.location);
+			expect(router.currentRoute.value.fullPath).toBe('/zh-CN/components/button?tab=api#usage');
+			expect(router.resolve('/en-US/index').href).toBe('#/en-US/index');
+			await router.push('/en-US/index?tab=guide#intro');
+			expect(location.pathname).toBe('/docs/en-US/index.html');
+			expect(location.search).toBe('?embed=1');
+			expect(location.hash).toBe('#/en-US/index?tab=guide#intro');
+		} finally {
+			router.options.history.destroy();
+			window.history.replaceState({}, '', previous || '/');
+		}
+	});
+
+	it('uses explicit HTML5 history with the deployment path independently from the resource base', async () => {
+		const previous = `${location.pathname}${location.search}${location.hash}`;
+		window.history.replaceState({}, '', '/docs/site/index.html');
+		const router = createDocsRouter({ ...config, history: 'html5', base: 'https://cdn.example.com/resources/' });
+		try {
+			expect(router.resolve('/en-US/index').href).toBe('/docs/site/en-US/index');
+			await router.push('/en-US/index?tab=guide#intro');
+			expect(location.pathname).toBe('/docs/site/en-US/index');
+			expect(location.search).toBe('?tab=guide');
+			expect(location.hash).toBe('#intro');
+		} finally {
+			router.options.history.destroy();
+			window.history.replaceState({}, '', previous || '/');
+		}
+	});
+
 	it('does not register the former renderer preview routes', () => {
 		const paths = createDocsRouter(config).getRoutes().map(route => route.path);
 		expect(paths).not.toContain('/__docs/renderer');

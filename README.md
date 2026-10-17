@@ -189,6 +189,7 @@ const routes = {
 | --- | --- |
 | `locales` | 文档语言及 Header 展示名称；第一项是默认语言。界面文案可覆盖 `client` / `markdown` / `playground` / `renderer` 命名空间。 |
 | `routes` | 去掉语言前缀后的路由和五插槽配置。 |
+| `history` | 路由模式：`'hash'` 或 `'html5'`。省略时根据当前地址协议选择：HTTP/HTTPS 使用 HTML5，其他协议使用 Hash；显式配置优先。 |
 | `base` | Production 资源基准 URL。 |
 | `namespace` | IndexedDB 缓存隔离标识。 |
 | `modules` | 远程 SFC 裸模块名到 URL 的映射。 |

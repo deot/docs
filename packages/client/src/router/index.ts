@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 import { ResourceSlot } from '../components/layout';
 import DatabasePage from '../pages/database/index.vue';
@@ -16,6 +16,7 @@ import {
 } from '../utils/resolver';
 import { localizePath } from '../utils/route';
 import { isHomeLikeRoute } from '../utils/content';
+import { getDocsHistoryMode } from '../utils/history';
 import type { DocsConfig, DocsRouteConfig } from '../types';
 
 export { getRouteValue, localizePath } from '../utils/route';
@@ -270,9 +271,10 @@ export const createDocsRouter = (
 		});
 	}
 
-	const deploymentBase = getDocsDeploymentBase(config);
-	const historyBase = new URL(deploymentBase).pathname;
-	const router = createRouter({ history: createWebHistory(historyBase), routes });
+	const history = getDocsHistoryMode(config) === 'hash'
+		? createWebHashHistory()
+		: createWebHistory(new URL(getDocsDeploymentBase(config)).pathname);
+	const router = createRouter({ history, routes });
 	router.beforeEach((to) => {
 		if (to.meta.docsPreview || to.meta.docsRawEditor || to.meta.docsMarkdownEditor) {
 			let language = '';

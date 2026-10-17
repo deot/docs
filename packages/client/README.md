@@ -88,7 +88,7 @@ const { app, router, disconnect } = await bootstrap(window.$docs);
 
 `sessionStorage['@deot/docs:redirect']` 是文档站点的深链约定：把待还原的**同站绝对路径**交给 Client，启动后再导航到部署目录内的对应路由。
 
-静态托管通常只会把未知路径交给入口 HTML 或自定义 404 页，不会像 `doc dev` / `doc preview` 那样做 history fallback。任意入口（常见是与 `index.html` 配套的 `404.html`）写入该键后跳转到**站点入口**（部署目录，例如 `'/'` 或 `'/docs/'`）：
+HTML5 路由模式下，静态托管通常只会把未知路径交给入口 HTML 或自定义 404 页，不会像 `doc dev` / `doc preview` 那样做 history fallback。任意入口（常见是与 `index.html` 配套的 `404.html`）写入该键后跳转到**站点入口**（部署目录，例如 `'/'` 或 `'/docs/'`）：
 
 ```html
 <script>
@@ -105,6 +105,7 @@ const { app, router, disconnect } = await bootstrap(window.$docs);
 | --- | --- |
 | `locales` | 语言代码到 `{ label, client?, markdown?, playground?, renderer? }` 的映射；第一项是默认文档语言。 |
 | `routes` | 去掉语言前缀后的路由配置。字符串和函数表示重定向。 |
+| `history` | 可选的 `'hash'` / `'html5'`，显式配置优先。省略时，当前地址协议为 HTTP/HTTPS 使用 HTML5，其他协议（如 `file:`）使用 Hash。Hash 模式保留入口文件及查询参数，路由写在 `#/…` 中；资源基准 URL 仍使用实际部署目录或 `base`。 |
 | `base` | production 资源的基准 URL。可省略；未配置时由客户端在路由启动前根据当前地址推导。 |
 | `namespace` | IndexedDB 缓存隔离标识；未设置时使用规范化后的 `base`。 |
 | `repository` | 当前文档项目的远程仓库页面。Header 在语言与工具之间展示入口，并在新窗口打开；GitHub 地址还会用于生成默认 Footer 的 Issues、需求与 Releases 链接。 |

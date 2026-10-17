@@ -319,6 +319,11 @@ export interface DocsConfig {
 	 */
 	routes: Record<string, DocsRouteConfig>;
 	/**
+	 * 路由模式。未配置时，HTTP/HTTPS 使用 html5，其他协议使用 hash；
+	 * 显式配置时始终使用指定模式。
+	 */
+	history?: 'hash' | 'html5';
+	/**
 	 * 站点 public base，与 Vite `base` 对齐。
 	 * 可省略；未配置时由客户端在路由启动前根据当前地址推导。
 	 */
