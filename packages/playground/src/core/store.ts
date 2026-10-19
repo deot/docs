@@ -3,22 +3,20 @@ import { File as ReplFile, useStore } from '@vue/repl';
 import type { SandboxProps } from '@vue/repl';
 import {
 	createBuiltinImports,
-	createBuiltinStyles,
 	createCdnResolver
 } from '../cdn';
 import { NEW_SFC_CODE } from '../constants';
 import {
 	filterSafeHrefs,
 	getPlaygroundImportMapOverrides,
-	getPlaygroundSiteModules,
-	getPlaygroundSiteStyles,
-	getPlaygroundStyleOverrides
+	getPlaygroundSiteModules
 } from '../import-map';
 import type { PlaygroundFiles, PlaygroundOptions } from '../types';
 import { SANDBOX_RUNTIME_ERROR_CAPTURE_HTML } from './runtime/error-guard';
 import { PREVIEW_SERVICE_IMPORT_CODE, PREVIEW_SERVICE_USE_CODE } from '../preview-service';
 import { bindPlaygroundScss, whenSassReady } from './scss';
 import { bindReplModules, resolveReplImports } from './repl-modules';
+import { createRuntimeStyleUrls } from './styles';
 import { collectBareSpecifiers } from './runtime/local/compile/files';
 import {
 	PREVIEW_SCROLL_RESET_CODE,
@@ -73,12 +71,7 @@ export const createRuntimePreviewOptions = (
 	options: CreateRuntimePreviewOptions = {}
 ): NonNullable<SandboxProps['previewOptions']> => {
 	const previewScroller = options.previewScroller === true;
-	const resolve = createCdnResolver(cdnURL);
-	const hrefs = Object.values({
-		...createBuiltinStyles(cdnURL),
-		...getPlaygroundSiteStyles(),
-		...getPlaygroundStyleOverrides()
-	}).map(resolve);
+	const hrefs = createRuntimeStyleUrls(cdnURL);
 	const styleBlocks = [
 		`html,body{height:auto;min-height:0;background:${PLAYGROUND_RUNTIME_CANVAS_BACKGROUND}}`,
 		'body{color:var(--vc-foreground-color,#080f20)}',

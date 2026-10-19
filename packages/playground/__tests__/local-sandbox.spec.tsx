@@ -9,7 +9,13 @@ import { createLocalPlayground } from '../src/core/runtime/local/playground';
 import { preloadLocalPlayground } from './preload-local';
 import { clearRemoteModuleCache } from '../src/core/runtime/local/remote';
 import { createBuiltinImports } from '../src/cdn';
-import { applyPlaygroundImportMapOverride, clearPlaygroundMaps, setPlaygroundSiteModules } from '../src/import-map';
+import {
+	applyPlaygroundImportMapOverride,
+	applyPlaygroundStyleOverride,
+	clearPlaygroundMaps,
+	setPlaygroundSiteModules,
+	setPlaygroundSiteStyles
+} from '../src/import-map';
 
 const require = createRequire(import.meta.url);
 const previewVueSource = readFileSync(require.resolve('vue/dist/vue.runtime.esm-browser.prod.js'), 'utf8');
@@ -65,6 +71,54 @@ const label = playground && version ? 'ready' : 'missing'
 		await nextTick();
 		expect(document.querySelector('.local-result')).toBeNull();
 	}, 15_000);
+
+	it('shares configured styles across previews and refreshes without removing host styles', async () => {
+		setPlaygroundSiteStyles({
+			'@deot/style/dist/index.normalize-only.css': '/local/normalize.css',
+			'@deot/style/dist/index.css': '/local/style.css',
+			'custom': '/host.css'
+		});
+		applyPlaygroundStyleOverride('@deot/style/dist/index.css', '/override.css');
+		const hostStyle = document.createElement('link');
+		hostStyle.rel = 'stylesheet';
+		hostStyle.href = '/host.css';
+		document.head.appendChild(hostStyle);
+		const wrappers = [0, 1].map(() => mount(LocalSandbox, {
+			props: {
+				files: { 'App.vue': '<template><p>styled</p></template><style>p{color:red}</style>' },
+				entry: 'App.vue',
+				options: {}
+			},
+			attachTo: document.body
+		}));
+		const links = () => [...document.head.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')];
+		try {
+			await vi.waitFor(() => wrappers.forEach(wrapper => expect(wrapper.text()).toBe('styled')));
+			expect(links().map(link => link.href)).toEqual([
+				'/host.css',
+				'/local/normalize.css',
+				'https://cdn.jsdelivr.net/npm/@deot/vc-components/dist/index.style.css',
+				'/override.css'
+			].map(url => new URL(url, document.baseURI).href));
+			const stylesheet = links().find(link => link.href === new URL('/override.css', document.baseURI).href)!;
+			const compiledStyle = document.head.querySelector('style[data-playground-id]')!;
+			expect(stylesheet.compareDocumentPosition(compiledStyle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+			(wrappers[0].vm as unknown as { refresh: () => void }).refresh();
+			await vi.waitFor(() => expect(wrappers[0].text()).toBe('styled'));
+			expect(links()).toHaveLength(4);
+			expect(links()).toContain(stylesheet);
+			await wrappers[0].setProps({ options: { cdnURL: 'https://cdn.example.test/npm' } });
+			await vi.waitFor(() => expect(wrappers[0].text()).toBe('styled'));
+			expect(links()).toHaveLength(5);
+			wrappers.shift()!.unmount();
+			expect(stylesheet.isConnected).toBe(true);
+			expect(links()).toHaveLength(4);
+		} finally {
+			wrappers.forEach(wrapper => wrapper.unmount());
+			expect(links()).toEqual([hostStyle]);
+			hostStyle.remove();
+		}
+	});
 
 	it('does not expand preview height when docs:playground.run is called', async () => {
 		const messages: unknown[] = [];
@@ -212,6 +266,7 @@ import { label, state } from 'lodash-es';
 	});
 
 	it('reports compile failures and DocsLink navigation', async () => {
+		setPlaygroundSiteStyles({ custom: '/compile-error.css' });
 		const errors: string[] = [];
 		const wrapper = mount(LocalSandbox, {
 			props: {
@@ -225,6 +280,8 @@ import { label, state } from 'lodash-es';
 			attachTo: document.body
 		});
 		await vi.waitFor(() => expect(errors.join('\n')).toContain('entry 不在 files'));
+		const stylesheet = document.querySelector('link[href$="/compile-error.css"]')!;
+		expect(stylesheet).toBeTruthy();
 		await wrapper.setProps({
 			files: {
 				'App.vue': '<template><DocsLink to="/guide">go</DocsLink></template>'
@@ -242,10 +299,13 @@ import { label, state } from 'lodash-es';
 		});
 		await wrapper.get('a').trigger('click');
 		await expect(navigated).resolves.toMatchObject({ action: 'docs:navigate', to: '/guide' });
+		expect(stylesheet.isConnected).toBe(true);
 		wrapper.unmount();
+		expect(stylesheet.isConnected).toBe(false);
 	});
 
 	it('renders the same files inside the standalone preview', async () => {
+		setPlaygroundSiteStyles({ custom: '/popup.css' });
 		const navigate = vi.fn();
 		const viewport = vi.fn();
 		const wrapper = mount(PopupPreview, {
@@ -264,6 +324,7 @@ import { label, state } from 'lodash-es';
 			attachTo: document.body
 		});
 		await vi.waitFor(() => expect(wrapper.get('.popup-local').text()).toBe('popup'));
+		expect(document.querySelectorAll('link[href$="/popup.css"]')).toHaveLength(1);
 		await wrapper.get('[data-action="refresh"]').trigger('click');
 		await vi.waitFor(() => expect(wrapper.get('.popup-local').text()).toBe('popup'));
 		const editor = document.createElement('div');
@@ -284,6 +345,7 @@ import { label, state } from 'lodash-es';
 		await wrapper.setProps({ viewport: 375 });
 		await wrapper.get('[data-action="close-popup"]').trigger('click');
 		wrapper.unmount();
+		expect(document.querySelector('link[href$="/popup.css"]')).toBeNull();
 		editor.remove();
 	});
 

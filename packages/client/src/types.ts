@@ -349,6 +349,7 @@ export interface DocsConfig {
 	modules?: Record<string, string>;
 	/**
 	 * Playground 预览 CSS 的站点默认地址。同名 key 覆盖内置样式表，也可追加新表。
+	 * local 为 true 时加载到宿主页面，否则加载到预览 iframe；管理页覆盖优先。
 	 */
 	styles?: Record<string, string>;
 	/**

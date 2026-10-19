@@ -35,6 +35,7 @@ import type {
 } from '../../../types';
 import { createLocalPlayground } from './playground';
 import { createRuntimeImports, createRuntimeImportOverrides } from '../../store';
+import { acquireRuntimeStyles, createRuntimeStyleUrls } from '../../styles';
 import { PREVIEW_SCROLL_CONTENT_CLASS } from '../../preview-scroll';
 import {
 	installLocalBridge,
@@ -74,6 +75,7 @@ const runtimeError = ref('');
 const messageSource = shallowRef<Window | null>(null);
 let port: LocalPreviewPort | null = null;
 let previewApp: App<Element> | null = null;
+let releaseStyles: (() => void) | undefined;
 let version = 0;
 let pendingMount: {
 	component: Component;
@@ -190,6 +192,9 @@ const run = async () => {
 	publishError();
 	destroyPreview();
 	try {
+		const release = acquireRuntimeStyles(createRuntimeStyleUrls(props.options.cdnURL));
+		releaseStyles?.();
+		releaseStyles = release;
 		const { compilePlayground } = await import('./compile');
 		/* istanbul ignore if -- 并发编译时只保留最后一次 */
 		if (current !== version) return;
@@ -282,6 +287,7 @@ onBeforeUnmount(() => {
 	version += 1;
 	pendingMount = null;
 	destroyPreview();
+	releaseStyles?.();
 });
 
 defineExpose({

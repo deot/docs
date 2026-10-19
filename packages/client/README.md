@@ -111,7 +111,7 @@ HTML5 路由模式下，静态托管通常只会把未知路径交给入口 HTML
 | `namespace` | IndexedDB 缓存隔离标识；未设置时使用规范化后的 `base`。 |
 | `repository` | 当前文档项目的远程仓库页面。Header 在语言与工具之间展示入口，并在新窗口打开；GitHub 地址还会用于生成默认 Footer 的 Issues、需求与 Releases 链接。 |
 | `modules` | 站点级裸模块名到 URL 的映射，对所有 Playground（含 Markdown）生效；各预览可通过实例 `options.builtinImportMap.imports` 覆盖，优先级高于站点配置和管理页覆盖；远程 SFC 也可通过实例 `builtinImportMap` 覆盖。`doc dev` 会把工作区源码编到 `/__docs/module/<包名>`；development 下可以把同名 key 指到该地址，直接打开 HTML 时不要使用它。 |
-| `styles` | 站点级预览 CSS 默认地址；同名 key 覆盖内置样式表，也可追加。管理页 `/:lang/__docs/playground-resource` 与 `modules` 同一张表管理。 |
+| `styles` | 站点级预览 CSS 默认地址；同名 key 覆盖内置样式表，也可追加。`local: true` 加载到宿主页面，`local: false` 加载到 iframe。管理页 `/:lang/__docs/playground-resource` 与 `modules` 同一张表管理，管理页覆盖优先。 |
 | `prefetch` | 空闲预加载开关或 `{ batchSize, idleTimeout }` 配置，默认开启。 |
 | `theme` | 主题开关或 `{ default: 'system' \| 'light' \| 'dark' }`，默认跟随系统。 |
 | `layout.header` | 内置 Header 配置；`brand.logo`、`brand.label` 和 `brand.value` 均支持固定值或按语言配置。文案未配置时回退到 `namespace` 和内置翻译，链接未配置时指向当前语言首页。站内链接自动补语言前缀，外链在新窗口打开。`nav` 是搜索后的横向导航，未配置时不渲染；条目复用 Sidebar 的 `{ label, value?, children? }` 结构，支持固定数组或按语言配置，有 `children` 的项以下拉展示。 |
@@ -122,6 +122,49 @@ HTML5 路由模式下，静态托管通常只会把未知路径交给入口 HTML
 | `runtime.cdn` | HTML 启动入口选定的 npm CDN 前缀；launch 缺省使用 jsDelivr。 |
 | `resolve.cdn` | 同步处理内置 CDN 转换后的 `{ url }`，空结果保留转换后的地址。 |
 | `resolve.link` | 将 Markdown 原始链接同步转换为外链或包含语言的站内 Router 地址。 |
+
+`modules` 为 Playground 的实际导入提供地址映射，`local: true` 与 `local: false` 都按「内置默认 → `$docs.modules` → 管理页覆盖 → 实例 `options.builtinImportMap.imports`」合并。远程 SFC 的实例配置使用 `builtinImportMap`。未显式配置的模块先使用内置映射；其余 npm 包名按默认 CDN 的 ESM 规则补齐地址，无须逐个登记。local 模式默认复用宿主的 Vue 和 vue-router，显式覆盖时才加载对应地址。
+
+`doc dev` 提供的 `/__docs/module/<包名>` 仅用于开发，要求工作区中存在可编译的对应源码包；preview 和 build 不提供该地址。例如，在本仓库开发时使用本地 `@deot/docs-locale`：
+
+```js
+if (window.__DOCS_RUNTIME__?.mode === 'development') {
+	window.$docs.modules = {
+		'@deot/docs-locale': '/__docs/module/@deot/docs-locale'
+	};
+}
+```
+
+| 配置方式 | 开发环境 | 生产环境 |
+| --- | --- | --- |
+| 在 development 条件内把真实 npm 包名映射到本地源码 | 使用配置的本地模块。 | 该分支不执行，使用内置映射或按包名补齐 CDN ESM 地址；公共 CDN 能提供该模块时，无须另配。 |
+| 在 development 条件内映射自定义别名、私有模块等 | 使用配置的本地模块。 | 需要显式声明生产可访问的 ESM 地址；不会根据开发地址推导线上地址或真实包名。 |
+| 不加 development 判断，直接配置本地路径 | 使用配置的路径。 | 仍使用同一路径，不会自动转换成 CDN 地址；需要按环境配置，或保证生产也能访问该路径。 |
+
+显式模块地址加载失败会报错，不会自动退回 CDN。`modules` 的自动补齐仅解决 JS 模块地址，不会推断其依赖的自定义 CSS；样式仍按下述 `styles` 规则配置。
+
+`styles` 内置 `@deot/style/dist/index.normalize-only.css`、`@deot/vc-components/dist/index.style.css` 和 `@deot/style/dist/index.css`，未覆盖时使用 CDN。开发时可仅覆盖本地地址：
+
+```js
+if (window.__DOCS_RUNTIME__?.mode === 'development') {
+	window.$docs.styles = {
+		'@deot/style/dist/index.normalize-only.css': '/packages/index/dist/index.normalize-only.css',
+		'@deot/style/dist/index.css': '/packages/index/dist/index.css'
+	};
+}
+```
+
+上述配置只在 development 执行，生产环境无须再声明这两张内置 CSS。不同写法的行为如下：
+
+| 配置方式 | 开发环境 | 生产环境 |
+| --- | --- | --- |
+| 在 development 条件内覆盖内置 CSS 的同名 key | 使用配置的本地 CSS。 | 该分支不执行，自动使用内置 CDN，无须另配。 |
+| 在 development 条件内添加非内置的自定义 CSS | 使用配置的本地 CSS。 | 不会自动加载；需要在生产配置中显式声明可访问的地址。 |
+| 不加 development 判断，直接配置本地路径 | 使用配置的路径。 | 仍使用同一路径，不会自动转换成线上地址；应按环境配置地址，或保证生产也能访问该路径。 |
+
+`styles` 只自动补齐内置样式表，不会根据模块导入推断自定义 CSS。管理页已保存的 CSS 覆盖优先于上述默认配置。
+
+`local: true` 的 CSS 作用于整个宿主页面，也可能影响其他示例；相同 URL 的链接在多个实例之间共享，卸载时只清理已无引用且由 Playground 创建的链接。`local: false` 的 CSS 只加载到对应 iframe。
 
 每个对象路由支持 `header`、`sidebar`、`content`、`footer` 和 `extra` 五个插槽：
 

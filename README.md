@@ -192,7 +192,7 @@ const routes = {
 | `history` | 路由模式：`'hash'` 或 `'html5'`。省略时根据当前地址协议选择：HTTP/HTTPS 使用 HTML5，其他协议使用 Hash；显式配置优先。 |
 | `base` | Production 资源基准 URL。 |
 | `namespace` | IndexedDB 缓存隔离标识。 |
-| `modules` | 远程 SFC 裸模块名到 URL 的映射。 |
+| `modules` | 所有 Playground（含远程 SFC）的裸模块名到 URL 的默认映射；未配置的模块使用内置映射或按 npm 包名补齐 CDN ESM 地址。 |
 | `styles` | Playground 预览 CSS 的站点默认地址；同名 key 覆盖内置样式表。 |
 | `theme` | 主题开关或默认主题配置。 |
 | `prefetch` | 空闲预加载开关或批次配置。 |
@@ -202,6 +202,10 @@ const routes = {
 | `runtime.cdn` | HTML 启动入口选定的 npm CDN 前缀；launch 缺省使用 jsDelivr。 |
 | `resolve.cdn` | 同步处理内置 CDN 转换后的 `{ url }`，空结果保留转换后的地址。 |
 | `resolve.link` | 将 Markdown 链接转换为外链或本地化 Router 地址。 |
+
+`$docs.modules` 可在 development 条件内把真实 npm 包名指向本地源码，生产不执行该分支时使用内置映射或默认 CDN ESM 地址，前提是公共 CDN 能提供对应模块。自定义别名、私有模块等需要显式配置生产可访问的 ESM 地址。不加环境判断的本地路径在生产仍按原路径加载，不会自动转换成 CDN 地址，加载失败也不会自动回退；`/__docs/module/<包名>` 仅在 `doc dev` 中提供。local 模式默认复用宿主 Vue 和 vue-router。
+
+`$docs.styles` 在 development 条件内覆盖内置 CSS 时，开发使用本地地址，生产自动回退内置 CDN，无须另配。非内置的自定义 CSS 需要显式声明生产地址，否则不会加载。不加 development 判断的本地路径在生产仍按原路径加载，不会自动转换为线上地址；应按环境配置，或保证生产也能访问该路径。两项配置的示例与行为对照见 [Client 配置文档](./packages/client/README.md)。
 
 完整 Client 配置、Gateway API 和资源状态模型请查看 [`@deot/docs-client`](packages/client/README.md)。
 

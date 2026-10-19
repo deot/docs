@@ -64,7 +64,7 @@ export const createBuiltinImports = (
 	'lodash-es': jsdelivrEsmURL('lodash-es/+esm')
 });
 
-// 预览 iframe 默认注入的样式表（key 为资源路径，value 为完整 CDN URL）。
+// 预览默认注入的样式表（key 为资源路径，value 为完整 CDN URL）。
 export const createBuiltinStyles = (
 	cdnURL = DEFAULT_CDN_URL
 ): Record<string, string> => Object.fromEntries(

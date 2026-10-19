@@ -152,6 +152,24 @@ const handleMessage = async () => {
 
 站点级 Playground 模块与预览 CSS 默认由 Client 的 `$docs.modules` 与 `$docs.styles` 管理（见 [`@deot/docs-client`](../client/README.md)）。模块地址优先级由低到高为：内置默认 → `$docs.modules` → 管理页覆盖 → 实例 `options.builtinImportMap.imports`。实例只覆盖声明的模块，其余继承默认配置；也可通过 `options.cdnURL` 调整默认 CDN。
 
+`modules` 未配置时，实际导入的模块使用内置映射或按 npm 包名补齐 CDN ESM 地址；local 模式默认复用宿主的 Vue 和 vue-router。开发与生产的配置规则如下：
+
+- 在 development 条件内将真实 npm 包名指向本地源码：开发使用本地模块；生产不执行该分支，使用内置映射或默认 CDN ESM 地址，前提是公共 CDN 能提供该模块。
+- 自定义别名、私有模块等无法由公共 CDN 按导入名解析的模块：需要显式提供生产可访问的 ESM 地址，不会根据开发地址推导线上地址或真实包名。
+- 不加 development 判断，直接配置本地路径：生产仍使用同一路径，不会自动转换成 CDN 地址。`/__docs/module/<包名>` 仅由 `doc dev` 提供，preview 和 build 不提供该地址。
+
+以上规则适用于 `local: true` 与 `local: false`；显式模块地址加载失败会直接报错，不会回退 CDN。配置示例与行为对照见 [Client 配置文档](../client/README.md)。模块地址补齐不会自动加载对应包的自定义 CSS。
+
+预览 CSS 按「内置样式表 → `$docs.styles` → 管理页覆盖」合并，同名 key 覆盖，最终 URL 去重。`local: false` 加载到预览 iframe；`local: true` 加载到宿主页面，会影响宿主及其他示例。local 实例共享相同 URL 的 stylesheet，最后一个使用者卸载时清理自身创建的链接，保留宿主已有链接；示例编译产生的 CSS 单独注入和清理。
+
+内置样式表为 `@deot/style/dist/index.normalize-only.css`、`@deot/vc-components/dist/index.style.css` 和 `@deot/style/dist/index.css`。开发与生产的配置规则如下：
+
+- 在 development 条件内覆盖内置样式表：开发使用本地 CSS；生产不执行该分支，自动使用内置 CDN，无须另配。
+- 在 development 条件内添加非内置的自定义 CSS：开发使用本地 CSS；生产需要显式配置可访问的地址，否则不会加载。不会根据模块导入自动推断自定义 CSS。
+- 不加 development 判断，直接配置本地路径：生产仍使用同一路径，不会自动转换成线上地址；需要按环境配置地址，或保证生产也能访问该路径。
+
+配置示例见 [`$docs.styles` 的开发与生产配置](../client/README.md)。管理页已保存的 CSS 覆盖优先于站点默认配置。
+
 ## 运行环境
 
 - iframe 运行时通过公共 CDN 加载 Vue 和默认 import map 中的依赖；local 运行时默认复用宿主 Vue 和 vue-router，业务包通过 ESM 加载，需要网络访问或配置可访问的本地 ESM 地址。
