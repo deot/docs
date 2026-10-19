@@ -1,5 +1,13 @@
 # @deot/docs-theme ChangeLog
 
+## v1.2.4
+
+_2026-10-19_
+
+### Features
+
+- feat: add site colors and unify semantic tokens ([20e35f7](https://github.com/deot/docs/commit/20e35f75f2812e0188beb35f39c923e6e3c3cef0))
+
 ## v1.2.0
 
 _2026-10-16_
