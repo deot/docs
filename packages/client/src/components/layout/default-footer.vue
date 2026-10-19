@@ -2,6 +2,7 @@
 	<footer
 		v-if="footer !== false"
 		class="docs-footer"
+		:class="{ 'docs-footer--no-sidebar': !hasSidebar }"
 		:data-content-width="contentWidth"
 	>
 		<div v-if="groups.length" class="docs-footer__inner">
@@ -69,9 +70,10 @@ const route = useRoute();
 const config = getDocsConfig();
 const footer = config.layout?.footer;
 const brandOptions = config.layout?.header?.brand;
-/** Home / no-sidebar pages stay on the wide column; docs with a sidebar follow the toggle. */
+const hasSidebar = computed(() => Boolean(sidebarItems.value?.length));
+/** Pages without a sidebar stay on the wide column; pages with one follow the toggle. */
 const contentWidth = computed(() => (
-	sidebarItems.value?.length ? ContentWidth.current.value : 'wide'
+	hasSidebar.value ? ContentWidth.current.value : 'wide'
 ));
 
 const normalizeRepository = (value?: string) => {
@@ -258,6 +260,30 @@ const toPath = (value: string) => {
 		.docs-footer__inner,
 		.docs-footer__bar-inner {
 			max-width: 1200px;
+		}
+	}
+
+	@include modifier(no-sidebar) {
+		&:has(.docs-footer__content),
+		.docs-footer__bar {
+			border-image: linear-gradient(varfix(pattern-fg) 0 0) 1;
+			border-image-outset: 0 100vw;
+		}
+
+		&[data-content-width] {
+			.docs-footer__inner,
+			.docs-footer__bar-inner {
+				max-width: none;
+			}
+
+			.docs-footer__inner {
+				border-inline: 0;
+			}
+
+			.docs-footer__group,
+			.docs-footer__bar-inner {
+				padding-inline: clamp(24px, 3vw, 48px);
+			}
 		}
 	}
 

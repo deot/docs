@@ -303,23 +303,6 @@ a {
 	}
 
 	@include modifier(home) {
-		.docs-footer:has(.docs-footer__content),
-		.docs-footer__bar {
-			border-image: linear-gradient(varfix(pattern-fg) 0 0) 1;
-			border-image-outset: 0 100vw;
-		}
-
-		.docs-footer[data-content-width] {
-			.docs-footer__inner,
-			.docs-footer__bar-inner {
-				max-width: none;
-			}
-
-			.docs-footer__inner {
-				border-inline: 0;
-			}
-		}
-
 		@include element(main) {
 			padding: 0;
 		}

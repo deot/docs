@@ -658,6 +658,22 @@ describe('client layout components', () => {
 		});
 	});
 
+	it('switches the shared footer style by sidebar presence regardless of the home route', async () => {
+		const { wrapper } = mountFooter();
+		expect(wrapper.find('.docs-footer').classes()).toContain('docs-footer--no-sidebar');
+		expect(wrapper.findAll('.docs-footer')).toHaveLength(1);
+		setSidebarItems([{ label: 'Guide', value: '/packages/guide' }]);
+		await flushPromises();
+		expect(wrapper.find('.docs-footer').classes()).not.toContain('docs-footer--no-sidebar');
+		route.meta = { docsHome: true };
+		await flushPromises();
+		expect(wrapper.find('.docs-footer').classes()).not.toContain('docs-footer--no-sidebar');
+		setSidebarItems([]);
+		await flushPromises();
+		expect(wrapper.find('.docs-footer').classes()).toContain('docs-footer--no-sidebar');
+		expect(wrapper.findAll('.docs-footer__group')).toHaveLength(4);
+	});
+
 	it('aligns the site footer inner width with the markdown content width', async () => {
 		setSidebarItems([
 			{ label: 'Guide', value: '/packages/guide' }
