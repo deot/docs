@@ -14,6 +14,7 @@ import { Settings, ThemeRuntime, ContentWidthRuntime } from './modules/settings'
 import { createDocsRouter } from './router';
 import { getDocsDeploymentBase, getDefaultLanguage } from './utils/resolver';
 import { initializeDocsRuntime } from './utils/runtime';
+import { syncDocumentFavicon } from './utils/favicon';
 import type { DocsConfig } from './types';
 
 export * from './utils/resolver';
@@ -98,6 +99,11 @@ export const bootstrap = async (config?: DocsConfig) => {
 	const stopDocumentLanguage = watch(locale, (value) => {
 		document.documentElement.lang = value.name;
 	}, { immediate: true });
+	const stopDocumentFavicon = watch(
+		() => String(router.currentRoute.value.params.lang || getDefaultLanguage(config)),
+		lang => syncDocumentFavicon(config, lang),
+		{ immediate: true }
+	);
 	app.mount('#app');
 	const disconnectEvents = connectResourceEvents();
 	let disconnected = false;
@@ -133,6 +139,7 @@ export const bootstrap = async (config?: DocsConfig) => {
 		stopPrefetchRoutes();
 		stopPrefetch?.();
 		stopDocumentLanguage();
+		stopDocumentFavicon();
 		stopPlaygroundResource();
 		stopContentWidth();
 		stopTheme();

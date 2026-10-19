@@ -329,6 +329,11 @@ export interface DocsConfig {
 	 */
 	base?: string;
 	/**
+	 * 站点图标地址。缺省时使用当前语言的 layout.header.brand.logo。
+	 * 页面已有 favicon 时不接管；否则自动设置 link 的 rel 和 type。
+	 */
+	favicon?: string;
+	/**
 	 * 当前文档项目的远程仓库页面。Header 据此展示仓库入口；
 	 * GitHub 地址还会用于生成默认 Footer 反馈链接。
 	 */

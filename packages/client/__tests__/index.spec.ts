@@ -116,16 +116,18 @@ describe('client entry', () => {
 		expect(client).not.toHaveProperty('Resource');
 		expect(startPlaygroundResource).toHaveBeenCalled();
 
-		const explicit = createDocsConfig({ locales: { en: { label: 'English' } } });
+		const explicit = createDocsConfig({ locales: { en: { label: 'English' } }, favicon: '/favicon.svg' });
 		router.currentRoute.value.params.lang = 'en';
 		const instance = await client.bootstrap(explicit);
 		expect(window.$docs).toBe(explicit);
 		expect(explicit.runtime).toEqual({ mode: 'development', workspace: '/site/' });
 		await vi.waitFor(() => expect(startIdlePrefetch).toHaveBeenCalledWith(explicit));
 		expect(document.documentElement.lang).toBe('en-US');
+		expect(document.head.querySelector('link[rel="icon"]')?.getAttribute('href')).toBe('/favicon.svg');
 		expect(router.push).not.toHaveBeenCalled();
 		instance.disconnect();
 		instance.disconnect();
+		document.head.querySelector('link[rel="icon"]')?.remove();
 		expect(disconnectEvents).toHaveBeenCalled();
 		expect(stopLanguagePersistence).toHaveBeenCalledTimes(2);
 		expect(stopPrefetch).toHaveBeenCalled();

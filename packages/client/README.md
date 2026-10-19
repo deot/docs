@@ -107,6 +107,7 @@ HTML5 路由模式下，静态托管通常只会把未知路径交给入口 HTML
 | `routes` | 去掉语言前缀后的路由配置。字符串和函数表示重定向。 |
 | `history` | 可选的 `'hash'` / `'html5'`，显式配置优先。省略时，当前地址协议为 HTTP/HTTPS 使用 HTML5，其他协议（如 `file:`）使用 Hash。Hash 模式保留入口文件及查询参数，路由写在 `#/…` 中；资源基准 URL 仍使用实际部署目录或 `base`。 |
 | `base` | production 资源的基准 URL。可省略；未配置时由客户端在路由启动前根据当前地址推导。 |
+| `favicon` | 页面已有 favicon 链接时保留原配置，不修改或额外注入。否则使用此站点图标 URL；未配置时使用 `layout.header.brand.logo`，按当前语言选择并回退到站点默认语言。Client 自动设置 `link rel="icon"`，从 Data URL 的 MIME 或文件扩展名识别 `type`（SVG、ICO、PNG、JPEG、GIF、WebP、AVIF、BMP）；无法识别时省略 `type`，由浏览器判断。 |
 | `namespace` | IndexedDB 缓存隔离标识；未设置时使用规范化后的 `base`。 |
 | `repository` | 当前文档项目的远程仓库页面。Header 在语言与工具之间展示入口，并在新窗口打开；GitHub 地址还会用于生成默认 Footer 的 Issues、需求与 Releases 链接。 |
 | `modules` | 站点级裸模块名到 URL 的映射，对所有 Playground（含 Markdown）生效；各预览可通过实例 `options.builtinImportMap.imports` 覆盖，优先级高于站点配置和管理页覆盖；远程 SFC 也可通过实例 `builtinImportMap` 覆盖。`doc dev` 会把工作区源码编到 `/__docs/module/<包名>`；development 下可以把同名 key 指到该地址，直接打开 HTML 时不要使用它。 |
