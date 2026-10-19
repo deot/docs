@@ -1,5 +1,13 @@
 # @deot/docs-client ChangeLog
 
+## v1.2.5
+
+_2026-10-19_
+
+### Bugfixes
+
+- fix(renderer): preserve multiline text line breaks ([91abe08](https://github.com/deot/docs/commit/91abe08a74308016c313940f2f8c3ca632e67b43))
+
 ## v1.2.4
 
 _2026-10-19_

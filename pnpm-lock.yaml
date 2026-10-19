@@ -52,7 +52,7 @@ importers:
         specifier: ^1.2.4
         version: link:../playground
       '@deot/docs-renderer':
-        specifier: ^1.2.4
+        specifier: ^1.2.5
         version: link:../renderer
       '@deot/docs-theme':
         specifier: ^1.2.4
@@ -131,7 +131,7 @@ importers:
         specifier: ^1.2.4
         version: link:../cli
       '@deot/docs-client':
-        specifier: ^1.2.4
+        specifier: ^1.2.5
         version: link:../client
       '@deot/docs-dever':
         specifier: ^1.2.4
@@ -149,7 +149,7 @@ importers:
         specifier: ^1.2.4
         version: link:../playground
       '@deot/docs-renderer':
-        specifier: ^1.2.4
+        specifier: ^1.2.5
         version: link:../renderer
       '@deot/docs-theme':
         specifier: ^1.2.4
