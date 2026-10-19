@@ -199,6 +199,7 @@ const rootStyle = computed(() => rendererSortableSectionStyle(String(value.value
 		font-size: 13px;
 		line-height: 1.95;
 		color: var(--docs-renderer-muted);
+		white-space: pre-line;
 		text-wrap: pretty;
 	}
 

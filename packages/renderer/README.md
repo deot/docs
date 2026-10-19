@@ -103,6 +103,8 @@ const document = {
 
 Hero、CTA、Features、Steps 新建及新增条目时，强调色默认留空以继承站点主题。优先级为条目/按钮显式颜色 → block 强调色 → 站点语义色 → 内置值；已有文档的显式颜色保留。`accent` 对应 `--docs-color-primary`，`accentSecondary` 对应 `--docs-color-secondary`；实心按钮文字默认使用 `--docs-foreground-color-on-primary`，仍可通过 `textColor` 覆盖。站点配置方式及 CSS / SCSS 变量迁移表见 [Theme 文档](../theme/README.md)。
 
+Hero、CTA、Features、Steps、FAQ、Code 的 `description`、Features / Steps 条目的 `description`、FAQ 条目的 `answer`，以及 Text 模块的 `text`，均按纯文本渲染并保留 `\n` 换行，同时支持自动折行；不解析 `<br>` 等 HTML 标签。
+
 `hero` 默认左侧文字、右侧文档面板；居中或居右时上下排列。
 保留 `showVisual` 开关，并支持可选的 `visual` 配置（旧数据使用默认文档）：
 

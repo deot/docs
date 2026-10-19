@@ -173,10 +173,6 @@ onBeforeUnmount(() => clearTimeout(copyTimer));
 		--docs-renderer-code-height: 540px;
 	}
 
-	&__lead {
-		white-space: pre-line;
-	}
-
 	&__window {
 		max-width: 1200px;
 		margin-inline: auto;

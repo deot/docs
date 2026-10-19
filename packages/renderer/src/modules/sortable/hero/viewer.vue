@@ -169,6 +169,7 @@ const actionsNode = computed<RendererSortableNode>(() => ({
 		font-size: 15px;
 		line-height: 1.9;
 		color: var(--docs-renderer-muted);
+		white-space: pre-line;
 		text-wrap: balance;
 	}
 

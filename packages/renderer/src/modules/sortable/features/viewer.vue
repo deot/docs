@@ -180,6 +180,7 @@ const imageNode = (item: Record<string, unknown>, index: number): RendererSortab
 		font-size: 13px;
 		line-height: 1.85;
 		color: var(--docs-renderer-muted);
+		white-space: pre-line;
 		text-wrap: pretty;
 	}
 

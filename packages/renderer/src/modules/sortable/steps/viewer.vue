@@ -212,6 +212,7 @@ const iconOf = (item: Record<string, unknown>, index: number) => (
 		font-size: 13px;
 		line-height: 1.95;
 		color: var(--docs-renderer-muted);
+		white-space: pre-line;
 		text-wrap: pretty;
 	}
 
