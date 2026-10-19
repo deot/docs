@@ -1,5 +1,21 @@
 # @deot/docs-client ChangeLog
 
+## v1.2.2
+
+_2026-10-19_
+
+### Bugfixes
+
+- fix: apply site styles to local previews ([a641db4](https://github.com/deot/docs/commit/a641db467e1cbb7c7ae01c980005b2ff64f6312b))
+
+### Features
+
+- feat: support configurable favicon with brand logo fallback ([fd6e84c](https://github.com/deot/docs/commit/fd6e84c75d420fe2edba5a9347379663fc78f8e9))
+
+### Updates
+
+- style: select shared footer styles by sidebar presence ([689c812](https://github.com/deot/docs/commit/689c8126c55c57e16cbd74673690693884ae581e))
+
 ## v1.2.1
 
 _2026-10-17_

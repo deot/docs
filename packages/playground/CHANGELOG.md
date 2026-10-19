@@ -1,5 +1,13 @@
 # @deot/docs-playground ChangeLog
 
+## v1.2.2
+
+_2026-10-19_
+
+### Bugfixes
+
+- fix: apply site styles to local previews ([a641db4](https://github.com/deot/docs/commit/a641db467e1cbb7c7ae01c980005b2ff64f6312b))
+
 ## v1.2.1
 
 _2026-10-17_
