@@ -55,7 +55,7 @@ const handleKeyboard = () => Theme.toggle(togglerRef.value);
 	align-items: center;
 
 	&:focus-visible {
-		outline: 2px solid varfix(primary-color);
+		outline: 2px solid varfix(color-primary);
 		outline-offset: 2px;
 	}
 
@@ -63,7 +63,7 @@ const handleKeyboard = () => Theme.toggle(togglerRef.value);
 		display: inline-flex;
 
 		&__wrapper {
-			background: varfix(background-color-mute) !important;
+			background: varfix(background-color-deeper) !important;
 			border-color: varfix(border-color) !important;
 		}
 
@@ -82,7 +82,7 @@ const handleKeyboard = () => Theme.toggle(togglerRef.value);
 
 		@include when(light) {
 			left: 6px;
-			color: varfix(foreground-color-mute);
+			color: varfix(foreground-color-lighter);
 		}
 
 		@include when(dark) {

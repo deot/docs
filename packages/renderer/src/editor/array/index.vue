@@ -143,7 +143,7 @@ watch(() => props.modelValue, syncRows, { immediate: true });
 		height: 20px;
 		padding: 0;
 		margin: 0;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		cursor: pointer;
 		background: varfix(background-color);
 		border: 1px solid varfix(border-color);
@@ -172,8 +172,8 @@ watch(() => props.modelValue, syncRows, { immediate: true });
 
 		&:hover:not(:disabled) {
 			color: #fff;
-			background: varfix(error-color);
-			border-color: varfix(error-color);
+			background: varfix(color-error);
+			border-color: varfix(color-error);
 		}
 
 		&:disabled {
@@ -196,8 +196,8 @@ watch(() => props.modelValue, syncRows, { immediate: true });
 	&__add {
 		width: 100%;
 		min-height: 28px;
-		color: varfix(primary-color);
-		background: varfix(background-color-soft);
+		color: varfix(color-primary);
+		background: varfix(background-color-deep);
 		border-style: dashed;
 	}
 }

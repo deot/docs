@@ -1,5 +1,5 @@
 import { readonly, ref } from 'vue';
-import { isDocsTheme } from '@deot/docs-theme';
+import { DOCS_THEME_COLOR_KEYS, isDocsTheme } from '@deot/docs-theme';
 import { getDocsNamespace } from '../../utils/resolver';
 import type {
 	DocsConfig,
@@ -48,12 +48,50 @@ export class ThemeSettingsManager implements DocsThemeController {
 	private operation?: Promise<void>;
 	private queued?: ThemeRequest;
 	private requested?: DocsTheme;
+	private restoreColors?: () => void;
 
 	readonly current = readonly(this.currentValue);
 	readonly enabled = readonly(this.enabledValue);
 	readonly ready = readonly(this.readyValue);
 
 	constructor(private settings: SettingsAccess) {}
+
+	private clearColors() {
+		this.restoreColors?.();
+		this.restoreColors = undefined;
+	}
+
+	private applyColors(config: DocsConfig) {
+		const colors = typeof config.theme === 'object' ? config.theme?.colors : undefined;
+		const root = this.target?.document.documentElement;
+		if (!colors || !root) return;
+		const originals: { name: string; value: string; priority: string }[] = [];
+		for (const key of DOCS_THEME_COLOR_KEYS) {
+			const value = colors[key];
+			const light = typeof value === 'string' ? value : value?.light;
+			if (typeof light !== 'string' || !light.trim()) continue;
+			const dark = typeof value === 'string' ? value : value?.dark;
+			const values = {
+				light: light.trim(),
+				dark: typeof dark === 'string' && dark.trim() ? dark.trim() : light.trim()
+			};
+			for (const theme of ['light', 'dark'] as const) {
+				const name = `--docs-theme-${theme}-${key}`;
+				originals.push({
+					name,
+					value: root.style.getPropertyValue(name),
+					priority: root.style.getPropertyPriority(name)
+				});
+				root.style.setProperty(name, values[theme]);
+			}
+		}
+		this.restoreColors = () => {
+			for (const { name, value, priority } of originals) {
+				if (value) root.style.setProperty(name, value, priority);
+				else root.style.removeProperty(name);
+			}
+		};
+	}
 
 	private normalizeDefault(config: DocsConfig): DocsThemePreference {
 		if (!config.theme || config.theme === true) return 'system';
@@ -224,6 +262,7 @@ export class ThemeSettingsManager implements DocsThemeController {
 	start(config: DocsConfig, target: Window = window) {
 		const session = ++this.session;
 		const preferenceVersion = ++this.preferenceVersion;
+		this.clearColors();
 		this.target = target;
 		this.active = true;
 		this.queued = undefined;
@@ -235,6 +274,7 @@ export class ThemeSettingsManager implements DocsThemeController {
 			this.readyValue.value = true;
 			return () => this.stop(session);
 		}
+		this.applyColors(config);
 		this.namespace = getDocsNamespace(config);
 		const initial = this.resolveInitialTheme(config);
 		this.followingSystem = initial.followingSystem;
@@ -254,6 +294,7 @@ export class ThemeSettingsManager implements DocsThemeController {
 		this.queued = undefined;
 		this.requested = undefined;
 		this.detachSystemListener();
+		this.clearColors();
 	}
 
 	private async flush(session: number) {

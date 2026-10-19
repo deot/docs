@@ -178,9 +178,9 @@ onMounted(() => nextTick(refreshCanvas));
 		font-size: 12px;
 		line-height: 20px;
 		color: #fff;
-		background: color-mix(in srgb, varfix(link-color) 70%, transparent);
+		background: color-mix(in srgb, varfix(color-link) 70%, transparent);
 		border-radius: 1px;
-		box-shadow: 0 0 5px -3px varfix(shadow-color);
+		box-shadow: 0 0 5px -3px varfix(color-shadow);
 		user-select: none;
 	}
 
@@ -197,14 +197,14 @@ onMounted(() => nextTick(refreshCanvas));
 		top: 0;
 		bottom: 0;
 		width: 0;
-		border-left: 1px dotted varfix(link-color);
+		border-left: 1px dotted varfix(color-link);
 	}
 
 	&--horizontal {
 		right: 0;
 		left: 0;
 		height: 0;
-		border-top: 1px dotted varfix(link-color);
+		border-top: 1px dotted varfix(color-link);
 	}
 }
 
@@ -225,7 +225,7 @@ onMounted(() => nextTick(refreshCanvas));
 		width: 20px;
 		height: 20px;
 		cursor: pointer;
-		background: varfix(background-color-mute);
+		background: varfix(background-color-deeper);
 	}
 
 	&__x {
@@ -278,7 +278,7 @@ onMounted(() => nextTick(refreshCanvas));
 	&__canvas {
 		display: block;
 		pointer-events: none;
-		background: varfix(background-color-soft);
+		background: varfix(background-color-deep);
 	}
 
 	.docs-renderer-guide {
@@ -291,9 +291,9 @@ onMounted(() => nextTick(refreshCanvas));
 			font-size: 12px;
 			line-height: 20px;
 			color: #fff;
-			background: color-mix(in srgb, varfix(link-color) 70%, transparent);
+			background: color-mix(in srgb, varfix(color-link) 70%, transparent);
 			border-radius: 1px;
-			box-shadow: 0 0 5px -3px varfix(shadow-color);
+			box-shadow: 0 0 5px -3px varfix(color-shadow);
 			user-select: none;
 			justify-content: center;
 			align-items: center;
@@ -308,7 +308,7 @@ onMounted(() => nextTick(refreshCanvas));
 		padding-left: 5px;
 		cursor: ew-resize;
 		border: 0;
-		border-left: 1px dashed color-mix(in srgb, varfix(link-color) 84%, transparent);
+		border-left: 1px dashed color-mix(in srgb, varfix(color-link) 84%, transparent);
 
 		&.is-user {
 			border-left-style: solid;
@@ -329,7 +329,7 @@ onMounted(() => nextTick(refreshCanvas));
 		padding-bottom: 5px;
 		cursor: ns-resize;
 		border: 0;
-		border-bottom: 1px dashed color-mix(in srgb, varfix(link-color) 84%, transparent);
+		border-bottom: 1px dashed color-mix(in srgb, varfix(color-link) 84%, transparent);
 		transform: rotate(-90deg);
 		transform-origin: 0 100%;
 

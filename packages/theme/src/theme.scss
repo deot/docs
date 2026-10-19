@@ -3,25 +3,30 @@
  * map 值允许为 light/dark 对象，单值表示两个主题保持一致。
  */
 $theme: (
+	color-primary: #873bf4,
+	color-secondary: var(--docs-color-link),
+	color-link: (light: #2d8cf0, dark: #6daeff),
+	color-mask: (light: rgb(255 255 255 / 72%), dark: rgb(10 13 18 / 76%)),
+	color-shadow: (light: rgb(0 0 0 / 14%), dark: rgb(0 0 0 / 45%)),
+	color-pattern: (light: rgb(3 7 18 / 5%), dark: rgb(255 255 255 / 10%)),
+	color-error: (light: #ed4014, dark: #ff6b6b),
+
 	background-color: (light: #fff, dark: #171b24),
-	background-color-soft: (light: #f7f8fa, dark: #252b3a),
-	background-color-mute: (light: #f2f3f5, dark: #303748),
+	background-color-deep: (light: #f7f8fa, dark: #252b3a),
+	background-color-deeper: (light: #f2f3f5, dark: #303748),
+	background-color-primary-light: (light: #f2ebfe, dark: #35244d),
+	background-color-code: (light: #f6f8fa, dark: #202630),
+	background-color-footer: (light: #141313, dark: #0d0f14),
+	background-color-tip-light: (light: #f9f0ff, dark: #30223f),
+	background-color-warning-light: (light: #fff6f7, dark: #3d2529),
+	background-color-error-light: (light: #fef2f2, dark: #41272b),
+
 	foreground-color: (light: #030712, dark: #f8f8f8),
 	foreground-color-light: (light: #364153, dark: #d1d5dc),
-	foreground-color-mute: (light: #4a5565, dark: #b9b9b9),
+	foreground-color-lighter: (light: #4a5565, dark: #b9b9b9),
+	foreground-color-footer: (light: #364153, dark: #9ca3af),
+	foreground-color-on-primary: #fff,
+
 	border-color: (light: #e8eaec, dark: #3b4355),
-	border-color-light: (light: #f0f1f2, dark: #303748),
-	primary-color: #873bf4,
-	primary-color-light: (light: #f2ebfe, dark: #35244d),
-	link-color: (light: #2d8cf0, dark: #6daeff),
-	mask-color: (light: rgb(255 255 255 / 72%), dark: rgb(10 13 18 / 76%)),
-	shadow-color: (light: rgb(0 0 0 / 14%), dark: rgb(0 0 0 / 45%)),
-	code-background: (light: #f6f8fa, dark: #202630),
-	pattern-fg: (light: rgb(3 7 18 / 5%), dark: rgb(255 255 255 / 10%)),
-	footer-background: (light: #141313, dark: #0d0f14),
-	footer-foreground: (light: #364153, dark: #9ca3af),
-	tip-background: (light: #f9f0ff, dark: #30223f),
-	warning-background: (light: #fff6f7, dark: #3d2529),
-	error-color: (light: #ed4014, dark: #ff6b6b),
-	error-background: (light: #fef2f2, dark: #41272b)
+	border-color-light: (light: #f0f1f2, dark: #303748)
 ) !default;

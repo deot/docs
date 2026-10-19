@@ -331,7 +331,7 @@ const handleUpdateLayout = async (value: Record<string, unknown> | RendererLayou
 
 	small {
 		font-weight: 400;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 	}
 }
 
@@ -367,7 +367,7 @@ const handleUpdateLayout = async (value: Record<string, unknown> | RendererLayou
 		margin: 8px 0 4px;
 		font-size: 11px;
 		line-height: 1.3;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 	}
 
 	&__pair {
@@ -391,7 +391,7 @@ const handleUpdateLayout = async (value: Record<string, unknown> | RendererLayou
 		padding: 0;
 		font-size: 11px;
 		line-height: 1.3;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		text-align: left;
 	}
 
@@ -423,7 +423,7 @@ const handleUpdateLayout = async (value: Record<string, unknown> | RendererLayou
 	}
 
 	&__error {
-		color: varfix(error-color);
+		color: varfix(color-error);
 	}
 }
 </style>

@@ -66,6 +66,7 @@ const scrollToHeading = (index: number) => {
 </script>
 <style lang="scss">
 @use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+@use '../../shared/code-highlight' as highlight;
 
 .docs-renderer-hero-panel {
 	position: relative;
@@ -192,6 +193,8 @@ const scrollToHeading = (index: number) => {
 	}
 
 	&__code {
+		@include highlight.colors;
+
 		min-width: max-content;
 		padding: 18px 20px;
 		margin: 0;
@@ -201,18 +204,6 @@ const scrollToHeading = (index: number) => {
 		color: var(--docs-renderer-ink);
 		background: color-mix(in srgb, var(--docs-renderer-accent) 2%, var(--docs-renderer-paper));
 		box-sizing: border-box;
-
-		.hljs-keyword, .hljs-tag, .hljs-selector-tag, .hljs-literal {
-			color: var(--docs-renderer-accent);
-		}
-
-		.hljs-string, .hljs-attr, .hljs-number, .hljs-title {
-			color: color-mix(in srgb, var(--docs-renderer-accent) 65%, var(--docs-renderer-ink));
-		}
-
-		.hljs-comment {
-			color: var(--docs-renderer-muted);
-		}
 	}
 
 	&__tag {

@@ -67,7 +67,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 	grid-template-columns: repeat(3, 20px);
 	gap: 4px;
 	padding: 2px;
-	color: varfix(foreground-color-mute);
+	color: varfix(foreground-color-lighter);
 	background: rgb(3 7 18 / 4%);
 	border-radius: 999px;
 
@@ -92,7 +92,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 		}
 
 		&:focus-visible {
-			outline: 2px solid varfix(link-color);
+			outline: 2px solid varfix(color-link);
 			outline-offset: 1px;
 		}
 	}

@@ -130,7 +130,7 @@ onBeforeUnmount(() => {
 	background: varfix(background-color);
 	border: 1px solid varfix(border-color);
 	border-radius: 8px;
-	box-shadow: 0 8px 24px varfix(shadow-color);
+	box-shadow: 0 8px 24px varfix(color-shadow);
 	box-sizing: border-box;
 
 	&__content {
@@ -174,15 +174,15 @@ onBeforeUnmount(() => {
 
 		&:hover,
 		&:focus-visible {
-			color: varfix(primary-color);
-			background: varfix(primary-color-light);
+			color: varfix(color-primary);
+			background: varfix(background-color-primary-light);
 			outline: none;
 		}
 
 		&.is-danger:hover,
 		&.is-danger:focus-visible {
-			color: varfix(error-color);
-			background: varfix(error-background);
+			color: varfix(color-error);
+			background: varfix(background-color-error-light);
 		}
 	}
 }

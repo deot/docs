@@ -14,7 +14,13 @@ import type {
 } from '@deot/docs-renderer';
 
 export type { DocsLocaleEntry, Language } from '@deot/docs-locale';
-export type { DocsTheme, DocsThemeOptions, DocsThemePreference } from '@deot/docs-theme';
+export type {
+	DocsTheme,
+	DocsThemeColor,
+	DocsThemeColorKey,
+	DocsThemeOptions,
+	DocsThemePreference
+} from '@deot/docs-theme';
 export type { MarkdownIndicatorConfig, MarkdownTheme } from '@deot/docs-markdown';
 export type { RendererFit } from '@deot/docs-renderer';
 

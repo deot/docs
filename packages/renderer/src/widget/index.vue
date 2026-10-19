@@ -225,7 +225,7 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		margin: 2px 9px 15px;
 		font-size: 12px;
 		color: varfix(foreground-color-light);
-		background: color-mix(in srgb, #ec9c39 18%, varfix(background-color-soft));
+		background: color-mix(in srgb, #ec9c39 18%, varfix(background-color-deep));
 		border: 0;
 		border-radius: 4px;
 		align-items: center;
@@ -281,7 +281,7 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		padding: 0;
 		overflow: auto;
 		font-size: 12px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		border-right: 1px solid varfix(border-color);
 		flex-direction: column;
 	}
@@ -298,7 +298,7 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 
 		&.is-active {
 			color: varfix(foreground-color);
-			background: varfix(background-color-mute);
+			background: varfix(background-color-deeper);
 		}
 	}
 
@@ -338,12 +338,12 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		align-items: center;
 
 		&:hover {
-			color: varfix(primary-color);
+			color: varfix(color-primary);
 		}
 
 		&.is-active {
-			color: varfix(primary-color);
-			background: varfix(primary-color-light);
+			color: varfix(color-primary);
+			background: varfix(background-color-primary-light);
 
 			.docs-renderer-widget__arrow {
 				border-color: currentcolor;
@@ -366,7 +366,7 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		display: flex;
 		width: 100%;
 		padding: 8px;
-		background: varfix(background-color-soft);
+		background: varfix(background-color-deep);
 		border-top: 1px solid varfix(border-color-light);
 		box-sizing: border-box;
 		gap: 8px;
@@ -393,9 +393,9 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		gap: 6px;
 
 		&:hover:not(:disabled) {
-			color: varfix(primary-color);
-			background: varfix(primary-color-light);
-			border-color: varfix(primary-color);
+			color: varfix(color-primary);
+			background: varfix(background-color-primary-light);
+			border-color: varfix(color-primary);
 
 			.docs-renderer-widget__preview {
 				color: inherit;
@@ -412,8 +412,8 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		display: flex;
 		height: 44px;
 		overflow: hidden;
-		color: varfix(foreground-color-mute);
-		background: varfix(background-color-soft);
+		color: varfix(foreground-color-lighter);
+		background: varfix(background-color-deep);
 		border-radius: 4px;
 		align-items: center;
 		justify-content: center;
@@ -446,7 +446,7 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 	&__error {
 		margin-top: 12px;
 		font-size: 12px;
-		color: varfix(error-color);
+		color: varfix(color-error);
 	}
 }
 </style>

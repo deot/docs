@@ -98,17 +98,17 @@ defineExpose({
 	}
 
 	.cm-gutters {
-		color: varfix(foreground-color-mute);
-		background: varfix(background-color-soft);
+		color: varfix(foreground-color-lighter);
+		background: varfix(background-color-deep);
 		border-color: varfix(border-color);
 	}
 
 	.cm-activeLine, .cm-activeLineGutter {
-		background: varfix(background-color-mute);
+		background: varfix(background-color-deeper);
 	}
 
 	.cm-focused .cm-selectionBackground, .cm-selectionBackground {
-		background: varfix(background-color-soft);
+		background: varfix(background-color-deep);
 	}
 
 	.cm-line {

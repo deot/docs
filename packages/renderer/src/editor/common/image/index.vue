@@ -62,9 +62,9 @@ const onFile = (event: Event) => {
 		display: inline-flex;
 		width: 26px;
 		height: 26px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		cursor: pointer;
-		background: varfix(background-color-soft);
+		background: varfix(background-color-deep);
 		border-radius: 6px;
 		flex: none;
 		align-items: center;
@@ -75,7 +75,7 @@ const onFile = (event: Event) => {
 		}
 
 		&:hover {
-			color: varfix(primary-color);
+			color: varfix(color-primary);
 		}
 	}
 

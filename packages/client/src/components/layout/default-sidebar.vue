@@ -130,7 +130,7 @@ const isItemActive = (value: string) => {
 		font-weight: 500;
 		line-height: 24px;
 		letter-spacing: 0.1em;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		text-transform: uppercase;
 		gap: 8px;
 		align-items: center;
@@ -226,16 +226,16 @@ const isItemActive = (value: string) => {
 		font-weight: 500;
 		line-height: 18px;
 		letter-spacing: 0.04em;
-		color: varfix(link-color);
+		color: varfix(color-link);
 		white-space: nowrap;
-		background: color-mix(in srgb, varfix(link-color) 12%, transparent);
-		border: 1px dashed color-mix(in srgb, varfix(link-color) 48%, transparent);
+		background: color-mix(in srgb, varfix(color-link) 12%, transparent);
+		border: 1px dashed color-mix(in srgb, varfix(color-link) 48%, transparent);
 		flex-shrink: 0;
 		align-items: center;
 
 		&::before {
 			position: absolute;
-			color: color-mix(in srgb, varfix(link-color) 55%, white);
+			color: color-mix(in srgb, varfix(color-link) 55%, white);
 			pointer-events: none;
 			background-image:
 				linear-gradient(currentcolor, currentcolor),

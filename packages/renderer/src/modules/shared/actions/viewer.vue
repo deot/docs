@@ -85,7 +85,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 }
 
 .docs-renderer-action {
-	--docs-renderer-action-color: var(--docs-renderer-accent, varfix(primary-color));
+	--docs-renderer-action-color: var(--docs-renderer-accent, varfix(color-primary));
 
 	display: inline-flex;
 	min-height: 36px;
@@ -94,7 +94,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 	font-size: 14px;
 	font-weight: 600;
 	line-height: 1.2;
-	color: var(--docs-renderer-action-text, #fff);
+	color: var(--docs-renderer-action-text, varfix(foreground-color-on-primary));
 	text-decoration: none;
 	cursor: pointer;
 	background: var(--docs-renderer-action-color);

@@ -199,7 +199,7 @@ onBeforeUnmount(handlePointerUp);
 		position: relative;
 		min-width: 0;
 		overflow: auto;
-		background: varfix(background-color-soft);
+		background: varfix(background-color-deep);
 		user-select: none;
 	}
 
@@ -215,12 +215,12 @@ onBeforeUnmount(handlePointerUp);
 		position: absolute;
 		overflow: visible;
 		cursor: move;
-		border: 1px dashed varfix(primary-color);
+		border: 1px dashed varfix(color-primary);
 		box-sizing: border-box;
 
 		&.is-selected {
 			z-index: 20 !important;
-			background: color-mix(in srgb, varfix(primary-color) 12%, transparent);
+			background: color-mix(in srgb, varfix(color-primary) 12%, transparent);
 		}
 	}
 
@@ -232,7 +232,7 @@ onBeforeUnmount(handlePointerUp);
 		color: #fff;
 		white-space: nowrap;
 		pointer-events: none;
-		background: varfix(primary-color);
+		background: varfix(color-primary);
 	}
 
 	&__side {
@@ -252,7 +252,7 @@ onBeforeUnmount(handlePointerUp);
 
 		span {
 			font-size: 12px;
-			color: varfix(foreground-color-mute);
+			color: varfix(foreground-color-lighter);
 		}
 	}
 
@@ -277,7 +277,7 @@ onBeforeUnmount(handlePointerUp);
 		box-sizing: border-box;
 
 		&.is-selected {
-			border-color: varfix(primary-color);
+			border-color: varfix(color-primary);
 		}
 
 		strong {
@@ -303,7 +303,7 @@ onBeforeUnmount(handlePointerUp);
 		padding: 0;
 		font-size: 12px;
 		line-height: 16px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		cursor: pointer;
 		background: varfix(background-color);
 		border: 1px solid varfix(border-color);

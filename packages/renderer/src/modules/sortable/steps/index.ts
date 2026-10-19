@@ -13,7 +13,6 @@ import {
 } from '../../shared/utils';
 import type { RendererSectionHeader } from '../../shared/utils';
 import { sectionDraggableFrame, sectionSortableFrame } from '../../shared/canvas-frame';
-import { featureAccentOf } from '../features/palette';
 import Editor from './editor.vue';
 import Viewer from './viewer.vue';
 
@@ -31,18 +30,18 @@ export interface RendererStepItem {
 }
 
 const createItems = (): RendererStepItem[] => [
-	{ title: 'Write', description: 'Compose the page with reusable modules.', icon: '1', accent: featureAccentOf(0) },
-	{ title: 'Preview', description: 'See live updates while you edit.', icon: '2', accent: featureAccentOf(1) },
-	{ title: 'Ship', description: 'Deploy a static workspace anywhere.', icon: '3', accent: featureAccentOf(2) }
+	{ title: 'Write', description: 'Compose the page with reusable modules.', icon: '1', accent: '' },
+	{ title: 'Preview', description: 'See live updates while you edit.', icon: '2', accent: '' },
+	{ title: 'Ship', description: 'Deploy a static workspace anywhere.', icon: '3', accent: '' }
 ];
 
-const normalizeItem = (item: unknown, index: number): RendererStepItem => {
+const normalizeItem = (item: unknown): RendererStepItem => {
 	const current = toRecord(item);
 	return {
 		title: toStringValue(current.title),
 		description: toStringValue(current.description),
 		icon: toStringValue(current.icon),
-		accent: toStringValue(current.accent, featureAccentOf(index))
+		accent: toStringValue(current.accent)
 	};
 };
 

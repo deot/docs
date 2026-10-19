@@ -216,8 +216,8 @@ onBeforeUnmount(() => {
 
 	&__error {
 		padding: 16px;
-		color: varfix(foreground-color-mute);
-		background: varfix(background-color-soft);
+		color: varfix(foreground-color-lighter);
+		background: varfix(background-color-deep);
 		border: 1px dashed varfix(border-color);
 		border-radius: 8px;
 	}

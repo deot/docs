@@ -71,17 +71,13 @@
 		]));
 		const createHomeDocument = (lang) => {
 			const t = (zh, en) => (lang === 'zh-CN' ? zh : en);
-			const accent = '#873bf4';
-			const accentSecondary = '#a78bda';
-			const accents = [accent, '#2d8cf0', '#14b8a6'];
+			const accents = ['', '#2d8cf0', '#14b8a6'];
 			const title = t('一个 HTML，即可部署', 'One HTML file. Ready to deploy.');
 			const action = {
 				label: t('开始使用', 'Quick Start'),
 				to: `/${lang}/packages/guide`,
 				variant: 'solid',
-				size: 'large',
-				color: accent,
-				textColor: '#ffffff'
+				size: 'large'
 			};
 			const stack = {
 				marginTop: 0,
@@ -168,9 +164,6 @@
 							'Put your site configuration and CDN entry in one HTML file. Add Markdown and publish.'
 						),
 						align: 'left',
-						accent,
-						accentSecondary,
-						background: '',
 						showVisual: true,
 						visual: {
 							type: 'code',
@@ -205,7 +198,6 @@
 							'Let the toolchain handle deployment, updates and caching. Focus on your content.'
 						),
 						align: 'center',
-						accent,
 						columns: 3,
 						gap: 24,
 						items: cards([
@@ -250,9 +242,6 @@
 						filename: 'index.html',
 						language: 'html',
 						content: deploymentExample,
-						accent: '',
-						background: '',
-						textColor: '',
 						folds: [
 							{ start: 3, end: 7, label: t('页面基础信息', 'Page metadata') },
 							{ start: 14, end: 38, label: t('语言、路由与资源配置', 'Locale, route and resource settings') }
@@ -268,7 +257,6 @@
 							'Write, preview and publish in one familiar workflow.'
 						),
 						align: 'center',
-						accent,
 						columns: 3,
 						items: cards([
 							{
@@ -303,7 +291,6 @@
 							'A few details about deployment, updates and customization.'
 						),
 						align: 'center',
-						accent,
 						items: [
 							{
 								question: t('需要单独的文档服务吗？', 'Do I need a dedicated documentation server?'),
@@ -337,9 +324,6 @@
 							'Start with Markdown, then add pages and modules as you need them.'
 						),
 						align: 'center',
-						accent,
-						accentSecondary,
-						background: '',
 						actions: [action]
 					}, { ...stack, marginBottom: 0, fullWidth: true, maxWidth: 1536 })
 				]
@@ -349,7 +333,13 @@
 		window.$docs = {
 			namespace: '@deot/docs-site',
 			repository: 'https://github.com/deot/docs',
-			theme: { default: 'system' },
+			theme: {
+				default: 'system',
+				colors: {
+					'color-primary': '#873bf4',
+					'color-secondary': '#a78bda'
+				}
+			},
 			layout: {
 				header: {
 					brand: {

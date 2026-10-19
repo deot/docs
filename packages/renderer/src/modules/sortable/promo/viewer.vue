@@ -130,7 +130,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 @use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
 
 .docs-renderer-ads {
-	--docs-renderer-accent: varfix(primary-color);
+	--docs-renderer-accent: varfix(color-primary);
 
 	min-width: 0;
 
@@ -186,7 +186,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 		color: var(--docs-renderer-accent);
 		background:
 			radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--docs-renderer-accent) 22%, transparent), transparent 42%),
-			color-mix(in srgb, var(--docs-renderer-accent) 12%, varfix(background-color-soft));
+			color-mix(in srgb, var(--docs-renderer-accent) 12%, varfix(background-color-deep));
 		place-items: center;
 	}
 

@@ -454,7 +454,7 @@ $sign: md;
 			& table[#{$sign}] tbody tr:hover {
 				background-color: color-mix(
 					in srgb,
-					var(--docs-primary-color, #873bf4) 7%,
+					var(--docs-color-primary, #873bf4) 7%,
 					var(--docs-background-color, #fff)
 				);
 			}
@@ -650,7 +650,7 @@ $sign: md;
 
 			& .csv-data th[#{$sign}] {
 				font-weight: 600;
-				background: var(--docs-code-background, #f6f8fa);
+				background: var(--docs-background-color-code, #f6f8fa);
 				border-top: 0;
 			}
 
@@ -691,7 +691,7 @@ $sign: md;
 				overflow: auto;
 				font-size: 0.9em;
 				line-height: 1.65;
-				background-color: var(--docs-code-background, #f6f8fa);
+				background-color: var(--docs-background-color-code, #f6f8fa);
 				border: 1px solid var(--docs-border-color, #eaeefb);
 				border-radius: 6px;
 			}
@@ -722,7 +722,7 @@ $sign: md;
 			}
 
 			& .tip[#{$sign}] {
-				--docs-callout-accent: var(--docs-primary-color, #873bf4);
+				--docs-callout-accent: var(--docs-color-primary, #873bf4);
 			}
 
 			& .warning[#{$sign}] {
@@ -730,13 +730,13 @@ $sign: md;
 			}
 
 			& .tip[#{$sign}].tip--filled {
-				background-color: var(--docs-tip-background, #f9f0ff);
+				background-color: var(--docs-background-color-tip-light, #f9f0ff);
 				border: 0;
 				border-left: 4px solid var(--docs-callout-accent);
 			}
 
 			& .warning[#{$sign}].warning--filled {
-				background-color: var(--docs-warning-background, #fff6f7);
+				background-color: var(--docs-background-color-warning-light, #fff6f7);
 				border: 0;
 				border-left: 4px solid var(--docs-callout-accent);
 			}
@@ -869,7 +869,7 @@ $sign: md;
 			& :not(pre) > tt[#{$sign}]::after {
 				font-size: inherit;
 				font-weight: 500;
-				color: var(--docs-primary-color, #873bf4);
+				color: var(--docs-color-primary, #873bf4);
 				content: "`";
 			}
 
@@ -1040,13 +1040,13 @@ $sign: md;
 				table[md] tbody tr:hover {
 					background-color: color-mix(
 						in srgb,
-						var(--docs-primary-color, #873bf4) 7%,
+						var(--docs-color-primary, #873bf4) 7%,
 						var(--docs-background-color, #171b24)
 					);
 				}
 
 				.csv-data th[md] {
-					background-color: var(--docs-background-color-soft, #252b3a);
+					background-color: var(--docs-background-color-deep, #252b3a);
 				}
 
 				:not(pre) > code[md]:not(.hljs),
@@ -1058,7 +1058,7 @@ $sign: md;
 				:not(pre) > code[md]:not(.hljs)::after,
 				:not(pre) > tt[md]::before,
 				:not(pre) > tt[md]::after {
-					color: var(--docs-primary-color, #873bf4);
+					color: var(--docs-color-primary, #873bf4);
 				}
 
 				a[md][href]:not(.header-anchor) {

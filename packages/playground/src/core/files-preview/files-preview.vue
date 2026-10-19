@@ -64,7 +64,7 @@ const handleActive = (filename: string) => {
 	max-height: 100%;
 	min-height: 0;
 	overflow: hidden;
-	background: var(--docs-code-background, var(--vc-background-color, #f6f8fa));
+	background: var(--docs-background-color-code, var(--vc-background-color, #f6f8fa));
 	border: 1px solid var(--docs-border-color, var(--vc-border-color, #e2e8f0));
 	border-radius: 12px;
 	box-sizing: border-box;
@@ -114,7 +114,7 @@ const handleActive = (filename: string) => {
 		font-size: 13px;
 		font-weight: 500;
 		line-height: 40px;
-		color: var(--docs-foreground-color-mute, var(--vc-color-dark-extralight, #71717a));
+		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-extralight, #71717a));
 		white-space: nowrap;
 		cursor: pointer;
 		background: transparent;
@@ -132,7 +132,7 @@ const handleActive = (filename: string) => {
 				bottom: 0;
 				left: 8px;
 				height: 3px;
-				background: var(--docs-primary-color, var(--vc-color-primary, #5495f6));
+				background: var(--docs-color-primary, var(--vc-color-primary, #5495f6));
 				border-radius: 2px 2px 0 0;
 				content: '';
 			}
@@ -142,7 +142,7 @@ const handleActive = (filename: string) => {
 	@include element(entry) {
 		font-size: 10px;
 		line-height: 16px;
-		color: var(--docs-foreground-color-mute, var(--vc-color-dark-extralight, #71717a));
+		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-extralight, #71717a));
 	}
 
 	@include element(body) {

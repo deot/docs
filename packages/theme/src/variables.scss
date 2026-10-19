@@ -3,6 +3,14 @@
 @use './theme' as *;
 
 @mixin generate-theme($light: true) {
+	$mode: light;
+
+	@if not $light {
+		$mode: dark;
+	}
+
+	color-scheme: $mode;
+
 	@each $key, $value in $theme {
 		$theme-value: $value;
 
@@ -18,7 +26,7 @@
 			}
 		}
 
-		--docs-#{$key}: #{$theme-value};
+		--docs-#{$key}: var(--docs-theme-#{$mode}-#{$key}, #{$theme-value});
 	}
 }
 

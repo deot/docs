@@ -123,6 +123,8 @@ site/
 </html>
 ```
 
+> 缓存提示：未指定版本的 CDN 地址可能返回旧版启动入口。发布后若出现空白页，可先检查实际加载的版本，再排查浏览器与 CDN 缓存。排查与固定版本建议见 [`@deot/docs-launch`](packages/launch/README.md)。
+
 默认资源寻址会将 `./guide/installation.md` 转换为：
 
 - development：`/site/{lang}/guide/installation.md`

@@ -312,7 +312,7 @@ a {
 		}
 
 		@include element(sidebar) {
-			border-right: 1px solid varfix(pattern-fg);
+			border-right: 1px solid varfix(color-pattern);
 		}
 
 		@include element(content) {
@@ -364,14 +364,14 @@ a {
 		background-attachment: fixed;
 		background-image: repeating-linear-gradient(
 			315deg,
-			varfix(pattern-fg) 0,
-			varfix(pattern-fg) 1px,
+			varfix(color-pattern) 0,
+			varfix(color-pattern) 1px,
 			transparent 0,
 			transparent 50%
 		);
 		background-size: 10px 10px;
-		border-right: 1px solid varfix(pattern-fg);
-		border-left: 1px solid varfix(pattern-fg);
+		border-right: 1px solid varfix(color-pattern);
+		border-left: 1px solid varfix(color-pattern);
 
 		@include modifier(start) {
 			grid-area: rail-start;
@@ -416,7 +416,7 @@ a {
 		}
 
 		@include element(sidebar) {
-			border-right: 1px solid varfix(pattern-fg);
+			border-right: 1px solid varfix(color-pattern);
 		}
 
 		@include element(content) {
@@ -458,8 +458,8 @@ a {
 
 				&:hover,
 				&:focus-visible {
-					color: varfix(primary-color);
-					background: varfix(primary-color-light);
+					color: varfix(color-primary);
+					background: varfix(background-color-primary-light);
 					outline: none;
 				}
 			}
@@ -478,7 +478,7 @@ a {
 			border-right: 0;
 			visibility: hidden;
 			transform: translateX(-100%);
-			box-shadow: 8px 0 24px varfix(shadow-color);
+			box-shadow: 8px 0 24px varfix(color-shadow);
 			transition: transform 0.24s ease, visibility 0.24s step-end;
 		}
 
@@ -489,7 +489,7 @@ a {
 			display: block;
 			padding: 0;
 			cursor: pointer;
-			background: varfix(mask-color);
+			background: varfix(color-mask);
 			border: 0;
 			opacity: 0;
 			visibility: hidden;

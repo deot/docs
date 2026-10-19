@@ -101,6 +101,8 @@ const document = {
 `features.items[].image` 可配置卡片下方的图片，支持 workspace 相对路径、URL 和 base64；
 编辑器支持填写地址或上传图片。留空时，左／右布局使用默认轻图示，居中布局保持简洁卡片。
 
+Hero、CTA、Features、Steps 新建及新增条目时，强调色默认留空以继承站点主题。优先级为条目/按钮显式颜色 → block 强调色 → 站点语义色 → 内置值；已有文档的显式颜色保留。`accent` 对应 `--docs-color-primary`，`accentSecondary` 对应 `--docs-color-secondary`；实心按钮文字默认使用 `--docs-foreground-color-on-primary`，仍可通过 `textColor` 覆盖。站点配置方式及 CSS / SCSS 变量迁移表见 [Theme 文档](../theme/README.md)。
+
 `hero` 默认左侧文字、右侧文档面板；居中或居右时上下排列。
 保留 `showVisual` 开关，并支持可选的 `visual` 配置（旧数据使用默认文档）：
 

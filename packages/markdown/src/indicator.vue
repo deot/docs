@@ -717,7 +717,7 @@ onBeforeUnmount(() => {
 		}
 
 		&.is-in-view {
-			background: var(--docs-foreground-color-mute, var(--vc-color-dark-extralight, #808695));
+			background: var(--docs-foreground-color-lighter, var(--vc-color-dark-extralight, #808695));
 			opacity: 0.92;
 		}
 
@@ -741,7 +741,7 @@ onBeforeUnmount(() => {
 		border: 1px solid var(--docs-border-color, var(--vc-border-color, #dcdee2));
 		border-radius: 8px;
 		transform: translateY(-50%);
-		box-shadow: 0 2px 8px var(--docs-shadow-color, rgb(0 0 0 / 10%));
+		box-shadow: 0 2px 8px var(--docs-color-shadow, rgb(0 0 0 / 10%));
 		overflow-wrap: anywhere;
 	}
 
@@ -757,7 +757,7 @@ onBeforeUnmount(() => {
 		display: -webkit-box;
 		margin-top: 4px;
 		overflow: hidden;
-		color: var(--docs-foreground-color-mute, var(--vc-color-dark-extralight, #808695));
+		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-extralight, #808695));
 		white-space: pre-line;
 		-webkit-box-orient: vertical;
 		-webkit-line-clamp: 4;

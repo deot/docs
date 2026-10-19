@@ -1,7 +1,7 @@
 @use '../../../node_modules/@deot/docs-theme/src/functions' as *;
 
 @mixin colors {
-	--docs-renderer-accent: #{varfix(primary-color)};
+	--docs-renderer-accent: #{varfix(color-primary)};
 	--docs-renderer-ink: #{varfix(foreground-color-light)};
 	--docs-renderer-muted: color-mix(in srgb, #{varfix(foreground-color-light)} 68%, #{varfix(background-color)});
 	--docs-renderer-rule: #{varfix(border-color-light)};

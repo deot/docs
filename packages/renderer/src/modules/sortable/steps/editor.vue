@@ -69,7 +69,6 @@ import ArrayEditor from '../../../editor/array/index.vue';
 import Field from '../../../editor/common/field/index.vue';
 import NumberEditor from '../../../editor/common/number/index.vue';
 import { SECTION_ALIGNMENTS, toRecord } from '../../shared/utils';
-import { FEATURE_ACCENTS } from '../features/palette';
 
 const props = defineProps<RendererModuleEditorProps>();
 const emit = defineEmits<{ 'update:modelValue': [value: Record<string, unknown>] }>();
@@ -82,7 +81,7 @@ const createItem = () => {
 		title: 'Step',
 		description: 'Describe this step.',
 		icon: String(index + 1),
-		accent: FEATURE_ACCENTS[index % FEATURE_ACCENTS.length]
+		accent: ''
 	};
 };
 const field = (item: unknown, key: string) => String(toRecord(item)[key] || '');

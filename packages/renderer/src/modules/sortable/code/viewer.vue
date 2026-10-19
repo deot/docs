@@ -143,14 +143,16 @@ onBeforeUnmount(() => clearTimeout(copyTimer));
 </script>
 <style lang="scss">
 @use '../../../../node_modules/@deot/docs-theme/src/functions' as *;
+@use '../../shared/code-highlight' as highlight;
 @use '../../shared/landing' as landing;
 
 .docs-renderer-code {
 	@include landing.section;
+	@include highlight.colors;
 
 	--docs-renderer-accent: light-dark(
-		var(--docs-renderer-code-accent, #{varfix(primary-color)}),
-		color-mix(in srgb, var(--docs-renderer-code-accent, #{varfix(primary-color)}) 35%, var(--docs-renderer-ink))
+		var(--docs-renderer-code-accent, #{varfix(color-primary)}),
+		color-mix(in srgb, var(--docs-renderer-code-accent, #{varfix(color-primary)}) 35%, var(--docs-renderer-ink))
 	);
 	--docs-renderer-code-paper: light-dark(
 		#{varfix(background-color)}, color-mix(in srgb, #{varfix(background-color)} 94%, var(--docs-renderer-ink))
@@ -353,18 +355,6 @@ onBeforeUnmount(() => clearTimeout(copyTimer));
 	button:focus-visible {
 		outline: 2px solid var(--docs-renderer-accent);
 		outline-offset: 3px;
-	}
-
-	.hljs-tag, .hljs-keyword, .hljs-name, .hljs-literal, .hljs-selector-tag {
-		color: var(--docs-renderer-accent);
-	}
-
-	.hljs-string, .hljs-attr, .hljs-number, .hljs-title {
-		color: var(--docs-renderer-code-tint);
-	}
-
-	.hljs-comment {
-		color: var(--docs-renderer-muted);
 	}
 
 	@container (width <= 760px) {

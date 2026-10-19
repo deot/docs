@@ -27,7 +27,7 @@ const parts = computed(() => {
 	color: inherit;
 	text-decoration: underline;
 	background: transparent;
-	text-decoration-color: varfix(link-color);
+	text-decoration-color: varfix(color-link);
 	text-underline-offset: 2px;
 }
 </style>

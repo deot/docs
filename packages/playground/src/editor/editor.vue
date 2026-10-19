@@ -395,7 +395,7 @@ onBeforeUnmount(() => {
 		font-size: 20px;
 		line-height: 20px;
 		cursor: move;
-		background: var(--docs-background-color-soft, var(--vc-background-color)) !important;
+		background: var(--docs-background-color-deep, var(--vc-background-color)) !important;
 		justify-content: space-between;
 		align-items: center;
 		flex: 0 0 auto;
@@ -407,7 +407,7 @@ onBeforeUnmount(() => {
 		min-width: 0;
 		padding: 6px 8px;
 		overflow: hidden;
-		background: var(--docs-background-color-soft, var(--vc-background-color));
+		background: var(--docs-background-color-deep, var(--vc-background-color));
 		border-top: 1px solid var(--docs-border-color, var(--vc-border-color));
 		border-bottom: 1px solid var(--docs-border-color, var(--vc-border-color));
 		box-sizing: border-box;
@@ -524,7 +524,7 @@ onBeforeUnmount(() => {
 		color: var(--vc-color-error, #b91c1c);
 		white-space: pre-wrap;
 		overflow-wrap: anywhere;
-		background: var(--docs-error-background, #fef2f2);
+		background: var(--docs-background-color-error-light, #fef2f2);
 		box-sizing: border-box;
 		flex: 0 0 auto;
 	}
@@ -538,7 +538,7 @@ onBeforeUnmount(() => {
 	@include element(editor) {
 		min-height: 240px;
 		padding: 1px;
-		background: var(--docs-code-background, var(--vc-background-color)) !important;
+		background: var(--docs-background-color-code, var(--vc-background-color)) !important;
 
 		.cm-editor {
 			height: auto;

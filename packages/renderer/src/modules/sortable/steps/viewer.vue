@@ -23,7 +23,7 @@
 				:key="index"
 				class="docs-renderer-steps__item"
 				:class="{ 'is-row-end': isRowEnd(index) }"
-				:style="itemStyle(item, index)"
+				:style="itemStyle(item)"
 			>
 				<div class="docs-renderer-steps__marker">
 					<span class="docs-renderer-steps__index">{{ iconOf(item, index) }}</span>
@@ -43,7 +43,6 @@ import type { CSSProperties } from 'vue';
 import type { RendererModuleViewerProps } from '../../../types';
 import { rendererSortableSectionStyle } from '../../../frame/shared/sortable-width';
 import { toLength, toRecord } from '../../shared/utils';
-import { featureAccentOf } from '../features/palette';
 import { useLandingMotion } from '../../shared/landing-motion';
 
 const props = defineProps<RendererModuleViewerProps>();
@@ -61,8 +60,8 @@ const rootStyle = computed(() => rendererSortableSectionStyle(String(value.value
 const listStyle = computed(() => ({
 	'--docs-renderer-columns': columns.value
 }) as CSSProperties);
-const itemStyle = (item: Record<string, unknown>, index: number) => ({
-	'--docs-renderer-card-accent': String(item.accent || featureAccentOf(index))
+const itemStyle = (item: Record<string, unknown>) => ({
+	'--docs-renderer-card-accent': String(item.accent || '').trim() || undefined
 }) as CSSProperties;
 const isRowEnd = (index: number) => (
 	index === items.value.length - 1
@@ -146,6 +145,8 @@ const iconOf = (item: Record<string, unknown>, index: number) => (
 	}
 
 	&__item {
+		--docs-renderer-card-accent: var(--docs-renderer-accent);
+
 		position: relative;
 		display: grid;
 		min-width: 0;

@@ -130,9 +130,9 @@ const toggleIndependent = () => {
 		width: 26px;
 		height: 26px;
 		padding: 0;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		cursor: pointer;
-		background: varfix(background-color-soft);
+		background: varfix(background-color-deep);
 		border: 0;
 		border-radius: 6px;
 
@@ -145,8 +145,8 @@ const toggleIndependent = () => {
 		}
 
 		&.is-active {
-			color: varfix(primary-color);
-			background: varfix(primary-color-light);
+			color: varfix(color-primary);
+			background: varfix(background-color-primary-light);
 		}
 	}
 }

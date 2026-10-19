@@ -60,7 +60,7 @@ const actionsNode = computed<RendererSortableNode>(() => ({
 	);
 	@include landing.side-label(64px);
 
-	--docs-renderer-accent-2: #{varfix(link-color)};
+	--docs-renderer-accent-2: #{varfix(color-secondary)};
 
 	padding: 64px 48px 68px;
 	text-align: left;

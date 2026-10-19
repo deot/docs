@@ -87,9 +87,9 @@ const actionsNode = computed<RendererSortableNode>(() => ({
 		color-mix(in srgb, var(--docs-renderer-accent) 1.5%, var(--docs-renderer-hero-background, varfix(background-color)))
 	);
 
-	--docs-renderer-accent-2: #{varfix(link-color)};
+	--docs-renderer-accent-2: #{varfix(color-secondary)};
 	--docs-renderer-stat-color: color-mix(in srgb, var(--docs-renderer-accent) 25%, var(--docs-renderer-muted));
-	--docs-renderer-paper: light-dark(#{varfix(background-color)}, #{varfix(background-color-soft)});
+	--docs-renderer-paper: light-dark(#{varfix(background-color)}, #{varfix(background-color-deep)});
 	--docs-renderer-paper-rule: light-dark(
 		color-mix(in srgb, var(--docs-renderer-accent) 10%, #{varfix(background-color)}),
 		var(--docs-renderer-rule)

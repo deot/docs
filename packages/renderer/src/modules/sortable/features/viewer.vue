@@ -17,7 +17,7 @@
 				v-for="(item, index) in items"
 				:key="index"
 				class="docs-renderer-features__item"
-				:style="cardStyle(item, index)"
+				:style="cardStyle(item)"
 			>
 				<div class="docs-renderer-features__meta">
 					<span class="docs-renderer-features__index">
@@ -55,7 +55,6 @@ import { rendererSortableSectionStyle } from '../../../frame/shared/sortable-wid
 import { toLength, toRecord } from '../../shared/utils';
 import { toDisplayImageSrc } from '../../shared/image-source';
 import { featureIconKind } from './icon';
-import { featureAccentOf } from './palette';
 import FeatureDiagram from './diagram.vue';
 import { useLandingMotion } from '../../shared/landing-motion';
 import ImageViewer from '../../shared/image/viewer.vue';
@@ -74,10 +73,10 @@ const gridStyle = computed(() => ({
 	'--docs-renderer-columns': Math.max(1, toLength(value.value.columns, 3)),
 	'gap': `${Math.max(0, toLength(value.value.gap, 20))}px`
 }) as CSSProperties);
-const cardStyle = (item: Record<string, unknown>, index: number) => {
-	const accent = String(item.accent || featureAccentOf(index));
+const cardStyle = (item: Record<string, unknown>) => {
+	const accent = String(item.accent || '').trim();
 	return {
-		'--docs-renderer-card-accent': accent
+		'--docs-renderer-card-accent': accent || undefined
 	} as CSSProperties;
 };
 const iconValue = (item: Record<string, unknown>) => toDisplayImageSrc(item.icon);
@@ -109,6 +108,8 @@ const imageNode = (item: Record<string, unknown>, index: number): RendererSortab
 	}
 
 	&__item {
+		--docs-renderer-card-accent: var(--docs-renderer-accent);
+
 		display: flex;
 		min-width: 0;
 		min-height: 296px;

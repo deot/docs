@@ -94,7 +94,7 @@ const handleSelectReady = async () => {
 	overflow: visible;
 	background: varfix(background-color);
 	border-top: 1px solid varfix(border-color-light);
-	box-shadow: 0 -2px 10px varfix(shadow-color);
+	box-shadow: 0 -2px 10px varfix(color-shadow);
 	align-items: center;
 	justify-content: flex-end;
 

@@ -115,7 +115,7 @@ const handleClick = async (event: MouseEvent, item: RendererAreaZone) => {
 	&__empty {
 		display: grid;
 		min-height: 160px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		border: 1px dashed varfix(border-color);
 		place-items: center;
 	}
@@ -127,7 +127,7 @@ const handleClick = async (event: MouseEvent, item: RendererAreaZone) => {
 
 	&.is-editing &__zone {
 		pointer-events: none;
-		border: 1px dashed varfix(primary-color);
+		border: 1px dashed varfix(color-primary);
 	}
 
 	&:not(.is-editing) &__zone {
@@ -146,7 +146,7 @@ const handleClick = async (event: MouseEvent, item: RendererAreaZone) => {
 		line-height: 1.2;
 		color: #fff;
 		white-space: nowrap;
-		background: varfix(primary-color);
+		background: varfix(color-primary);
 	}
 }
 </style>

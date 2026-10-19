@@ -38,7 +38,7 @@ defineProps<{
 		padding: 0;
 		font-size: 11px;
 		line-height: 1.3;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		text-align: left;
 	}
 

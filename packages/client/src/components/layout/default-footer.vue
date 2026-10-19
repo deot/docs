@@ -180,15 +180,15 @@ const toPath = (value: string) => {
 	background: transparent;
 
 	&:has(.docs-footer__content) {
-		border-top: 1px solid varfix(pattern-fg);
+		border-top: 1px solid varfix(color-pattern);
 	}
 
 	@include element(inner) {
 		width: 100%;
 		max-width: 1020px;
 		margin: 0 auto;
-		border-right: 1px solid varfix(pattern-fg);
-		border-left: 1px solid varfix(pattern-fg);
+		border-right: 1px solid varfix(color-pattern);
+		border-left: 1px solid varfix(color-pattern);
 		box-sizing: border-box;
 	}
 
@@ -237,7 +237,7 @@ const toPath = (value: string) => {
 
 	@include element(bar) {
 		width: 100%;
-		border-top: 1px solid varfix(pattern-fg);
+		border-top: 1px solid varfix(color-pattern);
 	}
 
 	@include element(bar-inner) {
@@ -266,7 +266,7 @@ const toPath = (value: string) => {
 	@include modifier(no-sidebar) {
 		&:has(.docs-footer__content),
 		.docs-footer__bar {
-			border-image: linear-gradient(varfix(pattern-fg) 0 0) 1;
+			border-image: linear-gradient(varfix(color-pattern) 0 0) 1;
 			border-image-outset: 0 100vw;
 		}
 
@@ -326,7 +326,7 @@ const toPath = (value: string) => {
 			padding: 40px 8px;
 
 			& + .docs-footer__group {
-				border-left: 1px solid varfix(pattern-fg);
+				border-left: 1px solid varfix(color-pattern);
 			}
 		}
 	}

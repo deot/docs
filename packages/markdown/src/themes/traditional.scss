@@ -154,7 +154,7 @@ $sign: md;
 				padding: 4px 0 4px 12px;
 				margin-right: 0;
 				margin-left: 0;
-				color: var(--docs-foreground-color-mute, #6a737d);
+				color: var(--docs-foreground-color-lighter, #6a737d);
 				background-color: transparent;
 				border-left: 3px solid var(--docs-border-color, #dfe2e5);
 			}
@@ -174,11 +174,11 @@ $sign: md;
 				line-height: 10px;
 				color: var(--docs-foreground-color-light, #444d56);
 				vertical-align: middle;
-				background-color: var(--docs-background-color-soft, #fafbfc);
+				background-color: var(--docs-background-color-deep, #fafbfc);
 				border: solid 1px var(--docs-border-color, #c6cbd1);
-				border-bottom-color: var(--docs-foreground-color-mute, #959da5);
+				border-bottom-color: var(--docs-foreground-color-lighter, #959da5);
 				border-radius: 3px;
-				box-shadow: inset 0 -1px 0 var(--docs-foreground-color-mute, #959da5);
+				box-shadow: inset 0 -1px 0 var(--docs-foreground-color-lighter, #959da5);
 			}
 
 			& h1[#{$sign}],
@@ -273,7 +273,7 @@ $sign: md;
 
 			& h6[#{$sign}] {
 				font-size: 0.9em;
-				color: var(--docs-foreground-color-mute, #6a737d);
+				color: var(--docs-foreground-color-lighter, #6a737d);
 			}
 
 			& strong[#{$sign}] {
@@ -352,7 +352,7 @@ $sign: md;
 			& table th[#{$sign}] {
 				font-weight: 600;
 				white-space: nowrap;
-				background-color: var(--docs-background-color-soft, #f7f8fa);
+				background-color: var(--docs-background-color-deep, #f7f8fa);
 			}
 
 			& table th[#{$sign}],
@@ -388,7 +388,7 @@ $sign: md;
 			}
 
 			& table tr[#{$sign}]:nth-child(2n) {
-				background-color: var(--docs-code-background, #f6f8fa);
+				background-color: var(--docs-background-color-code, #f6f8fa);
 			}
 
 			& table tbody tr[#{$sign}] {
@@ -398,7 +398,7 @@ $sign: md;
 			& table tbody tr[#{$sign}]:hover {
 				background-color: color-mix(
 					in srgb,
-					var(--docs-primary-color, #873bf4) 7%,
+					var(--docs-color-primary, #873bf4) 7%,
 					var(--docs-background-color, #fff)
 				);
 			}
@@ -539,7 +539,7 @@ $sign: md;
 
 			& .csv-data th[#{$sign}] {
 				font-weight: 600;
-				background: var(--docs-code-background, #f6f8fa);
+				background: var(--docs-background-color-code, #f6f8fa);
 				border-top: 0;
 			}
 
@@ -579,7 +579,7 @@ $sign: md;
 				overflow: auto;
 				font-size: 0.9em;
 				line-height: 1.65;
-				background-color: var(--docs-code-background, #f6f8fa);
+				background-color: var(--docs-background-color-code, #f6f8fa);
 				border: 1px solid var(--docs-border-color, #eaeefb);
 				border-radius: 6px;
 			}
@@ -599,8 +599,8 @@ $sign: md;
 			& .tip[#{$sign}] {
 				padding: 10px 14px;
 				margin: 20px 0;
-				background-color: var(--docs-tip-background, #f9f0ff);
-				border-left: 4px solid var(--docs-primary-color, #873bf4);
+				background-color: var(--docs-background-color-tip-light, #f9f0ff);
+				border-left: 4px solid var(--docs-color-primary, #873bf4);
 				border-radius: 6px;
 
 				p {
@@ -611,7 +611,7 @@ $sign: md;
 			& .warning[#{$sign}] {
 				padding: 10px 14px;
 				margin: 20px 0;
-				background-color: var(--docs-warning-background, #fff6f7);
+				background-color: var(--docs-background-color-warning-light, #fff6f7);
 				border-left: 4px solid #fe6c6f;
 				border-radius: 6px;
 
@@ -685,8 +685,8 @@ $sign: md;
 
 			& code[#{$sign}]:not(.hljs)  {
 				padding: 0.15em 0.4em;
-				color: var(--docs-primary-color, #873bf4);
-				background-color: var(--docs-code-background, #f9fafc);
+				color: var(--docs-color-primary, #873bf4);
+				background-color: var(--docs-background-color-code, #f9fafc);
 				border: 1px solid var(--docs-border-color, #eaeefb);
 				border-radius: 4px;
 			}
@@ -703,7 +703,7 @@ $sign: md;
 			}
 
 			& a[#{$sign}][href]:not(.header-anchor) {
-				color: var(--docs-link-color, #2d8cf0);
+				color: var(--docs-color-link, #2d8cf0);
 				text-decoration: underline;
 				text-decoration-color: color-mix(in srgb, currentcolor 20%, transparent);
 				text-underline-offset: 0.2em;
@@ -713,21 +713,21 @@ $sign: md;
 			& a[#{$sign}][href]:not(.header-anchor):hover {
 				color: var(
 					--docs-link-hover-color,
-					color-mix(in srgb, var(--docs-link-color, #2d8cf0) 82%, #000)
+					color-mix(in srgb, var(--docs-color-link, #2d8cf0) 82%, #000)
 				);
 				text-decoration-color: color-mix(in srgb, currentcolor 45%, transparent);
 			}
 
 			& a[#{$sign}][href]:not(.header-anchor):focus-visible {
 				border-radius: 2px;
-				outline: 2px solid color-mix(in srgb, var(--docs-link-color, #2d8cf0) 45%, transparent);
+				outline: 2px solid color-mix(in srgb, var(--docs-color-link, #2d8cf0) 45%, transparent);
 				outline-offset: 2px;
 			}
 
 			&>details {
 				padding: 10px 14px;
 				margin-bottom: 18px;
-				background-color: var(--docs-background-color-soft, #f7f8fa);
+				background-color: var(--docs-background-color-deep, #f7f8fa);
 				border: 1px solid var(--docs-border-color, #e1e4e8);
 				border-radius: 6px;
 			}
@@ -741,11 +741,11 @@ $sign: md;
 			}
 
 			&>details>summary:hover {
-				color: var(--docs-link-color, #2d8cf0);
+				color: var(--docs-color-link, #2d8cf0);
 			}
 
 			&>details>summary::marker {
-				color: var(--docs-foreground-color-mute, #6a737d);
+				color: var(--docs-foreground-color-lighter, #6a737d);
 			}
 
 			&>details[open]>summary {
@@ -770,15 +770,15 @@ $sign: md;
 			.tip[#{$sign}].tip--filled {
 				padding: 10px 14px;
 				margin: 20px 0;
-				background-color: var(--docs-tip-background, #f9f0ff);
-				border-left: 4px solid var(--docs-primary-color, #873bf4);
+				background-color: var(--docs-background-color-tip-light, #f9f0ff);
+				border-left: 4px solid var(--docs-color-primary, #873bf4);
 				border-radius: 6px;
 			}
 
 			.warning[#{$sign}].warning--filled {
 				padding: 10px 14px;
 				margin: 20px 0;
-				background-color: var(--docs-warning-background, #fff6f7);
+				background-color: var(--docs-background-color-warning-light, #fff6f7);
 				border-left: 4px solid #fe6c6f;
 				border-radius: 6px;
 			}
@@ -794,12 +794,12 @@ $sign: md;
 				}
 
 				blockquote[md] {
-					color: var(--docs-foreground-color-mute, #b9b9b9);
+					color: var(--docs-foreground-color-lighter, #b9b9b9);
 					border-left-color: var(--docs-border-color, #3b4355);
 				}
 
 				&>details {
-					background-color: var(--docs-background-color-soft, #252b3a);
+					background-color: var(--docs-background-color-deep, #252b3a);
 					border-color: var(--docs-border-color, #3b4355);
 				}
 
@@ -842,18 +842,18 @@ $sign: md;
 
 				table tr[md]:nth-child(2n),
 				.csv-data th[md] {
-					background-color: var(--docs-background-color-soft, #252b3a);
+					background-color: var(--docs-background-color-deep, #252b3a);
 				}
 
 				.tip[md] code:not(.hljs) {
 					color: var(--docs-foreground-color-light, #d9d9d9);
-					background-color: var(--docs-background-color-mute, #303748);
+					background-color: var(--docs-background-color-deeper, #303748);
 				}
 
 				code[md]:not(.hljs) {
 					color: var(
 						--docs-code-foreground,
-						color-mix(in srgb, var(--docs-primary-color, #873bf4) 65%, #fff)
+						color-mix(in srgb, var(--docs-color-primary, #873bf4) 65%, #fff)
 					);
 				}
 			}

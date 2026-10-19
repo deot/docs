@@ -35,8 +35,8 @@ export const CtaModule = defineRendererModule<RendererSectionHeader & {
 			description: 'Use the same modules for home, guides and API pages.',
 			actions: [],
 			align: 'center',
-			accent: '#873bf4',
-			accentSecondary: '#2d8cf0',
+			accent: '',
+			accentSecondary: '',
 			background: ''
 		}),
 		normalize: (value) => {

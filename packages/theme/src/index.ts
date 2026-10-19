@@ -5,11 +5,44 @@ export const DOCS_THEMES = ['light', 'dark'] as const;
 export type DocsTheme = typeof DOCS_THEMES[number];
 export type DocsThemePreference = DocsTheme | 'system';
 
+export const DOCS_THEME_COLOR_KEYS = [
+	'color-primary',
+	'color-secondary',
+	'color-link',
+	'color-mask',
+	'color-shadow',
+	'color-pattern',
+	'color-error',
+	'background-color',
+	'background-color-deep',
+	'background-color-deeper',
+	'background-color-primary-light',
+	'background-color-code',
+	'background-color-footer',
+	'background-color-tip-light',
+	'background-color-warning-light',
+	'background-color-error-light',
+	'foreground-color',
+	'foreground-color-light',
+	'foreground-color-lighter',
+	'foreground-color-footer',
+	'foreground-color-on-primary',
+	'border-color',
+	'border-color-light'
+] as const;
+
+export type DocsThemeColorKey = typeof DOCS_THEME_COLOR_KEYS[number];
+export type DocsThemeColor = string | { light: string; dark?: string };
+
 export interface DocsThemeOptions {
 	/**
 	 * 未保存用户设置时采用的主题，默认跟随系统。
 	 */
 	default?: DocsThemePreference;
+	/**
+	 * Docs 语义色覆盖。字符串在两个主题共用；对象缺省 dark 时沿用 light。
+	 */
+	colors?: Partial<Record<DocsThemeColorKey, DocsThemeColor>>;
 }
 
 /**

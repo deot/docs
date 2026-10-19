@@ -953,7 +953,7 @@ onBeforeUnmount(() => {
 		min-width: 0;
 		min-height: 0;
 		overflow: hidden;
-		background: varfix(background-color-mute);
+		background: varfix(background-color-deeper);
 		border-left: 1px solid varfix(border-color);
 		flex: 1;
 		flex-direction: column;
@@ -988,8 +988,8 @@ onBeforeUnmount(() => {
 		overflow: visible;
 		border: 1px solid color-mix(in srgb, varfix(border-color) 72%, transparent);
 		box-shadow:
-			0 1px 2px varfix(shadow-color),
-			0 10px 30px varfix(shadow-color);
+			0 1px 2px varfix(color-shadow),
+			0 10px 30px varfix(color-shadow);
 	}
 
 	&__artboard {
@@ -1043,10 +1043,10 @@ onBeforeUnmount(() => {
 		display: flex;
 		height: 55px;
 		margin: 4px 0;
-		color: varfix(primary-color);
+		color: varfix(color-primary);
 		pointer-events: none;
-		background: color-mix(in srgb, varfix(primary-color) 12%, varfix(background-color));
-		border: 1px dotted varfix(primary-color);
+		background: color-mix(in srgb, varfix(color-primary) 12%, varfix(background-color));
+		border: 1px dotted varfix(color-primary);
 		box-sizing: border-box;
 		align-items: center;
 		justify-content: center;
@@ -1057,14 +1057,14 @@ onBeforeUnmount(() => {
 		z-index: 20;
 		height: 2px;
 		margin: -1px 0;
-		background: varfix(primary-color);
+		background: varfix(color-primary);
 		box-shadow: 0 0 0 1px varfix(background-color);
 	}
 
 	&__empty {
 		display: grid;
 		min-height: 300px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		border: 1px dashed varfix(border-color);
 		place-items: center;
 	}
@@ -1095,7 +1095,7 @@ onBeforeUnmount(() => {
 
 .docs-renderer-selection {
 	pointer-events: auto;
-	border: 1px dotted varfix(primary-color);
+	border: 1px dotted varfix(color-primary);
 	box-sizing: border-box;
 
 	&--sortable {
@@ -1128,7 +1128,7 @@ onBeforeUnmount(() => {
 		text-align: center;
 		pointer-events: auto;
 		cursor: pointer;
-		background: varfix(primary-color);
+		background: varfix(color-primary);
 		border: 0;
 		border-radius: 0;
 		box-sizing: border-box;
@@ -1161,7 +1161,7 @@ onBeforeUnmount(() => {
 			top: -5px;
 
 			&:hover {
-				background: linear-gradient(to bottom, transparent, varfix(primary-color));
+				background: linear-gradient(to bottom, transparent, varfix(color-primary));
 			}
 		}
 
@@ -1169,7 +1169,7 @@ onBeforeUnmount(() => {
 			bottom: -5px;
 
 			&:hover {
-				background: linear-gradient(to top, transparent, varfix(primary-color));
+				background: linear-gradient(to top, transparent, varfix(color-primary));
 			}
 		}
 
@@ -1185,7 +1185,7 @@ onBeforeUnmount(() => {
 			right: -5px;
 
 			&:hover {
-				background: linear-gradient(to left, transparent, varfix(primary-color));
+				background: linear-gradient(to left, transparent, varfix(color-primary));
 			}
 		}
 
@@ -1193,7 +1193,7 @@ onBeforeUnmount(() => {
 			left: -5px;
 
 			&:hover {
-				background: linear-gradient(to right, transparent, varfix(primary-color));
+				background: linear-gradient(to right, transparent, varfix(color-primary));
 			}
 		}
 
@@ -1238,7 +1238,7 @@ onBeforeUnmount(() => {
 		display: flex;
 		width: 12px;
 		height: 22px;
-		color: varfix(primary-color);
+		color: varfix(color-primary);
 		cursor: crosshair;
 		transform: translate(-50%, -100%);
 		flex-direction: column;
@@ -1248,7 +1248,7 @@ onBeforeUnmount(() => {
 		&::before {
 			width: 8px;
 			height: 8px;
-			border: 1px solid varfix(primary-color);
+			border: 1px solid varfix(color-primary);
 			content: '';
 			box-sizing: border-box;
 		}
@@ -1256,7 +1256,7 @@ onBeforeUnmount(() => {
 		&::after {
 			width: 1px;
 			height: 10px;
-			background: varfix(primary-color);
+			background: varfix(color-primary);
 			content: '';
 		}
 	}
@@ -1268,8 +1268,8 @@ onBeforeUnmount(() => {
 		z-index: 2;
 		height: 1px;
 		pointer-events: none;
-		background: varfix(link-color);
-		border: 1px solid varfix(link-color);
+		background: varfix(color-link);
+		border: 1px solid varfix(color-link);
 		transform: translate(-50%, -50%) rotate(90deg);
 	}
 
@@ -1294,15 +1294,15 @@ onBeforeUnmount(() => {
 	position: absolute;
 	z-index: 50;
 	pointer-events: none;
-	background: color-mix(in srgb, varfix(primary-color) 16%, transparent);
-	border: 1px dotted varfix(primary-color);
+	background: color-mix(in srgb, varfix(color-primary) 16%, transparent);
+	border: 1px dotted varfix(color-primary);
 	box-sizing: border-box;
 }
 
 .docs-renderer-marquee {
 	position: absolute;
-	background: color-mix(in srgb, varfix(primary-color) 12%, transparent);
-	border: 1px solid varfix(primary-color);
+	background: color-mix(in srgb, varfix(color-primary) 12%, transparent);
+	border: 1px solid varfix(color-primary);
 }
 
 .docs-renderer-rotate-hud {
@@ -1336,7 +1336,7 @@ onBeforeUnmount(() => {
 	z-index: 30;
 	cursor: pointer;
 	background: varfix(background-color);
-	border: 1px solid varfix(primary-color);
+	border: 1px solid varfix(color-primary);
 
 	&__canvas {
 		position: relative;
@@ -1346,7 +1346,7 @@ onBeforeUnmount(() => {
 
 	&__node {
 		position: absolute;
-		background: varfix(background-color-mute);
+		background: varfix(background-color-deeper);
 	}
 
 	&__visible {
@@ -1374,7 +1374,7 @@ onBeforeUnmount(() => {
 	background: color-mix(in srgb, varfix(background-color) 94%, transparent);
 	border: 1px solid varfix(border-color);
 	border-radius: 8px;
-	box-shadow: 0 8px 24px varfix(shadow-color);
+	box-shadow: 0 8px 24px varfix(color-shadow);
 
 	&__list {
 		display: grid;
@@ -1389,7 +1389,7 @@ onBeforeUnmount(() => {
 		border-radius: 5px;
 
 		&.is-selected {
-			background: varfix(primary-color-light);
+			background: varfix(background-color-primary-light);
 		}
 
 		> button:first-child {

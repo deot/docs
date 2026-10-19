@@ -355,7 +355,7 @@ $search-active: #0ea5e9;
 	inset: 60px 0 0;
 	display: grid;
 	padding: 0 12px;
-	background: varfix(mask-color);
+	background: varfix(color-mask);
 	backdrop-filter: blur(5px);
 	place-items: start center;
 }
@@ -369,7 +369,7 @@ $search-active: #0ea5e9;
 	overflow: hidden;
 	background: varfix(background-color);
 	border-radius: 16px;
-	box-shadow: 0 25px 50px -12px varfix(shadow-color);
+	box-shadow: 0 25px 50px -12px varfix(color-shadow);
 
 	@include element(header) {
 		display: grid;
@@ -377,7 +377,7 @@ $search-active: #0ea5e9;
 		gap: 12px;
 		padding: 0 16px 0 20px;
 		background: varfix(background-color);
-		border-bottom: 1px solid varfix(pattern-fg);
+		border-bottom: 1px solid varfix(color-pattern);
 		align-items: center;
 	}
 
@@ -420,7 +420,7 @@ $search-active: #0ea5e9;
 		}
 
 		&::placeholder {
-			color: varfix(foreground-color-mute);
+			color: varfix(foreground-color-lighter);
 		}
 	}
 
@@ -428,7 +428,7 @@ $search-active: #0ea5e9;
 		padding: 4px 6px;
 		font: inherit;
 		font-size: 12px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -450,7 +450,7 @@ $search-active: #0ea5e9;
 		font: inherit;
 		font-size: 12px;
 		line-height: 1;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		cursor: pointer;
 		background: transparent;
 		border: 1px solid varfix(border-color);
@@ -460,7 +460,7 @@ $search-active: #0ea5e9;
 		&:hover,
 		&:focus-visible {
 			color: varfix(foreground-color);
-			background: varfix(background-color-soft);
+			background: varfix(background-color-deep);
 			outline: none;
 		}
 	}
@@ -495,7 +495,7 @@ $search-active: #0ea5e9;
 		color: varfix(foreground-color);
 		text-align: left;
 		cursor: pointer;
-		background: varfix(background-color-soft);
+		background: varfix(background-color-deep);
 		border: 0;
 		border-radius: 8px;
 		grid-template-columns: 24px minmax(0, 1fr) 16px;
@@ -540,7 +540,7 @@ $search-active: #0ea5e9;
 		height: 24px;
 		font-size: 12px;
 		font-weight: 500;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		text-align: center;
 		border: 1px solid varfix(border-color);
 		border-radius: 6px;
@@ -571,7 +571,7 @@ $search-active: #0ea5e9;
 		overflow: hidden;
 		font-size: 12px;
 		font-weight: 400;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
@@ -581,7 +581,7 @@ $search-active: #0ea5e9;
 		height: 7px;
 		justify-self: end;
 		font-size: 0;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		border-right: 1.5px solid currentcolor;
 		border-bottom: 1.5px solid currentcolor;
 		transform: rotate(-45deg);
@@ -595,7 +595,7 @@ $search-active: #0ea5e9;
 		padding: 10px 10px 10px 14px;
 		color: varfix(foreground-color);
 		cursor: pointer;
-		background: varfix(background-color-soft);
+		background: varfix(background-color-deep);
 		border-radius: 8px;
 		align-items: center;
 
@@ -620,7 +620,7 @@ $search-active: #0ea5e9;
 		width: 24px;
 		height: 24px;
 		font-size: 14px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		border: 1px solid varfix(border-color);
 		border-radius: 6px;
 		place-items: center;
@@ -632,21 +632,21 @@ $search-active: #0ea5e9;
 		padding: 0;
 		font: inherit;
 		font-size: 18px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		cursor: pointer;
 		background: transparent;
 		border: 0;
 
 		&:hover,
 		&--active {
-			color: varfix(link-color);
+			color: varfix(color-link);
 		}
 	}
 
 	@include element(state) {
 		display: grid;
 		min-height: 120px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		place-items: center;
 
 		@include modifier(error) {
@@ -679,7 +679,7 @@ $search-active: #0ea5e9;
 			font: inherit;
 			font-size: 11px;
 			text-align: center;
-			background: varfix(background-color-mute);
+			background: varfix(background-color-deeper);
 			border: 0;
 			border-radius: 2px;
 			box-shadow: none;

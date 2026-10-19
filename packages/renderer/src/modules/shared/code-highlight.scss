@@ -1,0 +1,21 @@
+@mixin colors {
+	.hljs-tag, .hljs-keyword, .hljs-literal, .hljs-selector-tag {
+		color: var(--docs-renderer-accent);
+	}
+
+	.hljs-string, .hljs-attr, .hljs-number, .hljs-title {
+		color: color-mix(in srgb, var(--docs-renderer-accent) 65%, var(--docs-renderer-ink));
+	}
+
+	.hljs-name {
+		color: light-dark(#22863a, #7ee787);
+	}
+
+	.hljs-variable.language_ {
+		color: light-dark(#d73a49, #ff7b72);
+	}
+
+	.hljs-comment {
+		color: var(--docs-renderer-muted);
+	}
+}

@@ -96,7 +96,6 @@ import ImageSource from '../../../editor/common/image/index.vue';
 import NumberEditor from '../../../editor/common/number/index.vue';
 import { SECTION_ALIGNMENTS, toRecord } from '../../shared/utils';
 import { featureIconKind, listBuiltinIconTypes } from './icon';
-import { FEATURE_ACCENTS } from './palette';
 
 const props = defineProps<RendererModuleEditorProps>();
 const emit = defineEmits<{ 'update:modelValue': [value: Record<string, unknown>] }>();
@@ -113,14 +112,13 @@ const iconOptions = computed(() => {
 	return [...types].sort((left, right) => left.localeCompare(right)).map(value => ({ label: value, value }));
 });
 const createItem = () => {
-	const index = items.value.length;
 	return {
 		title: 'Feature',
 		description: 'Describe this capability.',
 		badge: '',
 		icon: 'star',
 		image: '',
-		accent: FEATURE_ACCENTS[index % FEATURE_ACCENTS.length]
+		accent: ''
 	};
 };
 const field = (item: unknown, key: string) => String(toRecord(item)[key] || '');

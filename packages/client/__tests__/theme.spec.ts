@@ -2,7 +2,7 @@
 
 import 'fake-indexeddb/auto';
 import { Settings, Theme, ThemeRuntime } from '../src/modules/settings';
-import { createDocsConfig } from './fixtures/docs';
+import { createDocsConfig, invalid } from './fixtures/docs';
 import type { DocsConfig } from '../src/types';
 
 const createConfig = (namespace: string, theme?: DocsConfig['theme']): DocsConfig => (
@@ -32,6 +32,136 @@ describe('docs theme', () => {
 		document.documentElement.removeAttribute('data-vc-theme');
 		document.documentElement.style.removeProperty('color-scheme');
 		window.matchMedia = createMedia();
+	});
+
+	describe('site colors', () => {
+		let stop = () => {};
+		let originalStyle: string | null;
+		const color = (theme: 'light' | 'dark', key = 'color-primary') => (
+			document.documentElement.style.getPropertyValue(`--docs-theme-${theme}-${key}`)
+		);
+
+		beforeEach(() => {
+			originalStyle = document.documentElement.getAttribute('style');
+		});
+
+		afterEach(() => {
+			stop();
+			stop = () => {};
+			if (originalStyle === null) document.documentElement.removeAttribute('style');
+			else document.documentElement.setAttribute('style', originalStyle);
+			vi.restoreAllMocks();
+		});
+
+		it('accepts shared CSS colors, light/dark pairs and light-only values', () => {
+			stop = ThemeRuntime.start(createConfig('theme-colors-values', {
+				colors: {
+					'color-primary': { light: ' #15803d ', dark: '#86efac' },
+					'color-secondary': 'light-dark(#4338ca, #a5b4fc)',
+					'color-link': { light: '#2563eb' },
+					'color-error': { light: '#dc2626', dark: '' }
+				}
+			}));
+			expect(color('light')).toBe('#15803d');
+			expect(color('dark')).toBe('#86efac');
+			expect(color('light', 'color-secondary')).toBe('light-dark(#4338ca, #a5b4fc)');
+			expect(color('dark', 'color-secondary')).toBe('light-dark(#4338ca, #a5b4fc)');
+			expect(color('dark', 'color-link')).toBe('#2563eb');
+			expect(color('dark', 'color-error')).toBe('#dc2626');
+			expect(color('light', 'background-color')).toBe('');
+		});
+
+		it('ignores empty, malformed and unknown color entries', () => {
+			stop = ThemeRuntime.start(createConfig('theme-colors-invalid', invalid({
+				colors: {
+					'color-primary': '',
+					'color-link': { light: ' ', dark: '#fff' },
+					'color-secondary': null,
+					'color-error': 42,
+					'background-color': { dark: '#000' },
+					'unknown': 'red'
+				}
+			})));
+			expect(document.documentElement.style.cssText).not.toContain('--docs-theme-');
+		});
+
+		it('restores host values and priorities when stopped', () => {
+			const root = document.documentElement;
+			root.style.setProperty('--docs-theme-light-color-primary', '#123456', 'important');
+			root.style.setProperty('--unrelated', 'retained');
+			stop = ThemeRuntime.start(createConfig('theme-colors-host', {
+				colors: { 'color-primary': '#15803d' }
+			}));
+			expect(color('light')).toBe('#15803d');
+			stop();
+			expect(color('light')).toBe('#123456');
+			expect(root.style.getPropertyPriority('--docs-theme-light-color-primary')).toBe('important');
+			expect(color('dark')).toBe('');
+			expect(root.style.getPropertyValue('--unrelated')).toBe('retained');
+		});
+
+		it('clears previous colors on restart and ignores a stale stop callback', () => {
+			const stopOld = ThemeRuntime.start(createConfig('theme-colors-old', {
+				colors: { 'color-primary': '#15803d', 'color-link': '#2563eb' }
+			}));
+			stop = ThemeRuntime.start(createConfig('theme-colors-new', {
+				colors: { 'color-primary': '#be185d' }
+			}));
+			stopOld();
+			expect(color('light')).toBe('#be185d');
+			expect(color('light', 'color-link')).toBe('');
+			stop = ThemeRuntime.start(createConfig('theme-colors-default', true));
+			expect(color('light')).toBe('');
+		});
+
+		it('clears managed colors when theme control is disabled', () => {
+			ThemeRuntime.start(createConfig('theme-colors-enabled', {
+				colors: { 'color-primary': '#15803d' }
+			}));
+			stop = ThemeRuntime.start(createConfig('theme-colors-disabled', false));
+			expect(Theme.enabled.value).toBe(false);
+			expect(color('light')).toBe('');
+			expect(color('dark')).toBe('');
+		});
+
+		it('restores colors in the previous window when changing targets', () => {
+			const iframe = document.createElement('iframe');
+			document.body.append(iframe);
+			const target = iframe.contentWindow!;
+			target.matchMedia = createMedia();
+			try {
+				ThemeRuntime.start(createConfig('theme-colors-window-a', {
+					colors: { 'color-primary': '#15803d' }
+				}));
+				stop = ThemeRuntime.start(createConfig('theme-colors-window-b', {
+					colors: { 'color-primary': '#be185d' }
+				}), target);
+				expect(color('light')).toBe('');
+				expect(target.document.documentElement.style.getPropertyValue('--docs-theme-light-color-primary')).toBe('#be185d');
+				stop();
+				expect(target.document.documentElement.style.getPropertyValue('--docs-theme-light-color-primary')).toBe('');
+			} finally {
+				iframe.remove();
+			}
+		});
+
+		it('keeps site colors across preference restoration and manual switching', async () => {
+			const namespace = 'theme-colors-preferences';
+			await Settings.set(namespace, 'theme', 'dark');
+			const set = vi.spyOn(Settings, 'set');
+			stop = ThemeRuntime.start(createConfig(namespace, {
+				default: 'light',
+				colors: { 'color-primary': { light: '#15803d', dark: '#86efac' } }
+			}));
+			await vi.waitFor(() => expect(Theme.ready.value).toBe(true));
+			expect(Theme.current.value).toBe('dark');
+			expect(color('dark')).toBe('#86efac');
+			await Theme.set('light');
+			expect(document.body.getAttribute('data-doc-theme')).toBe('light');
+			expect(color('light')).toBe('#15803d');
+			expect(set).toHaveBeenCalledExactlyOnceWith(namespace, 'theme', 'light');
+			await Settings.remove(namespace, 'theme');
+		});
 	});
 
 	it('persists generic settings by namespace', async () => {

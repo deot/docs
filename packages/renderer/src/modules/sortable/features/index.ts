@@ -13,7 +13,6 @@ import {
 } from '../../shared/utils';
 import type { RendererSectionHeader } from '../../shared/utils';
 import { sectionDraggableFrame, sectionSortableFrame } from '../../shared/canvas-frame';
-import { featureAccentOf } from './palette';
 import Editor from './editor.vue';
 import Viewer from './viewer.vue';
 import { collectImageResources } from '../../shared/image-source';
@@ -35,19 +34,19 @@ export interface RendererFeatureItem {
 }
 
 const createItems = (): RendererFeatureItem[] => [
-	{ title: 'Feature 1', description: 'Describe this capability.', badge: 'Core', icon: 'star', accent: featureAccentOf(0) },
-	{ title: 'Feature 2', description: 'Describe this capability.', badge: 'Flow', icon: 'setting', accent: featureAccentOf(1) },
-	{ title: 'Feature 3', description: 'Describe this capability.', badge: 'Ops', icon: 'mark', accent: featureAccentOf(2) }
+	{ title: 'Feature 1', description: 'Describe this capability.', badge: 'Core', icon: 'star', accent: '' },
+	{ title: 'Feature 2', description: 'Describe this capability.', badge: 'Flow', icon: 'setting', accent: '' },
+	{ title: 'Feature 3', description: 'Describe this capability.', badge: 'Ops', icon: 'mark', accent: '' }
 ];
 
-const normalizeItem = (item: unknown, index: number): RendererFeatureItem => {
+const normalizeItem = (item: unknown): RendererFeatureItem => {
 	const current = toRecord(item);
 	return {
 		title: toStringValue(current.title),
 		description: toStringValue(current.description),
 		badge: toStringValue(current.badge),
 		icon: toStringValue(current.icon),
-		accent: toStringValue(current.accent, featureAccentOf(index)),
+		accent: toStringValue(current.accent),
 		image: toStringValue(current.image)
 	};
 };

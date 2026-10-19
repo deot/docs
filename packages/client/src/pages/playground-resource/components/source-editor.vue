@@ -94,7 +94,7 @@ const handleConfirm = async () => {
 			grid-template-columns: 88px minmax(0, 1fr);
 			gap: 8px;
 			align-items: start;
-			color: varfix(foreground-color-mute);
+			color: varfix(foreground-color-lighter);
 		}
 
 		.docs-playground-resource__kind {
@@ -115,7 +115,7 @@ const handleConfirm = async () => {
 	@include element(label) {
 		display: block;
 		margin-bottom: 8px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 	}
 }
 </style>

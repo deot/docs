@@ -58,7 +58,7 @@ const handleOpen = (name: string) => {
 	&__intro p {
 		margin: 0;
 		line-height: 1.6;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 	}
 
 	&__grid {

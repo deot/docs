@@ -113,7 +113,7 @@ HTML5 路由模式下，静态托管通常只会把未知路径交给入口 HTML
 | `modules` | 站点级裸模块名到 URL 的映射，对所有 Playground（含 Markdown）生效；各预览可通过实例 `options.builtinImportMap.imports` 覆盖，优先级高于站点配置和管理页覆盖；远程 SFC 也可通过实例 `builtinImportMap` 覆盖。`doc dev` 会把工作区源码编到 `/__docs/module/<包名>`；development 下可以把同名 key 指到该地址，直接打开 HTML 时不要使用它。 |
 | `styles` | 站点级预览 CSS 默认地址；同名 key 覆盖内置样式表，也可追加。`local: true` 加载到宿主页面，`local: false` 加载到 iframe。管理页 `/:lang/__docs/playground-resource` 与 `modules` 同一张表管理，管理页覆盖优先。 |
 | `prefetch` | 空闲预加载开关或 `{ batchSize, idleTimeout }` 配置，默认开启。 |
-| `theme` | 主题开关或 `{ default: 'system' \| 'light' \| 'dark' }`，默认跟随系统。 |
+| `theme` | 主题开关或 `{ default: 'system' \| 'light' \| 'dark', colors?: { ... } }`，默认跟随系统。`colors` 配置 Docs 语义色，支持分别设置亮暗值。 |
 | `layout.header` | 内置 Header 配置；`brand.logo`、`brand.label` 和 `brand.value` 均支持固定值或按语言配置。文案未配置时回退到 `namespace` 和内置翻译，链接未配置时指向当前语言首页。站内链接自动补语言前缀，外链在新窗口打开。`nav` 是搜索后的横向导航，未配置时不渲染；条目复用 Sidebar 的 `{ label, value?, children? }` 结构，支持固定数组或按语言配置，有 `children` 的项以下拉展示。 |
 | `layout.footer` | Footer 内容；未配置或 `default` 使用内置分组，`false` 全局隐藏，也可配置 `{ nav, poweredBy }`。两项均支持按语言代码配置，`nav` 复用 Sidebar 的 `{ label, value?, children? }` 结构，按四等分列渲染。底部左侧复用 Header 品牌，右侧为 `poweredBy`；主题切换仍在 Header。 Markdown content 页眉右侧可切换常规（1020px）/ 超宽（1200px）/ 全宽，默认超宽，站点 Footer 内栏同步该宽度；选择按站点 namespace 写入 `deot-docs-settings` IndexedDB。有标题时在正文右侧显示「大纲 / On this page」。文档指示器是贴轨小地图（密度 + 可视窗口），不占宽度，只滚动不改 hash。 |
 | `renderers` | 业务自定义 Renderer 模块注册项；type 必须使用非 `docs:` 的命名空间。 |
@@ -398,7 +398,13 @@ window.$docs = {
 window.$docs = {
 	// 其他配置
 	theme: {
-		default: 'system'
+		default: 'system',
+		colors: {
+			'color-primary': { light: '#15803d', dark: '#86efac' },
+			'color-secondary': 'light-dark(#4338ca, #a5b4fc)',
+			'background-color-primary-light': { light: '#f0fdf4', dark: '#143322' },
+			'foreground-color-on-primary': { light: '#ffffff', dark: '#052e16' }
+		}
 	},
 	// Markdown / Playground / Renderer 组件的站点默认 props（与 light/dark 正交）
 	components: {
@@ -411,7 +417,11 @@ window.$docs = {
 
 `components.markdown.theme` 为排版皮肤（`'default' | 'traditional'`）。`components.playground` 会作为 Markdown 内嵌 Playground 与远程 SFC 的默认 props；`:::playground` 块内 JSON5 配置会覆盖站点默认。`components.renderer.fit` 作用于发布页 Renderer（Combo 编辑器不读该配置）。
 
-设置 `theme: false` 可关闭内置主题控制。自定义 Header 可以从 `@deot/docs-client` 导入共享的 `Theme`，读取 `current/enabled/ready`，或调用 `Theme.set()`、`Theme.toggle()`；传入触发元素时，支持 View Transition 的浏览器会以该元素为圆心切换。
+`theme.colors` 的键名与 `--docs-*` CSS 变量一致，省略前缀。值可以是亮暗共用的 CSS 字符串（包括 `light-dark(...)`），也可以是 `{ light, dark? }`；省略或留空的 `dark` 沿用 `light`。未配置项保留内置值，各项独立，不自动推导其他颜色。`background-color-primary-light` 是主色淡色背景，不是亮色模式主色。完整键表与旧变量迁移说明见 [Theme 文档](../theme/README.md)。
+
+配色本身不持久化；停止或重新启动 Client 时恢复宿主变量。Renderer 的条目/按钮、block 显式配色优先于站点默认；VC 配色与 Playground iframe 配色保持独立，iframe 仅同步亮暗状态。
+
+设置 `theme: false` 可关闭内置主题控制，也不应用站点配色。自定义 Header 可以从 `@deot/docs-client` 导入共享的 `Theme`，读取 `current/enabled/ready`，或调用 `Theme.set()`、`Theme.toggle()`；传入触发元素时，支持 View Transition 的浏览器会以该元素为圆心切换。
 
 ### 空闲预加载
 

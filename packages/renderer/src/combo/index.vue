@@ -577,13 +577,13 @@ defineExpose({
 		grid-template-rows: 30px minmax(0, 1fr);
 		min-width: 0;
 		min-height: 0;
-		background-color: varfix(background-color-soft);
+		background-color: varfix(background-color-deep);
 		background-image: radial-gradient(varfix(border-color) 1px, transparent 1px);
 		background-size: 16px 16px;
 
 		&.is-draggable {
 			grid-template-rows: minmax(0, 1fr);
-			background-color: varfix(background-color-mute);
+			background-color: varfix(background-color-deeper);
 			background-image: none;
 		}
 	}
@@ -592,7 +592,7 @@ defineExpose({
 		display: flex;
 		padding: 0 12px;
 		font-size: 12px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		cursor: pointer;
 		background: varfix(background-color);
 		border-bottom: 1px solid varfix(border-color-light);
@@ -602,7 +602,7 @@ defineExpose({
 		&:hover,
 		&:focus-visible {
 			color: varfix(foreground-color);
-			background: varfix(background-color-soft);
+			background: varfix(background-color-deep);
 		}
 	}
 
@@ -642,7 +642,7 @@ defineExpose({
 		gap: 4px;
 		padding: 3px;
 		margin-bottom: 16px;
-		background: varfix(background-color-soft);
+		background: varfix(background-color-deep);
 		border-radius: 8px;
 	}
 
@@ -652,10 +652,10 @@ defineExpose({
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 		font-size: 12px;
 		line-height: 1.55;
-		color: varfix(error-color);
+		color: varfix(color-error);
 		text-align: left;
 		white-space: pre-wrap;
-		background: varfix(error-background);
+		background: varfix(background-color-error-light);
 		border-radius: 8px;
 	}
 
@@ -698,11 +698,11 @@ defineExpose({
 		--vc-input-color-dark-light: var(--docs-foreground-color);
 		--vc-input-color-disabled: transparent;
 		--vc-input-border-color: var(--docs-border-color);
-		--vc-input-color-primary: var(--docs-primary-color);
-		--vc-textarea-background-color-lightest: var(--docs-code-background);
+		--vc-input-color-primary: var(--docs-color-primary);
+		--vc-textarea-background-color-lightest: var(--docs-background-color-code);
 		--vc-textarea-color-dark-light: var(--docs-foreground-color);
 		--vc-textarea-border-color: var(--docs-border-color);
-		--vc-textarea-color-primary: var(--docs-primary-color);
+		--vc-textarea-color-primary: var(--docs-color-primary);
 
 		min-width: 0;
 		color: varfix(foreground-color);
@@ -740,7 +740,7 @@ defineExpose({
 	}
 
 	.vc-select__append {
-		color: varfix(foreground-color-mute) !important;
+		color: varfix(foreground-color-lighter) !important;
 	}
 
 	.vc-input-number__icon {
@@ -759,7 +759,7 @@ defineExpose({
 		font-size: 12px;
 		line-height: 1.6;
 		text-align: left;
-		background: varfix(code-background);
+		background: varfix(background-color-code);
 
 		.vc-textarea__wrapper,
 		.vc-textarea__content,
@@ -825,11 +825,11 @@ defineExpose({
 		}
 
 		&:hover {
-			background: varfix(background-color-soft);
+			background: varfix(background-color-deep);
 		}
 
 		&.is-locked {
-			background: varfix(background-color-soft);
+			background: varfix(background-color-deep);
 		}
 
 		&.is-locked .vc-input,
@@ -897,7 +897,7 @@ defineExpose({
 		position: relative;
 		padding: 0;
 		margin: 0;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		cursor: pointer;
 		background: varfix(background-color);
 		border: 1px solid varfix(border-color);
@@ -915,8 +915,8 @@ defineExpose({
 		}
 
 		&:hover:not(:disabled) {
-			color: varfix(primary-color);
-			border-color: varfix(primary-color);
+			color: varfix(color-primary);
+			border-color: varfix(color-primary);
 		}
 
 		&:disabled {
@@ -955,8 +955,8 @@ defineExpose({
 
 		&:hover:not(:disabled) {
 			color: #fff;
-			background: varfix(error-color);
-			border-color: varfix(error-color);
+			background: varfix(color-error);
+			border-color: varfix(color-error);
 		}
 
 		&:disabled {
@@ -980,7 +980,7 @@ defineExpose({
 
 	&__kind {
 		padding: 0 2px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 	}
 
 	&__key {
@@ -991,7 +991,7 @@ defineExpose({
 	}
 
 	&__drag-handle {
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		cursor: grab;
 		user-select: none;
 	}

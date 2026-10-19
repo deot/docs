@@ -143,14 +143,14 @@ onBeforeUnmount(() => {
 		padding: 12px 16px;
 		margin-bottom: 16px;
 		color: var(--vc-color-error);
-		background: varfix(error-background);
+		background: varfix(background-color-error-light);
 		border-radius: 8px;
 	}
 
 	@include element(loading) {
 		display: grid;
 		min-height: 600px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		place-items: center;
 	}
 }

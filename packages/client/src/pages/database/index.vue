@@ -420,7 +420,7 @@ onBeforeUnmount(() => {
 	min-width: 960px;
 	min-height: 100vh;
 	padding: 28px 32px 40px;
-	background: varfix(background-color-soft);
+	background: varfix(background-color-deep);
 
 	@include element(header) {
 		display: grid;
@@ -437,7 +437,7 @@ onBeforeUnmount(() => {
 
 		p {
 			margin: 0;
-			color: varfix(foreground-color-mute);
+			color: varfix(foreground-color-lighter);
 		}
 	}
 
@@ -502,7 +502,7 @@ onBeforeUnmount(() => {
 		gap: 8px;
 
 		.docs-database__action {
-			color: varfix(link-color);
+			color: varfix(color-link);
 		}
 	}
 

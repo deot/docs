@@ -85,7 +85,7 @@ const handleChange = (value: number | string | null | undefined) => {
 	min-width: 0;
 	min-height: 26px;
 	overflow: visible;
-	background: varfix(background-color-soft);
+	background: varfix(background-color-deep);
 	border-radius: 6px;
 	align-items: center;
 
@@ -97,7 +97,7 @@ const handleChange = (value: number | string | null | undefined) => {
 		background: transparent;
 
 		.docs-renderer-number-editor__box {
-			background: varfix(background-color-soft);
+			background: varfix(background-color-deep);
 			border-radius: 6px;
 		}
 	}
@@ -115,7 +115,7 @@ const handleChange = (value: number | string | null | undefined) => {
 		margin-left: 8px;
 		font-size: 11px;
 		line-height: 1;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 	}
 
 	&__slider {
@@ -140,7 +140,7 @@ const handleChange = (value: number | string | null | undefined) => {
 
 		&.is-focus::before,
 		&.is-focus::after {
-			border-color: varfix(primary-color);
+			border-color: varfix(color-primary);
 		}
 	}
 

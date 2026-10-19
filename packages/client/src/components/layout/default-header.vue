@@ -389,7 +389,7 @@ const handleTools = (action: string | number) => {
 	padding: 0 30px;
 	color: varfix(foreground-color-light);
 	background: varfix(background-color);
-	border-bottom: 1px solid varfix(pattern-fg);
+	border-bottom: 1px solid varfix(color-pattern);
 	align-items: center;
 
 	@include element(brand) {
@@ -453,8 +453,8 @@ const handleTools = (action: string | number) => {
 
 		&:hover,
 		&:focus-visible {
-			color: varfix(primary-color);
-			background: varfix(primary-color-light);
+			color: varfix(color-primary);
+			background: varfix(background-color-primary-light);
 		}
 
 	}
@@ -493,7 +493,7 @@ const handleTools = (action: string | number) => {
 
 		&:hover,
 		&:focus-visible {
-			color: varfix(primary-color);
+			color: varfix(color-primary);
 		}
 
 		&.router-link-active,
@@ -504,7 +504,7 @@ const handleTools = (action: string | number) => {
 				bottom: 0;
 				left: 2px;
 				height: 2px;
-				background: varfix(primary-color);
+				background: varfix(color-primary);
 				content: "";
 			}
 		}

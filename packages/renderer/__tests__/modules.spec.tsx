@@ -68,6 +68,56 @@ describe('built-in renderer modules', () => {
 		expect(BuiltinModules).toHaveLength(16);
 	});
 
+	it.each(['hero', 'cta', 'features', 'steps'])('inherits site colors when creating %s blocks', async (type) => {
+		const definition = BuiltinModules.find(item => 'identity' in item && item.identity.type === type);
+		if (!definition || !('identity' in definition)) throw new Error(`${type} unavailable`);
+		const value = toRecord(definition.data.create(createContext));
+		expect(value.accent).toBe('');
+		if (type === 'hero' || type === 'cta') {
+			expect(value.accentSecondary).toBe('');
+		} else {
+			expect(value.items).toEqual(expect.arrayContaining([expect.objectContaining({ accent: '' })]));
+			const normalized = toRecord(definition.data.normalize?.({ items: [{ title: 'Inherited' }, { title: 'Explicit', accent: '#14b8a6' }] }));
+			expect(normalized.items).toEqual(expect.arrayContaining([
+				expect.objectContaining({ title: 'Inherited', accent: '' }),
+				expect.objectContaining({ title: 'Explicit', accent: '#14b8a6' })
+			]));
+			const editor = mount(definition.editor, {
+				props: {
+					node: { id: type, module: { type, version: 1, props: value } },
+					modelValue: value,
+					context: moduleContext
+				}
+			});
+			await editor.get('.docs-renderer-array-editor__add').trigger('click');
+			const update = toRecord(editor.emitted('update:modelValue')?.at(-1)?.[0]);
+			expect((update.items as Record<string, unknown>[]).at(-1)?.accent).toBe('');
+			editor.unmount();
+		}
+	});
+
+	it.each(['features', 'steps'])('keeps empty %s item accents available for block inheritance', (type) => {
+		const definition = BuiltinModules.find(item => 'identity' in item && item.identity.type === type);
+		if (!definition || !('identity' in definition)) throw new Error(`${type} unavailable`);
+		const wrapper = mount(definition.viewer, {
+			props: {
+				node: {
+					id: type,
+					module: {
+						type, version: 1,
+						props: { accent: '#15803d', items: [{ title: 'Inherited' }, { title: 'Explicit', accent: '#be185d' }] }
+					}
+				},
+				context: moduleContext
+			}
+		});
+		const items = wrapper.findAll(`.docs-renderer-${type}__item`);
+		expect(wrapper.attributes('style')).toContain('--docs-renderer-accent: #15803d');
+		expect(items[0].attributes('style') || '').not.toContain('--docs-renderer-card-accent');
+		expect(items[1].attributes('style')).toContain('--docs-renderer-card-accent: #be185d');
+		wrapper.unmount();
+	});
+
 	it('keeps the default page module out of the widget library and document blocks', () => {
 		const definition = BuiltinModules.find(item => 'identity' in item && item.identity.type === 'page');
 		if (!definition || !('identity' in definition)) throw new Error('page unavailable');

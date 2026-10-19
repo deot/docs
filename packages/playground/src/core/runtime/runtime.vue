@@ -654,7 +654,7 @@ defineExpose({
 		min-width: 24px;
 		min-height: 24px;
 		padding: 0;
-		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
+		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-lightest, #64748b));
 		cursor: pointer;
 		background: var(--vc-background-color-lightest, var(--docs-background-color, #fff));
 		border: 0;
@@ -676,7 +676,7 @@ defineExpose({
 		}
 
 		&:focus-visible {
-			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline: 2px solid var(--docs-color-primary, var(--vc-color-primary, #2563eb));
 			outline-offset: 1px;
 		}
 
@@ -697,7 +697,7 @@ defineExpose({
 		line-height: 1.6;
 		color: var(--vc-color-error, #b91c1c);
 		white-space: pre-wrap;
-		background: var(--docs-error-background, #fef2f2);
+		background: var(--docs-background-color-error-light, #fef2f2);
 		border: 1px solid #f5c2c2;
 		border-radius: 12px;
 		box-sizing: border-box;

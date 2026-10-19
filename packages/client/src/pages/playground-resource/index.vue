@@ -457,7 +457,7 @@ onBeforeUnmount(() => {
 	min-width: 960px;
 	min-height: 100vh;
 	padding: 28px 32px 40px;
-	background: varfix(background-color-soft);
+	background: varfix(background-color-deep);
 
 	@include element(header) {
 		display: grid;
@@ -474,7 +474,7 @@ onBeforeUnmount(() => {
 
 		p {
 			margin: 0;
-			color: varfix(foreground-color-mute);
+			color: varfix(foreground-color-lighter);
 		}
 	}
 
@@ -546,9 +546,9 @@ onBeforeUnmount(() => {
 		display: inline-flex;
 		padding: 2px 8px;
 		font-size: 12px;
-		color: varfix(foreground-color-mute);
+		color: varfix(foreground-color-lighter);
 		white-space: nowrap;
-		background: varfix(background-color-soft);
+		background: varfix(background-color-deep);
 		border-radius: 999px;
 
 		@include when(style) {
@@ -561,8 +561,8 @@ onBeforeUnmount(() => {
 		display: inline-flex;
 		padding: 2px 8px;
 		font-size: 12px;
-		color: varfix(foreground-color-mute);
-		background: varfix(background-color-soft);
+		color: varfix(foreground-color-lighter);
+		background: varfix(background-color-deep);
 		border-radius: 999px;
 
 		@include when(overridden) {
@@ -579,7 +579,7 @@ onBeforeUnmount(() => {
 		gap: 8px;
 
 		.docs-playground-resource__action {
-			color: varfix(link-color);
+			color: varfix(color-link);
 		}
 	}
 }

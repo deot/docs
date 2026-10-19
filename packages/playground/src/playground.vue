@@ -441,7 +441,7 @@ watch(normalizedViewportOptions, (options) => {
 		transition: opacity 0.2s ease;
 
 		&:focus-visible {
-			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline: 2px solid var(--docs-color-primary, var(--vc-color-primary, #2563eb));
 			outline-offset: 1px;
 			opacity: 1;
 		}
@@ -471,7 +471,7 @@ watch(normalizedViewportOptions, (options) => {
 	@include element(tool-group) {
 		display: inline-flex;
 		padding: 2px;
-		background: var(--docs-background-color-soft, var(--vc-background-color, #f1f5f9));
+		background: var(--docs-background-color-deep, var(--vc-background-color, #f1f5f9));
 		border-radius: 999px;
 		gap: 0;
 		align-items: center;
@@ -488,7 +488,7 @@ watch(normalizedViewportOptions, (options) => {
 	@include element(views) {
 		display: inline-flex;
 		padding: 2px;
-		background: var(--docs-background-color-soft, var(--vc-background-color, #f1f5f9));
+		background: var(--docs-background-color-deep, var(--vc-background-color, #f1f5f9));
 		border-radius: 999px;
 		gap: 0;
 		align-items: center;
@@ -502,7 +502,7 @@ watch(normalizedViewportOptions, (options) => {
 		font-size: 13px;
 		font-weight: 500;
 		line-height: 20px;
-		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
+		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-lightest, #64748b));
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -516,7 +516,7 @@ watch(normalizedViewportOptions, (options) => {
 		}
 
 		&:focus-visible {
-			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline: 2px solid var(--docs-color-primary, var(--vc-color-primary, #2563eb));
 			outline-offset: 1px;
 		}
 
@@ -533,7 +533,7 @@ watch(normalizedViewportOptions, (options) => {
 		height: 28px;
 		padding: 0;
 		font: inherit;
-		color: var(--docs-foreground-color-mute, var(--vc-color-dark-lightest, #64748b));
+		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-lightest, #64748b));
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -552,7 +552,7 @@ watch(normalizedViewportOptions, (options) => {
 		}
 
 		&:focus-visible {
-			outline: 2px solid var(--docs-primary-color, var(--vc-color-primary, #2563eb));
+			outline: 2px solid var(--docs-color-primary, var(--vc-color-primary, #2563eb));
 			outline-offset: 1px;
 		}
 
