@@ -1,5 +1,13 @@
 # @deot/docs ChangeLog
 
+## v1.2.7
+
+_2026-10-20_
+
+### Bugfixes
+
+- fix(playground): isolate local Vue styles ([3d36bfb](https://github.com/deot/docs/commit/3d36bfbc0bf63e7ccab2a2889333e4e09c649783))
+
 ## v1.2.6
 
 _2026-10-20_

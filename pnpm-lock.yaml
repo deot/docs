@@ -46,10 +46,10 @@ importers:
         specifier: ^1.2.6
         version: link:../locale
       '@deot/docs-markdown':
-        specifier: ^1.2.6
+        specifier: ^1.2.7
         version: link:../markdown
       '@deot/docs-playground':
-        specifier: ^1.2.6
+        specifier: ^1.2.7
         version: link:../playground
       '@deot/docs-renderer':
         specifier: ^1.2.6
@@ -131,7 +131,7 @@ importers:
         specifier: ^1.2.6
         version: link:../cli
       '@deot/docs-client':
-        specifier: ^1.2.6
+        specifier: ^1.2.7
         version: link:../client
       '@deot/docs-dever':
         specifier: ^1.2.6
@@ -143,10 +143,10 @@ importers:
         specifier: ^1.2.6
         version: link:../locale
       '@deot/docs-markdown':
-        specifier: ^1.2.6
+        specifier: ^1.2.7
         version: link:../markdown
       '@deot/docs-playground':
-        specifier: ^1.2.6
+        specifier: ^1.2.7
         version: link:../playground
       '@deot/docs-renderer':
         specifier: ^1.2.6
@@ -169,7 +169,7 @@ importers:
         specifier: ^1.2.6
         version: link:../locale
       '@deot/docs-playground':
-        specifier: ^1.2.6
+        specifier: ^1.2.7
         version: link:../playground
       '@deot/docs-theme':
         specifier: ^1.2.6
