@@ -1,5 +1,13 @@
 # @deot/docs ChangeLog
 
+## v1.2.6
+
+_2026-10-20_
+
+### Updates
+
+- style: unify semantic names and preserve visuals ([5484b5d](https://github.com/deot/docs/commit/5484b5d30c67a05377fe3e108a618aa6090775a6))
+
 ## v1.2.5
 
 _2026-10-19_
