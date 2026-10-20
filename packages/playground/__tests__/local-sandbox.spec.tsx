@@ -72,6 +72,47 @@ const label = playground && version ? 'ready' : 'missing'
 		expect(document.querySelector('.local-result')).toBeNull();
 	}, 15_000);
 
+	it.each(['', ' scoped'])('isolates same-named Vue previews with <style%s> across edits and refreshes', async (scoped) => {
+		const source = (color: string) => `<script setup>const label = 'isolated';</script>
+<template><p class="scope-result">{{ label }}</p></template>
+<style${scoped}>.scope-result { color: ${color}; }</style>`;
+		const host = document.createElement('p');
+		host.className = 'scope-result';
+		document.body.appendChild(host);
+		const hostColor = getComputedStyle(host).color;
+		const wrappers = [0, 1].map(() => mount(LocalSandbox, {
+			props: {
+				files: { 'App.vue': source('red') },
+				entry: 'App.vue',
+				options: {}
+			},
+			attachTo: document.body
+		}));
+		const result = (index: number) => wrappers[index].get('.scope-result').element;
+		const color = (index: number) => getComputedStyle(result(index)).color;
+		const scopeId = (index: number) => result(index).getAttributeNames().find(name => name.startsWith('data-v-'));
+		try {
+			await vi.waitFor(() => wrappers.forEach(wrapper => expect(wrapper.text()).toBe('isolated')));
+			expect(scopeId(0)).toBeTruthy();
+			expect(scopeId(1)).toBeTruthy();
+			expect(scopeId(0)).not.toBe(scopeId(1));
+			expect([color(0), color(1)]).toEqual(['rgb(255, 0, 0)', 'rgb(255, 0, 0)']);
+			expect(getComputedStyle(host).color).toBe(hostColor);
+			await wrappers[1].setProps({ files: { 'App.vue': source('blue') } });
+			await vi.waitFor(() => expect(color(1)).toBe('rgb(0, 0, 255)'));
+			expect(color(0)).toBe('rgb(255, 0, 0)');
+			(wrappers[0].vm as unknown as { refresh: () => void }).refresh();
+			await vi.waitFor(() => expect(color(0)).toBe('rgb(255, 0, 0)'));
+			expect(color(1)).toBe('rgb(0, 0, 255)');
+			expect(getComputedStyle(host).color).toBe(hostColor);
+			wrappers.shift()!.unmount();
+			expect(getComputedStyle(wrappers[0].get('.scope-result').element).color).toBe('rgb(0, 0, 255)');
+		} finally {
+			wrappers.forEach(wrapper => wrapper.unmount());
+			host.remove();
+		}
+	});
+
 	it('shares configured styles across previews and refreshes without removing host styles', async () => {
 		setPlaygroundSiteStyles({
 			'@deot/style/dist/index.normalize-only.css': '/local/normalize.css',

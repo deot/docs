@@ -75,6 +75,29 @@ createApp(App).mount('#app');`,
 		expect(compiled.css.join('\n')).toContain('#123456');
 	});
 
+	it.each(['', '<script setup>const value = 1;</script>', '<script>export default {};</script>'])(
+		'scopes every Vue style block for %s',
+		async (script) => {
+			const files = {
+				'App.vue': `${script}<template><section><p class="local-result">x</p></section></template>
+<style>.local-result { color: red; }</style>
+<style scoped>.local-result { background: white; }</style>
+<style lang="scss">$accent: blue; .local-result { border-color: $accent; }</style>
+<style lang="sass">.local-result\n  outline-color: green</style>`
+			};
+			const { compiled, linked } = await mountLinked(files);
+			const wrapper = mount(linked.component!);
+			try {
+				const scope = wrapper.get('.local-result').element.getAttributeNames().find(name => name.startsWith('data-v-'));
+				expect(scope).toBeTruthy();
+				expect(compiled.css.join('').match(/\.local-result\[data-v-[\w-]+\]/gu)).toEqual(Array(4).fill(`.local-result[${scope}]`));
+				expect(files['App.vue']).toContain('<style>.local-result');
+			} finally {
+				wrapper.unmount();
+			}
+		}
+	);
+
 	it('compiles imported TSX components with Vue events and children', async () => {
 		const { linked } = await mountLinked({
 			'App.vue': `<script setup>import Example from './Example';</script><template><Example /></template>`,

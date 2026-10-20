@@ -162,6 +162,8 @@ const handleMessage = async () => {
 
 预览 CSS 按「内置样式表 → `$docs.styles` → 管理页覆盖」合并，同名 key 覆盖，最终 URL 去重。`local: false` 加载到预览 iframe；`local: true` 加载到宿主页面，会影响宿主及其他示例。local 实例共享相同 URL 的 stylesheet，最后一个使用者卸载时清理自身创建的链接，保留宿主已有链接；示例编译产生的 CSS 单独注入和清理。
 
+local 模式下，Vue 文件内所有 `<style>` 块（含 SCSS / Sass）统一按 `scoped` 编译，展示和编辑的源码保持原样。每次 Vue 文件编译生成独立的 scopeId，同名或相同源码的示例也互不共用作用域。`:deep()`、`:slotted()` 和 `:global()` 保留 Vue 原有语义；独立导入的 CSS / SCSS / Sass 文件仍按全局样式处理。`local: false` 保留源码声明的样式作用域。
+
 内置样式表为 `@deot/style/dist/index.normalize-only.css`、`@deot/vc-components/dist/index.style.css` 和 `@deot/style/dist/index.css`。开发与生产的配置规则如下：
 
 - 在 development 条件内覆盖内置样式表：开发使用本地 CSS；生产不执行该分支，自动使用内置 CDN，无须另配。

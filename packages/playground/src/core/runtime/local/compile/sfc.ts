@@ -5,6 +5,7 @@ import { compileLocalScss } from './scss';
 type CompilerSfc = typeof import('@vue/compiler-sfc');
 
 let compilerPromise: Promise<CompilerSfc> | null = null;
+let scopeId = 0;
 
 /**
  * 只加载浏览器构建，避免 `@vue/compiler-sfc` 的 Node 主入口碰文件系统。
@@ -26,15 +27,6 @@ export interface CompileSfcResult {
 	errors: string[];
 }
 
-const hashId = (filename: string): string => {
-	let hash = 0;
-	for (let i = 0; i < filename.length; i += 1) {
-		hash = ((hash << 5) - hash) + filename.charCodeAt(i);
-		hash |= 0;
-	}
-	return Math.abs(hash).toString(36).slice(0, 8);
-};
-
 const messageOf = (error: unknown) => (
 	error instanceof Error ? error.message : String(error)
 );
@@ -49,11 +41,16 @@ export const compileSfc = async (
 ): Promise<CompileSfcResult> => {
 	const compiler = await loadCompiler();
 	const errors: string[] = [];
-	const id = hashId(filename);
-	const { descriptor, errors: parseErrors } = compiler.parse(code, {
+	const id = `docs-local-${++scopeId}`;
+	const { descriptor: parsedDescriptor, errors: parseErrors } = compiler.parse(code, {
 		filename,
 		sourceMap: false
 	});
+	// 本地样式统一 scoped；复制描述符，避免改写编译器的 parse 缓存。
+	const descriptor = {
+		...parsedDescriptor,
+		styles: parsedDescriptor.styles.map(style => ({ ...style, scoped: true }))
+	};
 
 	parseErrors.forEach((error) => {
 		errors.push(messageOf(error));
