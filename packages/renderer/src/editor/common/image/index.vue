@@ -62,9 +62,9 @@ const onFile = (event: Event) => {
 		display: inline-flex;
 		width: 26px;
 		height: 26px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		cursor: pointer;
-		background: varfix(background-color-deep);
+		background: varfix(background-color-light);
 		border-radius: 6px;
 		flex: none;
 		align-items: center;

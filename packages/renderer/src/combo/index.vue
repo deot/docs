@@ -539,15 +539,15 @@ defineExpose({
 	height: 100vh;
 	min-width: 960px;
 	min-height: 560px;
-	color: varfix(foreground-color);
-	background: varfix(background-color);
+	color: varfix(foreground-color-dark);
+	background: varfix(background-color-lightest);
 
 	&__toolbar {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
 		gap: 16px;
 		padding: 0 16px;
-		border-bottom: 1px solid varfix(border-color-light);
+		border-bottom: 1px solid varfix(color-neutral-light);
 		align-items: center;
 	}
 
@@ -577,13 +577,13 @@ defineExpose({
 		grid-template-rows: 30px minmax(0, 1fr);
 		min-width: 0;
 		min-height: 0;
-		background-color: varfix(background-color-deep);
+		background-color: varfix(background-color-light);
 		background-image: radial-gradient(varfix(border-color) 1px, transparent 1px);
 		background-size: 16px 16px;
 
 		&.is-draggable {
 			grid-template-rows: minmax(0, 1fr);
-			background-color: varfix(background-color-deeper);
+			background-color: varfix(background-color-lighter);
 			background-image: none;
 		}
 	}
@@ -592,17 +592,17 @@ defineExpose({
 		display: flex;
 		padding: 0 12px;
 		font-size: 12px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		cursor: pointer;
-		background: varfix(background-color);
-		border-bottom: 1px solid varfix(border-color-light);
+		background: varfix(background-color-lightest);
+		border-bottom: 1px solid varfix(color-neutral-light);
 		align-items: center;
 		justify-content: space-between;
 
 		&:hover,
 		&:focus-visible {
-			color: varfix(foreground-color);
-			background: varfix(background-color-deep);
+			color: varfix(foreground-color-dark);
+			background: varfix(background-color-light);
 		}
 	}
 
@@ -642,7 +642,7 @@ defineExpose({
 		gap: 4px;
 		padding: 3px;
 		margin-bottom: 16px;
-		background: varfix(background-color-deep);
+		background: varfix(background-color-light);
 		border-radius: 8px;
 	}
 
@@ -694,20 +694,20 @@ defineExpose({
 	.vc-input-number,
 	.vc-select,
 	.vc-textarea {
-		--vc-input-background-color-lightest: var(--docs-background-color);
-		--vc-input-color-dark-light: var(--docs-foreground-color);
+		--vc-input-background-color-lightest: var(--docs-background-color-lightest);
+		--vc-input-color-dark-light: var(--docs-foreground-color-dark);
 		--vc-input-color-disabled: transparent;
 		--vc-input-border-color: var(--docs-border-color);
 		--vc-input-color-primary: var(--docs-color-primary);
 		--vc-textarea-background-color-lightest: var(--docs-background-color-code);
-		--vc-textarea-color-dark-light: var(--docs-foreground-color);
+		--vc-textarea-color-dark-light: var(--docs-foreground-color-dark);
 		--vc-textarea-border-color: var(--docs-border-color);
 		--vc-textarea-color-primary: var(--docs-color-primary);
 
 		min-width: 0;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		text-align: left;
-		background-color: varfix(background-color);
+		background-color: varfix(background-color-lightest);
 	}
 
 	.vc-input,
@@ -722,7 +722,7 @@ defineExpose({
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 		font-size: 12px;
 		line-height: 1.5;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		text-align: left;
 	}
 
@@ -732,7 +732,7 @@ defineExpose({
 	}
 
 	.vc-input.is-disabled input {
-		color: varfix(foreground-color-light) !important;
+		color: varfix(foreground-color) !important;
 	}
 
 	.vc-select__input {
@@ -740,7 +740,7 @@ defineExpose({
 	}
 
 	.vc-select__append {
-		color: varfix(foreground-color-lighter) !important;
+		color: varfix(foreground-color-light) !important;
 	}
 
 	.vc-input-number__icon {
@@ -803,7 +803,7 @@ defineExpose({
 			bottom: -999px;
 			left: -17px;
 			width: 3px;
-			background: varfix(background-color);
+			background: varfix(background-color-lightest);
 			content: '';
 		}
 	}
@@ -825,18 +825,18 @@ defineExpose({
 		}
 
 		&:hover {
-			background: varfix(background-color-deep);
+			background: varfix(background-color-light);
 		}
 
 		&.is-locked {
-			background: varfix(background-color-deep);
+			background: varfix(background-color-light);
 		}
 
 		&.is-locked .vc-input,
 		&.is-locked .vc-input-number,
 		&.is-locked .vc-select,
 		&.is-locked .vc-select__input {
-			color: varfix(foreground-color-light);
+			color: varfix(foreground-color);
 			background-color: transparent !important;
 			box-shadow: none;
 
@@ -897,9 +897,9 @@ defineExpose({
 		position: relative;
 		padding: 0;
 		margin: 0;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		cursor: pointer;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		border: 1px solid varfix(border-color);
 		border-radius: 50%;
 		appearance: none;
@@ -972,7 +972,7 @@ defineExpose({
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 		font-size: 12px;
 		line-height: 28px;
-		color: varfix(foreground-color-light);
+		color: varfix(foreground-color);
 		text-align: left;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -980,7 +980,7 @@ defineExpose({
 
 	&__kind {
 		padding: 0 2px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 	}
 
 	&__key {
@@ -991,7 +991,7 @@ defineExpose({
 	}
 
 	&__drag-handle {
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		cursor: grab;
 		user-select: none;
 	}

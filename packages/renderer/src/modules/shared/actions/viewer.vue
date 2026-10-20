@@ -94,7 +94,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 	font-size: 14px;
 	font-weight: 600;
 	line-height: 1.2;
-	color: var(--docs-renderer-action-text, varfix(foreground-color-on-primary));
+	color: var(--docs-renderer-action-text, varfix(color-contrast-light));
 	text-decoration: none;
 	cursor: pointer;
 	background: var(--docs-renderer-action-color);

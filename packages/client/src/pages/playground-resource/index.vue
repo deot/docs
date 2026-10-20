@@ -457,7 +457,7 @@ onBeforeUnmount(() => {
 	min-width: 960px;
 	min-height: 100vh;
 	padding: 28px 32px 40px;
-	background: varfix(background-color-deep);
+	background: varfix(background-color-light);
 
 	@include element(header) {
 		display: grid;
@@ -469,12 +469,12 @@ onBeforeUnmount(() => {
 		h1 {
 			margin: 0 0 6px;
 			font-size: 24px;
-			color: varfix(foreground-color);
+			color: varfix(foreground-color-dark);
 		}
 
 		p {
 			margin: 0;
-			color: varfix(foreground-color-lighter);
+			color: varfix(foreground-color-light);
 		}
 	}
 
@@ -527,7 +527,7 @@ onBeforeUnmount(() => {
 	}
 
 	@include element(table) {
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 
 		code {
 			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -546,9 +546,9 @@ onBeforeUnmount(() => {
 		display: inline-flex;
 		padding: 2px 8px;
 		font-size: 12px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		white-space: nowrap;
-		background: varfix(background-color-deep);
+		background: varfix(background-color-light);
 		border-radius: 999px;
 
 		@include when(style) {
@@ -561,8 +561,8 @@ onBeforeUnmount(() => {
 		display: inline-flex;
 		padding: 2px 8px;
 		font-size: 12px;
-		color: varfix(foreground-color-lighter);
-		background: varfix(background-color-deep);
+		color: varfix(foreground-color-light);
+		background: varfix(background-color-light);
 		border-radius: 999px;
 
 		@include when(overridden) {

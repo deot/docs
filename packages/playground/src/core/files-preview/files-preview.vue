@@ -114,7 +114,7 @@ const handleActive = (filename: string) => {
 		font-size: 13px;
 		font-weight: 500;
 		line-height: 40px;
-		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-extralight, #71717a));
+		color: var(--docs-foreground-color-light, var(--vc-color-dark-extralight, #71717a));
 		white-space: nowrap;
 		cursor: pointer;
 		background: transparent;
@@ -124,7 +124,7 @@ const handleActive = (filename: string) => {
 		align-items: center;
 
 		@include when(active) {
-			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
+			color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #18181b));
 
 			&::after {
 				position: absolute;
@@ -142,7 +142,7 @@ const handleActive = (filename: string) => {
 	@include element(entry) {
 		font-size: 10px;
 		line-height: 16px;
-		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-extralight, #71717a));
+		color: var(--docs-foreground-color-light, var(--vc-color-dark-extralight, #71717a));
 	}
 
 	@include element(body) {

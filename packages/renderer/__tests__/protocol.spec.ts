@@ -58,9 +58,9 @@ const node = (id: string, props: Record<string, unknown> = { text: id }) => ({
 
 describe('renderer protocol', () => {
 	it('maps empty and default white page backgrounds to the docs theme token', () => {
-		expect(rendererPageBackgroundCss('')).toBe('var(--docs-background-color)');
-		expect(rendererPageBackgroundCss('#fff')).toBe('var(--docs-background-color)');
-		expect(rendererPageBackgroundCss('#FFFFFF')).toBe('var(--docs-background-color)');
+		expect(rendererPageBackgroundCss('')).toBe('var(--docs-background-color-lightest)');
+		expect(rendererPageBackgroundCss('#fff')).toBe('var(--docs-background-color-lightest)');
+		expect(rendererPageBackgroundCss('#FFFFFF')).toBe('var(--docs-background-color-lightest)');
 		expect(rendererPageBackgroundCss('#f5f5f5')).toBe('#f5f5f5');
 		expect(rendererPageBackgroundCss('transparent')).toBe('transparent');
 	});

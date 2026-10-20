@@ -147,7 +147,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 		overflow: hidden;
 		color: inherit;
 		text-decoration: none;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		isolation: isolate;
 		align-content: stretch;
 		transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, border-color 0.2s ease;
@@ -186,7 +186,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 		color: var(--docs-renderer-accent);
 		background:
 			radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--docs-renderer-accent) 22%, transparent), transparent 42%),
-			color-mix(in srgb, var(--docs-renderer-accent) 12%, varfix(background-color-deep));
+			color-mix(in srgb, var(--docs-renderer-accent) 12%, varfix(background-color-light));
 		place-items: center;
 	}
 
@@ -247,7 +247,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 	&.is-banner &__item {
 		aspect-ratio: 2.4 / 1;
 		min-height: 112px;
-		border: 1px solid varfix(border-color-light);
+		border: 1px solid varfix(color-neutral-light);
 		border-radius: 16px;
 
 		.docs-renderer-ads__visual {
@@ -275,8 +275,8 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 			background:
 				linear-gradient(
 					135deg,
-					color-mix(in srgb, var(--docs-renderer-accent) 14%, varfix(background-color)) 0%,
-					varfix(background-color) 62%
+					color-mix(in srgb, var(--docs-renderer-accent) 14%, varfix(background-color-lightest)) 0%,
+					varfix(background-color-lightest) 62%
 				);
 			grid-template-columns: auto minmax(0, 1fr);
 			gap: 14px;
@@ -290,7 +290,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 
 			.docs-renderer-ads__title {
 				padding: 0;
-				color: varfix(foreground-color);
+				color: varfix(foreground-color-dark);
 				background: none;
 				align-self: center;
 			}
@@ -301,10 +301,10 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 		background:
 			linear-gradient(
 				180deg,
-				color-mix(in srgb, var(--docs-renderer-accent) 8%, varfix(background-color)) 0%,
-				varfix(background-color) 42%
+				color-mix(in srgb, var(--docs-renderer-accent) 8%, varfix(background-color-lightest)) 0%,
+				varfix(background-color-lightest) 42%
 			);
-		border: 1px solid varfix(border-color-light);
+		border: 1px solid varfix(color-neutral-light);
 		border-radius: 16px;
 		align-content: start;
 
@@ -323,7 +323,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 			font-size: 14px;
 			font-weight: 600;
 			line-height: 1.45;
-			color: varfix(foreground-color);
+			color: varfix(foreground-color-dark);
 		}
 
 		&.is-plain .docs-renderer-ads__fallback {
@@ -333,7 +333,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 
 	&.is-poster &__item {
 		aspect-ratio: 4 / 5;
-		border: 1px solid varfix(border-color-light);
+		border: 1px solid varfix(color-neutral-light);
 		border-radius: 18px;
 
 		.docs-renderer-ads__visual,
@@ -364,8 +364,8 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 			background:
 				linear-gradient(
 					180deg,
-					color-mix(in srgb, var(--docs-renderer-accent) 16%, varfix(background-color)) 0%,
-					varfix(background-color) 70%
+					color-mix(in srgb, var(--docs-renderer-accent) 16%, varfix(background-color-lightest)) 0%,
+					varfix(background-color-lightest) 70%
 				);
 
 			.docs-renderer-ads__fallback {
@@ -378,7 +378,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 
 			.docs-renderer-ads__title {
 				padding: 20px 18px 18px;
-				color: varfix(foreground-color);
+				color: varfix(foreground-color-dark);
 				background: none;
 			}
 		}
@@ -389,8 +389,8 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 		padding: 10px 14px 10px 10px;
 		grid-template-columns: 52px minmax(0, 1fr);
 		gap: 12px;
-		background: color-mix(in srgb, var(--docs-renderer-accent) 6%, varfix(background-color));
-		border: 1px solid varfix(border-color-light);
+		background: color-mix(in srgb, var(--docs-renderer-accent) 6%, varfix(background-color-lightest));
+		border: 1px solid varfix(color-neutral-light);
 		border-radius: 14px;
 		align-items: center;
 
@@ -410,7 +410,7 @@ const handleClick = async (event: MouseEvent, item: Record<string, unknown>) => 
 			font-size: 14px;
 			font-weight: 600;
 			line-height: 1.45;
-			color: varfix(foreground-color);
+			color: varfix(foreground-color-dark);
 		}
 
 		&:hover {

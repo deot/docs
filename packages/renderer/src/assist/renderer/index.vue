@@ -192,7 +192,7 @@ onBeforeUnmount(() => {
 .docs-renderer {
 	width: 100%;
 	min-width: 0;
-	color: varfix(foreground-color);
+	color: varfix(foreground-color-dark);
 
 	&__viewport {
 		position: relative;
@@ -216,8 +216,8 @@ onBeforeUnmount(() => {
 
 	&__error {
 		padding: 16px;
-		color: varfix(foreground-color-lighter);
-		background: varfix(background-color-deep);
+		color: varfix(foreground-color-light);
+		background: varfix(background-color-light);
 		border: 1px dashed varfix(border-color);
 		border-radius: 8px;
 	}

@@ -367,16 +367,16 @@ $search-active: #0ea5e9;
 	height: min(646px, calc(100vh - 86px));
 	margin-top: 12px;
 	overflow: hidden;
-	background: varfix(background-color);
+	background: varfix(background-color-lightest);
 	border-radius: 16px;
-	box-shadow: 0 25px 50px -12px varfix(color-shadow);
+	box-shadow: 0 25px 50px -12px varfix(color-shadow-fixed);
 
 	@include element(header) {
 		display: grid;
 		grid-template-columns: 24px minmax(0, 1fr) max-content;
 		gap: 12px;
 		padding: 0 16px 0 20px;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		border-bottom: 1px solid varfix(color-pattern);
 		align-items: center;
 	}
@@ -385,7 +385,7 @@ $search-active: #0ea5e9;
 		position: relative;
 		width: 14px;
 		height: 14px;
-		color: varfix(foreground-color-light);
+		color: varfix(foreground-color);
 		border: 1.5px solid currentcolor;
 		border-radius: 50%;
 		opacity: 0.85;
@@ -409,7 +409,7 @@ $search-active: #0ea5e9;
 		padding: 0;
 		font: inherit;
 		font-size: 16px;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		background: transparent;
 		border: 0;
 		outline: 0;
@@ -420,7 +420,7 @@ $search-active: #0ea5e9;
 		}
 
 		&::placeholder {
-			color: varfix(foreground-color-lighter);
+			color: varfix(foreground-color-light);
 		}
 	}
 
@@ -428,7 +428,7 @@ $search-active: #0ea5e9;
 		padding: 4px 6px;
 		font: inherit;
 		font-size: 12px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -450,7 +450,7 @@ $search-active: #0ea5e9;
 		font: inherit;
 		font-size: 12px;
 		line-height: 1;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		cursor: pointer;
 		background: transparent;
 		border: 1px solid varfix(border-color);
@@ -459,15 +459,15 @@ $search-active: #0ea5e9;
 
 		&:hover,
 		&:focus-visible {
-			color: varfix(foreground-color);
-			background: varfix(background-color-deep);
+			color: varfix(foreground-color-dark);
+			background: varfix(background-color-light);
 			outline: none;
 		}
 	}
 
 	@include element(body) {
 		min-height: 0;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 	}
 
 	@include element(scroller) {
@@ -483,7 +483,7 @@ $search-active: #0ea5e9;
 		padding: 4px 8px 10px;
 		font-size: 14px;
 		font-weight: 700;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 	}
 
 	@include element(result) {
@@ -492,10 +492,10 @@ $search-active: #0ea5e9;
 		min-height: 56px;
 		padding: 10px 14px;
 		font: inherit;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		text-align: left;
 		cursor: pointer;
-		background: varfix(background-color-deep);
+		background: varfix(background-color-light);
 		border: 0;
 		border-radius: 8px;
 		grid-template-columns: 24px minmax(0, 1fr) 16px;
@@ -540,7 +540,7 @@ $search-active: #0ea5e9;
 		height: 24px;
 		font-size: 12px;
 		font-weight: 500;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		text-align: center;
 		border: 1px solid varfix(border-color);
 		border-radius: 6px;
@@ -564,14 +564,14 @@ $search-active: #0ea5e9;
 	@include element(result-parent) {
 		font-size: 12px;
 		font-weight: 400;
-		color: varfix(foreground-color-light);
+		color: varfix(foreground-color);
 	}
 
 	@include element(result-excerpt) {
 		overflow: hidden;
 		font-size: 12px;
 		font-weight: 400;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
@@ -581,7 +581,7 @@ $search-active: #0ea5e9;
 		height: 7px;
 		justify-self: end;
 		font-size: 0;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		border-right: 1.5px solid currentcolor;
 		border-bottom: 1.5px solid currentcolor;
 		transform: rotate(-45deg);
@@ -593,9 +593,9 @@ $search-active: #0ea5e9;
 		gap: 12px;
 		min-height: 56px;
 		padding: 10px 10px 10px 14px;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		cursor: pointer;
-		background: varfix(background-color-deep);
+		background: varfix(background-color-light);
 		border-radius: 8px;
 		align-items: center;
 
@@ -620,7 +620,7 @@ $search-active: #0ea5e9;
 		width: 24px;
 		height: 24px;
 		font-size: 14px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		border: 1px solid varfix(border-color);
 		border-radius: 6px;
 		place-items: center;
@@ -632,7 +632,7 @@ $search-active: #0ea5e9;
 		padding: 0;
 		font: inherit;
 		font-size: 18px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -646,7 +646,7 @@ $search-active: #0ea5e9;
 	@include element(state) {
 		display: grid;
 		min-height: 120px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		place-items: center;
 
 		@include modifier(error) {
@@ -661,8 +661,8 @@ $search-active: #0ea5e9;
 		gap: 22px;
 		padding: 0 12px;
 		font-size: 13px;
-		color: varfix(foreground-color-light);
-		background: varfix(background-color);
+		color: varfix(foreground-color);
+		background: varfix(background-color-lightest);
 		border-top: 1px solid varfix(border-color);
 		align-items: center;
 
@@ -679,7 +679,7 @@ $search-active: #0ea5e9;
 			font: inherit;
 			font-size: 11px;
 			text-align: center;
-			background: varfix(background-color-deeper);
+			background: varfix(background-color-lighter);
 			border: 0;
 			border-radius: 2px;
 			box-shadow: none;

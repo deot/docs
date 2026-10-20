@@ -421,7 +421,7 @@ watch(normalizedViewportOptions, (options) => {
 		font-size: 14px;
 		font-weight: 600;
 		line-height: 20px;
-		color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
+		color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #18181b));
 		flex: 1 1 auto;
 		align-items: center;
 	}
@@ -471,7 +471,7 @@ watch(normalizedViewportOptions, (options) => {
 	@include element(tool-group) {
 		display: inline-flex;
 		padding: 2px;
-		background: var(--docs-background-color-deep, var(--vc-background-color, #f1f5f9));
+		background: var(--docs-background-color-light, var(--vc-background-color, #f1f5f9));
 		border-radius: 999px;
 		gap: 0;
 		align-items: center;
@@ -488,7 +488,7 @@ watch(normalizedViewportOptions, (options) => {
 	@include element(views) {
 		display: inline-flex;
 		padding: 2px;
-		background: var(--docs-background-color-deep, var(--vc-background-color, #f1f5f9));
+		background: var(--docs-background-color-light, var(--vc-background-color, #f1f5f9));
 		border-radius: 999px;
 		gap: 0;
 		align-items: center;
@@ -502,7 +502,7 @@ watch(normalizedViewportOptions, (options) => {
 		font-size: 13px;
 		font-weight: 500;
 		line-height: 20px;
-		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-lightest, #64748b));
+		color: var(--docs-foreground-color-light, var(--vc-color-dark-lightest, #64748b));
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -512,7 +512,7 @@ watch(normalizedViewportOptions, (options) => {
 		transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 
 		&:hover {
-			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
+			color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #18181b));
 		}
 
 		&:focus-visible {
@@ -521,8 +521,8 @@ watch(normalizedViewportOptions, (options) => {
 		}
 
 		@include when(active) {
-			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
-			background: var(--docs-background-color, var(--vc-background-color-lightest, #fff));
+			color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #18181b));
+			background: var(--docs-background-color-lightest, var(--vc-background-color-lightest, #fff));
 			box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
 		}
 	}
@@ -533,7 +533,7 @@ watch(normalizedViewportOptions, (options) => {
 		height: 28px;
 		padding: 0;
 		font: inherit;
-		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-lightest, #64748b));
+		color: var(--docs-foreground-color-light, var(--vc-color-dark-lightest, #64748b));
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -548,7 +548,7 @@ watch(normalizedViewportOptions, (options) => {
 		}
 
 		&:hover {
-			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
+			color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #18181b));
 		}
 
 		&:focus-visible {
@@ -557,8 +557,8 @@ watch(normalizedViewportOptions, (options) => {
 		}
 
 		@include when(active) {
-			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
-			background: var(--docs-background-color, var(--vc-background-color-lightest, #fff));
+			color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #18181b));
+			background: var(--docs-background-color-lightest, var(--vc-background-color-lightest, #fff));
 			box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
 		}
 	}

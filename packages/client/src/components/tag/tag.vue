@@ -38,15 +38,15 @@ const props = withDefaults(defineProps<{
 });
 
 const colorMap = computed<Record<string, TagColor>>(() => ({
-	default: ['var(--docs-background-color-deeper)', 'var(--docs-foreground-color)'],
-	waiting: ['var(--docs-background-color-deeper)', 'var(--docs-foreground-color)'],
-	pending: ['color-mix(in srgb, var(--vc-color-warning) 18%, var(--docs-background-color))', 'var(--vc-color-warning)'],
-	success: ['color-mix(in srgb, var(--vc-color-success) 18%, var(--docs-background-color))', 'var(--vc-color-success)'],
-	error: ['color-mix(in srgb, var(--vc-color-error) 18%, var(--docs-background-color))', 'var(--vc-color-error)'],
-	green: ['color-mix(in srgb, var(--vc-color-success) 18%, var(--docs-background-color))', 'var(--vc-color-success)'],
-	orange: ['color-mix(in srgb, var(--vc-color-warning) 18%, var(--docs-background-color))', 'var(--vc-color-warning)'],
-	red: ['color-mix(in srgb, var(--vc-color-error) 18%, var(--docs-background-color))', 'var(--vc-color-error)'],
-	blue: ['color-mix(in srgb, var(--vc-color-primary) 18%, var(--docs-background-color))', 'var(--vc-color-primary)'],
+	default: ['var(--docs-background-color-lighter)', 'var(--docs-foreground-color-dark)'],
+	waiting: ['var(--docs-background-color-lighter)', 'var(--docs-foreground-color-dark)'],
+	pending: ['color-mix(in srgb, var(--vc-color-warning) 18%, var(--docs-background-color-lightest))', 'var(--vc-color-warning)'],
+	success: ['color-mix(in srgb, var(--vc-color-success) 18%, var(--docs-background-color-lightest))', 'var(--vc-color-success)'],
+	error: ['color-mix(in srgb, var(--vc-color-error) 18%, var(--docs-background-color-lightest))', 'var(--vc-color-error)'],
+	green: ['color-mix(in srgb, var(--vc-color-success) 18%, var(--docs-background-color-lightest))', 'var(--vc-color-success)'],
+	orange: ['color-mix(in srgb, var(--vc-color-warning) 18%, var(--docs-background-color-lightest))', 'var(--vc-color-warning)'],
+	red: ['color-mix(in srgb, var(--vc-color-error) 18%, var(--docs-background-color-lightest))', 'var(--vc-color-error)'],
+	blue: ['color-mix(in srgb, var(--vc-color-primary) 18%, var(--docs-background-color-lightest))', 'var(--vc-color-primary)'],
 	purple: ['var(--docs-background-color-primary-light)', 'var(--docs-color-primary)'],
 	...props.color
 }));

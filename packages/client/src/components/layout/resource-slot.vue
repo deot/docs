@@ -601,7 +601,7 @@ onBeforeUnmount(() => {
 
 	@include element(loading) {
 		padding: 16px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 	}
 
 	@include element(error) {

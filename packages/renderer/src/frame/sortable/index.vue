@@ -451,7 +451,7 @@ const handleWidgetDrop = (event: DragEvent) => {
 		min-width: 0;
 		min-height: 0;
 		overflow: hidden;
-		background: varfix(background-color-deeper);
+		background: varfix(background-color-lighter);
 		border-left: 1px solid varfix(border-color);
 		flex: 1;
 		flex-direction: column;
@@ -486,8 +486,8 @@ const handleWidgetDrop = (event: DragEvent) => {
 		overflow: visible;
 		border: 1px solid color-mix(in srgb, varfix(border-color) 72%, transparent);
 		box-shadow:
-			0 1px 2px varfix(color-shadow),
-			0 10px 30px varfix(color-shadow);
+			0 1px 2px varfix(color-shadow-fixed),
+			0 10px 30px varfix(color-shadow-fixed);
 	}
 
 	&__artboard {
@@ -543,7 +543,7 @@ const handleWidgetDrop = (event: DragEvent) => {
 		margin: 4px 0;
 		color: varfix(color-primary);
 		pointer-events: none;
-		background: color-mix(in srgb, varfix(color-primary) 12%, varfix(background-color));
+		background: color-mix(in srgb, varfix(color-primary) 12%, varfix(background-color-lightest));
 		border: 1px dotted varfix(color-primary);
 		box-sizing: border-box;
 		align-items: center;
@@ -556,13 +556,13 @@ const handleWidgetDrop = (event: DragEvent) => {
 		height: 2px;
 		margin: -1px 0;
 		background: varfix(color-primary);
-		box-shadow: 0 0 0 1px varfix(background-color);
+		box-shadow: 0 0 0 1px varfix(background-color-lightest);
 	}
 
 	&__empty {
 		display: grid;
 		min-height: 300px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		border: 1px dashed varfix(border-color);
 		place-items: center;
 	}
@@ -772,10 +772,10 @@ const handleWidgetDrop = (event: DragEvent) => {
 		height: 16px;
 		font-size: 12px;
 		line-height: 16px;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		text-align: center;
 		pointer-events: none;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		border: 1px solid varfix(border-color);
 		border-radius: 8px;
 	}

@@ -262,7 +262,7 @@ onBeforeUnmount(() => {
 		max-width: 100%;
 		max-height: 100%;
 		overflow: hidden;
-		background: var(--docs-background-color, var(--vc-background-color-lightest, #fff));
+		background: var(--docs-background-color-lightest, var(--vc-background-color-lightest, #fff));
 		border-radius: 12px;
 		box-sizing: border-box;
 	}
@@ -318,7 +318,7 @@ onBeforeUnmount(() => {
 			width: 100%;
 			height: 100%;
 			min-height: 100%;
-			background: var(--vc-background-color-lightest, var(--docs-background-color, #fff)) !important;
+			background: var(--vc-background-color-lightest, var(--docs-background-color-lightest, #fff)) !important;
 		}
 
 		.iframe-container iframe {

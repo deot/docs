@@ -387,8 +387,8 @@ const handleTools = (action: string | number) => {
 	width: 100%;
 	height: 60px;
 	padding: 0 30px;
-	color: varfix(foreground-color-light);
-	background: varfix(background-color);
+	color: varfix(foreground-color);
+	background: varfix(background-color-lightest);
 	border-bottom: 1px solid varfix(color-pattern);
 	align-items: center;
 
@@ -442,7 +442,7 @@ const handleTools = (action: string | number) => {
 		height: 36px;
 		padding: 0;
 		font: inherit;
-		color: varfix(foreground-color-light);
+		color: varfix(foreground-color);
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -484,7 +484,7 @@ const handleTools = (action: string | number) => {
 		padding: 0 20px;
 		font: inherit;
 		font-size: 14px;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		white-space: nowrap;
 		cursor: pointer;
 		background: transparent;

@@ -6,7 +6,7 @@
 export const rendererPageBackgroundCss = (background?: string) => {
 	const value = String(background || '').trim().toLowerCase();
 	if (!value || value === '#fff' || value === '#ffffff' || value === 'fff' || value === 'ffffff') {
-		return 'var(--docs-background-color)';
+		return 'var(--docs-background-color-lightest)';
 	}
 	return String(background).trim();
 };

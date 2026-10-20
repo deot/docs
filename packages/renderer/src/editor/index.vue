@@ -325,13 +325,13 @@ const handleUpdateLayout = async (value: Record<string, unknown> | RendererLayou
 	padding: 0 10px;
 	font-size: 12px;
 	font-weight: 600;
-	border-bottom: 1px solid varfix(border-color-light);
+	border-bottom: 1px solid varfix(color-neutral-light);
 	align-items: center;
 	justify-content: space-between;
 
 	small {
 		font-weight: 400;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 	}
 }
 
@@ -342,8 +342,8 @@ const handleUpdateLayout = async (value: Record<string, unknown> | RendererLayou
 	min-height: 0;
 	font-size: 12px;
 	text-align: left;
-	background: varfix(background-color);
-	border-left: 1px solid varfix(border-color-light);
+	background: varfix(background-color-lightest);
+	border-left: 1px solid varfix(color-neutral-light);
 
 	&__content {
 		padding: 10px 12px 20px;
@@ -352,7 +352,7 @@ const handleUpdateLayout = async (value: Record<string, unknown> | RendererLayou
 	&__section + &__section {
 		padding-top: 10px;
 		margin-top: 10px;
-		border-top: 1px solid varfix(border-color-light);
+		border-top: 1px solid varfix(color-neutral-light);
 	}
 
 	&__section h3 {
@@ -367,7 +367,7 @@ const handleUpdateLayout = async (value: Record<string, unknown> | RendererLayou
 		margin: 8px 0 4px;
 		font-size: 11px;
 		line-height: 1.3;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 	}
 
 	&__pair {
@@ -391,7 +391,7 @@ const handleUpdateLayout = async (value: Record<string, unknown> | RendererLayou
 		padding: 0;
 		font-size: 11px;
 		line-height: 1.3;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		text-align: left;
 	}
 

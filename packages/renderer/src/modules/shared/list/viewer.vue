@@ -15,6 +15,6 @@ const items = computed(() => Array.isArray(props.node.module.props.items) ? prop
 
 .docs-renderer-list {
 	margin: 0;
-	color: varfix(foreground-color);
+	color: varfix(foreground-color-dark);
 }
 </style>

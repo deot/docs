@@ -395,7 +395,7 @@ onBeforeUnmount(() => {
 		padding: 0;
 		margin: 0;
 		list-style: none;
-		border-left: 1px solid color-mix(in srgb, varfix(foreground-color) 10%, transparent);
+		border-left: 1px solid color-mix(in srgb, varfix(foreground-color-dark) 10%, transparent);
 
 		@include modifier(nested) {
 			border-left-color: transparent;
@@ -419,19 +419,19 @@ onBeforeUnmount(() => {
 		font-size: 14px;
 		font-weight: 400;
 		line-height: 24px;
-		color: varfix(foreground-color-light);
+		color: varfix(foreground-color);
 		overflow-wrap: anywhere;
 		border-left: 1px solid transparent;
 
 		&:hover {
-			color: varfix(foreground-color);
-			border-left-color: color-mix(in srgb, varfix(foreground-color) 25%, transparent);
+			color: varfix(foreground-color-dark);
+			border-left-color: color-mix(in srgb, varfix(foreground-color-dark) 25%, transparent);
 		}
 
 		&[aria-current='location'] {
 			font-weight: 600;
-			color: varfix(foreground-color);
-			border-left-color: varfix(foreground-color);
+			color: varfix(foreground-color-dark);
+			border-left-color: varfix(foreground-color-dark);
 		}
 	}
 }

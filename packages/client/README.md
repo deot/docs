@@ -403,7 +403,7 @@ window.$docs = {
 			'color-primary': { light: '#15803d', dark: '#86efac' },
 			'color-secondary': 'light-dark(#4338ca, #a5b4fc)',
 			'background-color-primary-light': { light: '#f0fdf4', dark: '#143322' },
-			'foreground-color-on-primary': { light: '#ffffff', dark: '#052e16' }
+			'color-contrast-light': '#ffffff'
 		}
 	},
 	// Markdown / Playground / Renderer 组件的站点默认 props（与 light/dark 正交）
@@ -418,6 +418,8 @@ window.$docs = {
 `components.markdown.theme` 为排版皮肤（`'default' | 'traditional'`）。`components.playground` 会作为 Markdown 内嵌 Playground 与远程 SFC 的默认 props；`:::playground` 块内 JSON5 配置会覆盖站点默认。`components.renderer.fit` 作用于发布页 Renderer（Combo 编辑器不读该配置）。
 
 `theme.colors` 的键名与 `--docs-*` CSS 变量一致，省略前缀。值可以是亮暗共用的 CSS 字符串（包括 `light-dark(...)`），也可以是 `{ light, dark? }`；省略或留空的 `dark` 沿用 `light`。未配置项保留内置值，各项独立，不自动推导其他颜色。`background-color-primary-light` 是主色淡色背景，不是亮色模式主色。完整键表与旧变量迁移说明见 [Theme 文档](../theme/README.md)。
+
+`background-color` 控制页面底色，`background-color-lightest` 控制 Header、侧栏、表格、分页、弹层和编辑器等模块的背景。两者默认均为亮色 `#fff`、暗色 `#171b24`，可分别配置。正文滚动容器和筛选栏保留透明背景，透出各自外层的页面底色。主题命名与分层参考 `@deot/vc`，默认配色及文字层级保持 Docs 原有视觉。
 
 配色本身不持久化；停止或重新启动 Client 时恢复宿主变量。Renderer 的条目/按钮、block 显式配色优先于站点默认；VC 配色与 Playground iframe 配色保持独立，iframe 仅同步亮暗状态。
 

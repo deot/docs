@@ -53,10 +53,9 @@ const escapeHtmlAttr = (value: string) => value
 
 /**
  * runtime 画布色。`previewInset` 露出的 padding、iframe chrome 和 sandbox
- * `html`/`body` 必须共用这一变量，暗色下 `--docs-background-color` 与
- * `--vc-background-color-lightest` 不同，否则会出现色带割裂。
+ * `html`/`body` 共用这一变量，优先沿用 VC 配色，回退到 Docs 模块背景色。
  */
-export const PLAYGROUND_RUNTIME_CANVAS_BACKGROUND = 'var(--vc-background-color-lightest, var(--docs-background-color, #fff))';
+export const PLAYGROUND_RUNTIME_CANVAS_BACKGROUND = 'var(--vc-background-color-lightest, var(--docs-background-color-lightest, #fff))';
 
 export interface CreateRuntimePreviewOptions {
 	/**

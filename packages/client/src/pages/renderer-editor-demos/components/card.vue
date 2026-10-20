@@ -40,7 +40,7 @@ const { t } = useLocale();
 	color: inherit;
 	text-align: left;
 	cursor: pointer;
-	background: color-mix(in srgb, var(--docs-demo-accent) 8%, varfix(background-color));
+	background: color-mix(in srgb, var(--docs-demo-accent) 8%, varfix(background-color-lightest));
 	border: 1px solid color-mix(in srgb, var(--docs-demo-accent) 26%, varfix(border-color));
 	border-radius: 16px;
 
@@ -70,7 +70,7 @@ const { t } = useLocale();
 	&__desc {
 		margin: 0;
 		line-height: 1.6;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 	}
 
 	&__modules {

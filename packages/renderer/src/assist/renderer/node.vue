@@ -147,8 +147,8 @@ onErrorCaptured((reason) => {
 
 .docs-renderer-node__state {
 	padding: 16px;
-	color: varfix(foreground-color-lighter);
-	background: varfix(background-color-deep);
+	color: varfix(foreground-color-light);
+	background: varfix(background-color-light);
 	border: 1px dashed varfix(border-color);
 	border-radius: 8px;
 }

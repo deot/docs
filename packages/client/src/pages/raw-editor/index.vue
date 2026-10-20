@@ -121,7 +121,7 @@ watch(() => route.query, applyQuery, { immediate: true });
 	}
 
 	[role='alert'] {
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		overflow-wrap: anywhere;
 	}
 
@@ -129,7 +129,7 @@ watch(() => route.query, applyQuery, { immediate: true });
 		padding: 8px 12px;
 		font: inherit;
 		color: inherit;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		border: 1px solid varfix(border-color);
 		border-radius: 6px;
 	}

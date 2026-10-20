@@ -26,7 +26,7 @@ const style = computed(() => {
 
 .docs-renderer-text {
 	margin: 0;
-	color: varfix(foreground-color);
+	color: varfix(foreground-color-dark);
 	white-space: pre-line;
 }
 </style>

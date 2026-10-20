@@ -85,7 +85,7 @@ const handleChange = (value: number | string | null | undefined) => {
 	min-width: 0;
 	min-height: 26px;
 	overflow: visible;
-	background: varfix(background-color-deep);
+	background: varfix(background-color-light);
 	border-radius: 6px;
 	align-items: center;
 
@@ -97,7 +97,7 @@ const handleChange = (value: number | string | null | undefined) => {
 		background: transparent;
 
 		.docs-renderer-number-editor__box {
-			background: varfix(background-color-deep);
+			background: varfix(background-color-light);
 			border-radius: 6px;
 		}
 	}
@@ -115,7 +115,7 @@ const handleChange = (value: number | string | null | undefined) => {
 		margin-left: 8px;
 		font-size: 11px;
 		line-height: 1;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 	}
 
 	&__slider {

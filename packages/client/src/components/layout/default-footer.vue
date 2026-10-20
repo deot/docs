@@ -176,7 +176,7 @@ const toPath = (value: string) => {
 	font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 	font-size: 14px;
 	line-height: 28px;
-	color: varfix(foreground-color);
+	color: varfix(foreground-color-dark);
 	background: transparent;
 
 	&:has(.docs-footer__content) {
@@ -210,7 +210,7 @@ const toPath = (value: string) => {
 		font-size: 14px;
 		font-weight: 600;
 		line-height: 28px;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 	}
 
 	@include element(links) {
@@ -226,7 +226,7 @@ const toPath = (value: string) => {
 
 		a,
 		span {
-			color: varfix(foreground-color);
+			color: varfix(foreground-color-dark);
 			text-decoration: none;
 		}
 
@@ -293,7 +293,7 @@ const toPath = (value: string) => {
 		font-size: 14px;
 		font-weight: 600;
 		line-height: 24px;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		text-decoration: none;
 		align-items: center;
 
@@ -311,7 +311,7 @@ const toPath = (value: string) => {
 	}
 
 	@include element(powered-by) {
-		color: varfix(foreground-color-light);
+		color: varfix(foreground-color);
 		text-align: right;
 	}
 }

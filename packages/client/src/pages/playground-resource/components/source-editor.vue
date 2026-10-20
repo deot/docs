@@ -94,7 +94,7 @@ const handleConfirm = async () => {
 			grid-template-columns: 88px minmax(0, 1fr);
 			gap: 8px;
 			align-items: start;
-			color: varfix(foreground-color-lighter);
+			color: varfix(foreground-color-light);
 		}
 
 		.docs-playground-resource__kind {
@@ -106,7 +106,7 @@ const handleConfirm = async () => {
 			overflow: hidden;
 			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 			font-size: 12px;
-			color: varfix(foreground-color);
+			color: varfix(foreground-color-dark);
 			text-overflow: ellipsis;
 			white-space: nowrap;
 		}
@@ -115,7 +115,7 @@ const handleConfirm = async () => {
 	@include element(label) {
 		display: block;
 		margin-bottom: 8px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 	}
 }
 </style>

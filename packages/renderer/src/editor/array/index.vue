@@ -126,7 +126,7 @@ watch(() => props.modelValue, syncRows, { immediate: true });
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
 		padding: 10px 8px;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		border: 1px dashed varfix(border-color);
 		border-radius: 4px;
 	}
@@ -143,9 +143,9 @@ watch(() => props.modelValue, syncRows, { immediate: true });
 		height: 20px;
 		padding: 0;
 		margin: 0;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		cursor: pointer;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		border: 1px solid varfix(border-color);
 		border-radius: 50%;
 		appearance: none;
@@ -197,7 +197,7 @@ watch(() => props.modelValue, syncRows, { immediate: true });
 		width: 100%;
 		min-height: 28px;
 		color: varfix(color-primary);
-		background: varfix(background-color-deep);
+		background: varfix(background-color-light);
 		border-style: dashed;
 	}
 }

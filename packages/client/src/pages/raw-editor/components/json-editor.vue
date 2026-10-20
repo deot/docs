@@ -66,8 +66,8 @@ onBeforeUnmount(() => editor?.destroy());
 	width: 100%;
 	min-width: 0;
 	min-height: 0;
-	color: varfix(foreground-color);
-	background: varfix(background-color);
+	color: varfix(foreground-color-dark);
+	background: varfix(background-color-lightest);
 
 	.cm-editor {
 		height: auto;
@@ -83,21 +83,21 @@ onBeforeUnmount(() => editor?.destroy());
 
 	.cm-content {
 		padding: 12px 0;
-		caret-color: varfix(foreground-color);
+		caret-color: varfix(foreground-color-dark);
 	}
 
 	.cm-gutters {
-		color: varfix(foreground-color-lighter);
-		background: varfix(background-color-deep);
+		color: varfix(foreground-color-light);
+		background: varfix(background-color-light);
 		border-color: varfix(border-color);
 	}
 
 	.cm-activeLine, .cm-activeLineGutter {
-		background: varfix(background-color-deeper);
+		background: varfix(background-color-lighter);
 	}
 
 	.cm-focused .cm-selectionBackground, .cm-selectionBackground {
-		background: varfix(background-color-deep);
+		background: varfix(background-color-light);
 	}
 
 	.cm-line {

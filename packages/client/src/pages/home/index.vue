@@ -150,7 +150,7 @@ onBeforeUnmount(() => {
 	@include element(loading) {
 		display: grid;
 		min-height: 600px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		place-items: center;
 	}
 }

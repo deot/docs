@@ -57,9 +57,9 @@ onBeforeUnmount(() => {
 	width: 54px;
 	height: 24px;
 	padding: 0 8px;
-	color: varfix(foreground-color-light);
+	color: varfix(foreground-color);
 	cursor: pointer;
-	background: varfix(background-color-deep);
+	background: varfix(background-color-light);
 	border: 1px solid varfix(border-color);
 	border-radius: 999px;
 	box-sizing: border-box;
@@ -69,8 +69,8 @@ onBeforeUnmount(() => {
 
 	&:hover,
 	&:focus-visible {
-		color: varfix(foreground-color-light);
-		background: varfix(background-color-deeper);
+		color: varfix(foreground-color);
+		background: varfix(background-color-lighter);
 		border-color: varfix(border-color);
 		outline: none;
 	}

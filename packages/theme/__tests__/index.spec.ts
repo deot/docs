@@ -18,7 +18,7 @@ describe('docs theme protocol', () => {
 	it('keeps the public color keys in sync with the SCSS theme', () => {
 		const source = readFileSync(resolve(themeRoot, 'theme.scss'), 'utf8');
 		const keys = [...source.matchAll(/^\t([a-z-]+):/gm)].map(match => match[1]);
-		expect(new Set(DOCS_THEME_COLOR_KEYS).size).toBe(23);
+		expect(new Set(DOCS_THEME_COLOR_KEYS).size).toBe(24);
 		expect([...DOCS_THEME_COLOR_KEYS].sort()).toEqual(keys.sort());
 	});
 
@@ -32,8 +32,27 @@ describe('docs theme protocol', () => {
 		expect(css).toContain('color-scheme: dark');
 		expect(css).toContain('--docs-background-color: var(--docs-theme-light-background-color, #fff)');
 		expect(css).toContain('--docs-background-color: var(--docs-theme-dark-background-color, #171b24)');
+		expect(css).toContain('--docs-background-color-lightest: var(--docs-theme-light-background-color-lightest, #fff)');
+		expect(css).toContain('--docs-background-color-lightest: var(--docs-theme-dark-background-color-lightest, #171b24)');
+		expect(css).toContain('--docs-color-contrast-light: var(--docs-theme-dark-color-contrast-light, #fff)');
 		expect(css).toContain('--docs-color-secondary: var(--docs-theme-dark-color-secondary, var(--docs-color-link))');
-		expect(css).not.toMatch(/--docs-(?:primary-color|background-color-soft|foreground-color-mute)\b/);
+		const legacyKeys = [
+			'primary-color', 'background-color-page', 'background-color-soft', 'background-color-mute',
+			'background-color-deep', 'background-color-deeper', 'foreground-color-mute',
+			'foreground-color-lighter', 'foreground-color-on-primary', 'color-shadow', 'border-color-light'
+		];
+		legacyKeys.forEach(key => expect(css).not.toContain(`--docs-${key}:`));
+	});
+
+	it('preserves the existing light and dark visual palette after renaming', () => {
+		const palette = JSON.parse(readFileSync(resolve(__dirname, 'fixtures/palette.json'), 'utf8')) as Record<string, [string, string]>;
+		const css = compile(resolve(themeRoot, 'variables.scss')).css;
+		expect(Object.keys(palette).sort()).toEqual([...DOCS_THEME_COLOR_KEYS].sort());
+		Object.entries(palette).forEach(([key, values]) => {
+			DOCS_THEMES.forEach((mode, index) => {
+				expect(css).toContain(`--docs-${key}: var(--docs-theme-${mode}-${key}, ${values[index]})`);
+			});
+		});
 	});
 
 	it('preserves light-only SCSS theme customization in dark mode', () => {

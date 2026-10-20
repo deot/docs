@@ -49,7 +49,7 @@ const move = (event: PointerEvent) => {
 @include block(docs-markdown-editor-pane-divider) {
 	position: relative;
 	cursor: col-resize;
-	background: varfix(background-color-deep);
+	background: varfix(background-color-light);
 	touch-action: none;
 
 	&::before {
@@ -63,10 +63,10 @@ const move = (event: PointerEvent) => {
 	}
 
 	&:hover, &:focus-visible, &.is-dragging {
-		background: varfix(background-color-deeper);
+		background: varfix(background-color-lighter);
 
 		&::before {
-			background: varfix(foreground-color-lighter);
+			background: varfix(foreground-color-light);
 		}
 	}
 

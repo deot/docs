@@ -155,7 +155,7 @@ onBeforeUnmount(() => clearTimeout(copyTimer));
 		color-mix(in srgb, var(--docs-renderer-code-accent, #{varfix(color-primary)}) 35%, var(--docs-renderer-ink))
 	);
 	--docs-renderer-code-paper: light-dark(
-		#{varfix(background-color)}, color-mix(in srgb, #{varfix(background-color)} 94%, var(--docs-renderer-ink))
+		#{varfix(background-color-lightest)}, color-mix(in srgb, #{varfix(background-color-lightest)} 94%, var(--docs-renderer-ink))
 	);
 	--docs-renderer-muted: color-mix(in srgb, var(--docs-renderer-ink) 68%, var(--docs-renderer-code-paper));
 	--docs-renderer-code-tint: color-mix(in srgb, var(--docs-renderer-accent) 25%, var(--docs-renderer-muted));

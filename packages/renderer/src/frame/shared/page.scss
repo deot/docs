@@ -14,7 +14,7 @@
 
 	&.has-side-pattern {
 		width: calc(100% - 80px);
-		border-inline: 1px solid varfix(border-color-light);
+		border-inline: 1px solid varfix(color-neutral-light);
 	}
 
 	&.has-side-pattern::before,
@@ -27,7 +27,7 @@
 		background: repeating-linear-gradient(
 			-45deg,
 			transparent 0 5px,
-			color-mix(in srgb, varfix(foreground-color-light) 8%, transparent) 5px 6px
+			color-mix(in srgb, varfix(foreground-color) 8%, transparent) 5px 6px
 		);
 		content: '';
 		box-sizing: border-box;
@@ -35,12 +35,12 @@
 
 	&.has-side-pattern::before {
 		left: -41px;
-		border-left: 1px solid varfix(border-color-light);
+		border-left: 1px solid varfix(color-neutral-light);
 	}
 
 	&.has-side-pattern::after {
 		right: -41px;
-		border-right: 1px solid varfix(border-color-light);
+		border-right: 1px solid varfix(color-neutral-light);
 	}
 }
 

@@ -695,7 +695,7 @@ onBeforeUnmount(() => {
 		width: 20px;
 		min-height: 12px;
 		pointer-events: none;
-		background: var(--docs-foreground-color-light, var(--vc-color-dark-lighter, #515a6e));
+		background: var(--docs-foreground-color, var(--vc-color-dark-lighter, #515a6e));
 		border-radius: 6px;
 		opacity: 0;
 		transition: opacity 120ms ease;
@@ -717,13 +717,13 @@ onBeforeUnmount(() => {
 		}
 
 		&.is-in-view {
-			background: var(--docs-foreground-color-lighter, var(--vc-color-dark-extralight, #808695));
+			background: var(--docs-foreground-color-light, var(--vc-color-dark-extralight, #808695));
 			opacity: 0.92;
 		}
 
 		&.is-active,
 		&.is-hovered {
-			background: var(--docs-foreground-color-light, var(--vc-color-dark-lighter, #515a6e));
+			background: var(--docs-foreground-color, var(--vc-color-dark-lighter, #515a6e));
 			opacity: 1;
 		}
 	}
@@ -735,20 +735,20 @@ onBeforeUnmount(() => {
 		padding: 8px 10px;
 		font-size: 12px;
 		line-height: 1.5;
-		color: var(--docs-foreground-color, var(--vc-foreground-color, #17233d));
+		color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #17233d));
 		pointer-events: none;
-		background: var(--docs-background-color, var(--vc-background-color-lightest, #fff));
+		background: var(--docs-background-color-lightest, var(--vc-background-color-lightest, #fff));
 		border: 1px solid var(--docs-border-color, var(--vc-border-color, #dcdee2));
 		border-radius: 8px;
 		transform: translateY(-50%);
-		box-shadow: 0 2px 8px var(--docs-color-shadow, rgb(0 0 0 / 10%));
+		box-shadow: 0 2px 8px var(--docs-color-shadow-fixed, rgb(0 0 0 / 10%));
 		overflow-wrap: anywhere;
 	}
 
 	@include element(preview-title) {
 		overflow: hidden;
 		font-weight: 600;
-		color: var(--docs-foreground-color, var(--vc-foreground-color, #17233d));
+		color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #17233d));
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
@@ -757,7 +757,7 @@ onBeforeUnmount(() => {
 		display: -webkit-box;
 		margin-top: 4px;
 		overflow: hidden;
-		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-extralight, #808695));
+		color: var(--docs-foreground-color-light, var(--vc-color-dark-extralight, #808695));
 		white-space: pre-line;
 		-webkit-box-orient: vertical;
 		-webkit-line-clamp: 4;

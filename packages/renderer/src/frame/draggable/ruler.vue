@@ -180,7 +180,7 @@ onMounted(() => nextTick(refreshCanvas));
 		color: #fff;
 		background: color-mix(in srgb, varfix(color-link) 70%, transparent);
 		border-radius: 1px;
-		box-shadow: 0 0 5px -3px varfix(color-shadow);
+		box-shadow: 0 0 5px -3px varfix(color-shadow-fixed);
 		user-select: none;
 	}
 
@@ -225,7 +225,7 @@ onMounted(() => nextTick(refreshCanvas));
 		width: 20px;
 		height: 20px;
 		cursor: pointer;
-		background: varfix(background-color-deeper);
+		background: varfix(background-color-lighter);
 	}
 
 	&__x {
@@ -278,7 +278,7 @@ onMounted(() => nextTick(refreshCanvas));
 	&__canvas {
 		display: block;
 		pointer-events: none;
-		background: varfix(background-color-deep);
+		background: varfix(background-color-light);
 	}
 
 	.docs-renderer-guide {
@@ -293,7 +293,7 @@ onMounted(() => nextTick(refreshCanvas));
 			color: #fff;
 			background: color-mix(in srgb, varfix(color-link) 70%, transparent);
 			border-radius: 1px;
-			box-shadow: 0 0 5px -3px varfix(color-shadow);
+			box-shadow: 0 0 5px -3px varfix(color-shadow-fixed);
 			user-select: none;
 			justify-content: center;
 			align-items: center;

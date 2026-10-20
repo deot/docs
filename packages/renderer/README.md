@@ -101,7 +101,7 @@ const document = {
 `features.items[].image` 可配置卡片下方的图片，支持 workspace 相对路径、URL 和 base64；
 编辑器支持填写地址或上传图片。留空时，左／右布局使用默认轻图示，居中布局保持简洁卡片。
 
-Hero、CTA、Features、Steps 新建及新增条目时，强调色默认留空以继承站点主题。优先级为条目/按钮显式颜色 → block 强调色 → 站点语义色 → 内置值；已有文档的显式颜色保留。`accent` 对应 `--docs-color-primary`，`accentSecondary` 对应 `--docs-color-secondary`；实心按钮文字默认使用 `--docs-foreground-color-on-primary`，仍可通过 `textColor` 覆盖。站点配置方式及 CSS / SCSS 变量迁移表见 [Theme 文档](../theme/README.md)。
+Hero、CTA、Features、Steps 新建及新增条目时，强调色默认留空以继承站点主题。优先级为条目/按钮显式颜色 → block 强调色 → 站点语义色 → 内置值；已有文档的显式颜色保留。`accent` 对应 `--docs-color-primary`，`accentSecondary` 对应 `--docs-color-secondary`；实心按钮文字默认使用 `--docs-color-contrast-light`，仍可通过 `textColor` 覆盖。站点配置方式及 CSS / SCSS 变量迁移表见 [Theme 文档](../theme/README.md)。
 
 Hero、CTA、Features、Steps、FAQ、Code 的 `description`、Features / Steps 条目的 `description`、FAQ 条目的 `answer`，以及 Text 模块的 `text`，均按纯文本渲染并保留 `\n` 换行，同时支持自动折行；不解析 `<br>` 等 HTML 标签。
 

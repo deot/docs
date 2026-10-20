@@ -161,10 +161,12 @@ body,
 	box-sizing: border-box;
 }
 
-body {
+// 文档基础样式优先于预览后加载的全局 body 规则。
+html body {
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
 	font-size: 14px;
-	color: varfix(foreground-color-light);
+	line-height: inherit;
+	color: varfix(foreground-color);
 	background: varfix(background-color);
 }
 
@@ -328,7 +330,7 @@ a {
 		width: 100%;
 		min-height: 0;
 		overflow: hidden;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 	}
 
 	@include element(sidebar-scroller) {
@@ -448,7 +450,7 @@ a {
 				width: 36px;
 				height: 36px;
 				padding: 0;
-				color: varfix(foreground-color-light);
+				color: varfix(foreground-color);
 				cursor: pointer;
 				background: transparent;
 				border: 0;
@@ -478,7 +480,7 @@ a {
 			border-right: 0;
 			visibility: hidden;
 			transform: translateX(-100%);
-			box-shadow: 8px 0 24px varfix(color-shadow);
+			box-shadow: 8px 0 24px varfix(color-shadow-fixed);
 			transition: transform 0.24s ease, visibility 0.24s step-end;
 		}
 

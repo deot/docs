@@ -126,11 +126,11 @@ onBeforeUnmount(() => {
 	z-index: 1999;
 	min-width: 168px;
 	padding: 6px;
-	color: varfix(foreground-color);
-	background: varfix(background-color);
+	color: varfix(foreground-color-dark);
+	background: varfix(background-color-lightest);
 	border: 1px solid varfix(border-color);
 	border-radius: 8px;
-	box-shadow: 0 8px 24px varfix(color-shadow);
+	box-shadow: 0 8px 24px varfix(color-shadow-fixed);
 	box-sizing: border-box;
 
 	&__content {
@@ -167,7 +167,7 @@ onBeforeUnmount(() => {
 				right: 4px;
 				left: 4px;
 				height: 1px;
-				background: varfix(border-color-light);
+				background: varfix(color-neutral-light);
 				content: '';
 			}
 		}

@@ -115,7 +115,7 @@ const imageNode = (item: Record<string, unknown>, index: number): RendererSortab
 		min-height: 296px;
 		padding: 28px;
 		overflow: hidden;
-		background: color-mix(in srgb, var(--docs-renderer-card-accent) 3%, varfix(background-color));
+		background: color-mix(in srgb, var(--docs-renderer-card-accent) 3%, varfix(background-color-lightest));
 		border: 0;
 		border-radius: 18px;
 		box-sizing: border-box;
@@ -143,7 +143,7 @@ const imageNode = (item: Record<string, unknown>, index: number): RendererSortab
 		font-size: 16px;
 		line-height: 1;
 		color: var(--docs-renderer-card-accent);
-		background: color-mix(in srgb, var(--docs-renderer-card-accent) 6%, varfix(background-color));
+		background: color-mix(in srgb, var(--docs-renderer-card-accent) 6%, varfix(background-color-lightest));
 		border-radius: 11px;
 		align-items: center;
 		justify-content: center;
@@ -226,7 +226,7 @@ const imageNode = (item: Record<string, unknown>, index: number): RendererSortab
 		}
 
 		.is-paper {
-			fill: varfix(background-color);
+			fill: varfix(background-color-lightest);
 			fill-opacity: 0.68;
 			stroke: currentcolor;
 			stroke-opacity: 0.16;

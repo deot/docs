@@ -12,7 +12,7 @@ $sign: md;
 		}
 
 		a {
-			color: var(--docs-foreground-color, var(--vc-foreground-color, #333));
+			color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #333));
 			text-decoration: none;
 		}
 
@@ -193,7 +193,7 @@ $sign: md;
 				font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 				font-size: 12px;
 				line-height: 20px;
-				color: var(--docs-foreground-color, #030712);
+				color: var(--docs-foreground-color-dark, #030712);
 				vertical-align: middle;
 				background-color: color-mix(in srgb, #030712 5%, transparent);
 				border: 1px solid color-mix(in srgb, #030712 10%, transparent);
@@ -228,7 +228,7 @@ $sign: md;
 			& h4 .octicon-link[#{$sign}],
 			& h5 .octicon-link[#{$sign}],
 			& h6 .octicon-link[#{$sign}] {
-				color: var(--docs-foreground-color, #1b1f23);
+				color: var(--docs-foreground-color-dark, #1b1f23);
 				vertical-align: middle;
 				visibility: hidden;
 			}
@@ -447,7 +447,7 @@ $sign: md;
 
 			& table[#{$sign}] tbody tr {
 				background-color: transparent;
-				border-bottom: 1px solid var(--docs-border-color-light, #f0f1f2);
+				border-bottom: 1px solid var(--docs-color-neutral-light, #f0f1f2);
 				transition: background-color 0.15s ease;
 			}
 
@@ -455,7 +455,7 @@ $sign: md;
 				background-color: color-mix(
 					in srgb,
 					var(--docs-color-primary, #873bf4) 7%,
-					var(--docs-background-color, #fff)
+					var(--docs-background-color-lightest, #fff)
 				);
 			}
 
@@ -510,7 +510,7 @@ $sign: md;
 
 			& img[#{$sign}] {
 				max-width: 100%;
-				background-color: var(--docs-background-color, #fff);
+				background-color: var(--docs-background-color-lightest, #fff);
 				border-radius: 6px;
 				box-sizing: content-box;
 			}
@@ -520,7 +520,7 @@ $sign: md;
 				display: block;
 				max-width: 100%;
 				margin-inline: auto;
-				background-color: var(--docs-background-color, #fff);
+				background-color: var(--docs-background-color-lightest, #fff);
 				border-radius: 6px;
 				box-sizing: content-box;
 			}
@@ -563,7 +563,7 @@ $sign: md;
 				display: block;
 				padding: 5px 0 0;
 				clear: both;
-				color: var(--docs-foreground-color, #24292e);
+				color: var(--docs-foreground-color-dark, #24292e);
 			}
 
 			& span.align-center[#{$sign}] {
@@ -640,7 +640,7 @@ $sign: md;
 			& .csv-data .blob-num[#{$sign}] {
 				padding: 10px 8px 9px;
 				text-align: right;
-				background: var(--docs-background-color, #fff);
+				background: var(--docs-background-color-lightest, #fff);
 				border: 0;
 			}
 
@@ -875,7 +875,7 @@ $sign: md;
 
 			& a[#{$sign}][href]:not(.header-anchor) {
 				font-weight: 600;
-				color: var(--docs-foreground-color, var(--vc-foreground-color, #17233d));
+				color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #17233d));
 				text-decoration: underline;
 				text-decoration-thickness: 1px;
 				text-decoration-color: #38bdf8;
@@ -930,7 +930,7 @@ $sign: md;
 		@at-root {
 			[data-doc-theme='dark'] #{&} .docs-markdown-reset,
 			[data-vc-theme='dark'] #{&} .docs-markdown-reset {
-				color: var(--docs-foreground-color-light, #d9d9d9);
+				color: var(--docs-foreground-color, #d9d9d9);
 
 				hr[md] {
 					background-color: color-mix(in srgb, #fff 10%, transparent);
@@ -946,7 +946,7 @@ $sign: md;
 				}
 
 				details > summary {
-					color: var(--docs-foreground-color, #f8f8f8);
+					color: var(--docs-foreground-color-dark, #f8f8f8);
 				}
 
 				.tip[md],
@@ -959,7 +959,7 @@ $sign: md;
 				}
 
 				.docs-markdown-tabs__tab {
-					color: var(--docs-foreground-color-light, #d9d9d9);
+					color: var(--docs-foreground-color, #d9d9d9);
 				}
 
 				.docs-markdown-tabs__tab:hover {
@@ -968,7 +968,7 @@ $sign: md;
 
 				.docs-markdown-tabs__tab--active,
 				.docs-markdown-tabs__tab[aria-selected='true'] {
-					color: var(--docs-foreground-color, #f8f8f8);
+					color: var(--docs-foreground-color-dark, #f8f8f8);
 					box-shadow: inset 0 -2px 0 currentcolor;
 				}
 
@@ -987,7 +987,7 @@ $sign: md;
 
 				kbd,
 				kbd[md] {
-					color: var(--docs-foreground-color, #f8f8f8);
+					color: var(--docs-foreground-color-dark, #f8f8f8);
 					background-color: color-mix(in srgb, #fff 10%, transparent);
 					border-color: color-mix(in srgb, #fff 15%, transparent);
 				}
@@ -995,12 +995,12 @@ $sign: md;
 				figure img,
 				p[md] > img:only-child,
 				img[md] {
-					background-color: var(--docs-background-color, #171b24);
+					background-color: var(--docs-background-color-lightest, #171b24);
 				}
 
 				figcaption,
 				figcaption[md] {
-					color: color-mix(in srgb, var(--docs-foreground-color-light, #d9d9d9) 75%, transparent);
+					color: color-mix(in srgb, var(--docs-foreground-color, #d9d9d9) 75%, transparent);
 				}
 
 				h1[md],
@@ -1010,15 +1010,15 @@ $sign: md;
 				h5[md],
 				h6[md],
 				strong[md] {
-					color: var(--docs-foreground-color, #f8f8f8);
+					color: var(--docs-foreground-color-dark, #f8f8f8);
 				}
 
 				h2[md]:has(+ h3[md]) {
-					color: var(--docs-foreground-color-light, #d9d9d9);
+					color: var(--docs-foreground-color, #d9d9d9);
 				}
 
 				ol[md] li[md]::marker {
-					color: var(--docs-foreground-color, #f8f8f8);
+					color: var(--docs-foreground-color-dark, #f8f8f8);
 				}
 
 				span.frame > span[md] {
@@ -1030,23 +1030,23 @@ $sign: md;
 				}
 
 				table[md] tbody tr {
-					border-bottom-color: var(--docs-border-color-light, #303748);
+					border-bottom-color: var(--docs-color-neutral-light, #303748);
 				}
 
 				table[md] th {
-					color: var(--docs-foreground-color, #f8f8f8);
+					color: var(--docs-foreground-color-dark, #f8f8f8);
 				}
 
 				table[md] tbody tr:hover {
 					background-color: color-mix(
 						in srgb,
 						var(--docs-color-primary, #873bf4) 7%,
-						var(--docs-background-color, #171b24)
+						var(--docs-background-color-lightest, #171b24)
 					);
 				}
 
 				.csv-data th[md] {
-					background-color: var(--docs-background-color-deep, #252b3a);
+					background-color: var(--docs-background-color-light, #252b3a);
 				}
 
 				:not(pre) > code[md]:not(.hljs),
@@ -1062,7 +1062,7 @@ $sign: md;
 				}
 
 				a[md][href]:not(.header-anchor) {
-					color: var(--docs-foreground-color, #f8f8f8);
+					color: var(--docs-foreground-color-dark, #f8f8f8);
 				}
 			}
 		}

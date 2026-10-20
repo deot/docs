@@ -63,12 +63,12 @@ const handleKeyboard = () => Theme.toggle(togglerRef.value);
 		display: inline-flex;
 
 		&__wrapper {
-			background: varfix(background-color-deeper) !important;
+			background: varfix(background-color-lighter) !important;
 			border-color: varfix(border-color) !important;
 		}
 
 		&__inner {
-			background: varfix(background-color) !important;
+			background: varfix(background-color-lightest) !important;
 		}
 	}
 
@@ -82,12 +82,12 @@ const handleKeyboard = () => Theme.toggle(togglerRef.value);
 
 		@include when(light) {
 			left: 6px;
-			color: varfix(foreground-color-lighter);
+			color: varfix(foreground-color-light);
 		}
 
 		@include when(dark) {
 			left: 22px;
-			color: varfix(foreground-color-light);
+			color: varfix(foreground-color);
 		}
 
 	}

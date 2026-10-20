@@ -138,7 +138,7 @@ const iconOf = (item: Record<string, unknown>, index: number) => (
 		margin: 36px 0 0;
 		overflow: hidden;
 		list-style: none;
-		background: color-mix(in srgb, var(--docs-renderer-accent) 2%, varfix(background-color));
+		background: color-mix(in srgb, var(--docs-renderer-accent) 2%, varfix(background-color-lightest));
 		border-radius: 18px;
 		grid-template-columns: repeat(var(--docs-renderer-columns, 3), minmax(0, 1fr));
 		gap: var(--docs-renderer-step-gap);
@@ -172,8 +172,8 @@ const iconOf = (item: Record<string, unknown>, index: number) => (
 		font-size: 13px;
 		font-weight: 500;
 		color: var(--docs-renderer-card-accent);
-		background: varfix(background-color);
-		border: 1px solid color-mix(in srgb, var(--docs-renderer-card-accent) 16%, varfix(background-color));
+		background: varfix(background-color-lightest);
+		border: 1px solid color-mix(in srgb, var(--docs-renderer-card-accent) 16%, varfix(background-color-lightest));
 		border-radius: 13px;
 		align-items: center;
 		justify-content: center;

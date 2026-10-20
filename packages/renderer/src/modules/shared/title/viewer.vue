@@ -23,6 +23,6 @@ const style = computed(() => ({
 
 .docs-renderer-title {
 	margin: 0;
-	color: varfix(foreground-color);
+	color: varfix(foreground-color-dark);
 }
 </style>

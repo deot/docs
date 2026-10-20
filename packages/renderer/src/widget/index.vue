@@ -196,7 +196,7 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 	width: 284px;
 	min-width: 0;
 	min-height: 0;
-	background: varfix(background-color);
+	background: varfix(background-color-lightest);
 	border-right: 1px solid varfix(border-color);
 	box-sizing: border-box;
 	flex: 0 0 284px;
@@ -205,7 +205,7 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		display: flex;
 		height: 100%;
 		padding: 10px 0 0;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		flex-direction: column;
 		align-items: stretch;
 	}
@@ -215,7 +215,7 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		margin: 0;
 		font-size: 15px;
 		font-weight: 400;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 	}
 
 	&__tip {
@@ -224,8 +224,8 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		padding: 0 10px;
 		margin: 2px 9px 15px;
 		font-size: 12px;
-		color: varfix(foreground-color-light);
-		background: color-mix(in srgb, #ec9c39 18%, varfix(background-color-deep));
+		color: varfix(foreground-color);
+		background: color-mix(in srgb, #ec9c39 18%, varfix(background-color-light));
 		border: 0;
 		border-radius: 4px;
 		align-items: center;
@@ -281,7 +281,7 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		padding: 0;
 		overflow: auto;
 		font-size: 12px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		border-right: 1px solid varfix(border-color);
 		flex-direction: column;
 	}
@@ -297,8 +297,8 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		border: 0;
 
 		&.is-active {
-			color: varfix(foreground-color);
-			background: varfix(background-color-deeper);
+			color: varfix(foreground-color-dark);
+			background: varfix(background-color-lighter);
 		}
 	}
 
@@ -317,7 +317,7 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		flex: 0 0 100%;
 		min-width: 0;
 		overflow: hidden;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		border: 1px solid varfix(border-color);
 		border-radius: 6px;
 		flex-direction: column;
@@ -329,7 +329,7 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		padding: 10px 12px;
 		font: inherit;
 		font-size: 12px;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		text-align: left;
 		cursor: pointer;
 		background: transparent;
@@ -366,8 +366,8 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		display: flex;
 		width: 100%;
 		padding: 8px;
-		background: varfix(background-color-deep);
-		border-top: 1px solid varfix(border-color-light);
+		background: varfix(background-color-light);
+		border-top: 1px solid varfix(color-neutral-light);
 		box-sizing: border-box;
 		gap: 8px;
 		flex-wrap: wrap;
@@ -380,10 +380,10 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		font: inherit;
 		font-size: 12px;
 		line-height: 1.3;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		text-align: center;
 		cursor: grab;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		border: 1px solid varfix(border-color);
 		border-radius: 6px;
 		box-sizing: border-box;
@@ -412,8 +412,8 @@ const handleDrag = (event: DragEvent, type: string, presetKey?: string) => {
 		display: flex;
 		height: 44px;
 		overflow: hidden;
-		color: varfix(foreground-color-lighter);
-		background: varfix(background-color-deep);
+		color: varfix(foreground-color-light);
+		background: varfix(background-color-light);
 		border-radius: 4px;
 		align-items: center;
 		justify-content: center;

@@ -177,7 +177,7 @@ describe('Renderer and Combo', () => {
 		await flushPromises();
 		const publishedCanvas = preview.get('.docs-renderer__canvas').attributes('style') || '';
 		expect(publishedCanvas).toContain('width: 100%');
-		expect(publishedCanvas).toContain('var(--docs-background-color)');
+		expect(publishedCanvas).toContain('var(--docs-background-color-lightest)');
 		expect(publishedCanvas).not.toContain('--docs-renderer-content-width');
 		expect(publishedCanvas).not.toMatch(/min-height/);
 		expect(preview.get('[data-renderer-node-id="hero"]').classes()).toContain('is-full-width');

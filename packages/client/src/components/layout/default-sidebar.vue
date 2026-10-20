@@ -80,7 +80,7 @@ const isItemActive = (value: string) => {
 		gap: 8px;
 		padding: 0;
 		margin: 0;
-		border-left: 1px solid color-mix(in srgb, varfix(foreground-color) 10%, transparent);
+		border-left: 1px solid color-mix(in srgb, varfix(foreground-color-dark) 10%, transparent);
 
 		.docs-sidebar--nested {
 			border-left-color: transparent;
@@ -101,7 +101,7 @@ const isItemActive = (value: string) => {
 		font-size: 14px;
 		font-weight: 400;
 		line-height: 28px;
-		color: varfix(foreground-color-light);
+		color: varfix(foreground-color);
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -109,14 +109,14 @@ const isItemActive = (value: string) => {
 		align-items: center;
 
 		&:hover {
-			color: varfix(foreground-color);
+			color: varfix(foreground-color-dark);
 			background: transparent;
 		}
 
 		&.is-active,
 		&.router-link-active {
 			font-weight: 600;
-			color: varfix(foreground-color);
+			color: varfix(foreground-color-dark);
 			background: transparent;
 		}
 	}
@@ -130,7 +130,7 @@ const isItemActive = (value: string) => {
 		font-weight: 500;
 		line-height: 24px;
 		letter-spacing: 0.1em;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		text-transform: uppercase;
 		gap: 8px;
 		align-items: center;
@@ -158,12 +158,12 @@ const isItemActive = (value: string) => {
 			border-left: 1px solid transparent;
 
 			&:hover {
-				border-left-color: color-mix(in srgb, varfix(foreground-color) 25%, transparent);
+				border-left-color: color-mix(in srgb, varfix(foreground-color-dark) 25%, transparent);
 			}
 
 			&.is-active,
 			&.router-link-active {
-				border-left-color: varfix(foreground-color);
+				border-left-color: varfix(foreground-color-dark);
 			}
 		}
 

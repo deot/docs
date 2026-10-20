@@ -211,7 +211,7 @@ defineExpose({ getData, load, reset, refreshAffix });
 
 @include block(docs-paging) {
 	@include element(table) {
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 	}
 
 	@include element(pagination) {
@@ -219,7 +219,7 @@ defineExpose({ getData, load, reset, refreshAffix });
 		grid-template-columns: minmax(0, 1fr) max-content;
 		width: 100%;
 		padding: 12px 8px 8px 0;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		align-items: center;
 		gap: 16px;
 	}

@@ -56,7 +56,7 @@ const actionsNode = computed<RendererSortableNode>(() => ({
 	@include landing.motion;
 	@include landing.full-width-rule;
 	@include landing.full-width-background(
-		color-mix(in srgb, var(--docs-renderer-accent) 2%, var(--docs-renderer-cta-background, varfix(background-color)))
+		color-mix(in srgb, var(--docs-renderer-accent) 2%, var(--docs-renderer-cta-background, varfix(background-color-lightest)))
 	);
 	@include landing.side-label(64px);
 

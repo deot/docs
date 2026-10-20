@@ -104,7 +104,7 @@ const handleClick = async (event: MouseEvent, item: RendererAreaZone) => {
 	position: relative;
 	display: block;
 	overflow: hidden;
-	background: varfix(background-color);
+	background: varfix(background-color-lightest);
 
 	&__image {
 		display: block;
@@ -115,7 +115,7 @@ const handleClick = async (event: MouseEvent, item: RendererAreaZone) => {
 	&__empty {
 		display: grid;
 		min-height: 160px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		border: 1px dashed varfix(border-color);
 		place-items: center;
 	}

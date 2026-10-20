@@ -6,16 +6,19 @@ export type DocsTheme = typeof DOCS_THEMES[number];
 export type DocsThemePreference = DocsTheme | 'system';
 
 export const DOCS_THEME_COLOR_KEYS = [
+	'color-contrast-light',
 	'color-primary',
 	'color-secondary',
 	'color-link',
 	'color-mask',
-	'color-shadow',
+	'color-neutral-light',
+	'color-shadow-fixed',
 	'color-pattern',
 	'color-error',
 	'background-color',
-	'background-color-deep',
-	'background-color-deeper',
+	'background-color-light',
+	'background-color-lighter',
+	'background-color-lightest',
 	'background-color-primary-light',
 	'background-color-code',
 	'background-color-footer',
@@ -24,11 +27,9 @@ export const DOCS_THEME_COLOR_KEYS = [
 	'background-color-error-light',
 	'foreground-color',
 	'foreground-color-light',
-	'foreground-color-lighter',
+	'foreground-color-dark',
 	'foreground-color-footer',
-	'foreground-color-on-primary',
-	'border-color',
-	'border-color-light'
+	'border-color'
 ] as const;
 
 export type DocsThemeColorKey = typeof DOCS_THEME_COLOR_KEYS[number];

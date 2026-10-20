@@ -67,7 +67,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 	grid-template-columns: repeat(3, 20px);
 	gap: 4px;
 	padding: 2px;
-	color: varfix(foreground-color-lighter);
+	color: varfix(foreground-color-light);
 	background: rgb(3 7 18 / 4%);
 	border-radius: 999px;
 
@@ -84,7 +84,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 		place-items: center;
 
 		&.is-active {
-			color: varfix(foreground-color-light);
+			color: varfix(foreground-color);
 			background: #fff;
 			box-shadow:
 				0 0 0 1px rgb(255 255 255 / 10%) inset,

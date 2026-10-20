@@ -59,7 +59,8 @@ describe('docs theme', () => {
 					'color-primary': { light: ' #15803d ', dark: '#86efac' },
 					'color-secondary': 'light-dark(#4338ca, #a5b4fc)',
 					'color-link': { light: '#2563eb' },
-					'color-error': { light: '#dc2626', dark: '' }
+					'color-error': { light: '#dc2626', dark: '' },
+					'background-color': { light: '#f5f6fa', dark: '#111827' }
 				}
 			}));
 			expect(color('light')).toBe('#15803d');
@@ -68,7 +69,9 @@ describe('docs theme', () => {
 			expect(color('dark', 'color-secondary')).toBe('light-dark(#4338ca, #a5b4fc)');
 			expect(color('dark', 'color-link')).toBe('#2563eb');
 			expect(color('dark', 'color-error')).toBe('#dc2626');
-			expect(color('light', 'background-color')).toBe('');
+			expect(color('light', 'background-color')).toBe('#f5f6fa');
+			expect(color('dark', 'background-color')).toBe('#111827');
+			expect(color('light', 'background-color-lightest')).toBe('');
 		});
 
 		it('ignores empty, malformed and unknown color entries', () => {
@@ -78,7 +81,7 @@ describe('docs theme', () => {
 					'color-link': { light: ' ', dark: '#fff' },
 					'color-secondary': null,
 					'color-error': 42,
-					'background-color': { dark: '#000' },
+					'background-color-lightest': { dark: '#000' },
 					'unknown': 'red'
 				}
 			})));

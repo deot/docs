@@ -620,7 +620,7 @@ defineExpose({
 		height: 100%;
 
 		// 覆盖 @vue/repl 的 iframe `#fff` / `.dark` `#1e1e1e`，与 sandbox 画布对齐。
-		background: var(--vc-background-color-lightest, var(--docs-background-color, #fff)) !important;
+		background: var(--vc-background-color-lightest, var(--docs-background-color-lightest, #fff)) !important;
 	}
 
 	.iframe-container iframe {
@@ -632,7 +632,7 @@ defineExpose({
 		position: relative;
 		min-height: 0;
 		overflow: hidden;
-		background: var(--vc-background-color-lightest, var(--docs-background-color, #fff));
+		background: var(--vc-background-color-lightest, var(--docs-background-color-lightest, #fff));
 		border: 1px solid var(--docs-border-color, var(--vc-border-color, #e2e8f0));
 		border-radius: 12px;
 
@@ -654,9 +654,9 @@ defineExpose({
 		min-width: 24px;
 		min-height: 24px;
 		padding: 0;
-		color: var(--docs-foreground-color-lighter, var(--vc-color-dark-lightest, #64748b));
+		color: var(--docs-foreground-color-light, var(--vc-color-dark-lightest, #64748b));
 		cursor: pointer;
-		background: var(--vc-background-color-lightest, var(--docs-background-color, #fff));
+		background: var(--vc-background-color-lightest, var(--docs-background-color-lightest, #fff));
 		border: 0;
 		border-radius: 8px;
 		transform: translateX(-50%);
@@ -672,7 +672,7 @@ defineExpose({
 		}
 
 		&:hover {
-			color: var(--docs-foreground-color, var(--vc-foreground-color, #18181b));
+			color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #18181b));
 		}
 
 		&:focus-visible {

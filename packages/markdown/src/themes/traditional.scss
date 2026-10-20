@@ -12,7 +12,7 @@ $sign: md;
 		}
 
 		a {
-			color: var(--docs-foreground-color, var(--vc-foreground-color, #333));
+			color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #333));
 			text-decoration: none;
 		}
 
@@ -64,7 +64,7 @@ $sign: md;
 			-webkit-font-smoothing: antialiased;
 			-moz-osx-font-smoothing: grayscale;
 			line-height: 1.65;
-			color: var(--docs-foreground-color-light, var(--vc-color-dark-lighter, #515a6e));
+			color: var(--docs-foreground-color, var(--vc-color-dark-lighter, #515a6e));
 			overflow-wrap: break-word;
 		}
 
@@ -154,7 +154,7 @@ $sign: md;
 				padding: 4px 0 4px 12px;
 				margin-right: 0;
 				margin-left: 0;
-				color: var(--docs-foreground-color-lighter, #6a737d);
+				color: var(--docs-foreground-color-light, #6a737d);
 				background-color: transparent;
 				border-left: 3px solid var(--docs-border-color, #dfe2e5);
 			}
@@ -172,13 +172,13 @@ $sign: md;
 				padding: 3px 5px;
 				font-size: 11px;
 				line-height: 10px;
-				color: var(--docs-foreground-color-light, #444d56);
+				color: var(--docs-foreground-color, #444d56);
 				vertical-align: middle;
-				background-color: var(--docs-background-color-deep, #fafbfc);
+				background-color: var(--docs-background-color-light, #fafbfc);
 				border: solid 1px var(--docs-border-color, #c6cbd1);
-				border-bottom-color: var(--docs-foreground-color-lighter, #959da5);
+				border-bottom-color: var(--docs-foreground-color-light, #959da5);
 				border-radius: 3px;
-				box-shadow: inset 0 -1px 0 var(--docs-foreground-color-lighter, #959da5);
+				box-shadow: inset 0 -1px 0 var(--docs-foreground-color-light, #959da5);
 			}
 
 			& h1[#{$sign}],
@@ -191,7 +191,7 @@ $sign: md;
 				margin-bottom: 12px;
 				font-weight: 650;
 				line-height: 1.35;
-				color: var(--docs-foreground-color, var(--vc-foreground-color, #24292f));
+				color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #24292f));
 				scroll-margin-top: 80px;
 			}
 
@@ -207,7 +207,7 @@ $sign: md;
 			& h4 .octicon-link[#{$sign}],
 			& h5 .octicon-link[#{$sign}],
 			& h6 .octicon-link[#{$sign}] {
-				color: var(--docs-foreground-color, #1b1f23);
+				color: var(--docs-foreground-color-dark, #1b1f23);
 				vertical-align: middle;
 				visibility: hidden;
 			}
@@ -273,12 +273,12 @@ $sign: md;
 
 			& h6[#{$sign}] {
 				font-size: 0.9em;
-				color: var(--docs-foreground-color-lighter, #6a737d);
+				color: var(--docs-foreground-color-light, #6a737d);
 			}
 
 			& strong[#{$sign}] {
 				font-weight: 650;
-				color: var(--docs-foreground-color, var(--vc-foreground-color, #24292f));
+				color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #24292f));
 			}
 
 			& del[#{$sign}] {
@@ -352,7 +352,7 @@ $sign: md;
 			& table th[#{$sign}] {
 				font-weight: 600;
 				white-space: nowrap;
-				background-color: var(--docs-background-color-deep, #f7f8fa);
+				background-color: var(--docs-background-color-light, #f7f8fa);
 			}
 
 			& table th[#{$sign}],
@@ -384,7 +384,7 @@ $sign: md;
 			}
 
 			& table tr[#{$sign}] {
-				background-color: var(--docs-background-color, #fff);
+				background-color: var(--docs-background-color-lightest, #fff);
 			}
 
 			& table tr[#{$sign}]:nth-child(2n) {
@@ -399,7 +399,7 @@ $sign: md;
 				background-color: color-mix(
 					in srgb,
 					var(--docs-color-primary, #873bf4) 7%,
-					var(--docs-background-color, #fff)
+					var(--docs-background-color-lightest, #fff)
 				);
 			}
 
@@ -409,7 +409,7 @@ $sign: md;
 
 			& img[#{$sign}] {
 				max-width: 100%;
-				background-color: var(--docs-background-color, #fff);
+				background-color: var(--docs-background-color-lightest, #fff);
 				border-radius: 6px;
 				box-sizing: content-box;
 			}
@@ -452,7 +452,7 @@ $sign: md;
 				display: block;
 				padding: 5px 0 0;
 				clear: both;
-				color: var(--docs-foreground-color, #24292e);
+				color: var(--docs-foreground-color-dark, #24292e);
 			}
 
 			& span.align-center[#{$sign}] {
@@ -529,7 +529,7 @@ $sign: md;
 			& .csv-data .blob-num[#{$sign}] {
 				padding: 10px 8px 9px;
 				text-align: right;
-				background: var(--docs-background-color, #fff);
+				background: var(--docs-background-color-lightest, #fff);
 				border: 0;
 			}
 
@@ -644,7 +644,7 @@ $sign: md;
 				font-size: 14px;
 				font-weight: 500;
 				line-height: 1.75;
-				color: var(--docs-foreground-color-light, #445368);
+				color: var(--docs-foreground-color, #445368);
 				cursor: pointer;
 				background: transparent;
 				border: 0;
@@ -658,7 +658,7 @@ $sign: md;
 
 			& .docs-markdown-tabs__tab--active,
 			& .docs-markdown-tabs__tab[aria-selected='true'] {
-				color: var(--docs-foreground-color, #24292f);
+				color: var(--docs-foreground-color-dark, #24292f);
 				box-shadow: inset 0 -2px 0 currentcolor;
 			}
 
@@ -693,10 +693,10 @@ $sign: md;
 
 			& .tip[#{$sign}] {
 				code:not(.hljs)  {
-					color: var(--docs-foreground-color-light, #445368);
+					color: var(--docs-foreground-color, #445368);
 					background-color: color-mix(
 						in srgb,
-						var(--docs-background-color, #fff) 70%,
+						var(--docs-background-color-lightest, #fff) 70%,
 						transparent
 					);
 				}
@@ -727,14 +727,14 @@ $sign: md;
 			&>details {
 				padding: 10px 14px;
 				margin-bottom: 18px;
-				background-color: var(--docs-background-color-deep, #f7f8fa);
+				background-color: var(--docs-background-color-light, #f7f8fa);
 				border: 1px solid var(--docs-border-color, #e1e4e8);
 				border-radius: 6px;
 			}
 
 			&>details>summary {
 				font-weight: 600;
-				color: var(--docs-foreground-color, var(--vc-foreground-color, #24292f));
+				color: var(--docs-foreground-color-dark, var(--vc-foreground-color, #24292f));
 				cursor: pointer;
 				transition: color 0.2s ease;
 				user-select: none;
@@ -745,7 +745,7 @@ $sign: md;
 			}
 
 			&>details>summary::marker {
-				color: var(--docs-foreground-color-lighter, #6a737d);
+				color: var(--docs-foreground-color-light, #6a737d);
 			}
 
 			&>details[open]>summary {
@@ -787,19 +787,19 @@ $sign: md;
 		@at-root {
 			[data-doc-theme='dark'] #{&} .docs-markdown-reset,
 			[data-vc-theme='dark'] #{&} .docs-markdown-reset {
-				color: var(--docs-foreground-color-light, #d9d9d9);
+				color: var(--docs-foreground-color, #d9d9d9);
 
 				hr[md] {
 					background-color: var(--docs-border-color, #3b4355);
 				}
 
 				blockquote[md] {
-					color: var(--docs-foreground-color-lighter, #b9b9b9);
+					color: var(--docs-foreground-color-light, #b9b9b9);
 					border-left-color: var(--docs-border-color, #3b4355);
 				}
 
 				&>details {
-					background-color: var(--docs-background-color-deep, #252b3a);
+					background-color: var(--docs-background-color-light, #252b3a);
 					border-color: var(--docs-border-color, #3b4355);
 				}
 
@@ -808,12 +808,12 @@ $sign: md;
 				}
 
 				.docs-markdown-tabs__tab {
-					color: var(--docs-foreground-color-light, #d9d9d9);
+					color: var(--docs-foreground-color, #d9d9d9);
 				}
 
 				.docs-markdown-tabs__tab--active,
 				.docs-markdown-tabs__tab[aria-selected='true'] {
-					color: var(--docs-foreground-color, #f8f8f8);
+					color: var(--docs-foreground-color-dark, #f8f8f8);
 					box-shadow: inset 0 -2px 0 currentcolor;
 				}
 
@@ -826,8 +826,8 @@ $sign: md;
 				kbd[md],
 				table tr[md],
 				img[md] {
-					color: var(--docs-foreground-color-light, #d9d9d9);
-					background-color: var(--docs-background-color, #171b24);
+					color: var(--docs-foreground-color, #d9d9d9);
+					background-color: var(--docs-background-color-lightest, #171b24);
 					border-color: var(--docs-border-color, #3b4355);
 				}
 
@@ -842,12 +842,12 @@ $sign: md;
 
 				table tr[md]:nth-child(2n),
 				.csv-data th[md] {
-					background-color: var(--docs-background-color-deep, #252b3a);
+					background-color: var(--docs-background-color-light, #252b3a);
 				}
 
 				.tip[md] code:not(.hljs) {
-					color: var(--docs-foreground-color-light, #d9d9d9);
-					background-color: var(--docs-background-color-deeper, #303748);
+					color: var(--docs-foreground-color, #d9d9d9);
+					background-color: var(--docs-background-color-lighter, #303748);
 				}
 
 				code[md]:not(.hljs) {

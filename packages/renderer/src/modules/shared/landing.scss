@@ -2,9 +2,9 @@
 
 @mixin colors {
 	--docs-renderer-accent: #{varfix(color-primary)};
-	--docs-renderer-ink: #{varfix(foreground-color-light)};
-	--docs-renderer-muted: color-mix(in srgb, #{varfix(foreground-color-light)} 68%, #{varfix(background-color)});
-	--docs-renderer-rule: #{varfix(border-color-light)};
+	--docs-renderer-ink: #{varfix(foreground-color)};
+	--docs-renderer-muted: color-mix(in srgb, #{varfix(foreground-color)} 68%, #{varfix(background-color-lightest)});
+	--docs-renderer-rule: #{varfix(color-neutral-light)};
 }
 
 @mixin eyebrow {

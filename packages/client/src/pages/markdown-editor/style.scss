@@ -26,7 +26,7 @@
 			font: inherit;
 			color: inherit;
 			cursor: pointer;
-			background: varfix(background-color);
+			background: varfix(background-color-lightest);
 			border: 1px solid varfix(border-color);
 			border-radius: 6px;
 		}
@@ -113,12 +113,12 @@
 	}
 
 	.docs-markdown-editor {
-		--docs-background-color: #fff;
-		--docs-background-color-deep: #f6f8fa;
-		--docs-background-color-deeper: #f6f8fa;
+		--docs-background-color-lightest: #fff;
+		--docs-background-color-light: #f6f8fa;
+		--docs-background-color-lighter: #f6f8fa;
+		--docs-foreground-color-dark: #24292f;
 		--docs-foreground-color: #24292f;
-		--docs-foreground-color-light: #24292f;
-		--docs-foreground-color-lighter: #57606a;
+		--docs-foreground-color-light: #57606a;
 		--docs-border-color: #d0d7de;
 
 		&__toolbar, &__status, .docs-markdown-editor-source-editor, .docs-markdown-editor-pane-divider,

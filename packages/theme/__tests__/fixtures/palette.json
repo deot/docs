@@ -1,0 +1,98 @@
+{
+  "color-primary": [
+    "#873bf4",
+    "#873bf4"
+  ],
+  "color-secondary": [
+    "var(--docs-color-link)",
+    "var(--docs-color-link)"
+  ],
+  "color-link": [
+    "#2d8cf0",
+    "#6daeff"
+  ],
+  "color-mask": [
+    "rgba(255, 255, 255, 0.72)",
+    "rgba(10, 13, 18, 0.76)"
+  ],
+  "color-shadow-fixed": [
+    "rgba(0, 0, 0, 0.14)",
+    "rgba(0, 0, 0, 0.45)"
+  ],
+  "color-pattern": [
+    "rgba(3, 7, 18, 0.05)",
+    "rgba(255, 255, 255, 0.1)"
+  ],
+  "color-error": [
+    "#ed4014",
+    "#ff6b6b"
+  ],
+  "background-color-lightest": [
+    "#fff",
+    "#171b24"
+  ],
+  "background-color-light": [
+    "#f7f8fa",
+    "#252b3a"
+  ],
+  "background-color-lighter": [
+    "#f2f3f5",
+    "#303748"
+  ],
+  "background-color-primary-light": [
+    "#f2ebfe",
+    "#35244d"
+  ],
+  "background-color-code": [
+    "#f6f8fa",
+    "#202630"
+  ],
+  "background-color-footer": [
+    "#141313",
+    "#0d0f14"
+  ],
+  "background-color-tip-light": [
+    "#f9f0ff",
+    "#30223f"
+  ],
+  "background-color-warning-light": [
+    "#fff6f7",
+    "#3d2529"
+  ],
+  "background-color-error-light": [
+    "#fef2f2",
+    "#41272b"
+  ],
+  "foreground-color-dark": [
+    "#030712",
+    "#f8f8f8"
+  ],
+  "foreground-color": [
+    "#364153",
+    "#d1d5dc"
+  ],
+  "foreground-color-light": [
+    "#4a5565",
+    "#b9b9b9"
+  ],
+  "foreground-color-footer": [
+    "#364153",
+    "#9ca3af"
+  ],
+  "color-contrast-light": [
+    "#fff",
+    "#fff"
+  ],
+  "border-color": [
+    "#e8eaec",
+    "#3b4355"
+  ],
+  "color-neutral-light": [
+    "#f0f1f2",
+    "#303748"
+  ],
+  "background-color": [
+    "#fff",
+    "#171b24"
+  ]
+}

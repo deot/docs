@@ -199,7 +199,7 @@ onBeforeUnmount(handlePointerUp);
 		position: relative;
 		min-width: 0;
 		overflow: auto;
-		background: varfix(background-color-deep);
+		background: varfix(background-color-light);
 		user-select: none;
 	}
 
@@ -245,14 +245,14 @@ onBeforeUnmount(handlePointerUp);
 	&__toolbar {
 		display: flex;
 		padding-bottom: 8px;
-		border-bottom: 1px solid varfix(border-color-light);
+		border-bottom: 1px solid varfix(color-neutral-light);
 		align-items: flex-end;
 		justify-content: space-between;
 		gap: 8px;
 
 		span {
 			font-size: 12px;
-			color: varfix(foreground-color-lighter);
+			color: varfix(foreground-color-light);
 		}
 	}
 
@@ -303,9 +303,9 @@ onBeforeUnmount(handlePointerUp);
 		padding: 0;
 		font-size: 12px;
 		line-height: 16px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		cursor: pointer;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		border: 1px solid varfix(border-color);
 		border-radius: 50%;
 	}

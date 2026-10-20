@@ -130,9 +130,9 @@ const toggleIndependent = () => {
 		width: 26px;
 		height: 26px;
 		padding: 0;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		cursor: pointer;
-		background: varfix(background-color-deep);
+		background: varfix(background-color-light);
 		border: 0;
 		border-radius: 6px;
 

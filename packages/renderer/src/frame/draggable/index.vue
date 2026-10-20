@@ -953,7 +953,7 @@ onBeforeUnmount(() => {
 		min-width: 0;
 		min-height: 0;
 		overflow: hidden;
-		background: varfix(background-color-deeper);
+		background: varfix(background-color-lighter);
 		border-left: 1px solid varfix(border-color);
 		flex: 1;
 		flex-direction: column;
@@ -988,8 +988,8 @@ onBeforeUnmount(() => {
 		overflow: visible;
 		border: 1px solid color-mix(in srgb, varfix(border-color) 72%, transparent);
 		box-shadow:
-			0 1px 2px varfix(color-shadow),
-			0 10px 30px varfix(color-shadow);
+			0 1px 2px varfix(color-shadow-fixed),
+			0 10px 30px varfix(color-shadow-fixed);
 	}
 
 	&__artboard {
@@ -1045,7 +1045,7 @@ onBeforeUnmount(() => {
 		margin: 4px 0;
 		color: varfix(color-primary);
 		pointer-events: none;
-		background: color-mix(in srgb, varfix(color-primary) 12%, varfix(background-color));
+		background: color-mix(in srgb, varfix(color-primary) 12%, varfix(background-color-lightest));
 		border: 1px dotted varfix(color-primary);
 		box-sizing: border-box;
 		align-items: center;
@@ -1058,13 +1058,13 @@ onBeforeUnmount(() => {
 		height: 2px;
 		margin: -1px 0;
 		background: varfix(color-primary);
-		box-shadow: 0 0 0 1px varfix(background-color);
+		box-shadow: 0 0 0 1px varfix(background-color-lightest);
 	}
 
 	&__empty {
 		display: grid;
 		min-height: 300px;
-		color: varfix(foreground-color-lighter);
+		color: varfix(foreground-color-light);
 		border: 1px dashed varfix(border-color);
 		place-items: center;
 	}
@@ -1281,10 +1281,10 @@ onBeforeUnmount(() => {
 		height: 16px;
 		font-size: 12px;
 		line-height: 16px;
-		color: varfix(foreground-color);
+		color: varfix(foreground-color-dark);
 		text-align: center;
 		pointer-events: none;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 		border: 1px solid varfix(border-color);
 		border-radius: 8px;
 	}
@@ -1315,8 +1315,8 @@ onBeforeUnmount(() => {
 		top: 50%;
 		left: 50%;
 		z-index: 2;
-		border-top: 1px dashed varfix(background-color);
-		border-bottom: 1px dashed varfix(foreground-color);
+		border-top: 1px dashed varfix(background-color-lightest);
+		border-bottom: 1px dashed varfix(foreground-color-dark);
 		opacity: 0.4;
 
 		&.is-0 { transform: translate(-50%, -50%); }
@@ -1335,25 +1335,25 @@ onBeforeUnmount(() => {
 	bottom: 50px;
 	z-index: 30;
 	cursor: pointer;
-	background: varfix(background-color);
+	background: varfix(background-color-lightest);
 	border: 1px solid varfix(color-primary);
 
 	&__canvas {
 		position: relative;
 		overflow: hidden;
-		background: varfix(background-color);
+		background: varfix(background-color-lightest);
 	}
 
 	&__node {
 		position: absolute;
-		background: varfix(background-color-deeper);
+		background: varfix(background-color-lighter);
 	}
 
 	&__visible {
 		position: absolute;
 		z-index: 2;
 		cursor: move;
-		background: color-mix(in srgb, varfix(foreground-color) 50%, transparent);
+		background: color-mix(in srgb, varfix(foreground-color-dark) 50%, transparent);
 		border: 1px solid varfix(border-color);
 		box-sizing: border-box;
 	}
@@ -1371,10 +1371,10 @@ onBeforeUnmount(() => {
 	max-height: calc(100% - 112px);
 	padding: 12px;
 	overflow: hidden;
-	background: color-mix(in srgb, varfix(background-color) 94%, transparent);
+	background: color-mix(in srgb, varfix(background-color-lightest) 94%, transparent);
 	border: 1px solid varfix(border-color);
 	border-radius: 8px;
-	box-shadow: 0 8px 24px varfix(color-shadow);
+	box-shadow: 0 8px 24px varfix(color-shadow-fixed);
 
 	&__list {
 		display: grid;
@@ -1396,7 +1396,7 @@ onBeforeUnmount(() => {
 			padding: 6px 8px;
 			overflow: hidden;
 			font: inherit;
-			color: varfix(foreground-color);
+			color: varfix(foreground-color-dark);
 			text-align: left;
 			text-overflow: ellipsis;
 			white-space: nowrap;
