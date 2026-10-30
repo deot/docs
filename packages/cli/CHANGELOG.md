@@ -1,5 +1,21 @@
 # @deot/docs-cli ChangeLog
 
+## v1.2.8
+
+_2026-10-30_
+
+### Updates
+
+- chore(dever): force-publish `1.2.7` -> `1.2.8`
+
+## v1.2.7
+
+_2026-10-27_
+
+### Updates
+
+- chore: bump @deot/vc to 1.2.4 ([c43851c](https://github.com/deot/docs/commit/c43851c0318078739fe2b2b4a6e95b951d67adec))
+
 ## v1.2.6
 
 _2026-10-20_
