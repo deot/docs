@@ -1,5 +1,13 @@
 # @deot/docs-cli ChangeLog
 
+## v1.2.8
+
+_2026-10-30_
+
+### Updates
+
+- chore(dever): force-publish `1.2.7` -> `1.2.8`
+
 ## v1.2.7
 
 _2026-10-27_
