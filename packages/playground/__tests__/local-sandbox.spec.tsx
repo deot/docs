@@ -91,11 +91,22 @@ const label = playground && version ? 'ready' : 'missing'
 		const result = (index: number) => wrappers[index].get('.scope-result').element;
 		const color = (index: number) => getComputedStyle(result(index)).color;
 		const scopeId = (index: number) => result(index).getAttributeNames().find(name => name.startsWith('data-v-'));
+		const scopeAttr = (index: number) => (
+			wrappers[index].get('.docs-playground-local__mount').element.getAttribute('data-playground-scope')
+		);
 		try {
 			await vi.waitFor(() => wrappers.forEach(wrapper => expect(wrapper.text()).toBe('isolated')));
-			expect(scopeId(0)).toBeTruthy();
-			expect(scopeId(1)).toBeTruthy();
-			expect(scopeId(0)).not.toBe(scopeId(1));
+			if (scoped) {
+				expect(scopeId(0)).toBeTruthy();
+				expect(scopeId(1)).toBeTruthy();
+				expect(scopeId(0)).not.toBe(scopeId(1));
+			} else {
+				expect(scopeId(0)).toBeUndefined();
+				expect(scopeId(1)).toBeUndefined();
+				expect(scopeAttr(0)).toBeTruthy();
+				expect(scopeAttr(1)).toBeTruthy();
+				expect(scopeAttr(0)).not.toBe(scopeAttr(1));
+			}
 			expect([color(0), color(1)]).toEqual(['rgb(255, 0, 0)', 'rgb(255, 0, 0)']);
 			expect(getComputedStyle(host).color).toBe(hostColor);
 			await wrappers[1].setProps({ files: { 'App.vue': source('blue') } });
@@ -109,6 +120,48 @@ const label = playground && version ? 'ready' : 'missing'
 			expect(getComputedStyle(wrappers[0].get('.scope-result').element).color).toBe('rgb(0, 0, 255)');
 		} finally {
 			wrappers.forEach(wrapper => wrapper.unmount());
+			host.remove();
+		}
+	});
+
+	it('applies unscoped styles to child markup without styling the host page', async () => {
+		const host = document.createElement('div');
+		host.className = 'audit-row';
+		document.body.appendChild(host);
+		const wrapper = mount(LocalSandbox, {
+			props: {
+				files: {
+					'App.vue': `<template>
+						<p class="own">own</p>
+						<Child />
+					</template>
+					<script setup>
+					import Child from './Child.vue'
+					</script>
+					<style>
+					.audit-row { display: flex; gap: 10px; }
+					</style>
+					<style scoped>
+					.own { color: rgb(0, 0, 255); }
+					</style>`,
+					'Child.vue': '<template><div class="audit-row"><span class="own">child</span></div></template>'
+				},
+				entry: 'App.vue',
+				options: {}
+			},
+			attachTo: document.body
+		});
+		try {
+			await vi.waitFor(() => expect(wrapper.get('.audit-row').text()).toBe('child'));
+			const row = wrapper.get('.audit-row').element;
+			const rowStyle = getComputedStyle(row);
+			expect(rowStyle.display).toBe('flex');
+			expect(rowStyle.gap).toBe('10px');
+			expect(getComputedStyle(host).display).toBe('block');
+			expect(getComputedStyle(wrapper.get('p.own').element).color).toBe('rgb(0, 0, 255)');
+			expect(getComputedStyle(wrapper.get('span.own').element).color).not.toBe('rgb(0, 0, 255)');
+		} finally {
+			wrapper.unmount();
 			host.remove();
 		}
 	});

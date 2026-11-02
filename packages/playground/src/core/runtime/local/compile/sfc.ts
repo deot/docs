@@ -1,6 +1,11 @@
 import type { BindingMetadata } from '@vue/compiler-sfc';
 import type { PlaygroundFiles } from '../../../../types';
 import { compileLocalScss } from './scss';
+import {
+	DEFAULT_PREVIEW_STYLE_SCOPE,
+	isPreviewStyleScope,
+	liftPreviewScope
+} from './style-scope';
 
 type CompilerSfc = typeof import('@vue/compiler-sfc');
 
@@ -37,20 +42,23 @@ const isSupportedStyleLang = (lang?: string) => !lang || lang === 'css' || isScs
 export const compileSfc = async (
 	code: string,
 	filename: string,
-	files: PlaygroundFiles = {}
+	files: PlaygroundFiles = {},
+	styleScope = DEFAULT_PREVIEW_STYLE_SCOPE
 ): Promise<CompileSfcResult> => {
+	if (!isPreviewStyleScope(styleScope)) {
+		return {
+			js: 'export default {}',
+			css: '',
+			errors: [`[Playground] 无效的样式隔离标记: ${styleScope}`]
+		};
+	}
 	const compiler = await loadCompiler();
 	const errors: string[] = [];
 	const id = `docs-local-${++scopeId}`;
-	const { descriptor: parsedDescriptor, errors: parseErrors } = compiler.parse(code, {
+	const { descriptor, errors: parseErrors } = compiler.parse(code, {
 		filename,
 		sourceMap: false
 	});
-	// 本地样式统一 scoped；复制描述符，避免改写编译器的 parse 缓存。
-	const descriptor = {
-		...parsedDescriptor,
-		styles: parsedDescriptor.styles.map(style => ({ ...style, scoped: true }))
-	};
 
 	parseErrors.forEach((error) => {
 		errors.push(messageOf(error));
@@ -152,18 +160,23 @@ export const compileSfc = async (
 			}
 		}
 		try {
+			// 未 scoped 的样式也先走 Vue scoped，拿到稳定选择器后再提升到预览根。
+			// 子组件内部节点没有组件 scope 属性，但都在挂载根内。
 			const styleResult = await compiler.compileStyleAsync({
-				id: style.scoped ? `data-v-${id}` : id,
+				id: style.scoped ? `data-v-${id}` : styleScope,
 				filename,
 				source,
-				scoped: !!style.scoped
+				scoped: true
 			});
 			if (styleResult.errors?.length) {
 				styleResult.errors.forEach((error) => {
 					errors.push(messageOf(error));
 				});
 			} else {
-				css += `${styleResult.code}\n`;
+				const compiledCss = style.scoped
+					? styleResult.code
+					: liftPreviewScope(styleResult.code, styleScope);
+				css += `${compiledCss}\n`;
 			}
 		} catch (error: unknown) {
 			/* istanbul ignore next -- 样式编译失败会走 errors 数组，这里只兜底抛错 */

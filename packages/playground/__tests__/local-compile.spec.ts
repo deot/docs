@@ -76,7 +76,7 @@ createApp(App).mount('#app');`,
 	});
 
 	it.each(['', '<script setup>const value = 1;</script>', '<script>export default {};</script>'])(
-		'scopes every Vue style block for %s',
+		'keeps authored scoped styles on the component and roots other styles at the preview for %s',
 		async (script) => {
 			const files = {
 				'App.vue': `${script}<template><section><p class="local-result">x</p></section></template>
@@ -88,15 +88,44 @@ createApp(App).mount('#app');`,
 			const { compiled, linked } = await mountLinked(files);
 			const wrapper = mount(linked.component!);
 			try {
+				const css = compiled.css.join('');
 				const scope = wrapper.get('.local-result').element.getAttributeNames().find(name => name.startsWith('data-v-'));
 				expect(scope).toBeTruthy();
-				expect(compiled.css.join('').match(/\.local-result\[data-v-[\w-]+\]/gu)).toEqual(Array(4).fill(`.local-result[${scope}]`));
+				expect(css.match(new RegExp(`\\.local-result\\[${scope}\\]`, 'gu'))).toEqual([`.local-result[${scope}]`]);
+				expect(css.match(/\[data-playground-scope="docs-local-root"\] \.local-result/gu)).toHaveLength(3);
 				expect(files['App.vue']).toContain('<style>.local-result');
 			} finally {
 				wrapper.unmount();
 			}
 		}
 	);
+
+	it('lets unscoped rules match markup rendered by a child component', async () => {
+		const { compiled } = await mountLinked({
+			'App.vue': `<template><Child /></template>
+<script setup>
+import Child from './Child.vue'
+</script>
+<style>
+.audit-row { display: flex; gap: 10px; }
+.parent :deep(.child) { color: #112233; }
+:global(.leak-global) { color: #445566; }
+@keyframes spin { from { opacity: 0; } to { opacity: 1; } }
+.box { animation: spin 1s linear; }
+</style>`,
+			'Child.vue': '<template><div class="audit-row"></div></template>'
+		});
+		const css = compiled.css.join('\n');
+		expect(css).toContain('[data-playground-scope="docs-local-root"] .audit-row');
+		expect(css).toContain('[data-playground-scope="docs-local-root"] .parent .child');
+		expect(css).toContain('.leak-global');
+		expect(css).not.toContain('[data-playground-scope="docs-local-root"] .leak-global');
+		expect(css).toContain('@keyframes spin-docs-local-root');
+		expect(css).toContain('animation: spin-docs-local-root 1s linear');
+		expect(css).not.toContain('.audit-row[data-v-');
+		expect(compiled.modules['/App.vue']?.js).not.toContain('__scopeId');
+		expect(compiled.modules['/Child.vue']?.js).not.toContain('__scopeId');
+	});
 
 	it('compiles imported TSX components with Vue events and children', async () => {
 		const { linked } = await mountLinked({
@@ -199,6 +228,10 @@ createApp(App).mount('#app');`,
 	it('reports empty files, missing entries and unsupported sources', async () => {
 		const empty = await compilePlayground({});
 		expect(empty.errors[0]).toContain('files 为空');
+		const invalidScope = await compilePlayground({
+			'App.vue': '<template />'
+		}, { styleScope: 'bad scope' });
+		expect(invalidScope.errors[0]).toContain('无效的样式隔离标记');
 		const missing = await compilePlayground({ 'App.vue': '<template />' }, 'Missing.vue');
 		expect(missing.errors[0]).toContain('entry 不在 files');
 		const ignored = await compilePlayground({

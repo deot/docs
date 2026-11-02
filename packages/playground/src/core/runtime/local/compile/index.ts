@@ -12,9 +12,12 @@ import { compileSfc } from './sfc';
 import { compileLocalScss } from './scss';
 import { collectCss } from './css';
 import { extractScssExports } from '../../../scss';
+import { DEFAULT_PREVIEW_STYLE_SCOPE, isPreviewStyleScope } from './style-scope';
 
 export interface CompilePlaygroundOptions {
 	entry?: string;
+	/** 挂载根 data-playground-scope 的值。同一页面的多个预览必须不同。 */
+	styleScope?: string;
 }
 
 const JSON_IDENT = /^[$A-Z_][0-9A-Z_$]*$/iu;
@@ -44,7 +47,8 @@ const transformJson = (parsed: unknown, filename: string): string => {
 const compileOne = async (
 	filename: string,
 	code: string,
-	files: PlaygroundFiles
+	files: PlaygroundFiles,
+	styleScope: string
 ): Promise<CompiledModule & { errors: string[] }> => {
 	const ext = getExtension(filename);
 	const errors: string[] = [];
@@ -54,7 +58,7 @@ const compileOne = async (
 			errors.push(`[Playground] JSX/TSX 暂不支持: ${filename}`);
 			return { filename, js: 'exports.default = {}', css: '', errors };
 		}
-		const result = await compileSfc(code, filename, files);
+		const result = await compileSfc(code, filename, files, styleScope);
 		errors.push(...result.errors);
 		const js = transformScript(result.js, filename, { typescript: true });
 		return { filename, js, css: result.css, errors };
@@ -121,6 +125,15 @@ export const compilePlayground = async (
 	const options = typeof entryOrOptions === 'string'
 		? { entry: entryOrOptions }
 		: (entryOrOptions || {});
+	const styleScope = options.styleScope ?? DEFAULT_PREVIEW_STYLE_SCOPE;
+	if (!isPreviewStyleScope(styleScope)) {
+		return {
+			entry: '',
+			modules: {},
+			css: [],
+			errors: [`[Playground] 无效的样式隔离标记: ${styleScope}`]
+		};
+	}
 	const errors: string[] = [];
 	let entry: string;
 
@@ -143,7 +156,7 @@ export const compilePlayground = async (
 	for (const filename of reachable) {
 		const code = fileIndex.get(filename);
 		if (typeof code !== 'string') continue;
-		const compiled = await compileOne(filename, code, files);
+		const compiled = await compileOne(filename, code, files, styleScope);
 		errors.push(...compiled.errors);
 		modules[filename] = {
 			filename,

@@ -13,6 +13,7 @@
 			ref="mountEl"
 			class="docs-playground-local__mount"
 			:class="{ 'docs-playground-local__mount--auto': autoHeight }"
+			v-bind="styleScopeAttrs"
 		/>
 	</div>
 </template>
@@ -43,6 +44,7 @@ import {
 	LocalPreviewPort
 } from './port';
 import { injectStyle, removeStyle } from './compile/css';
+import { PREVIEW_STYLE_SCOPE_ATTR } from './compile/style-scope';
 import { formatPlaygroundRuntimeError } from './format-error';
 import { linkPlayground } from './linker';
 import { loadLocalModules } from './modules';
@@ -85,6 +87,7 @@ let pendingMount: {
 	version: number;
 } | null = null;
 const styleId = `docs-local-${Math.random().toString(36).slice(2, 10)}`;
+const styleScopeAttrs = { [PREVIEW_STYLE_SCOPE_ATTR]: styleId };
 
 const publishError = () => {
 	emit('error', {
@@ -198,7 +201,10 @@ const run = async () => {
 		const { compilePlayground } = await import('./compile');
 		/* istanbul ignore if -- 并发编译时只保留最后一次 */
 		if (current !== version) return;
-		const compiled = await compilePlayground(props.files, { entry: props.entry });
+		const compiled = await compilePlayground(props.files, {
+			entry: props.entry,
+			styleScope: styleId
+		});
 		// 后到的编译结果直接丢弃，避免旧任务覆盖新预览。
 		/* istanbul ignore if -- 并发编译时只保留最后一次 */
 		if (current !== version) return;
