@@ -1,5 +1,14 @@
 # @deot/docs-client ChangeLog
 
+## v1.2.11
+
+_2026-11-02_
+
+### Bugfixes
+
+- fix: revalidate stale sources when GitHub imports move ([5a01404](https://github.com/deot/docs/commit/5a01404fc7bf47d833f76da9b5e5fd502111e32d))
+- fix(playground): keep unscoped preview styles on child markup ([e50e1b9](https://github.com/deot/docs/commit/e50e1b9dc9e0534a37768c6c69b9da3e6c3d401a))
+
 ## v1.2.10
 
 _2026-11-02_
