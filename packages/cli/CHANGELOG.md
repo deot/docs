@@ -1,5 +1,13 @@
 # @deot/docs-cli ChangeLog
 
+## v1.2.10
+
+_2026-11-02_
+
+### Updates
+
+- chore: bump @deot/vc to 1.2.6 ([550a015](https://github.com/deot/docs/commit/550a015f997a607f703a5a680f51250fd4379215))
+
 ## v1.2.8
 
 _2026-10-30_
