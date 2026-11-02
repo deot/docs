@@ -29,7 +29,7 @@ import {
 	isSupportedDependency,
 	toLogicalResourceSource
 } from '../../utils/resource-graph';
-import { createGithubSourceResolver, rewritePackageStyleImports } from '../../utils/github-source';
+import { createGithubSourceResolver, rewritePackageStyleImports, UnresolvedDependencyError } from '../../utils/github-source';
 import { assertResolvableSourceGlobs } from '../../utils/source-dependencies';
 import { getDocsConfig } from '../../utils/runtime';
 import { previewConfigKey } from '../../modules/preview/config';
@@ -118,9 +118,37 @@ const getFilename = (url: string, lang: string) => {
 	return (index >= 0 ? pathname.slice(index + marker.length) : pathname.replace(/^\/+/, ''));
 };
 
+const sameSourceRevision = (
+	left: { hash?: string; content: string },
+	right: { hash?: string; content: string }
+) => (
+	typeof left.hash === 'string' && typeof right.hash === 'string'
+		? left.hash === right.hash
+		: left.content === right.content
+);
+
+const settleAll = async (tasks: Promise<void>[]) => {
+	try {
+		await Promise.all(tasks);
+	} catch (reason) {
+		// 失败后其余分支仍可能拒绝；先接住，避免中止过期遍历时变成未处理拒绝。
+		tasks.forEach(task => void task.catch(() => {}));
+		throw reason;
+	}
+};
+
+interface LoadedRemoteSource {
+	identity: ReturnType<typeof createResourceIdentity>;
+	requestUrl: string;
+	hash?: string;
+	content: string;
+}
+
 /**
  * 加载一份完整源码依赖图。generation token 用于阻止过期结果提交；
  * 路由变化或插槽卸载时，controller 同时取消所有未完成的依赖请求。
+ * IndexedDB 可能仍保存文件移动前的源码。现行 Git 树因此找不到旧引用时，
+ * 先等待这份源码回源；内容变了就重走依赖图，没变才是真的缺失。
  */
 const loadFiles = async () => {
 	const current = ++generation;
@@ -132,6 +160,12 @@ const loadFiles = async () => {
 	loading.value = true;
 	error.value = '';
 	clearSubscriptions();
+	let walkController = new AbortController();
+	let walkId = 0;
+	const abortWalk = () => walkController.abort();
+	activeController.signal.addEventListener('abort', abortWalk);
+	const refreshedImporters = new Set<string>();
+	const loadedByUrl = new Map<string, LoadedRemoteSource>();
 	try {
 		const rootUrl = await resolveResource(config, {
 			source: sourceSnapshot,
@@ -140,67 +174,105 @@ const loadFiles = async () => {
 		});
 		if (current !== generation || activeController.signal.aborted) return;
 		const github = createGithubSourceResolver(rootUrl, activeController.signal);
-		const nextFiles: Record<string, string> = {};
-		const visited = new Set<string>();
-		const activeLoads = new Set<string>();
-		const visit = async (url: string, logicalSource?: string) => {
-			if (current !== generation || visited.has(url)) return;
-			// 入队时就占用 URL，避免并发分支重复加载、解析和订阅同一个依赖。
-			visited.add(url);
+		const walk = async () => {
+			const id = ++walkId;
+			const signal = walkController.signal;
+			clearSubscriptions();
+			loadedByUrl.clear();
+			const nextFiles: Record<string, string> = {};
+			const visited = new Set<string>();
+			const activeLoads = new Set<string>();
+			const visit = async (url: string, logicalSource?: string) => {
+				if (id !== walkId || signal.aborted || current !== generation || visited.has(url)) return;
+				// 入队时就占用 URL，避免并发分支重复加载、解析和订阅同一个依赖。
+				visited.add(url);
 
-			const type = getResourceType(url);
-			const source = logicalSource || toLogicalResourceSource(config, langSnapshot, url);
-			const identity = createResourceIdentity(config, langSnapshot, type, source);
-			const key = resourceIdentityKey(identity);
-			// 首次加载成功时，内容订阅通知会早于 load() 返回；忽略这次自身通知，
-			// 避免每个依赖都重新启动整张资源图。
-			const reload = () => {
-				if (!activeLoads.has(key)) void loadFiles();
+				const type = getResourceType(url);
+				const source = logicalSource || toLogicalResourceSource(config, langSnapshot, url);
+				const identity = createResourceIdentity(config, langSnapshot, type, source);
+				const key = resourceIdentityKey(identity);
+				// 首次加载成功时，内容订阅通知会早于 load() 返回；忽略这次自身通知，
+				// 避免每个依赖都重新启动整张资源图。
+				const reload = () => {
+					if (!activeLoads.has(key)) void loadFiles();
+				};
+
+				activeLoads.add(key);
+				let record: ResourceContentRecord;
+				try {
+					record = await Gateway.load(identity, {
+						url: resolveDependencyRequestUrl(url),
+						priority: 100,
+						signal
+					});
+				} catch (reason) {
+					visited.delete(url);
+					throw reason;
+				} finally {
+					activeLoads.delete(key);
+				}
+				if (id !== walkId || signal.aborted || current !== generation) return;
+				loadedByUrl.set(url, {
+					identity,
+					requestUrl: resolveDependencyRequestUrl(url),
+					hash: record.hash,
+					content: record.content
+				});
+				subscriptions.push(Gateway.subscribe(identity, reload));
+				let content = github && type === 'module' ? await github.expandGlob(record.content, url) : record.content;
+				if (!github && type !== 'style') assertResolvableSourceGlobs(content, url);
+				if (github && type === 'style') content = rewritePackageStyleImports(content, resolveCdnURL);
+				nextFiles[getFilename(url, langSnapshot)] = content;
+				const imports = /\.json(?:$|[?#])/i.test(url) ? [] : await collectResourceImports(content, type);
+				const styles = collectResourceStyleImports(content, type);
+				await settleAll(imports.filter(isSupportedDependency).map(async (value) => {
+					if (id !== walkId || signal.aborted || current !== generation) return;
+					const style = styles.includes(value) || /\.(?:scss|sass)(?:$|[?#])/i.test(value);
+					const candidates = github
+						? await github.resolve(value, url, style)
+						: dependencyUrlCandidates(value, url, style);
+					if (id !== walkId || signal.aborted || candidates.some(dependency => visited.has(dependency))) return;
+					for (const [index, dependency] of candidates.entries()) {
+						try {
+							await visit(dependency);
+							break;
+						} catch (reason) {
+							if (
+								visited.has(dependency) || !(reason instanceof ResourceRequestError)
+								|| reason.status !== 404 || index === candidates.length - 1
+							) throw reason;
+						}
+					}
+				}));
 			};
-
-			activeLoads.add(key);
-			let record: ResourceContentRecord;
+			await visit(rootUrl, sourceSnapshot);
+			if (id !== walkId || signal.aborted || current !== generation) return;
+			return nextFiles;
+		};
+		let nextFiles: Record<string, string> | undefined;
+		while (current === generation && !activeController.signal.aborted) {
 			try {
-				record = await Gateway.load(identity, {
-					url: resolveDependencyRequestUrl(url),
+				nextFiles = await walk();
+				break;
+			} catch (reason) {
+				if (!(reason instanceof UnresolvedDependencyError)) throw reason;
+				const cached = loadedByUrl.get(reason.importer);
+				// 同一份源码只回源一次。内容没变，说明现行仓库里确实没有这个引用。
+				if (!cached || refreshedImporters.has(reason.importer)) throw reason;
+				refreshedImporters.add(reason.importer);
+				walkController.abort();
+				walkController = new AbortController();
+				clearSubscriptions();
+				const fresh = await Gateway.revalidate(cached.identity, {
+					url: cached.requestUrl,
 					priority: 100,
 					signal: activeController.signal
 				});
-			} catch (reason) {
-				visited.delete(url);
-				throw reason;
-			} finally {
-				activeLoads.delete(key);
+				if (current !== generation || activeController.signal.aborted) return;
+				if (sameSourceRevision(fresh, cached)) throw reason;
 			}
-			if (current !== generation) return;
-			subscriptions.push(Gateway.subscribe(identity, reload));
-			let content = github && type === 'module' ? await github.expandGlob(record.content, url) : record.content;
-			if (!github && type !== 'style') assertResolvableSourceGlobs(content, url);
-			if (github && type === 'style') content = rewritePackageStyleImports(content, resolveCdnURL);
-			nextFiles[getFilename(url, langSnapshot)] = content;
-			const imports = /\.json(?:$|[?#])/i.test(url) ? [] : await collectResourceImports(content, type);
-			const styles = collectResourceStyleImports(content, type);
-			await Promise.all(imports.filter(isSupportedDependency).map(async (value) => {
-				const style = styles.includes(value) || /\.(?:scss|sass)(?:$|[?#])/i.test(value);
-				const candidates = github
-					? await github.resolve(value, url, style)
-					: dependencyUrlCandidates(value, url, style);
-				if (candidates.some(dependency => visited.has(dependency))) return;
-				for (const [index, dependency] of candidates.entries()) {
-					try {
-						await visit(dependency);
-						break;
-					} catch (reason) {
-						if (
-							visited.has(dependency) || !(reason instanceof ResourceRequestError)
-							|| reason.status !== 404 || index === candidates.length - 1
-						) throw reason;
-					}
-				}
-			}));
-		};
-		await visit(rootUrl, sourceSnapshot);
-		if (current !== generation) return;
+		}
+		if (!nextFiles || current !== generation || activeController.signal.aborted) return;
 		let component = PlaygroundComponent.value;
 		if (!PlaygroundComponent.value) {
 			const module = await import('@deot/docs-playground');

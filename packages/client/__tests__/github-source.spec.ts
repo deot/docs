@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { createGithubSourceResolver } from '../src/utils/github-source';
+import { createGithubSourceResolver, UnresolvedDependencyError } from '../src/utils/github-source';
 
 const root = 'https://raw.githubusercontent.com/deot/vc/refs/heads/main/';
 
@@ -74,7 +74,12 @@ describe('GitHub remote source resolution', () => {
 	it('reports missing files and unsupported glob calls', async () => {
 		vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ tree: [] }) })));
 		const resolver = createGithubSourceResolver(`${root}App.vue`, new AbortController().signal)!;
-		await expect(resolver.resolve('./missing', `${root}App.vue`, false)).rejects.toThrow('无法解析依赖');
+		await expect(resolver.resolve('./missing', `${root}App.vue`, false)).rejects.toEqual(expect.objectContaining({
+			name: 'UnresolvedDependencyError',
+			specifier: './missing',
+			importer: `${root}App.vue`
+		}));
+		await expect(resolver.resolve('./missing', `${root}App.vue`, false)).rejects.toBeInstanceOf(UnresolvedDependencyError);
 		await expect(resolver.expandGlob(`import.meta.glob('./*.vue')`, `${root}App.vue`)).rejects.toThrow('不支持的 glob');
 		expect(createGithubSourceResolver('https://example.com/App.vue', new AbortController().signal)).toBeNull();
 	});

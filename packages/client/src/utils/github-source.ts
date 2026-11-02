@@ -1,6 +1,19 @@
 import { dependencyUrlCandidates } from './resource-graph';
 
 /**
+ * 现行 Git 树里没有这份相对引用。缓存中的源码可能还是移动文件之前的内容。
+ */
+export class UnresolvedDependencyError extends Error {
+	constructor(
+		readonly specifier: string,
+		readonly importer: string
+	) {
+		super(`[RemoteSfc] 无法解析依赖 "${specifier}"（来自 ${importer}）`);
+		this.name = 'UnresolvedDependencyError';
+	}
+}
+
+/**
  * GitHub Raw 不提供目录列表，用 Git tree 确定源码文件和 glob 匹配项。
  * @param rootUrl 入口源码的 URL。
  * @param signal 资源图的取消信号。
@@ -50,7 +63,7 @@ export const createGithubSourceResolver = (rootUrl: string, signal?: AbortSignal
 			const files = await tree();
 			if (!files) return candidates;
 			const found = candidates.find(value => files.has(value.split(/[?#]/)[0]));
-			if (!found) throw new Error(`[RemoteSfc] 无法解析依赖 "${specifier}"（来自 ${importer}）`);
+			if (!found) throw new UnresolvedDependencyError(specifier, importer);
 			return [found];
 		},
 		expandGlob: async (code: string, importer: string) => {

@@ -10,8 +10,9 @@ import { createBuiltinImports } from '../../playground/src/cdn';
 import { createRuntimeImports } from '../../playground/src/core/store';
 import { clearPlaygroundMaps, setPlaygroundImportMapOverrides, setPlaygroundSiteModules } from '../../playground/src/import-map';
 
-const { load, subscribe, release, push, listeners, notifyOnLoad } = vi.hoisted(() => ({
+const { load, revalidate, subscribe, release, push, listeners, notifyOnLoad } = vi.hoisted(() => ({
 	load: vi.fn(),
+	revalidate: vi.fn(),
 	subscribe: vi.fn(),
 	release: vi.fn(),
 	push: vi.fn(),
@@ -28,6 +29,7 @@ vi.mock('vue-router', () => ({ useRouter: () => ({ push }) }));
 vi.mock('../src/modules/gateway', () => ({
 	Gateway: {
 		load,
+		revalidate,
 		subscribe: (identity: any, listener: () => void) => {
 			listeners.set(identity.source, listener);
 			subscribe(identity, listener);
@@ -447,5 +449,75 @@ describe('RemoteSfc', () => {
 		expect(unmountSignal.aborted).toBe(true);
 		finishUnmounted({ content: '<template>ignored</template>' });
 		await flushPromises();
+	});
+
+	it('revalidates stale cached importers when the GitHub tree no longer contains their imports', async () => {
+		const root = 'https://raw.githubusercontent.com/deot/vc/refs/heads/main/packages/components/transition/';
+		const entry = `${root}transition.ts`;
+		const hook = `${root}hooks/use-transition.ts`;
+		const versions: Record<string, string[]> = {
+			[entry]: [
+				`import { useTransition } from './use-transition';`,
+				`import { useTransition } from './hooks/use-transition';`
+			],
+			[hook]: [
+				`import { gone } from './missing';`,
+				'export const useTransition = 1;'
+			]
+		};
+		const cursor = new Map<string, number>([[entry, 0], [hook, 0]]);
+		vi.stubGlobal('fetch', vi.fn(async () => ({
+			ok: true,
+			json: async () => ({
+				tree: [
+					{ type: 'blob', path: 'packages/components/transition/transition.ts' },
+					{ type: 'blob', path: 'packages/components/transition/hooks/use-transition.ts' }
+				]
+			})
+		})));
+		load.mockImplementation(async (_identity: any, options: any) => {
+			const versionsForUrl = versions[options.url];
+			if (!versionsForUrl) throw new ResourceRequestError(404);
+			const content = versionsForUrl[cursor.get(options.url) || 0];
+			return { content, hash: content };
+		});
+		revalidate.mockImplementation(async (identity: any, options: any) => {
+			expect(options.signal.aborted).toBe(false);
+			const next = (cursor.get(options.url) || 0) + 1;
+			cursor.set(options.url, next);
+			const content = versions[options.url][next];
+			expect(identity.source).toBe(options.url);
+			return { content, hash: content };
+		});
+
+		const wrapper = mount(RemoteSfc, { props: { source: entry, lang: 'zh-CN' } });
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		expect(revalidate).toHaveBeenCalledTimes(2);
+		expect(revalidate.mock.calls.map(call => call[1].url)).toEqual([entry, hook]);
+		const files = wrapper.findComponent({ name: 'Playground' }).props('files');
+		expect(files[new URL(entry).pathname.slice(1)]).toContain('./hooks/use-transition');
+		expect(files[new URL(hook).pathname.slice(1)]).toBe('export const useTransition = 1;');
+	});
+
+	it('reports a missing import when revalidation does not change the cached source', async () => {
+		const root = 'https://raw.githubusercontent.com/deot/vc/refs/heads/main/packages/components/transition/';
+		const entry = `${root}transition.ts`;
+		const stale = `import { useTransition } from './use-transition';`;
+		vi.stubGlobal('fetch', vi.fn(async () => ({
+			ok: true,
+			json: async () => ({
+				tree: [{ type: 'blob', path: 'packages/components/transition/transition.ts' }]
+			})
+		})));
+		load.mockImplementation(async (_identity: any, options: any) => {
+			if (options.url !== entry) throw new ResourceRequestError(404);
+			return { content: stale, hash: stale };
+		});
+		revalidate.mockResolvedValue({ content: stale, hash: stale });
+
+		const wrapper = mount(RemoteSfc, { props: { source: entry, lang: 'zh-CN' } });
+		await vi.waitFor(() => expect(wrapper.text()).toContain('无法解析依赖 "./use-transition"'));
+		expect(revalidate).toHaveBeenCalledOnce();
+		expect(wrapper.find('.playground').exists()).toBe(false);
 	});
 });
