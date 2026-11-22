@@ -249,6 +249,8 @@ const enUS = {
 			collapsePreview: 'Collapse to default height',
 			previewVariables: 'Preview variables',
 			previewVariable: '{label}: {value}',
+			expandVariables: 'Show more variables',
+			collapseVariables: 'Hide variables',
 			importMapTip: 'Check the import path, or add an Import Map entry for this dependency.'
 		},
 		files: {

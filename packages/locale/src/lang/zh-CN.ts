@@ -248,6 +248,8 @@ const zhCN = {
 			collapsePreview: '收起为默认高度',
 			previewVariables: '预览变量',
 			previewVariable: '{label}：{value}',
+			expandVariables: '展开更多变量',
+			collapseVariables: '收起变量',
 			importMapTip: '请检查导入路径，或为该依赖补充 Import Map。'
 		},
 		files: {

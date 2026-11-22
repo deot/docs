@@ -483,6 +483,21 @@ const handleClick = playground.run(560, { visible: isActive });
 		label: 'rem',
 		values: ['auto', '0.5px', '0.552px', '0.64px', '1px'],
 		default: '0.5px'
+	}, {
+		name: '--gap',
+		label: 'gap',
+		values: ['8px', '16px', '24px'],
+		default: '16px'
+	}, {
+		name: '--padding',
+		label: 'padding',
+		values: ['12px', '24px', '32px'],
+		default: '24px'
+	}, {
+		name: '--box',
+		label: 'box',
+		values: ['#dbeafe', '#dcfce7', '#fee2e2'],
+		default: '#dbeafe'
 	}]
 }
 </config>
@@ -502,13 +517,13 @@ const rows = Array.from({ length: 24 }, (_, index) => index + 1);
 .mobile-demo {
 	display: flex;
 	flex-direction: column;
-	gap: calc(var(--vc-rem) * 16);
+	gap: var(--gap, calc(var(--vc-rem) * 16));
 }
 .mobile-demo__box {
 	width: calc(var(--vc-rem) * 400);
 	margin: 0;
-	padding: calc(var(--vc-rem) * 24);
-	background: #dbeafe;
+	padding: var(--padding, calc(var(--vc-rem) * 24));
+	background: var(--box, #dbeafe);
 }
 </style>
 ```

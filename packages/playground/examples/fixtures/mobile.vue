@@ -12,13 +12,13 @@ const rows = Array.from({ length: 24 }, (_, index) => index + 1);
 .mobile-demo {
 	display: flex;
 	flex-direction: column;
-	gap: calc(var(--vc-rem) * 16);
+	gap: var(--gap, calc(var(--vc-rem) * 16));
 }
 
 .mobile-demo__box {
 	width: calc(var(--vc-rem) * 400);
-	padding: calc(var(--vc-rem) * 24);
+	padding: var(--padding, calc(var(--vc-rem) * 24));
 	margin: 0;
-	background: #dbeafe;
+	background: var(--box, #dbeafe);
 }
 </style>
