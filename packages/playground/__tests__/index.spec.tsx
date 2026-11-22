@@ -1359,6 +1359,121 @@ describe('Playground', () => {
 		expect(wrapper.find('.sandbox').exists()).toBe(true);
 	});
 
+	it('lays code and preview side by side when mobile is enabled', async () => {
+		const wrapper = mountPlayground({
+			props: {
+				modelValue: '<template><p>mobile</p></template>',
+				title: '移动端',
+				mobile: 480,
+				expandable: true,
+				views: ['runtime', 'files'],
+				previewVariables: [{
+					name: '--rem',
+					label: 'rem',
+					values: ['auto', '0.5px'],
+					default: '0.5px'
+				}]
+			},
+			attachTo: document.body
+		});
+		expect(wrapper.classes()).toContain('docs-playground--mobile');
+		expect(wrapper.find('.docs-playground__split').exists()).toBe(true);
+		expect(wrapper.find('.docs-playground__code').exists()).toBe(true);
+		expect(wrapper.find('.docs-playground__stage .sandbox').exists()).toBe(true);
+		expect(wrapper.find('.docs-playground__views').exists()).toBe(false);
+		expect(wrapper.find('[data-action="expand-preview"]').exists()).toBe(false);
+		expect(wrapper.find('.docs-playground__code .scroller').exists()).toBe(true);
+		const style = wrapper.attributes('style') || '';
+		expect(style).toContain('--docs-playground-mobile-max-height: 480px');
+		expect(style).toContain('--docs-playground-preview-width: 375px');
+		const previewOptions = wrapper.findComponent({ name: 'Sandbox' }).props('previewOptions');
+		expect(previewOptions.customCode.useCode).toContain('Scroller');
+		expect(previewOptions.headHTML).toContain('docs-playground-preview-scroll');
+
+		await nextTick();
+		const iframe = wrapper.get('iframe').element as HTMLIFrameElement;
+		const root = iframe.contentDocument?.documentElement;
+		expect(root?.style.getPropertyValue('--rem')).toBe('0.5px');
+		expect(root?.style.getPropertyValue('--vc-rem')).toBe('var(--rem)');
+		await wrapper.get('[data-value="auto"]').trigger('click');
+		expect(root?.style.getPropertyValue('--rem')).toBe('');
+		expect(root?.style.getPropertyValue('--vc-rem')).toBe('');
+		wrapper.unmount();
+	});
+
+	it('uses the viewport width for the mobile preview column', () => {
+		const wrapper = mountPlayground({
+			props: {
+				modelValue: '<template>width</template>',
+				mobile: true,
+				viewport: 320
+			}
+		});
+		expect(wrapper.attributes('style')).toContain('--docs-playground-mobile-max-height: 640px');
+		expect(wrapper.attributes('style')).toContain('--docs-playground-preview-width: 320px');
+	});
+
+	it('writes local mobile variables onto the preview mount', async () => {
+		const wrapper = mountPlayground({
+			attachTo: document.body,
+			props: {
+				local: true,
+				mobile: true,
+				modelValue: '<template><p class="local-mobile">local</p></template>',
+				previewVariables: [{
+					name: '--rem',
+					values: ['auto', '0.5px'],
+					default: '0.5px'
+				}]
+			}
+		});
+		const previewRoot = wrapper.get('[data-playground-scope]');
+		expect(previewRoot.attributes('style')).toContain('--rem: 0.5px');
+		expect(previewRoot.attributes('style')).toContain('--vc-rem: var(--rem)');
+		await wrapper.get('[data-value="auto"]').trigger('click');
+		const style = previewRoot.attributes('style') || '';
+		expect(style).toContain('100cqw');
+		expect(style).not.toContain('--rem:');
+		expect(wrapper.find('.docs-playground__code .scroller').exists()).toBe(true);
+		wrapper.unmount();
+	});
+
+	it('ignores the mobile layout when styleless', () => {
+		const wrapper = mountPlayground({
+			props: {
+				modelValue: '<template>styleless</template>',
+				styleless: true,
+				mobile: true
+			}
+		});
+		expect(wrapper.find('.docs-playground--mobile').exists()).toBe(false);
+		expect(wrapper.find('.docs-playground__split').exists()).toBe(false);
+	});
+
+	it('marks a narrow mobile playground from its own width', async () => {
+		const original = globalThis.ResizeObserver;
+		class Observer {
+			constructor(private readonly callback: ResizeObserverCallback) {}
+
+			observe(target: Element) {
+				Object.defineProperty(target, 'clientWidth', { configurable: true, value: 480 });
+				this.callback([{ target } as ResizeObserverEntry], this as unknown as ResizeObserver);
+			}
+
+			disconnect() {}
+
+			unobserve() {}
+		}
+		globalThis.ResizeObserver = Observer as unknown as typeof ResizeObserver;
+		const wrapper = mountPlayground({
+			props: { modelValue: '<template>narrow</template>', mobile: true }
+		});
+		await nextTick();
+		expect(wrapper.classes()).toContain('docs-playground--narrow');
+		globalThis.ResizeObserver = original;
+		wrapper.unmount();
+	});
+
 	it('shows an invalid explicit entry', () => {
 		const wrapper = mountPlayground({
 			props: { files: { 'App.vue': 'app' }, entry: 'missing.js' }

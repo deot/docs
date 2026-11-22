@@ -39,6 +39,38 @@ export type PlaygroundPreviewInset = number | [vertical: number, horizontal: num
  */
 export type PlaygroundExpandable = true | number;
 
+/**
+ * 左代码、右预览。
+ * `true` 使用默认最大高度；正数是整块最大高度（px）。
+ */
+export type PlaygroundMobile = true | number;
+
+/** 预览底栏可切换的 CSS 变量值。`auto` 表示不写入。 */
+export type PlaygroundPreviewVariableValue = 'auto' | (string & {});
+
+/**
+ * 预览根上可切换的 CSS 变量。
+ * 只作用在当前预览，不写宿主页面。
+ */
+export interface PlaygroundPreviewVariable {
+	/**
+	 * CSS 自定义属性名，必须以 `--` 开头。
+	 */
+	name: `--${string}`;
+	/**
+	 * 可切换的值。`auto` 表示移除该变量，交给预览自己的级联。
+	 */
+	values: PlaygroundPreviewVariableValue[];
+	/**
+	 * 初始值，必须是 `values` 中的一项。缺省取第一项。
+	 */
+	default?: PlaygroundPreviewVariableValue;
+	/**
+	 * 底栏标签。缺省为去掉 `--` 后的变量名。
+	 */
+	label?: string;
+}
+
 export type PlaygroundOptions = Omit<Partial<StoreState>,
 	'builtinImportMap' | 'files' | 'activeFilename' | 'mainFile' | 'template'
 > & {

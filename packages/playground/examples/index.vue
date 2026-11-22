@@ -44,6 +44,14 @@
 			v-model:entry="scssEntry"
 			:views="['runtime', 'files']"
 		/>
+
+		<h2>移动端分栏</h2>
+		<Playground
+			v-model="mobileSource"
+			title="移动端"
+			mobile
+			:preview-variables="previewVariables"
+		/>
 	</div>
 </template>
 <script setup>
@@ -60,6 +68,7 @@ import vueCard from './fixtures/vue/Card.vue?raw';
 import scssApp from './fixtures/scss/App.vue?raw';
 import scssVariables from './fixtures/scss/_variables.scss?raw';
 import scssTheme from './fixtures/scss/theme.scss?raw';
+import mobileText from './fixtures/mobile.vue?raw';
 
 const source = ref(sourceText);
 const viewport = ref('auto');
@@ -75,6 +84,13 @@ const vueFiles = ref({
 	'App.vue': vueApp,
 	'Card.vue': vueCard
 });
+const mobileSource = ref(mobileText);
+const previewVariables = [{
+	name: '--rem',
+	label: 'rem',
+	values: ['auto', '0.5px', '0.552px', '0.64px', '1px'],
+	default: '0.5px'
+}];
 const scssEntry = ref('App.vue');
 const scssFiles = ref({
 	'App.vue': scssApp,

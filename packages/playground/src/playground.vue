@@ -20,8 +20,14 @@
 	/>
 	<div
 		v-else
+		ref="rootEl"
 		class="docs-playground"
-		:class="{ 'docs-playground--files': activeView === 'files' }"
+		:class="{
+			'docs-playground--files': !mobileEnabled && activeView === 'files',
+			'docs-playground--mobile': mobileEnabled,
+			'docs-playground--narrow': mobileEnabled && narrow
+		}"
+		:style="mobileStyle"
 	>
 		<div v-if="error" class="docs-playground__error">
 			{{ error }}
@@ -50,10 +56,10 @@
 					:copy-value="copyValue"
 					:viewport="activeViewport"
 					:viewport-options="selectableViewportOptions"
-					:views="normalizedViews"
+					:views="mobileEnabled ? [] : normalizedViews"
 					:active-view="activeView"
 					:show-runtime-actions="showRuntimeActions"
-					:show-open-popup="hasRuntimeView"
+					:show-open-popup="hasRuntimeView || mobileEnabled"
 					@refresh="handleRefresh"
 					@edit="handleEdit"
 					@open-popup="handleOpenPopup"
@@ -61,8 +67,46 @@
 					@view-change="handleView"
 				/>
 			</div>
+			<div
+				v-if="mobileEnabled"
+				class="docs-playground__split"
+			>
+				<FilesPreview
+					class="docs-playground__code"
+					:files="sourceFiles"
+					:entry="currentEntry"
+					:active-filename="fileActiveFilename"
+					:active-view="'files'"
+					:views="['files']"
+					@active-change="handleFileActive"
+				/>
+				<RuntimePreview
+					ref="runtimeRef"
+					class="docs-playground__stage"
+					:files="sourceFiles"
+					:entry="currentEntry"
+					:options="options"
+					:preview-options="previewOptions"
+					:preview-inset="previewInset"
+					:preview-scroller="true"
+					:preview-variables="previewVariables"
+					:local="local"
+					:expandable="false"
+					:mobile="true"
+					:hide-chrome="true"
+					:title="title"
+					:id="id"
+					:active-view="'runtime'"
+					:views="['runtime']"
+					:viewport="activeViewport"
+					:viewport-options="selectableViewportOptions"
+					@files-change="handleFilesChange"
+					@navigate="emit('navigate', $event)"
+					@viewport-change="handleViewport"
+				/>
+			</div>
 			<RuntimePreview
-				v-if="runtimeActivated && hasRuntimeView"
+				v-if="!mobileEnabled && runtimeActivated && hasRuntimeView"
 				ref="runtimeRef"
 				v-show="activeView === 'runtime'"
 				:files="sourceFiles"
@@ -71,6 +115,7 @@
 				:preview-options="previewOptions"
 				:preview-inset="previewInset"
 				:preview-scroller="previewScroller"
+				:preview-variables="previewVariables"
 				:local="local"
 				:expandable="local ? false : expandable"
 				:hide-chrome="true"
@@ -85,7 +130,7 @@
 				@viewport-change="handleViewport"
 			/>
 			<FilesPreview
-				v-if="hasFilesView"
+				v-if="!mobileEnabled && hasFilesView"
 				v-show="activeView === 'files'"
 				:files="sourceFiles"
 				:entry="currentEntry"
@@ -98,7 +143,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { provideLocale, useLocale } from '@deot/docs-locale';
 import type { Language } from '@deot/docs-locale';
 import { DEFAULT_ENTRY, NEW_SFC_CODE } from './constants';
@@ -113,9 +158,18 @@ import type {
 	PlaygroundPreviewInset,
 	PlaygroundPreviewOptions,
 	PlaygroundPreviewScroller,
+	PlaygroundPreviewVariable,
 	PlaygroundView,
 	PlaygroundViewport
 } from './types';
+import {
+	isNarrowPlayground,
+	isPlaygroundMobile,
+	PLAYGROUND_MOBILE_NARROW_CODE_MAX_HEIGHT,
+	PLAYGROUND_MOBILE_NARROW_PREVIEW_MAX_HEIGHT,
+	resolvePlaygroundMobileMaxHeight,
+	resolvePlaygroundMobilePreviewWidth
+} from './core/runtime/mobile';
 import {
 	cloneViewport,
 	includeActiveViewport,
@@ -161,6 +215,15 @@ const props = withDefaults(defineProps<{
 	 * 默认关闭；开启后动态探测 `Scroller`，不存在则回退。
 	 */
 	previewScroller?: PlaygroundPreviewScroller;
+	/**
+	 * 左代码、右预览。`true` 限高 640px；正数为最大高度 px。
+	 * 容器窄于 720px 时改为上预览、下代码。`styleless` 下忽略。
+	 */
+	mobile?: boolean | number;
+	/**
+	 * 预览底部可切换的 CSS 变量。未传不显示底栏。
+	 */
+	previewVariables?: readonly PlaygroundPreviewVariable[];
 	/**
 	 * 在当前文档直接编译挂载。默认开启；`false` 改回 iframe Sandbox。
 	 */
@@ -238,12 +301,42 @@ const titleId = computed(() => resolvePlaygroundTitleId(
 	}
 ));
 const copyValue = computed(() => sourceFiles.value[currentEntry.value] || '');
-/** runtime / 双视图始终有顶栏；files-only 仅有标题时渲染。 */
-const showHeader = computed(() => (
-	hasRuntimeView.value || !!displayTitle.value
+const mobileEnabled = computed(() => isPlaygroundMobile(props.mobile));
+const mobileMaxHeight = computed(() => (
+	mobileEnabled.value ? resolvePlaygroundMobileMaxHeight(props.mobile as true | number) : 0
 ));
-const showToolbar = computed(() => hasRuntimeView.value);
-const showRuntimeActions = computed(() => activeView.value === 'runtime');
+const mobileStyle = computed(() => {
+	if (!mobileEnabled.value) return undefined;
+	const maxHeight = mobileMaxHeight.value;
+	return {
+		'--docs-playground-mobile-max-height': `${maxHeight}px`,
+		'--docs-playground-preview-width': `${resolvePlaygroundMobilePreviewWidth(activeViewport.value)}px`,
+		'--docs-playground-narrow-preview-max-height': `${Math.min(PLAYGROUND_MOBILE_NARROW_PREVIEW_MAX_HEIGHT, maxHeight)}px`,
+		'--docs-playground-narrow-code-max-height': `${Math.min(PLAYGROUND_MOBILE_NARROW_CODE_MAX_HEIGHT, maxHeight)}px`
+	};
+});
+const rootEl = ref<HTMLElement | null>(null);
+const narrow = ref(false);
+let narrowObserver: ResizeObserver | null = null;
+const syncNarrow = () => {
+	narrow.value = isNarrowPlayground(rootEl.value?.clientWidth ?? 0);
+};
+onMounted(() => {
+	syncNarrow();
+	if (typeof ResizeObserver === 'undefined' || !rootEl.value) return;
+	narrowObserver = new ResizeObserver(syncNarrow);
+	narrowObserver.observe(rootEl.value);
+});
+onBeforeUnmount(() => {
+	narrowObserver?.disconnect();
+	narrowObserver = null;
+});
+/** runtime / 双视图始终有顶栏；files-only 仅有标题时渲染。移动端分栏始终保留顶栏。 */
+const showHeader = computed(() => (
+	mobileEnabled.value || hasRuntimeView.value || !!displayTitle.value
+));
+const showToolbar = computed(() => mobileEnabled.value || hasRuntimeView.value);
+const showRuntimeActions = computed(() => mobileEnabled.value || activeView.value === 'runtime');
 
 watch(locale, () => {
 	if (props.entry && sourceFiles.value[props.entry] === undefined) {
@@ -350,9 +443,13 @@ watch(() => props.entry, (entry) => {
 
 watch(normalizedViews, (views) => {
 	if (!views.includes(activeView.value)) activeView.value = views[0];
-	if (!views.includes('runtime')) runtimeActivated.value = false;
-	else if (activeView.value === 'runtime') runtimeActivated.value = true;
+	if (mobileEnabled.value || activeView.value === 'runtime') runtimeActivated.value = true;
+	else if (!views.includes('runtime')) runtimeActivated.value = false;
 });
+
+watch(mobileEnabled, (enabled) => {
+	if (enabled) runtimeActivated.value = true;
+}, { immediate: true });
 
 watch(() => props.viewport, (viewport) => {
 	const nextViewport = resolveInitialViewport(viewport, normalizedViewportOptions.value);
@@ -375,6 +472,26 @@ watch(normalizedViewportOptions, (options) => {
 <style lang="scss">
 @use './style' as *;
 @use '../node_modules/@deot/docs-theme/src/variables';
+
+@mixin docs-playground-mobile-stack {
+	.docs-playground__split {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows:
+			minmax(0, var(--docs-playground-narrow-preview-max-height, 480px))
+			minmax(0, var(--docs-playground-narrow-code-max-height, 320px));
+		max-height: none;
+	}
+
+	.docs-playground__stage {
+		order: -1;
+		width: 100%;
+		max-height: var(--docs-playground-narrow-preview-max-height, 480px);
+	}
+
+	.docs-playground__code {
+		max-height: var(--docs-playground-narrow-code-max-height, 320px);
+	}
+}
 
 @include block(docs-playground) {
 	display: flex;
@@ -592,6 +709,65 @@ watch(normalizedViewportOptions, (options) => {
 	@include element(popup-close-mark) {
 		font-size: 16px;
 		line-height: 1;
+	}
+
+	@include modifier(mobile) {
+		container-name: docs-playground;
+		container-type: inline-size;
+
+		@include element(split) {
+			display: grid;
+			max-height: var(--docs-playground-mobile-max-height, 640px);
+			min-width: 0;
+			grid-template-columns: minmax(0, 1fr) var(--docs-playground-preview-width, 375px);
+			grid-template-rows: minmax(0, var(--docs-playground-mobile-max-height, 640px));
+			align-items: stretch;
+			gap: 8px;
+		}
+
+		@include element(code) {
+			display: flex;
+			max-height: 100%;
+			min-width: 0;
+			min-height: 0;
+			overflow: hidden;
+			flex-direction: column;
+		}
+
+		@include element(stage) {
+			display: flex;
+			width: 100%;
+			max-height: 100%;
+			min-width: 0;
+			min-height: 0;
+			overflow: hidden;
+			container-name: docs-playground-preview;
+			container-type: inline-size;
+			flex-direction: column;
+		}
+
+		.docs-playground-files,
+		.docs-playground-runtime-host,
+		.docs-playground-runtime,
+		.docs-playground-runtime__body,
+		.docs-code-preview,
+		.docs-code-preview__scroller,
+		.docs-playground__stage .vc-scroller,
+		.docs-playground__code .vc-scroller {
+			height: 100%;
+			max-height: 100%;
+			min-height: 0;
+		}
+
+		&.docs-playground--narrow {
+			@include docs-playground-mobile-stack;
+		}
+	}
+}
+
+@container docs-playground (max-width: 719px) {
+	.docs-playground--mobile {
+		@include docs-playground-mobile-stack;
 	}
 }
 </style>

@@ -149,7 +149,9 @@ vi.mock('@deot/docs-playground', async () => {
 				'expandable',
 				'title',
 				'id',
-				'previewScroller'
+				'previewScroller',
+				'mobile',
+				'previewVariables'
 			],
 			unmounted: playgroundUnmounted,
 			setup(props) {
@@ -166,7 +168,9 @@ vi.mock('@deot/docs-playground', async () => {
 						JSON.stringify(props.expandable),
 						props.title || '',
 						props.id || '',
-						JSON.stringify(props.previewScroller)
+						JSON.stringify(props.previewScroller),
+						JSON.stringify(props.mobile),
+						JSON.stringify(props.previewVariables)
 					].join('-');
 					return (
 						<div class="playground">
@@ -1344,6 +1348,39 @@ describe('markdown', () => {
 		expect(render('{ previewScroller: \'true\' }')).toContain(error);
 		expect(render('{ previewScroller: true }')).toContain('data-playground');
 		expect(render('{ previewScroller: false }')).toContain('data-playground');
+	});
+
+	it('reports invalid playground mobile and previewVariables declarations', () => {
+		const render = (config: string) => MarkdownRenderer.render(
+			runtimeWithConfig(config, '```vue\n<template />\n```')
+		);
+
+		expect(render('{ mobile: false }')).toContain('mobile 必须是 true 或正数');
+		expect(render('{ mobile: 0 }')).toContain('mobile 必须是 true 或正数');
+		expect(render('{ mobile: true }')).toContain('data-playground');
+		expect(render('{ mobile: 520 }')).toContain('data-playground');
+		expect(render('{ previewVariables: {} }')).toContain('previewVariables 必须是数组');
+		expect(render('{ previewVariables: [{ name: \'rem\', values: [\'0.5px\'] }] }'))
+			.toContain('previewVariables[0].name 必须以 -- 开头');
+		expect(render('{ previewVariables: [{ name: \'--rem\', values: [] }] }'))
+			.toContain('previewVariables[0].values 必须是非空字符串数组');
+		expect(render('{ previewVariables: [{ name: \'--rem\', values: [\'0.5px\'], default: \'1px\' }] }'))
+			.toContain('previewVariables[0].default 必须是 values 中的值');
+		expect(render('{ previewVariables: [{ name: \'--rem\', values: [\'auto\', \'0.5px\'], label: \'rem\' }] }'))
+			.toContain('data-playground');
+	});
+
+	it('passes playground mobile config to Playground', async () => {
+		const source = runtimeWithConfig(
+			'{ mobile: 520, previewVariables: [{ name: \'--rem\', values: [\'auto\', \'0.5px\'] }] }',
+			'```vue\n<template />\n```'
+		);
+		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
+		await vi.waitFor(() => expect(wrapper.find('.playground').exists()).toBe(true));
+		const text = wrapper.find('.playground').text();
+		expect(text).toContain('520');
+		expect(text).toContain('--rem');
+		wrapper.unmount();
 	});
 
 	it('reports invalid playground local declarations', () => {

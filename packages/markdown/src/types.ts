@@ -5,6 +5,7 @@ import type {
 	PlaygroundPreviewInset,
 	PlaygroundPreviewOptions,
 	PlaygroundPreviewScroller,
+	PlaygroundPreviewVariable,
 	PlaygroundView,
 	PlaygroundViewport
 } from '@deot/docs-playground';
@@ -51,6 +52,14 @@ export interface MarkdownPlaygroundConfig {
 	 * 在当前文档直接编译挂载。默认开启；`false` 使用 iframe。
 	 */
 	local?: boolean;
+	/**
+	 * 左代码、右预览。`true` 限高 640px；正数为最大高度 px。
+	 */
+	mobile?: boolean | number;
+	/**
+	 * 预览底部可切换的 CSS 变量。
+	 */
+	previewVariables?: PlaygroundPreviewVariable[];
 	previewOptions?: PlaygroundPreviewOptions;
 }
 

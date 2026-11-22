@@ -13,6 +13,7 @@
 			ref="mountEl"
 			class="docs-playground-local__mount"
 			:class="{ 'docs-playground-local__mount--auto': autoHeight }"
+			:style="rootStyle"
 			v-bind="styleScopeAttrs"
 		/>
 	</div>
@@ -58,6 +59,10 @@ const props = withDefaults(defineProps<{
 	previewScroller?: PlaygroundPreviewScroller;
 	clearConsole?: boolean;
 	autoHeight?: boolean;
+	/**
+	 * 写到挂载根上的 CSS 变量。只影响当前预览。
+	 */
+	rootStyle?: Record<string, string>;
 }>(), {
 	previewScroller: false,
 	clearConsole: false,

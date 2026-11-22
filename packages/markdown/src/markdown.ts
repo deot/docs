@@ -211,6 +211,46 @@ const validateLocal = (propsData: MarkdownPlaygroundConfig) => {
 	if (typeof propsData.local === 'boolean') return '';
 	return 'local 必须是布尔值';
 };
+const validateMobile = (propsData: MarkdownPlaygroundConfig) => {
+	if (!('mobile' in propsData)) return '';
+	const { mobile } = propsData;
+	if (mobile === true) return '';
+	if (typeof mobile === 'number' && Number.isFinite(mobile) && mobile > 0) return '';
+	return 'mobile 必须是 true 或正数';
+};
+const PREVIEW_VARIABLE_NAME = /^--[A-Za-z_][\w-]*$/u;
+const validatePreviewVariables = (propsData: MarkdownPlaygroundConfig) => {
+	if (!('previewVariables' in propsData)) return '';
+	const list = propsData.previewVariables;
+	if (!Array.isArray(list)) return 'previewVariables 必须是数组';
+	const names = new Set<string>();
+	for (let index = 0; index < list.length; index += 1) {
+		const item = list[index];
+		if (!item || typeof item !== 'object' || Array.isArray(item)) {
+			return `previewVariables[${index}] 必须是对象`;
+		}
+		if (typeof item.name !== 'string' || !PREVIEW_VARIABLE_NAME.test(item.name)) {
+			return `previewVariables[${index}].name 必须以 -- 开头`;
+		}
+		if (names.has(item.name)) return `previewVariables 不能重复声明 ${item.name}`;
+		names.add(item.name);
+		if (!Array.isArray(item.values) || !item.values.length
+			|| item.values.some(value => typeof value !== 'string' || !value.trim())) {
+			return `previewVariables[${index}].values 必须是非空字符串数组`;
+		}
+		const duplicate = item.values.find((value, valueIndex) => item.values.indexOf(value) !== valueIndex);
+		if (duplicate !== undefined) {
+			return `previewVariables[${index}].values 不能重复声明 ${duplicate}`;
+		}
+		if ('default' in item && (typeof item.default !== 'string' || !item.values.includes(item.default))) {
+			return `previewVariables[${index}].default 必须是 values 中的值`;
+		}
+		if ('label' in item && typeof item.label !== 'string') {
+			return `previewVariables[${index}].label 必须是字符串`;
+		}
+	}
+	return '';
+};
 const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>): MarkdownPlaygroundConfig => {
 	for (const token of tokens) {
 		const sources: string[] = [];
@@ -339,7 +379,9 @@ md.core.ruler.after('markdown-tabs', 'runtime-files', (state) => {
 			|| validateTitle(propsData)
 			|| validateTitleId(propsData)
 			|| validatePreviewScroller(propsData)
-			|| validateLocal(propsData);
+			|| validateLocal(propsData)
+			|| validateMobile(propsData)
+			|| validatePreviewVariables(propsData);
 		const propsAttr = renderPlaygroundAttrs(propsData);
 
 		if (!fences.length) {

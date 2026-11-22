@@ -52,7 +52,9 @@ const files = ref({
 | `title` | `string` | `''` | 顶栏标题；空串或不传不渲染标题文本。runtime / 双视图始终保留顶栏；files-only 仅在有标题时显示顶栏。带标题时生成锚点（`#` 链接），规则对齐 markdown-it-anchor。 |
 | `id` | `string` | `''` | 标题锚点 id；未传时从 `title` 自动生成。仅挂在内联 runtime 标题上，弹窗不重复。 |
 | `expandable` | `true \| number` | `undefined` | 开启预览高度展开；未传不显示控件；`true` 展开到剩余视口；正数为目标高度（px）。 |
-| `previewScroller` | `boolean` | `false` | 在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条；开启后会动态探测 `Scroller`，不存在则回退原生滚动。 |
+| `previewScroller` | `boolean` | `false` | 在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条；开启后会动态探测 `Scroller`，不存在则回退原生滚动。`mobile` 开启时预览列强制使用 Scroller。 |
+| `mobile` | `boolean \| number` | `undefined` | 左代码、右预览。`true` 限高 640px；正数为最大高度 px。容器窄于 720px 时改为上预览、下代码。`styleless` 下忽略，也不显示高度展开。 |
+| `previewVariables` | `PlaygroundPreviewVariable[]` | `undefined` | 预览底部可切换的 CSS 变量。`auto` 表示移除。`--rem` 会在预览根上同时写入 `--vc-rem: var(--rem)`。未配置不显示底栏。 |
 | `local` | `boolean` | `true` | 在当前文档编译并挂载。业务模块通过运行时 ESM 加载，可通过 import map 逐个覆盖；预览使用所选 Vue 运行时挂载。 |
 | `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项；`cdnURL` 会同时作用于预览样式和默认 import map。 |
 | `previewOptions` | `SandboxProps['previewOptions']` | `undefined` | 传给当前 iframe 的 preview 选项。 |
@@ -184,6 +186,20 @@ local 模式下，Vue 文件内所有 `<style>` 块（含 SCSS / Sass）统一�
 - local 模式在当前页面按 URL 缓存外部模块的下载和转换成果，并合并并发请求；切换文档时可复用，最多保留最近使用的 128 个模块。各预览仍独立执行模块并解析依赖覆盖；失败的加载不缓存，同源模块实时读取，刷新页面会清空缓存。
 - 每个 Playground 实例都使用自己的 preview 配置和 iframe 消息来源校验。
 - `local` 默认开启：同一份 `files` 在当前文档里编译。直接渲染不撑开预览高度，`expandable` 固定为关闭，`docs:playground.run` 不会申请临时高度；`<DocsLink>` 仍通过 `docs:navigate` 通知。`local: false` 改回 iframe Sandbox。
+- `mobile` 把代码和预览放在同一行，两边都在格子内用 `Scroller` 滚动，不再按内容撑开外框。预览列宽跟随 `viewport` 的数字宽度，未指定时为 375。窄容器改为上预览、下代码。
+- `previewVariables` 只写当前预览根。local 写到挂载根；iframe 写到预览文档的 `documentElement`。local 且开启 `mobile` 时，未指定 `--vc-rem` 会按预览列宽度写成 `min(calc(100cqw / 750), 0.64px)`，避免沿用整页的 `100vw`。iframe 的 `auto` 不改写 `--vc-rem`。
+
+```vue
+<Playground
+	v-model:files="files"
+	mobile
+	:preview-variables="[{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]"
+/>
+```
 
 ## 运行时模块加载
 

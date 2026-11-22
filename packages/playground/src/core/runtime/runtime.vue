@@ -21,9 +21,10 @@
 					:files="files"
 					:entry="entry"
 					:options="options"
-					:preview-scroller="previewScroller"
+					:preview-scroller="effectivePreviewScroller"
+					:root-style="localRootStyle"
 					:clear-console="clearConsole"
-					:auto-height="!getViewportHeight(viewport)"
+					:auto-height="!mobile && !getViewportHeight(viewport)"
 					@error="handleLocalError"
 				/>
 				<Sandbox
@@ -70,50 +71,62 @@
 				class="docs-playground__runtime-error"
 				role="alert"
 			>{{ errorText }}</pre>
-			<section
-				class="docs-playground__preview"
-				:class="{ 'is-expanded': previewExpanded }"
-				:style="previewStyle"
+			<div
+				class="docs-playground-runtime__body"
+				:class="{ 'docs-playground-runtime__body--mobile': mobile }"
 			>
-				<div class="docs-playground-runtime__viewport-stage">
-					<div class="docs-playground-runtime__viewport" :style="viewportStyle">
-						<LocalSandbox
-							v-if="local"
-							:key="sandboxKey"
-							ref="sandboxRef"
-							:files="files"
-							:entry="entry"
-							:options="options"
-							:preview-scroller="previewScroller"
-							:clear-console="clearConsole"
-							:auto-height="!getViewportHeight(viewport)"
-							@error="handleLocalError"
-						/>
-						<Sandbox
-							v-else-if="store && storeReady"
-							:key="sandboxKey"
-							ref="sandboxRef"
-							:store="store"
-							:auto-store-init="false"
-							:clear-console="clearConsole"
-							:preview-options="mergedPreviewOptions"
-						/>
-					</div>
-				</div>
-				<button
-					v-if="canExpandPreview"
-					type="button"
-					class="docs-playground__expand"
-					data-action="expand-preview"
+				<section
+					class="docs-playground__preview"
 					:class="{ 'is-expanded': previewExpanded }"
-					:aria-expanded="previewExpanded"
-					:title="expandLabel"
-					:aria-label="expandLabel"
-					@click="handleTogglePreviewExpand"
+					:style="previewStyle"
 				>
-					<PlaygroundIcon name="expand" />
-				</button>
-			</section>
+					<div class="docs-playground-runtime__viewport-stage" :style="stageStyle">
+						<div class="docs-playground-runtime__viewport" :style="viewportStyle">
+							<LocalSandbox
+								v-if="local"
+								:key="sandboxKey"
+								ref="sandboxRef"
+								:files="files"
+								:entry="entry"
+								:options="options"
+								:preview-scroller="effectivePreviewScroller"
+								:root-style="localRootStyle"
+								:clear-console="clearConsole"
+								:auto-height="!mobile && !getViewportHeight(viewport)"
+								@error="handleLocalError"
+							/>
+							<Sandbox
+								v-else-if="store && storeReady"
+								:key="sandboxKey"
+								ref="sandboxRef"
+								:store="store"
+								:auto-store-init="false"
+								:clear-console="clearConsole"
+								:preview-options="mergedPreviewOptions"
+							/>
+						</div>
+						<button
+							v-if="canExpandPreview"
+							type="button"
+							class="docs-playground__expand"
+							data-action="expand-preview"
+							:class="{ 'is-expanded': previewExpanded }"
+							:aria-expanded="previewExpanded"
+							:title="expandLabel"
+							:aria-label="expandLabel"
+							@click="handleTogglePreviewExpand"
+						>
+							<PlaygroundIcon name="expand" />
+						</button>
+					</div>
+					<PreviewVariableBar
+						v-if="normalizedVariables.length"
+						:variables="normalizedVariables"
+						:selected="selectedVariables"
+						@select="handlePreviewVariable"
+					/>
+				</section>
+			</div>
 		</div>
 	</div>
 </template>
@@ -132,6 +145,7 @@ import type {
 	PlaygroundPreviewInset,
 	PlaygroundPreviewOptions,
 	PlaygroundPreviewScroller,
+	PlaygroundPreviewVariable,
 	PlaygroundView,
 	PlaygroundViewport,
 	PlaygroundViewsProps
@@ -175,6 +189,9 @@ import { whenSassReady } from '../scss';
 import { isIgnoredFilename } from './local/compile/files';
 // 宿主组件必须与 Runtime 使用同一份 Vue；编译器仍在 LocalSandbox 内按需加载。
 import LocalSandbox from './local/local-sandbox.vue';
+import PreviewVariableBar from './preview-variable-bar.vue';
+import { normalizePreviewVariables, resolvePreviewRootVars } from './preview-variables';
+import { usePreviewRootVars } from './use-preview-root-vars';
 
 const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<PlaygroundViewsProps> & {
 	options: PlaygroundOptions;
@@ -198,6 +215,14 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	 * 在当前文档编译并挂载，不使用 iframe Sandbox。默认开启。
 	 */
 	local?: boolean;
+	/**
+	 * 分栏限高。为 true 时预览填满分栏格子，不再按内容撑高。
+	 */
+	mobile?: boolean;
+	/**
+	 * 预览底部可切换的 CSS 变量。
+	 */
+	previewVariables?: readonly PlaygroundPreviewVariable[];
 }>(), {
 	styleless: false,
 	hideChrome: false,
@@ -209,7 +234,8 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	views: () => ['runtime'],
 	viewport: 'auto',
 	viewportOptions: () => ['auto', 375],
-	local: true
+	local: true,
+	mobile: false
 });
 const { locale, t } = useLocale();
 const displayTitle = computed(() => props.title.trim());
@@ -231,11 +257,37 @@ const emit = defineEmits<{
 }>();
 
 const joinCode = (...values: Array<string | undefined>) => values.filter(Boolean).join('\n');
+/** 移动端分栏必须在格子内滚动，不看 previewScroller 自己的开关。 */
+const effectivePreviewScroller = computed(() => props.previewScroller || props.mobile);
+const normalizedVariables = computed(() => normalizePreviewVariables(props.previewVariables));
+const selectedVariables = ref<Record<string, string>>({});
+watch(normalizedVariables, (list) => {
+	const next: Record<string, string> = {};
+	for (const item of list) {
+		const current = selectedVariables.value[item.name];
+		next[item.name] = current && item.values.includes(current) ? current : item.value;
+	}
+	selectedVariables.value = next;
+}, { immediate: true });
+const variableSelections = computed(() => normalizedVariables.value.map(item => ({
+	name: item.name,
+	value: selectedVariables.value[item.name] || item.value
+})));
+const rootVars = computed(() => resolvePreviewRootVars(variableSelections.value, {
+	local: props.local,
+	mobile: props.mobile
+}));
+const localRootStyle = computed(() => (props.local ? rootVars.value.set : undefined));
+const handlePreviewVariable = (name: string, value: string) => {
+	if (selectedVariables.value[name] === value) return;
+	selectedVariables.value = { ...selectedVariables.value, [name]: value };
+};
 const mergePreviewOptions = (
-	extraHeadHTML?: string
+	extraHeadHTML?: string,
+	previewScroller = effectivePreviewScroller.value
 ): NonNullable<PlaygroundPreviewOptions> => {
 	const runtimePreviewOptions = createRuntimePreviewOptions(props.options.cdnURL, {
-		previewScroller: props.previewScroller
+		previewScroller
 	});
 	return {
 		...runtimePreviewOptions,
@@ -250,20 +302,21 @@ const mergePreviewOptions = (
 			importCode: joinCode(
 				runtimePreviewOptions.customCode?.importCode,
 				props.previewOptions?.customCode?.importCode,
-				props.previewScroller ? PREVIEW_SCROLL_RESET_CODE : undefined,
-				props.previewScroller ? PREVIEW_SCROLLER_IMPORT_CODE : undefined
+				previewScroller ? PREVIEW_SCROLL_RESET_CODE : undefined,
+				previewScroller ? PREVIEW_SCROLLER_IMPORT_CODE : undefined
 			),
 			useCode: joinCode(
 				runtimePreviewOptions.customCode?.useCode,
 				props.previewOptions?.customCode?.useCode,
-				props.previewScroller ? PREVIEW_SCROLLER_USE_CODE : undefined
+				previewScroller ? PREVIEW_SCROLLER_USE_CODE : undefined
 			)
 		}
 	};
 };
 const mergedPreviewOptions = computed(() => mergePreviewOptions());
 const popupPreviewOptions = computed(() => mergePreviewOptions(
-	'<style>html,body{height:100%;min-height:100%}</style>'
+	'<style>html,body{height:100%;min-height:100%}</style>',
+	props.previewScroller
 ));
 
 const env = (import.meta as ImportMeta & { env: { MODE?: string } }).env;
@@ -363,6 +416,7 @@ if (typeof window !== 'undefined') {
 }
 const canExpandPreview = computed(() => (
 	!props.local
+	&& !props.mobile
 	&& !props.styleless
 	&& isPlaygroundExpandable(props.expandable)
 ));
@@ -413,18 +467,36 @@ watch(canExpandPreview, (enabled) => {
 });
 const previewStyle = computed(() => {
 	const [vertical, horizontal] = normalizedPreviewInset.value;
+	const padding = vertical === horizontal
+		? `${vertical}px`
+		: `${vertical}px ${horizontal}px`;
+	if (props.mobile || normalizedVariables.value.length) {
+		return {
+			padding,
+			background: PLAYGROUND_RUNTIME_CANVAS_BACKGROUND
+		};
+	}
 	return {
 		height: `${resolvePreviewBoxHeight(desiredViewportHeight.value, vertical)}px`,
-		padding: vertical === horizontal
-			? `${vertical}px`
-			: `${vertical}px ${horizontal}px`,
+		padding,
 		background: PLAYGROUND_RUNTIME_CANVAS_BACKGROUND
 	};
 });
 const stylelessStyle = computed(() => (errorText.value
 	? undefined
 	: { height: `${desiredViewportHeight.value}px` }));
+const stageStyle = computed(() => {
+	if (props.mobile || !normalizedVariables.value.length) return undefined;
+	return { height: `${desiredViewportHeight.value}px` };
+});
 const viewportStyle = computed(() => {
+	if (props.mobile) {
+		return {
+			width: '100%',
+			maxWidth: '100%',
+			height: '100%'
+		};
+	}
 	const width = getViewportWidth(props.viewport);
 	return {
 		width: width ? `${width}px` : '100%',
@@ -432,6 +504,8 @@ const viewportStyle = computed(() => {
 		height: '100%'
 	};
 });
+const iframeVarsEnabled = computed(() => !props.local);
+usePreviewRootVars(sandboxRef, rootVars, iframeVarsEnabled);
 let syncedFiles = { ...props.files };
 let syncedEntry = props.entry;
 
@@ -575,6 +649,20 @@ defineExpose({
 }
 
 @include block(docs-playground-runtime) {
+	@include element(body) {
+		display: flex;
+		min-width: 0;
+		min-height: 0;
+		flex: 1 1 auto;
+		flex-direction: column;
+
+		@include modifier(mobile) {
+			height: 100%;
+			max-height: 100%;
+			overflow: hidden;
+		}
+	}
+
 	display: flex;
 	width: 100%;
 	min-height: 0;
@@ -596,11 +684,29 @@ defineExpose({
 	}
 
 	@include element(viewport-stage) {
+		position: relative;
 		display: flex;
 		width: 100%;
 		height: 100%;
 		min-width: 0;
 		justify-content: center;
+	}
+
+	.docs-playground-runtime__body--mobile {
+		.docs-playground__preview {
+			display: flex;
+			height: auto;
+			max-height: 100%;
+			min-height: 0;
+			flex: 1 1 auto;
+			flex-direction: column;
+		}
+
+		.docs-playground-runtime__viewport-stage {
+			height: auto;
+			min-height: 0;
+			flex: 1 1 auto;
+		}
 	}
 
 	@include element(viewport) {
