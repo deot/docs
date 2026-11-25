@@ -1,5 +1,17 @@
 # @deot/docs-renderer ChangeLog
 
+## v1.2.11
+
+_2026-11-25_
+
+### Features
+
+- feat(locale,markdown,playground): cap mobile previews beside the source ([892f5a4](https://github.com/deot/docs/commit/892f5a4ebe7375958a5ca65d0c3735ea454a3946))
+
+### Updates
+
+- chore: bump @deot/vc to 1.2.7 ([9bfc485](https://github.com/deot/docs/commit/9bfc485c7d6bc7b09ea552b8a9fbd10c5e2a3deb))
+
 ## v1.2.10
 
 _2026-11-02_

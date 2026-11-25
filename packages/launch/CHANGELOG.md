@@ -1,5 +1,13 @@
 # @deot/docs-launch ChangeLog
 
+## v1.2.11
+
+_2026-11-25_
+
+### Updates
+
+- chore: bump @deot/vc to 1.2.7 ([9bfc485](https://github.com/deot/docs/commit/9bfc485c7d6bc7b09ea552b8a9fbd10c5e2a3deb))
+
 ## v1.2.10
 
 _2026-11-02_
