@@ -10,7 +10,7 @@
 			:min="min"
 			:max="max"
 			:step="step"
-			:show-tip="showTip"
+			:tooltip="showTip"
 			class="docs-renderer-number-editor__slider"
 			@update:model-value="handleChange"
 		/>

@@ -7,6 +7,8 @@
 			<ColorPicker
 				:model-value="String(modelValue.background || '')"
 				alpha
+				confirm
+				:clearable="false"
 				@update:model-value="handleBackground"
 			/>
 		</Field>

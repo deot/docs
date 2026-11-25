@@ -35,6 +35,8 @@
 								<ColorPicker
 									:model-value="field(item, 'color')"
 									alpha
+									confirm
+									:clearable="false"
 									@update:model-value="value => updateItem(patchItem(item, { color: value }))"
 								/>
 							</Field>
@@ -42,6 +44,8 @@
 								<ColorPicker
 									:model-value="field(item, 'textColor')"
 									alpha
+									confirm
+									:clearable="false"
 									@update:model-value="value => updateItem(patchItem(item, { textColor: value }))"
 								/>
 							</Field>

@@ -45,6 +45,8 @@
 			<ColorPicker
 				:model-value="String(modelValue.color || '')"
 				alpha
+				confirm
+				:clearable="false"
 				@update:model-value="value => update({ color: value })"
 			/>
 		</Field>

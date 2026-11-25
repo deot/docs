@@ -66,6 +66,8 @@
 			<ColorPicker
 				:model-value="layout.background"
 				alpha
+				confirm
+				:clearable="false"
 				@update:model-value="value => update({ background: value })"
 			/>
 		</Field>

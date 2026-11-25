@@ -47,6 +47,7 @@ describe('renderer editor surfaces', () => {
 	it('keeps Slider and numeric input on one normalized value path', async () => {
 		const wrapper = mount(NumberEditor, { props: { modelValue: 20, min: 0, max: 40, showSlider: true } });
 		const slider = wrapper.findComponent({ name: 'vc-slider' });
+		expect(slider.props('tooltip')).toBe('hover');
 		slider.vm.$emit('update:modelValue', 32);
 		await wrapper.vm.$nextTick();
 		expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([32]);
@@ -220,6 +221,7 @@ describe('renderer editor surfaces', () => {
 		};
 		const props = (modelValue: Record<string, unknown>) => ({ node, modelValue, context });
 		const title = mount(TitleEditor, { props: props({ text: 'Title' }) });
+		expect(title.findComponent(ColorPicker).props()).toMatchObject({ confirm: true, clearable: false });
 		title.findComponent(Input).vm.$emit('update:modelValue', 'Changed');
 		title.findAllComponents(NumberEditor).forEach((editor, index) => editor.vm.$emit('update:modelValue', index + 1));
 		title.findComponent(ColorPicker).vm.$emit('update:modelValue', '#fff');

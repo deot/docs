@@ -510,7 +510,7 @@ describe('built-in renderer modules', () => {
 		expect(listBuiltinIconTypes()).toEqual(expect.arrayContaining(['search']));
 		IconManager.icons['docs-test-icon'] = {
 			viewBox: '0 0 1024 1024',
-			path: ['M0 0']
+			path: [{ d: 'M0 0', fill: '' }]
 		};
 		expect(listBuiltinIconTypes()).toContain('docs-test-icon');
 		delete IconManager.icons['docs-test-icon'];

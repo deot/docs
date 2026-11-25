@@ -13,13 +13,13 @@
 			<Select :model-value="String(modelValue.align || 'center')" :data="alignments" @update:model-value="value => update({ align: value })" />
 		</Field>
 		<Field :label="t('renderer.editor.accent')">
-			<ColorPicker :model-value="String(modelValue.accent || '')" alpha @update:model-value="value => update({ accent: value })" />
+			<ColorPicker :model-value="String(modelValue.accent || '')" alpha confirm :clearable="false" @update:model-value="value => update({ accent: value })" />
 		</Field>
 		<Field :label="t('renderer.editor.background')">
-			<ColorPicker :model-value="String(modelValue.background || '')" alpha @update:model-value="value => update({ background: value })" />
+			<ColorPicker :model-value="String(modelValue.background || '')" alpha confirm :clearable="false" @update:model-value="value => update({ background: value })" />
 		</Field>
 		<Field :label="t('renderer.editor.textColor')">
-			<ColorPicker :model-value="String(modelValue.textColor || '')" alpha @update:model-value="value => update({ textColor: value })" />
+			<ColorPicker :model-value="String(modelValue.textColor || '')" alpha confirm :clearable="false" @update:model-value="value => update({ textColor: value })" />
 		</Field>
 		<Field :label="t('renderer.editor.codeFilename')">
 			<Input :model-value="String(modelValue.filename || '')" @update:model-value="value => update({ filename: value })" />

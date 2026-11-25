@@ -266,7 +266,7 @@ import { encode } from '@deot/helper-unicode';
 
 const config = {
 	url: sourceUrl,
-	styles: ['https://cdn.jsdelivr.net/npm/@deot/vc-components@1.2.1/dist/index.style.css'],
+	styles: ['https://cdn.jsdelivr.net/npm/@deot/vc-components@1.2.7/dist/index.style.css'],
 	modules: { lodash: 'https://esm.sh/lodash-es' },
 	playground: {
 		local: true,

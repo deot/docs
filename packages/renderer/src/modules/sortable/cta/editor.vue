@@ -16,6 +16,8 @@
 			<ColorPicker
 				:model-value="String(modelValue.accent || '')"
 				alpha
+				confirm
+				:clearable="false"
 				@update:model-value="value => update({ accent: value })"
 			/>
 		</Field>
@@ -23,6 +25,8 @@
 			<ColorPicker
 				:model-value="String(modelValue.accentSecondary || '')"
 				alpha
+				confirm
+				:clearable="false"
 				@update:model-value="value => update({ accentSecondary: value })"
 			/>
 		</Field>
@@ -30,6 +34,8 @@
 			<ColorPicker
 				:model-value="String(modelValue.background || '')"
 				alpha
+				confirm
+				:clearable="false"
 				@update:model-value="value => update({ background: value })"
 			/>
 		</Field>

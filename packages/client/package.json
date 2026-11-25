@@ -31,9 +31,9 @@
     "@deot/docs-playground": "^1.2.11",
     "@deot/docs-renderer": "^1.2.10",
     "@deot/docs-theme": "^1.2.10",
-    "@deot/helper": "^1.1.23",
+    "@deot/helper": "^1.1.24",
     "@deot/http": "^1.1.10",
-    "@deot/vc": "^1.2.6",
+    "@deot/vc": "^1.2.7",
     "codemirror": "^6.0.2",
     "es-module-lexer": "^3.0.3"
   },
