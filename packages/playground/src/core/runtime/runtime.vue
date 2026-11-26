@@ -93,6 +93,8 @@
 								:root-style="localRootStyle"
 								:clear-console="clearConsole"
 								:auto-height="!mobile && !getViewportHeight(viewport)"
+								:mobile="mobile"
+								:overlay="overlay"
 								@error="handleLocalError"
 							/>
 							<Sandbox
@@ -147,6 +149,7 @@ import type {
 	PlaygroundPreviewScroller,
 	PlaygroundPreviewVariable,
 	PlaygroundPreviewVariableLinks,
+	PlaygroundOverlayOptions,
 	PlaygroundView,
 	PlaygroundViewport,
 	PlaygroundViewsProps
@@ -232,6 +235,10 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	 * 预览变量联动。缺省为 `--rem` → `--vc-rem`；`false` 关闭。
 	 */
 	previewVariableLinks?: PlaygroundPreviewVariableLinks;
+	/**
+	 * local 移动端预览的弹层适配器。
+	 */
+	overlay?: PlaygroundOverlayOptions;
 }>(), {
 	styleless: false,
 	// 类型含 false，显式默认 undefined 才能区分「未写」与「关闭」。

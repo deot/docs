@@ -56,6 +56,7 @@ const files = ref({
 | `mobile` | `boolean \| number` | `undefined` | 左代码、右预览。`true` 限高 640px；正数为最大高度 px。容器窄于 720px 时改为上预览、下代码。`styleless` 下忽略，也不显示高度展开。未写 `previewInset` 时预览留白为 `[12, 0]`，上下避开外框圆角。 |
 | `previewVariables` | `PlaygroundPreviewVariable[]` | `undefined` | 预览底部可切换的 CSS 变量。`auto` 表示移除。值可写成 `{ label, value }`，底栏显示 `label`，`default` 写 value。联动见 `previewVariableLinks`。未配置不显示底栏。 |
 | `previewVariableLinks` | `PlaygroundPreviewVariableLink[] \| false` | `[{ source: '--rem', target: '--vc-rem', auto: 'min(calc(100cqw / 750), 0.64px)' }]` | `source` 生效时在预览根上把 `target` 写成 `var(source)`；显式选中 `target` 时以它为准。`auto` 只在 local 移动端使用。`false` 关闭。 |
+| `overlay` | `PlaygroundOverlayOptions` | `undefined` | local 移动端预览的弹层适配器：外部模块加载后、示例代码执行前调用 `setup({ element, modules })`，返回的函数在重新运行和卸载时调用。通常写在站点配置 `components.playground.overlay`。 |
 | `local` | `boolean` | `true` | 在当前文档编译并挂载。业务模块通过运行时 ESM 加载，可通过 import map 逐个覆盖；预览使用所选 Vue 运行时挂载。 |
 | `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项；`cdnURL` 会同时作用于预览样式和默认 import map。 |
 | `previewOptions` | `SandboxProps['previewOptions']` | `undefined` | 传给当前 iframe 的 preview 选项。 |
@@ -188,6 +189,7 @@ local 模式下，Vue 文件内所有 `<style>` 块（含 SCSS / Sass）统一�
 - 每个 Playground 实例都使用自己的 preview 配置和 iframe 消息来源校验。
 - `local` 默认开启：同一份 `files` 在当前文档里编译。直接渲染不撑开预览高度，`expandable` 固定为关闭，`docs:playground.run` 不会申请临时高度；`<DocsLink>` 仍通过 `docs:navigate` 通知。`local: false` 改回 iframe Sandbox。
 - `mobile` 把代码和预览放在同一行，两边都在格子内用 `Scroller` 滚动，不再按内容撑开外框。预览列宽跟随 `viewport` 的数字宽度，未指定时为 375。窄容器改为上预览、下代码。
+- local 且开启 `mobile` 时，预览区是 `position: fixed` 的包含块，并提供弹层节点 `docs:playground.overlay`（位于手机框内、滚动区外，带预览根的变量和样式作用域）；桌面 local 为 `null`，iframe 为预览文档的 `body`。`overlay.setup` 适配器把组件库的命令式弹层接到该节点；未接入的弹层仍在 `body` 上，预览操作后 1 秒内出现的节点会带上预览根的变量和样式作用域，并在预览销毁时移除。
 - `mobile` 分栏高度固定，`docs:playground.run(height, …)` 不改变高度，也不等待：直接调用回调，或把 `visible` 置为 `true`。local 与 iframe 行为一致。
 - `previewVariables` 只写当前预览根。local 写到挂载根；iframe 写到预览文档的 `documentElement`。local 且开启 `mobile` 时，联动的 `target` 未指定时写成该联动的 `auto`（默认 `--vc-rem: min(calc(100cqw / 750), 0.64px)`），避免沿用整页的 `100vw`。iframe 的 `auto` 不改写 `target`。
 

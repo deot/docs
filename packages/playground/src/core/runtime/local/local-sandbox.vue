@@ -1,5 +1,9 @@
 <template>
-	<div ref="containerEl" class="docs-playground-local">
+	<div
+		ref="containerEl"
+		class="docs-playground-local"
+		:class="{ 'docs-playground-local--contained': mobile }"
+	>
 		<iframe
 			ref="bridgeEl"
 			class="docs-playground-local__bridge"
@@ -13,6 +17,13 @@
 			ref="mountEl"
 			class="docs-playground-local__mount"
 			:class="{ 'docs-playground-local__mount--auto': autoHeight }"
+			:style="rootStyle"
+			v-bind="styleScopeAttrs"
+		/>
+		<div
+			v-if="mobile"
+			ref="overlayEl"
+			class="docs-playground-local__overlay"
 			:style="rootStyle"
 			v-bind="styleScopeAttrs"
 		/>
@@ -33,8 +44,12 @@ import * as VueRouter from 'vue-router';
 import type {
 	PlaygroundFiles,
 	PlaygroundOptions,
+	PlaygroundOverlayOptions,
 	PlaygroundPreviewScroller
 } from '../../../types';
+import { markPreviewActive, trackPreviewActivity } from './activity';
+import { createPreviewOverlay } from './overlay';
+import type { PreviewOverlayController } from './overlay';
 import { createLocalPlayground } from './playground';
 import { createRuntimeImports, createRuntimeImportOverrides } from '../../store';
 import { acquireRuntimeStyles, createRuntimeStyleUrls } from '../../styles';
@@ -63,10 +78,19 @@ const props = withDefaults(defineProps<{
 	 * 写到挂载根上的 CSS 变量。只影响当前预览。
 	 */
 	rootStyle?: Record<string, string>;
+	/**
+	 * 移动端分栏：预览区成为 fixed 的包含块，并提供弹层挂载节点。
+	 */
+	mobile?: boolean;
+	/**
+	 * 站点弹层适配器，只在 `mobile` 时使用。
+	 */
+	overlay?: PlaygroundOverlayOptions;
 }>(), {
 	previewScroller: false,
 	clearConsole: false,
-	autoHeight: false
+	autoHeight: false,
+	mobile: false
 });
 
 const emit = defineEmits<{
@@ -77,6 +101,9 @@ const bridgeSrcdoc = LOCAL_BRIDGE_SRCDOC;
 const containerEl = ref<HTMLElement | null>(null);
 const bridgeEl = ref<HTMLIFrameElement | null>(null);
 const mountEl = ref<HTMLElement | null>(null);
+const overlayEl = ref<HTMLElement | null>(null);
+let overlayController: PreviewOverlayController | null = null;
+let stopActivity: (() => void) | undefined;
 const compileError = ref('');
 const runtimeError = ref('');
 const messageSource = shallowRef<Window | null>(null);
@@ -93,6 +120,32 @@ let pendingMount: {
 } | null = null;
 const styleId = `docs-local-${Math.random().toString(36).slice(2, 10)}`;
 const styleScopeAttrs = { [PREVIEW_STYLE_SCOPE_ATTR]: styleId };
+
+const reportOverlayError = (error: unknown) => {
+	const message = formatPlaygroundRuntimeError(error);
+	runtimeError.value = `[Playground] overlay.setup: ${message || String(error)}`;
+};
+
+/** 移动端分栏才创建弹层控制器；切换布局时重建。 */
+const syncOverlay = () => {
+	const element = props.mobile ? overlayEl.value : null;
+	if (overlayController && !element) {
+		overlayController.teardown();
+		overlayController.dispose();
+		overlayController = null;
+	}
+	stopActivity?.();
+	stopActivity = undefined;
+	if (!element || !containerEl.value) return;
+	overlayController ??= createPreviewOverlay({
+		scope: styleId,
+		element,
+		adapter: props.overlay,
+		onError: reportOverlayError
+	});
+	overlayController.updateVars(props.rootStyle);
+	stopActivity = trackPreviewActivity(styleId, containerEl.value);
+};
 
 const publishError = () => {
 	emit('error', {
@@ -126,6 +179,11 @@ const destroyPreview = () => {
 	removeStyle(styleId);
 };
 
+/** 撤销适配器并清空弹层，每次重新运行和卸载时调用。 */
+const teardownOverlay = () => {
+	overlayController?.teardown();
+};
+
 const mountPreview = (job: NonNullable<typeof pendingMount>, preview: LocalPreviewPort) => {
 	if (!mountEl.value) return;
 	const { component, vue, scroller, css } = job;
@@ -135,7 +193,7 @@ const mountPreview = (job: NonNullable<typeof pendingMount>, preview: LocalPrevi
 	const app = vue.createApp({
 		name: 'LocalSandboxRoot',
 		setup() {
-			const service = createLocalPlayground(vue);
+			const service = createLocalPlayground(vue, { overlay: props.mobile ? overlayEl.value : null });
 			vue.provide('docs:playground', service);
 			vue.onErrorCaptured((error) => {
 				const message = formatPlaygroundRuntimeError(error);
@@ -161,6 +219,8 @@ const mountPreview = (job: NonNullable<typeof pendingMount>, preview: LocalPrevi
 		const message = formatPlaygroundRuntimeError(error);
 		if (message) runtimeError.value = message;
 	};
+	// 挂载时同步追加到 body 的节点也算本预览的。
+	if (overlayController) markPreviewActive(styleId);
 	app.mount(mountEl.value);
 	previewApp = app;
 };
@@ -199,6 +259,7 @@ const run = async () => {
 	runtimeError.value = '';
 	publishError();
 	destroyPreview();
+	teardownOverlay();
 	try {
 		const release = acquireRuntimeStyles(createRuntimeStyleUrls(props.options.cdnURL));
 		releaseStyles?.();
@@ -247,6 +308,8 @@ const run = async () => {
 			publishError();
 			return;
 		}
+		// 外部模块已经执行，示例代码还没执行：此时配置的弹层节点对顶层代码和事件回调都生效。
+		overlayController?.setup(loaded.modules);
 		const linked = linkPlayground(compiled, props.files, { modules: loaded.modules, loadModule: remote.loadModule });
 		/* istanbul ignore if -- 并发编译时只保留最后一次 */
 		if (current !== version) return;
@@ -282,7 +345,18 @@ const handleBridgeLoad = () => {
 };
 
 onMounted(() => {
+	syncOverlay();
 	void run();
+});
+
+watch(() => props.rootStyle, value => overlayController?.updateVars(value));
+watch(() => [props.mobile, props.overlay] as const, async () => {
+	await nextTick();
+	overlayController?.teardown();
+	overlayController?.dispose();
+	overlayController = null;
+	syncOverlay();
+	if (containerEl.value) void run();
 });
 
 watch(
@@ -298,11 +372,16 @@ onBeforeUnmount(() => {
 	version += 1;
 	pendingMount = null;
 	destroyPreview();
+	teardownOverlay();
+	overlayController?.dispose();
+	overlayController = null;
+	stopActivity?.();
 	releaseStyles?.();
 });
 
 defineExpose({
 	container: containerEl,
+	overlay: overlayEl,
 	messageSource,
 	local: true,
 	refresh: () => {
@@ -343,6 +422,23 @@ defineExpose({
 			// 自然高度包含行框与边距，不能继承上一次测量结果。
 			display: flow-root;
 			height: auto;
+		}
+	}
+
+	// 移动端分栏：预览区是 fixed 元素的包含块，弹层收在手机框内。
+	// 桌面 local 不设，同页 Modal 仍升到页面层叠。
+	@include modifier(contained) {
+		contain: layout paint;
+		isolation: isolate;
+	}
+
+	@include element(overlay) {
+		position: absolute;
+		pointer-events: none;
+		inset: 0;
+
+		> * {
+			pointer-events: auto;
 		}
 	}
 }

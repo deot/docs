@@ -91,6 +91,7 @@
 					:preview-scroller="true"
 					:preview-variables="previewVariables"
 					:preview-variable-links="previewVariableLinks"
+					:overlay="overlay"
 					:local="local"
 					:expandable="false"
 					:mobile="true"
@@ -162,6 +163,7 @@ import type {
 	PlaygroundPreviewScroller,
 	PlaygroundPreviewVariable,
 	PlaygroundPreviewVariableLinks,
+	PlaygroundOverlayOptions,
 	PlaygroundView,
 	PlaygroundViewport
 } from './types';
@@ -232,6 +234,11 @@ const props = withDefaults(defineProps<{
 	 * 预览变量联动。缺省为 `--rem` → `--vc-rem`；`false` 关闭。
 	 */
 	previewVariableLinks?: PlaygroundPreviewVariableLinks;
+	/**
+	 * local 移动端预览的弹层适配器，通常写在站点配置 `components.playground.overlay`。
+	 * 外部模块加载后、示例代码执行前调用 `setup({ element, modules })`。
+	 */
+	overlay?: PlaygroundOverlayOptions;
 	/**
 	 * 在当前文档直接编译挂载。默认开启；`false` 改回 iframe Sandbox。
 	 */

@@ -54,6 +54,12 @@ describe('playground warnings', () => {
 		expect(collectPlaygroundDefaultsWarnings({ mobileDefaults: [] })).toEqual([
 			'components.playground.mobileDefaults 必须是对象'
 		]);
-		expect(collectPlaygroundDefaultsWarnings({ local: false, overlay: undefined } as never)).toHaveLength(1);
+		expect(collectPlaygroundDefaultsWarnings({ local: false, overlay: { setup() {} } })).toEqual([]);
+		expect(collectPlaygroundDefaultsWarnings({ overlay: {} })).toEqual([
+			'components.playground.overlay 必须是带 setup 函数的对象'
+		]);
+		expect(collectPlaygroundWarnings({ overlay: {} })).toEqual([
+			'overlay 只能写在站点配置 components.playground 里，块内会被忽略'
+		]);
 	});
 });

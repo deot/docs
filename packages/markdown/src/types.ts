@@ -2,6 +2,7 @@ import type {
 	PlaygroundExpandable,
 	PlaygroundFiles,
 	PlaygroundOptions,
+	PlaygroundOverlayOptions,
 	PlaygroundPreviewInset,
 	PlaygroundPreviewOptions,
 	PlaygroundPreviewScroller,
@@ -82,6 +83,10 @@ export interface MarkdownPlaygroundDefaults extends MarkdownPlaygroundConfig {
 	 * `previewVariables` 与块按 `name` 合并：同名整条替换，新名字追加在后，块写 `[]` 清空。
 	 */
 	mobileDefaults?: MarkdownPlaygroundMobileDefaults;
+	/**
+	 * local 移动端预览的弹层适配器。含函数，只能写在站点配置里。
+	 */
+	overlay?: PlaygroundOverlayOptions;
 }
 
 interface MarkdownPlaygroundFilesMount {

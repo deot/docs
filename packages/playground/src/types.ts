@@ -122,3 +122,28 @@ export type PlaygroundPreviewOptions = SandboxProps['previewOptions'];
  * 默认关闭；开启后会动态探测 `Scroller`，不存在则回退原生滚动。
  */
 export type PlaygroundPreviewScroller = boolean;
+
+/** 站点适配器 `overlay.setup` 收到的上下文。 */
+export interface PlaygroundOverlayContext {
+	/**
+	 * 预览区内的弹层挂载节点。它位于手机框内、滚动区外，fixed 定位以预览列为包含块，
+	 * 并带有预览根的 CSS 变量（如 `--vc-rem`）与样式作用域。
+	 */
+	element: HTMLElement;
+	/**
+	 * 本次运行加载的外部模块，键为模块名（如 `@deot/vc`）。local 预览每次运行都会重新执行这些模块，
+	 * 因此这里的配置只影响当前预览。
+	 */
+	modules: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * local 移动端预览的弹层适配器，只能写在站点配置 `components.playground.overlay`。
+ * 例：`setup({ element, modules }) { modules['@deot/vc']?.VcInstance.configure({ Portal: { element } }); }`
+ */
+export interface PlaygroundOverlayOptions {
+	/**
+	 * 外部模块加载完、示例代码执行前调用。返回的函数在预览销毁、重新运行时调用。
+	 */
+	setup?: (context: PlaygroundOverlayContext) => void | (() => void);
+}

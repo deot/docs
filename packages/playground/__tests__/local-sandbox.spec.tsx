@@ -7,6 +7,7 @@ import LocalSandbox from '../src/core/runtime/local/local-sandbox.vue';
 import PopupPreview from '../src/core/runtime/alone/wrapper.vue';
 import { createLocalPlayground } from '../src/core/runtime/local/playground';
 import { preloadLocalPlayground } from './preload-local';
+import type { PlaygroundOverlayContext } from '../src/types';
 import { clearRemoteModuleCache } from '../src/core/runtime/local/remote';
 import { createBuiltinImports } from '../src/cdn';
 import {
@@ -70,6 +71,91 @@ const label = playground && version ? 'ready' : 'missing'
 		wrapper.unmount();
 		await nextTick();
 		expect(document.querySelector('.local-result')).toBeNull();
+	}, 15_000);
+
+	it('gives mobile previews an overlay node, runs the site adapter, and cleans up', async () => {
+		const cleanup = vi.fn();
+		const setup = vi.fn<(context: PlaygroundOverlayContext) => () => void>(() => cleanup);
+		const files = (label: string) => ({
+			'App.vue': `<template><p class="overlay-result">{{ label }}</p></template>
+<script setup>
+import { inject } from 'vue'
+const playground = inject('docs:playground')
+const label = playground.overlay?.classList.contains('docs-playground-local__overlay') ? '${label}' : 'missing'
+</script>`
+		});
+		const wrapper = mount(LocalSandbox, {
+			props: {
+				files: files('first'),
+				entry: 'App.vue',
+				options: {},
+				mobile: true,
+				rootStyle: { '--rem': '0.5px' },
+				overlay: { setup }
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(wrapper.get('.overlay-result').text()).toBe('first'), { timeout: 10_000 });
+		const overlay = wrapper.get('.docs-playground-local__overlay');
+		expect(wrapper.classes()).toContain('docs-playground-local--contained');
+		expect(overlay.attributes('style')).toContain('--rem: 0.5px');
+		expect(overlay.attributes('data-playground-scope'))
+			.toBe(wrapper.get('.docs-playground-local__mount').attributes('data-playground-scope'));
+		expect(setup).toHaveBeenCalledTimes(1);
+		const [context] = setup.mock.calls[0];
+		expect(context.element).toBe(overlay.element);
+		expect(context.modules.vue).toBeTruthy();
+
+		overlay.element.appendChild(document.createElement('div'));
+		await wrapper.setProps({ files: files('second') });
+		await vi.waitFor(() => expect(wrapper.get('.overlay-result').text()).toBe('second'), { timeout: 10_000 });
+		expect(cleanup).toHaveBeenCalledTimes(1);
+		expect(setup).toHaveBeenCalledTimes(2);
+		expect(overlay.element.children).toHaveLength(0);
+
+		wrapper.unmount();
+		expect(cleanup).toHaveBeenCalledTimes(2);
+	}, 25_000);
+
+	it('keeps desktop local previews without an overlay', async () => {
+		const setup = vi.fn();
+		const wrapper = mount(LocalSandbox, {
+			props: {
+				files: {
+					'App.vue': `<template><p class="desktop-overlay">{{ String(overlay) }}</p></template>
+<script setup>
+import { inject } from 'vue'
+const overlay = inject('docs:playground').overlay
+</script>`
+				},
+				entry: 'App.vue',
+				options: {},
+				overlay: { setup }
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(wrapper.get('.desktop-overlay').text()).toBe('null'), { timeout: 10_000 });
+		expect(wrapper.find('.docs-playground-local__overlay').exists()).toBe(false);
+		expect(wrapper.classes()).not.toContain('docs-playground-local--contained');
+		expect(setup).not.toHaveBeenCalled();
+		wrapper.unmount();
+	}, 15_000);
+
+	it('reports a failing overlay adapter without blocking the preview', async () => {
+		const wrapper = mount(LocalSandbox, {
+			props: {
+				files: { 'App.vue': '<template><p class="adapter-error">ok</p></template>' },
+				entry: 'App.vue',
+				options: {},
+				mobile: true,
+				overlay: { setup: () => { throw new Error('boom'); } }
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(wrapper.get('.adapter-error').text()).toBe('ok'), { timeout: 10_000 });
+		const errors = wrapper.emitted('error') as Array<[{ runtime: string }]>;
+		expect(errors.at(-1)?.[0].runtime).toContain('[Playground] overlay.setup: boom');
+		wrapper.unmount();
 	}, 15_000);
 
 	it.each(['', ' scoped'])('isolates same-named Vue previews with <style%s> across edits and refreshes', async (scoped) => {

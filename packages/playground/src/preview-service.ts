@@ -49,6 +49,15 @@ export class PlaygroundService {
 	}
 
 	/**
+	 * 弹层挂载节点。iframe 有自己的视口，直接用预览文档的 body。
+	 * @returns 预览文档的 body。
+	 */
+	/* istanbul ignore next -- class 会被序列化到没有覆盖率运行时的 iframe。 */
+	get overlay(): HTMLElement {
+		return this.target.document.body;
+	}
+
+	/**
 	 * 申请手动临时高度；新请求会替换上一个手动请求。
 	 * @param height iframe 最小高度。
 	 * @returns iframe 是否在超时前应用目标高度。

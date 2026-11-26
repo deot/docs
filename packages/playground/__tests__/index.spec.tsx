@@ -1448,6 +1448,7 @@ describe('Playground', () => {
 		const previewRoot = wrapper.get('[data-playground-scope]');
 		expect(previewRoot.attributes('style')).toContain('--rem: 0.5px');
 		expect(previewRoot.attributes('style')).toContain('--vc-rem: var(--rem)');
+		expect(wrapper.find('.docs-playground__stage .docs-playground-local__overlay').exists()).toBe(true);
 		await wrapper.get('[data-value="auto"]').trigger('click');
 		const style = previewRoot.attributes('style') || '';
 		expect(style).toContain('100cqw');

@@ -24,7 +24,7 @@ export const PLAYGROUND_CONFIG_KEYS: readonly string[] = Object.freeze([
 ]);
 
 /** 只能写在站点配置 `components.playground` 里的键。 */
-export const PLAYGROUND_SITE_ONLY_KEYS: readonly string[] = Object.freeze(['mobileDefaults']);
+export const PLAYGROUND_SITE_ONLY_KEYS: readonly string[] = Object.freeze(['mobileDefaults', 'overlay']);
 
 /** 站点默认值里不该出现的实例字段。 */
 const PLAYGROUND_INSTANCE_KEYS = new Set(['entry', 'title', 'id']);
@@ -132,14 +132,20 @@ export const collectPlaygroundDefaultsWarnings = (defaults: Record<string, unkno
 			warnings.push(`components.playground: ${formatUnknownKey(key, siteKeys)}`);
 		}
 	}
+	const overlay = defaults.overlay;
+	if (overlay !== undefined && (!overlay || typeof overlay !== 'object'
+		|| typeof (overlay as { setup?: unknown }).setup !== 'function')) {
+		warnings.push('components.playground.overlay 必须是带 setup 函数的对象');
+	}
 	const mobile = defaults.mobileDefaults;
 	if (mobile !== undefined) {
 		if (!mobile || typeof mobile !== 'object' || Array.isArray(mobile)) {
 			warnings.push('components.playground.mobileDefaults 必须是对象');
 		} else {
-			const mobileKeys = siteKeys.filter(key => key !== 'mobile' && key !== 'mobileDefaults');
+			const ignored = new Set(['mobile', ...PLAYGROUND_SITE_ONLY_KEYS, ...PLAYGROUND_INSTANCE_KEYS]);
+			const mobileKeys = siteKeys.filter(key => !ignored.has(key));
 			for (const key of Object.keys(mobile)) {
-				if (key === 'mobile' || key === 'mobileDefaults' || PLAYGROUND_INSTANCE_KEYS.has(key)) {
+				if (ignored.has(key)) {
 					warnings.push(`components.playground.mobileDefaults.${key} 不生效`);
 				} else if (!mobileKeys.includes(key)) {
 					warnings.push(`components.playground.mobileDefaults: ${formatUnknownKey(key, mobileKeys)}`);

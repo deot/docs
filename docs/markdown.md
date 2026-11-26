@@ -592,6 +592,63 @@ const rows = Array.from({ length: 24 }, (_, index) => index + 1);
 ```
 :::
 
+## 移动端弹层
+
+local 移动端分栏会把预览区作为 `position: fixed` 的包含块，并在预览区内、滚动区外提供一个弹层节点，带着预览根的 CSS 变量（如 `--vc-rem`）和样式作用域。示例里通过 `inject('docs:playground').overlay` 拿到它，可以直接写 `<Teleport :to="playground.overlay">`。
+
+命令式弹层没有组件上下文，由站点配置 `components.playground.overlay.setup` 接入。它在外部模块加载完、示例代码执行前调用；local 预览每次运行都会重新执行一份外部模块，所以配置只影响当前预览。返回的函数在重新运行、切换示例和卸载时调用：
+
+```js
+window.$docs = {
+	components: {
+		playground: {
+			overlay: {
+				setup({ element, modules }) {
+					const vc = modules['@deot/vc'];
+					if (!vc?.VcInstance) return;
+					vc.VcInstance.configure({ Portal: { ...vc.VcInstance.options.Portal, element } });
+					return () => vc.Portal?.clearAll?.();
+				}
+			}
+		}
+	}
+};
+```
+
+没有接入适配器的第三方弹层仍然挂到 `body`，位置铺满整页；在预览操作后 1 秒内出现的节点会带上预览根的变量和样式作用域，预览销毁时一并移除。需要精确收在手机框内时，接入适配器或改用 `local: false`。
+
+下面的示例不写 `local: false`，提示会出现在右侧预览列里：
+
+:::playground
+<!--
+<config lang="json5">
+{
+	title: '移动端弹层',
+	mobile: true
+}
+</config>
+-->
+```vue
+<template>
+	<div class="overlay-demo">
+		<Button @click="handleToast">显示提示</Button>
+	</div>
+</template>
+<script setup>
+import { Button, MToast } from '@deot/vc';
+
+const handleToast = () => {
+	MToast.info({ content: '提示收在预览列里', duration: 1500 });
+};
+</script>
+<style>
+.overlay-demo {
+	padding: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
+
 ## 配置校验
 
 写错的配置不会打断示例，但会给出警告：未知键（附最接近的键名）、mobile 下不生效的键、不是合法 JSON5 的 `<config>`。警告总会输出到 `console.warn`，开发模式下还会显示在示例上方。站点配置 `components.playground` 里的未知键同样会在控制台提示。`views` 等取值非法时仍按原样报 `PLAYGROUND: …` 错误。

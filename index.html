@@ -340,6 +340,19 @@
 					'color-secondary': '#a78bda'
 				}
 			},
+			components: {
+				playground: {
+					// local 移动端预览：把 @deot/vc 的命令式弹层（MToast、Modal.open 等）挂到预览区内。
+					overlay: {
+						setup({ element, modules }) {
+							const vc = modules['@deot/vc'];
+							if (!vc?.VcInstance) return;
+							vc.VcInstance.configure({ Portal: { ...vc.VcInstance.options.Portal, element } });
+							return () => vc.Portal?.clearAll?.();
+						}
+					}
+				}
+			},
 			layout: {
 				header: {
 					brand: {
