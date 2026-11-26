@@ -68,6 +68,22 @@ export interface MarkdownPlaygroundConfig {
 	previewOptions?: PlaygroundPreviewOptions;
 }
 
+/**
+ * 只在 `mobile` 生效时合并的站点默认值。
+ */
+export type MarkdownPlaygroundMobileDefaults = Omit<MarkdownPlaygroundConfig, 'entry' | 'title' | 'id' | 'mobile'>;
+
+/**
+ * 站点级 Playground 默认值：普通默认值 + 只作用于移动端分栏的 `mobileDefaults`。
+ */
+export interface MarkdownPlaygroundDefaults extends MarkdownPlaygroundConfig {
+	/**
+	 * 块（或站点默认值）开启 `mobile` 且未开启 `styleless` 时才合并，块配置仍然优先。
+	 * `previewVariables` 与块按 `name` 合并：同名整条替换，新名字追加在后，块写 `[]` 清空。
+	 */
+	mobileDefaults?: MarkdownPlaygroundMobileDefaults;
+}
+
 interface MarkdownPlaygroundFilesMount {
 	files: PlaygroundFiles;
 	/**

@@ -21,7 +21,7 @@ import {
 import type { MarkdownTabQueryAdapter } from './tab-query';
 import type {
 	MarkdownIndicatorConfig,
-	MarkdownPlaygroundConfig,
+	MarkdownPlaygroundDefaults,
 	MarkdownTheme
 } from './types';
 
@@ -41,7 +41,7 @@ const props = withDefaults(defineProps<{
 	/**
 	 * Playground 站点默认 props。`:::playground` 块配置会浅合并覆盖。
 	 */
-	playground?: MarkdownPlaygroundConfig;
+	playground?: MarkdownPlaygroundDefaults;
 	/**
 	 * `?tab=` 读写；未传时优先 inject，再回退 history 适配器。
 	 */

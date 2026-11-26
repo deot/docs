@@ -8,7 +8,8 @@ import {
 } from './tab-query';
 import type { MarkdownTabQueryAdapter } from './tab-query';
 import TabsNav from './tabs-nav.vue';
-import type { MarkdownPlaygroundConfig, MarkdownPlaygroundMountProps } from './types';
+import { resolvePlaygroundProps } from './playground-props';
+import type { MarkdownPlaygroundConfig, MarkdownPlaygroundDefaults, MarkdownPlaygroundMountProps } from './types';
 
 const mountedApps = new WeakMap<HTMLElement, App[]>();
 const renderVersions = new WeakMap<HTMLElement, number>();
@@ -35,16 +36,16 @@ interface MarkdownDirectiveValue {
 	source?: string;
 	locale: Language;
 	/**
-	 * 站点级 Playground 默认 props；块级 JSON5 会覆盖。
+	 * 站点级 Playground 默认 props；块级 JSON5 会覆盖。`mobileDefaults` 只作用于 mobile 块。
 	 */
-	playground?: MarkdownPlaygroundConfig;
+	playground?: MarkdownPlaygroundDefaults;
 	/**
 	 * `?tab=` 读写适配器；缺省时用 history.replaceState。
 	 */
 	tabQuery?: MarkdownTabQueryAdapter;
 }
 
-const serializePlaygroundDefaults = (value?: MarkdownPlaygroundConfig) => (
+const serializePlaygroundDefaults = (value?: MarkdownPlaygroundDefaults) => (
 	JSON.stringify(value || {})
 );
 
@@ -141,8 +142,7 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirecti
 			? { files, entry: item.dataset.entry }
 			: { modelValue: code };
 		const app = createApp(() => h(DocsPlayground.Playground, {
-			...sitePlaygroundDefaults,
-			...(typeof propsData === 'object' ? propsData : {}),
+			...resolvePlaygroundProps(sitePlaygroundDefaults, propsData),
 			...runtimeProps,
 			locale: binding.value.locale
 		}));

@@ -1239,6 +1239,35 @@ describe('markdown', () => {
 		wrapper.unmount();
 	});
 
+	it('merges site mobileDefaults into mobile blocks only', async () => {
+		const source = [
+			runtimeWithConfig('{ title: "desktop" }', '```vue\n<template />\n```'),
+			runtimeWithConfig(
+				'{ title: "mobile", mobile: true, previewVariables: [{ name: "--gap", values: ["8px"] }] }',
+				'```vue\n<template />\n```'
+			)
+		].join('\n\n');
+		const wrapper = mount(Markdown, {
+			props: {
+				modelValue: source,
+				playground: {
+					mobileDefaults: {
+						previewInset: [12, 0],
+						previewVariables: [{ name: '--rem', values: ['auto', '0.5px'] }]
+					}
+				}
+			},
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(wrapper.findAll('.playground')).toHaveLength(2));
+		const [desktop, mobile] = wrapper.findAll('.playground').map(item => item.text());
+		expect(desktop).not.toContain('[12,0]');
+		expect(desktop).not.toContain('--rem');
+		expect(mobile).toContain('[12,0]');
+		expect(mobile).toContain('[{"name":"--rem","values":["auto","0.5px"]},{"name":"--gap","values":["8px"]}]');
+		wrapper.unmount();
+	});
+
 	it('passes playground expandable to Playground', async () => {
 		const enabled = mount(Markdown, {
 			props: {

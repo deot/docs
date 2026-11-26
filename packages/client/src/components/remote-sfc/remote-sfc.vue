@@ -72,7 +72,9 @@ const playgroundOptions = computed(() => {
 	};
 });
 const playgroundProps = computed(() => {
-	const site = playgroundDefaults.value;
+	// 远程 SFC 始终 styleless，不走移动端分栏，mobileDefaults 不适用。
+	const site = { ...playgroundDefaults.value };
+	delete site.mobileDefaults;
 	const overrides = JSON.parse(previewPlayground.value);
 	return {
 		...site,

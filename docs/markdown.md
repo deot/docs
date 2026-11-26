@@ -482,6 +482,27 @@ window.$docs = {
 };
 ```
 
+`mobileDefaults` 只在块开启 `mobile`（且没有 `styleless`）时合并，桌面示例不受影响，块内配置仍然优先。`previewVariables` 与块按 `name` 合并：同名整条替换，新名字追加在后面，块里写 `previewVariables: []` 可以清空。其他数组整体替换。
+
+```js
+window.$docs = {
+	components: {
+		playground: {
+			mobileDefaults: {
+				previewVariables: [{
+					name: '--rem',
+					label: '屏宽',
+					values: ['auto', { label: '375', value: '0.5px' }, { label: '480', value: '0.64px' }],
+					default: '0.5px'
+				}]
+			}
+		}
+	}
+};
+```
+
+这样移动端示例只写 `mobile: true` 就带上 `--rem` 底栏；需要额外变量时在块里写 `previewVariables: [{ name: '--gap', … }]`，`--rem` 会保留。
+
 `previewVariableLinks` 声明底栏变量与组件库变量的联动，默认值对应 `@deot/vc` 的 750 稿：`--rem` 生效时把 `--vc-rem` 改写为 `var(--rem)`；local 移动端选 `auto` 时按预览列宽度计算。其他组件库可以换成自己的变量，写 `false` 关闭：
 
 ```js

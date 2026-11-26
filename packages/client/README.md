@@ -415,7 +415,7 @@ window.$docs = {
 };
 ```
 
-`components.markdown.theme` 为排版皮肤（`'default' | 'traditional'`）。`components.playground` 会作为 Markdown 内嵌 Playground 与远程 SFC 的默认 props；`:::playground` 块内 JSON5 配置会覆盖站点默认。`components.renderer.fit` 作用于发布页 Renderer（Combo 编辑器不读该配置）。
+`components.markdown.theme` 为排版皮肤（`'default' | 'traditional'`）。`components.playground` 会作为 Markdown 内嵌 Playground 与远程 SFC 的默认 props；`:::playground` 块内 JSON5 配置会覆盖站点默认。`components.playground.mobileDefaults` 只在块开启 `mobile` 时合并（块配置优先，`previewVariables` 按 `name` 合并），适合放移动端专用的 `previewVariables`；远程 SFC 不使用它。`components.renderer.fit` 作用于发布页 Renderer（Combo 编辑器不读该配置）。
 
 `theme.colors` 的键名与 `--docs-*` CSS 变量一致，省略前缀。值可以是亮暗共用的 CSS 字符串（包括 `light-dark(...)`），也可以是 `{ light, dark? }`；省略或留空的 `dark` 沿用 `light`。未配置项保留内置值，各项独立，不自动推导其他颜色。`background-color-primary-light` 是主色淡色背景，不是亮色模式主色。完整键表与旧变量迁移说明见 [Theme 文档](../theme/README.md)。
 

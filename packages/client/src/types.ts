@@ -3,7 +3,7 @@ import type { Ref } from 'vue';
 import type { DocsLocaleEntry } from '@deot/docs-locale';
 import type {
 	MarkdownIndicatorConfig,
-	MarkdownPlaygroundConfig,
+	MarkdownPlaygroundDefaults,
 	MarkdownTheme
 } from '@deot/docs-markdown';
 import type { DocsTheme, DocsThemeOptions } from '@deot/docs-theme';
@@ -296,8 +296,9 @@ export interface DocsMarkdownComponentOptions {
 /**
  * 站点级 Playground 组件默认 props。
  * 对齐 `MarkdownPlaygroundConfig` 中的非实例字段；`:::playground` 块配置会覆盖。
+ * `mobileDefaults` 只在块开启 `mobile` 时合并。
  */
-export type DocsPlaygroundComponentOptions = Omit<MarkdownPlaygroundConfig, 'entry' | 'title' | 'id'>;
+export type DocsPlaygroundComponentOptions = Omit<MarkdownPlaygroundDefaults, 'entry' | 'title' | 'id'>;
 
 /**
  * 站点级 Renderer 组件默认 props（排除 `document` / `modules` / `context`）。
