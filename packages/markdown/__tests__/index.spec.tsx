@@ -1387,6 +1387,35 @@ describe('markdown', () => {
 			.toContain('previewVariables[0].default 必须是 values 中的值');
 		expect(render('{ previewVariables: [{ name: \'--rem\', values: [\'auto\', \'0.5px\'], label: \'rem\' }] }'))
 			.toContain('data-playground');
+		expect(render('{ previewVariables: [{ name: "--rem", values: ["auto", { label: "375", value: "0.5px" }], default: "0.5px" }] }'))
+			.toContain('data-playground');
+		expect(render('{ previewVariables: [{ name: "--rem", values: [{ label: "375" }] }] }'))
+			.toContain('previewVariables[0].values[0].value 必须是非空字符串');
+		expect(render('{ previewVariables: [{ name: "--rem", values: [{ label: 1, value: "1px" }] }] }'))
+			.toContain('previewVariables[0].values[0].label 必须是字符串');
+		expect(render('{ previewVariables: [{ name: "--rem", values: ["1px", { label: "x", value: "1px" }] }] }'))
+			.toContain('previewVariables[0].values 不能重复声明 1px');
+		expect(render('{ previewVariables: [{ name: "--rem", values: [{ label: "375", value: "0.5px" }], default: "375" }] }'))
+			.toContain('previewVariables[0].default 必须是 values 中的值');
+	});
+
+	it('validates previewVariableLinks', () => {
+		const render = (config: string) => MarkdownRenderer.render(
+			runtimeWithConfig(config, '```vue\n<template />\n```')
+		);
+		expect(render('{ previewVariableLinks: false }')).toContain('data-playground');
+		expect(render('{ previewVariableLinks: [{ source: "--rem", target: "--lib-rem", auto: "1px" }] }'))
+			.toContain('data-playground');
+		expect(render('{ previewVariableLinks: true }')).toContain('previewVariableLinks 必须是数组或 false');
+		expect(render('{ previewVariableLinks: [1] }')).toContain('previewVariableLinks[0] 必须是对象');
+		expect(render('{ previewVariableLinks: [{ source: "rem", target: "--a" }] }'))
+			.toContain('previewVariableLinks[0].source 必须以 -- 开头');
+		expect(render('{ previewVariableLinks: [{ source: "--a", target: "b" }] }'))
+			.toContain('previewVariableLinks[0].target 必须以 -- 开头');
+		expect(render('{ previewVariableLinks: [{ source: "--a", target: "--a" }] }'))
+			.toContain('previewVariableLinks[0].source 与 target 不能相同');
+		expect(render('{ previewVariableLinks: [{ source: "--a", target: "--b", auto: "" }] }'))
+			.toContain('previewVariableLinks[0].auto 必须是非空字符串');
 	});
 
 	it('passes playground mobile config to Playground', async () => {

@@ -146,6 +146,7 @@ import type {
 	PlaygroundPreviewOptions,
 	PlaygroundPreviewScroller,
 	PlaygroundPreviewVariable,
+	PlaygroundPreviewVariableLinks,
 	PlaygroundView,
 	PlaygroundViewport,
 	PlaygroundViewsProps
@@ -190,7 +191,11 @@ import { isIgnoredFilename } from './local/compile/files';
 // 宿主组件必须与 Runtime 使用同一份 Vue；编译器仍在 LocalSandbox 内按需加载。
 import LocalSandbox from './local/local-sandbox.vue';
 import PreviewVariableBar from './preview-variable-bar.vue';
-import { normalizePreviewVariables, resolvePreviewRootVars } from './preview-variables';
+import {
+	normalizePreviewVariableLinks,
+	normalizePreviewVariables,
+	resolvePreviewRootVars
+} from './preview-variables';
 import { usePreviewRootVars } from './use-preview-root-vars';
 
 const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<PlaygroundViewsProps> & {
@@ -223,8 +228,14 @@ const props = withDefaults(defineProps<PlaygroundFilesProps & Partial<Playground
 	 * 预览底部可切换的 CSS 变量。
 	 */
 	previewVariables?: readonly PlaygroundPreviewVariable[];
+	/**
+	 * 预览变量联动。缺省为 `--rem` → `--vc-rem`；`false` 关闭。
+	 */
+	previewVariableLinks?: PlaygroundPreviewVariableLinks;
 }>(), {
 	styleless: false,
+	// 类型含 false，显式默认 undefined 才能区分「未写」与「关闭」。
+	previewVariableLinks: undefined,
 	hideChrome: false,
 	previewInset: 10,
 	previewScroller: false,
@@ -273,9 +284,11 @@ const variableSelections = computed(() => normalizedVariables.value.map(item => 
 	name: item.name,
 	value: selectedVariables.value[item.name] || item.value
 })));
+const variableLinks = computed(() => normalizePreviewVariableLinks(props.previewVariableLinks));
 const rootVars = computed(() => resolvePreviewRootVars(variableSelections.value, {
 	local: props.local,
-	mobile: props.mobile
+	mobile: props.mobile,
+	links: variableLinks.value
 }));
 const localRootStyle = computed(() => (props.local ? rootVars.value.set : undefined));
 const handlePreviewVariable = (name: string, value: string) => {

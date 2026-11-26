@@ -6,6 +6,7 @@ import type {
 	PlaygroundPreviewOptions,
 	PlaygroundPreviewScroller,
 	PlaygroundPreviewVariable,
+	PlaygroundPreviewVariableLinks,
 	PlaygroundView,
 	PlaygroundViewport
 } from '@deot/docs-playground';
@@ -60,6 +61,10 @@ export interface MarkdownPlaygroundConfig {
 	 * 预览底部可切换的 CSS 变量。
 	 */
 	previewVariables?: PlaygroundPreviewVariable[];
+	/**
+	 * 预览变量联动。缺省为 `--rem` → `--vc-rem`；`false` 关闭。通常写在站点配置里。
+	 */
+	previewVariableLinks?: PlaygroundPreviewVariableLinks;
 	previewOptions?: PlaygroundPreviewOptions;
 }
 

@@ -1456,6 +1456,32 @@ describe('Playground', () => {
 		wrapper.unmount();
 	});
 
+	it('shows value labels in the variable bar and applies configured links', async () => {
+		const wrapper = mountPlayground({
+			attachTo: document.body,
+			props: {
+				local: true,
+				mobile: true,
+				modelValue: '<template><p>labels</p></template>',
+				previewVariableLinks: [{ source: '--unit', target: '--lib-unit' }],
+				previewVariables: [{
+					name: '--unit',
+					values: ['auto', { label: '375', value: '0.5px' }, { label: '480', value: '0.64px' }],
+					default: '0.5px'
+				}]
+			}
+		});
+		const options = wrapper.findAll('[data-name="--unit"]');
+		expect(options.map(item => item.text())).toEqual(['auto', '375', '480']);
+		expect(options[1].attributes('aria-checked')).toBe('true');
+		const previewRoot = wrapper.get('[data-playground-scope]');
+		expect(previewRoot.attributes('style')).toContain('--lib-unit: var(--unit)');
+		expect(previewRoot.attributes('style')).not.toContain('--vc-rem');
+		await options[2].trigger('click');
+		expect(previewRoot.attributes('style')).toContain('--unit: 0.64px');
+		wrapper.unmount();
+	});
+
 	it('ignores the mobile layout when styleless', () => {
 		const wrapper = mountPlayground({
 			props: {

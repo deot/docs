@@ -48,6 +48,33 @@ export type PlaygroundMobile = true | number;
 /** 预览底栏可切换的 CSS 变量值。`auto` 表示不写入。 */
 export type PlaygroundPreviewVariableValue = 'auto' | (string & {});
 
+/** 带底栏文字的变量值，例如 `{ label: '375', value: '0.5px' }`。 */
+export interface PlaygroundPreviewVariableOption {
+	/** 底栏显示的文字。 */
+	label: string;
+	/** 写入预览根的值。`auto` 表示不写入。 */
+	value: PlaygroundPreviewVariableValue;
+}
+
+/**
+ * 预览变量的联动：`source` 生效时，同一节点的 `target` 改写为 `var(source)`。
+ * 默认 `[{ source: '--rem', target: '--vc-rem', auto: 'min(calc(100cqw / 750), 0.64px)' }]`。
+ */
+export interface PlaygroundPreviewVariableLink {
+	/** 底栏切换的变量。 */
+	source: `--${string}`;
+	/** 组件库实际读取的变量。显式选中它时以它为准。 */
+	target: `--${string}`;
+	/**
+	 * local 且 mobile 时，`source` 与 `target` 都没有值（或为 `auto`）时写给 `target` 的值。
+	 * local 预览没有自己的视口，`100vw` 是整页宽度，这里通常按预览列的 `cqw` 计算。iframe 不使用。
+	 */
+	auto?: string;
+}
+
+/** `false` 关闭全部联动。 */
+export type PlaygroundPreviewVariableLinks = readonly PlaygroundPreviewVariableLink[] | false;
+
 /**
  * 预览根上可切换的 CSS 变量。
  * 只作用在当前预览，不写宿主页面。
@@ -59,10 +86,11 @@ export interface PlaygroundPreviewVariable {
 	name: `--${string}`;
 	/**
 	 * 可切换的值。`auto` 表示移除该变量，交给预览自己的级联。
+	 * 写成 `{ label, value }` 时底栏显示 `label`。
 	 */
-	values: PlaygroundPreviewVariableValue[];
+	values: Array<PlaygroundPreviewVariableValue | PlaygroundPreviewVariableOption>;
 	/**
-	 * 初始值，必须是 `values` 中的一项。缺省取第一项。
+	 * 初始值，必须是 `values` 中某项的值。缺省取第一项。
 	 */
 	default?: PlaygroundPreviewVariableValue;
 	/**

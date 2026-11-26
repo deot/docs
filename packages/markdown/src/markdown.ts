@@ -234,19 +234,54 @@ const validatePreviewVariables = (propsData: MarkdownPlaygroundConfig) => {
 		}
 		if (names.has(item.name)) return `previewVariables 不能重复声明 ${item.name}`;
 		names.add(item.name);
-		if (!Array.isArray(item.values) || !item.values.length
-			|| item.values.some(value => typeof value !== 'string' || !value.trim())) {
+		if (!Array.isArray(item.values) || !item.values.length) {
 			return `previewVariables[${index}].values 必须是非空字符串数组`;
 		}
-		const duplicate = item.values.find((value, valueIndex) => item.values.indexOf(value) !== valueIndex);
-		if (duplicate !== undefined) {
-			return `previewVariables[${index}].values 不能重复声明 ${duplicate}`;
+		const values: string[] = [];
+		for (let valueIndex = 0; valueIndex < item.values.length; valueIndex += 1) {
+			const entry: unknown = item.values[valueIndex];
+			const isOption = !!entry && typeof entry === 'object' && !Array.isArray(entry);
+			const value = isOption ? (entry as { value?: unknown }).value : entry;
+			if (typeof value !== 'string' || !value.trim()) {
+				return isOption
+					? `previewVariables[${index}].values[${valueIndex}].value 必须是非空字符串`
+					: `previewVariables[${index}].values 必须是非空字符串数组`;
+			}
+			if (isOption && typeof (entry as { label?: unknown }).label !== 'string') {
+				return `previewVariables[${index}].values[${valueIndex}].label 必须是字符串`;
+			}
+			if (values.includes(value)) return `previewVariables[${index}].values 不能重复声明 ${value}`;
+			values.push(value);
 		}
-		if ('default' in item && (typeof item.default !== 'string' || !item.values.includes(item.default))) {
+		if ('default' in item && (typeof item.default !== 'string' || !values.includes(item.default))) {
 			return `previewVariables[${index}].default 必须是 values 中的值`;
 		}
 		if ('label' in item && typeof item.label !== 'string') {
 			return `previewVariables[${index}].label 必须是字符串`;
+		}
+	}
+	return '';
+};
+const validatePreviewVariableLinks = (propsData: MarkdownPlaygroundConfig) => {
+	if (!('previewVariableLinks' in propsData)) return '';
+	const list = propsData.previewVariableLinks;
+	if (list === false) return '';
+	if (!Array.isArray(list)) return 'previewVariableLinks 必须是数组或 false';
+	for (let index = 0; index < list.length; index += 1) {
+		const item: unknown = list[index];
+		if (!item || typeof item !== 'object' || Array.isArray(item)) {
+			return `previewVariableLinks[${index}] 必须是对象`;
+		}
+		const { source, target, auto } = item as Record<string, unknown>;
+		if (typeof source !== 'string' || !PREVIEW_VARIABLE_NAME.test(source)) {
+			return `previewVariableLinks[${index}].source 必须以 -- 开头`;
+		}
+		if (typeof target !== 'string' || !PREVIEW_VARIABLE_NAME.test(target)) {
+			return `previewVariableLinks[${index}].target 必须以 -- 开头`;
+		}
+		if (source === target) return `previewVariableLinks[${index}].source 与 target 不能相同`;
+		if (auto !== undefined && (typeof auto !== 'string' || !auto.trim())) {
+			return `previewVariableLinks[${index}].auto 必须是非空字符串`;
 		}
 	}
 	return '';
@@ -381,7 +416,8 @@ md.core.ruler.after('markdown-tabs', 'runtime-files', (state) => {
 			|| validatePreviewScroller(propsData)
 			|| validateLocal(propsData)
 			|| validateMobile(propsData)
-			|| validatePreviewVariables(propsData);
+			|| validatePreviewVariables(propsData)
+			|| validatePreviewVariableLinks(propsData);
 		const propsAttr = renderPlaygroundAttrs(propsData);
 
 		if (!fences.length) {

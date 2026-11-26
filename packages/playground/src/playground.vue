@@ -90,6 +90,7 @@
 					:preview-inset="resolvedPreviewInset"
 					:preview-scroller="true"
 					:preview-variables="previewVariables"
+					:preview-variable-links="previewVariableLinks"
 					:local="local"
 					:expandable="false"
 					:mobile="true"
@@ -116,6 +117,7 @@
 				:preview-inset="resolvedPreviewInset"
 				:preview-scroller="previewScroller"
 				:preview-variables="previewVariables"
+				:preview-variable-links="previewVariableLinks"
 				:local="local"
 				:expandable="local ? false : expandable"
 				:hide-chrome="true"
@@ -159,6 +161,7 @@ import type {
 	PlaygroundPreviewOptions,
 	PlaygroundPreviewScroller,
 	PlaygroundPreviewVariable,
+	PlaygroundPreviewVariableLinks,
 	PlaygroundView,
 	PlaygroundViewport
 } from './types';
@@ -226,6 +229,10 @@ const props = withDefaults(defineProps<{
 	 */
 	previewVariables?: readonly PlaygroundPreviewVariable[];
 	/**
+	 * 预览变量联动。缺省为 `--rem` → `--vc-rem`；`false` 关闭。
+	 */
+	previewVariableLinks?: PlaygroundPreviewVariableLinks;
+	/**
 	 * 在当前文档直接编译挂载。默认开启；`false` 改回 iframe Sandbox。
 	 */
 	local?: boolean;
@@ -237,6 +244,8 @@ const props = withDefaults(defineProps<{
 	entry: '',
 	views: () => ['runtime'],
 	styleless: false,
+	// 类型含 false，Vue 会把缺省的布尔类 prop 转成 false；显式默认 undefined 才能区分「未写」与「关闭」。
+	previewVariableLinks: undefined,
 	previewScroller: false,
 	local: true,
 	title: '',

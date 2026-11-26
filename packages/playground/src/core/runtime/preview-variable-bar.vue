@@ -18,19 +18,20 @@
 					:aria-label="item.label"
 				>
 					<button
-						v-for="value in item.values"
-						:key="value"
+						v-for="option in item.options"
+						:key="option.value"
 						type="button"
 						class="docs-playground__variable-option"
-						:class="{ 'is-active': value === selected[item.name] }"
+						:class="{ 'is-active': option.value === selected[item.name] }"
 						role="radio"
 						:data-name="item.name"
-						:data-value="value"
-						:aria-checked="value === selected[item.name]"
-						:aria-label="t('playground.runtime.previewVariable', { label: item.label, value })"
-						@click="emit('select', item.name, value)"
+						:data-value="option.value"
+						:title="option.label === option.value ? undefined : option.value"
+						:aria-checked="option.value === selected[item.name]"
+						:aria-label="t('playground.runtime.previewVariable', { label: item.label, value: option.label })"
+						@click="emit('select', item.name, option.value)"
 					>
-						{{ value }}
+						{{ option.label }}
 					</button>
 				</div>
 			</div>

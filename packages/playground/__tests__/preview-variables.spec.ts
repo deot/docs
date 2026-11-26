@@ -7,6 +7,8 @@ import {
 } from '../src/core/runtime/mobile';
 import {
 	applyPreviewRootVars,
+	DEFAULT_PREVIEW_VARIABLE_LINKS,
+	normalizePreviewVariableLinks,
 	normalizePreviewVariables,
 	resolvePreviewRootVars
 } from '../src/core/runtime/preview-variables';
@@ -22,8 +24,45 @@ describe('preview variables', () => {
 			name: '--gap',
 			label: '间距',
 			values: ['8px', '12px'],
+			options: [{ label: '8px', value: '8px' }, { label: '12px', value: '12px' }],
 			value: '8px'
 		}]);
+	});
+
+	it('keeps labelled values and matches default by value', () => {
+		const [rem] = normalizePreviewVariables([{
+			name: '--rem',
+			values: ['auto', { label: '375', value: '0.5px' }, { label: ' ', value: '0.64px' }, { label: 'x', value: '0.5px' }, { value: '' }],
+			default: '0.5px'
+		}]);
+		expect(rem.values).toEqual(['auto', '0.5px', '0.64px']);
+		expect(rem.options).toEqual([
+			{ label: 'auto', value: 'auto' },
+			{ label: '375', value: '0.5px' },
+			{ label: '0.64px', value: '0.64px' }
+		]);
+		expect(rem.value).toBe('0.5px');
+	});
+
+	it('follows configured links and can turn them off', () => {
+		const links = normalizePreviewVariableLinks([
+			{ source: '--unit', target: '--lib-unit', auto: 'calc(100cqw / 375)' },
+			{ source: '--bad', target: 'nope' } as never,
+			{ source: '--same', target: '--same' }
+		]);
+		expect(links).toEqual([{ source: '--unit', target: '--lib-unit', auto: 'calc(100cqw / 375)' }]);
+		expect(normalizePreviewVariableLinks(undefined)).toBe(DEFAULT_PREVIEW_VARIABLE_LINKS);
+		expect(normalizePreviewVariableLinks(false)).toEqual([]);
+
+		expect(resolvePreviewRootVars([{ name: '--unit', value: '2px' }], { local: false, mobile: false, links }).set)
+			.toEqual({ '--unit': '2px', '--lib-unit': 'var(--unit)' });
+		expect(resolvePreviewRootVars([], { local: true, mobile: true, links }).set)
+			.toEqual({ '--lib-unit': 'calc(100cqw / 375)' });
+		// 自定义联动不再改写 --vc-rem。
+		expect(resolvePreviewRootVars([{ name: '--rem', value: '0.5px' }], { local: true, mobile: true, links }).set)
+			.toEqual({ '--rem': '0.5px', '--lib-unit': 'calc(100cqw / 375)' });
+		expect(resolvePreviewRootVars([{ name: '--rem', value: '0.5px' }], { local: true, mobile: true, links: [] }).set)
+			.toEqual({ '--rem': '0.5px' });
 	});
 
 	it('rewrites --vc-rem when --rem is set and clears both for iframe auto', () => {

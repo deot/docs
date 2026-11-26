@@ -482,11 +482,27 @@ window.$docs = {
 };
 ```
 
+`previewVariableLinks` 声明底栏变量与组件库变量的联动，默认值对应 `@deot/vc` 的 750 稿：`--rem` 生效时把 `--vc-rem` 改写为 `var(--rem)`；local 移动端选 `auto` 时按预览列宽度计算。其他组件库可以换成自己的变量，写 `false` 关闭：
+
+```js
+window.$docs = {
+	components: {
+		playground: {
+			previewVariableLinks: [{
+				source: '--rem',
+				target: '--vc-rem',
+				auto: 'min(calc(100cqw / 750), 0.64px)'
+			}]
+		}
+	}
+};
+```
+
 `mobile: true` 的块会忽略 `views`，始终是代码和预览分栏；但块内写了非法的 `views` 仍会报错。
 
 ## 移动端分栏
 
-左代码、右预览，整块最高 640px。容器窄于 720px 时改为上预览、下代码。底栏切换 `--rem`，预览根会同时重写 `--vc-rem`。
+左代码、右预览，整块最高 640px。容器窄于 720px 时改为上预览、下代码。底栏切换 `--rem`，预览根会同时重写 `--vc-rem`。`values` 的项可以写成 `{ label, value }`，底栏显示 `label`（下例显示屏宽），`default` 仍写 value。
 
 分栏高度固定：`docs:playground.run(height, …)` 不改变高度，直接调用回调（或把 `visible` 置为 `true`），local 与 iframe 一致。`views`、`expandable` 在分栏下不生效。
 
@@ -500,8 +516,14 @@ window.$docs = {
 	mobile: true,
 	previewVariables: [{
 		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px'],
+		label: '屏宽',
+		values: [
+			'auto',
+			{ label: '375', value: '0.5px' },
+			{ label: '414', value: '0.552px' },
+			{ label: '480', value: '0.64px' },
+			'1px'
+		],
 		default: '0.5px'
 	}, {
 		name: '--gap',
