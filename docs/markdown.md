@@ -490,6 +490,8 @@ window.$docs = {
 
 分栏高度固定：`docs:playground.run(height, …)` 不改变高度，直接调用回调（或把 `visible` 置为 `true`），local 与 iframe 一致。`views`、`expandable` 在分栏下不生效。
 
+预览列默认上下留出 12px（外框圆角半径）、左右为 0，内容横向铺满且不会被圆角裁切，无需再写 `previewInset: [12, 0]`。`previewInset` 只在需要别的留白时才写，写了就整体替换默认值。
+
 :::playground
 <!--
 <config lang="json5">

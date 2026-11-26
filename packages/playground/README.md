@@ -53,7 +53,7 @@ const files = ref({
 | `id` | `string` | `''` | 标题锚点 id；未传时从 `title` 自动生成。仅挂在内联 runtime 标题上，弹窗不重复。 |
 | `expandable` | `true \| number` | `undefined` | 开启预览高度展开；未传不显示控件；`true` 展开到剩余视口；正数为目标高度（px）。 |
 | `previewScroller` | `boolean` | `false` | 在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条；开启后会动态探测 `Scroller`，不存在则回退原生滚动。`mobile` 开启时预览列强制使用 Scroller。 |
-| `mobile` | `boolean \| number` | `undefined` | 左代码、右预览。`true` 限高 640px；正数为最大高度 px。容器窄于 720px 时改为上预览、下代码。`styleless` 下忽略，也不显示高度展开。 |
+| `mobile` | `boolean \| number` | `undefined` | 左代码、右预览。`true` 限高 640px；正数为最大高度 px。容器窄于 720px 时改为上预览、下代码。`styleless` 下忽略，也不显示高度展开。未写 `previewInset` 时预览留白为 `[12, 0]`，上下避开外框圆角。 |
 | `previewVariables` | `PlaygroundPreviewVariable[]` | `undefined` | 预览底部可切换的 CSS 变量。`auto` 表示移除。`--rem` 会在预览根上同时写入 `--vc-rem: var(--rem)`。未配置不显示底栏。 |
 | `local` | `boolean` | `true` | 在当前文档编译并挂载。业务模块通过运行时 ESM 加载，可通过 import map 逐个覆盖；预览使用所选 Vue 运行时挂载。 |
 | `options` | `PlaygroundOptions` | `{}` | 传给 Vue REPL store 的实例级选项；`cdnURL` 会同时作用于预览样式和默认 import map。 |

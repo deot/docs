@@ -740,6 +740,8 @@ defineExpose({
 		overflow: hidden;
 		background: var(--vc-background-color-lightest, var(--docs-background-color-lightest, #fff));
 		border: 1px solid var(--docs-border-color, var(--vc-border-color, #e2e8f0));
+
+		// 与 mobile.ts 的 PLAYGROUND_PREVIEW_RADIUS 一致；mobile 默认上下留白按它避开圆角。
 		border-radius: 12px;
 
 		// 保持 border-box：高度已含上下描边。content-box 会让 expand 看起来撑开预览。

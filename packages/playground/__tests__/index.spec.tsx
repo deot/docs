@@ -1401,6 +1401,24 @@ describe('Playground', () => {
 		wrapper.unmount();
 	});
 
+	it('keeps mobile previews clear of the rounded frame by default', async () => {
+		const wrapper = mountPlayground({
+			props: {
+				modelValue: '<template>inset</template>',
+				mobile: true
+			}
+		});
+		const previewStyle = () => wrapper.find('.docs-playground__preview').attributes('style');
+		expect(previewStyle()).toContain('padding: 12px 0px');
+		await wrapper.setProps({ previewInset: 0 });
+		expect(previewStyle()).toContain('padding: 0px');
+		await wrapper.setProps({ previewInset: [20, 4] });
+		expect(previewStyle()).toContain('padding: 20px 4px');
+		await wrapper.setProps({ previewInset: undefined, mobile: undefined });
+		expect(previewStyle()).toContain('padding: 0px');
+		wrapper.unmount();
+	});
+
 	it('uses the viewport width for the mobile preview column', () => {
 		const wrapper = mountPlayground({
 			props: {

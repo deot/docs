@@ -1,4 +1,4 @@
-import type { PlaygroundMobile, PlaygroundViewport } from '../../types';
+import type { PlaygroundMobile, PlaygroundPreviewInset, PlaygroundViewport } from '../../types';
 import { getViewportWidth } from './viewport';
 
 /** `mobile: true` 时分栏的最大高度。 */
@@ -15,6 +15,28 @@ export const PLAYGROUND_MOBILE_NARROW_PREVIEW_MAX_HEIGHT = 480;
 
 /** 窄容器里代码区的最大高度。 */
 export const PLAYGROUND_MOBILE_NARROW_CODE_MAX_HEIGHT = 320;
+
+/**
+ * 预览外框圆角。与 runtime.vue 中 `.docs-playground__preview` 的 `border-radius` 保持一致。
+ */
+export const PLAYGROUND_PREVIEW_RADIUS = 12;
+
+/** mobile 未写 `previewInset` 时的留白：上下避开圆角，左右铺满。 */
+export const PLAYGROUND_MOBILE_PREVIEW_INSET: [vertical: number, horizontal: number] = [PLAYGROUND_PREVIEW_RADIUS, 0];
+
+/**
+ * 解析传给运行时的 `previewInset`。显式值原样使用。
+ * @param value 用户配置。
+ * @param mobile 是否处于移动端分栏。
+ * @returns 运行时使用的留白。
+ */
+export const resolvePlaygroundPreviewInset = (
+	value: PlaygroundPreviewInset | undefined,
+	mobile: boolean
+): PlaygroundPreviewInset => {
+	if (value !== undefined) return value;
+	return mobile ? [...PLAYGROUND_MOBILE_PREVIEW_INSET] : 0;
+};
 
 /**
  * local 移动端预览没有自己的视口，`100vw` 是整页宽度。

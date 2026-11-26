@@ -5,7 +5,7 @@
 		:entry="currentEntry"
 		:options="options"
 		:preview-options="previewOptions"
-		:preview-inset="previewInset"
+		:preview-inset="resolvedPreviewInset"
 		:preview-scroller="previewScroller"
 		:local="local"
 		:expandable="local ? false : expandable"
@@ -87,7 +87,7 @@
 					:entry="currentEntry"
 					:options="options"
 					:preview-options="previewOptions"
-					:preview-inset="previewInset"
+					:preview-inset="resolvedPreviewInset"
 					:preview-scroller="true"
 					:preview-variables="previewVariables"
 					:local="local"
@@ -113,7 +113,7 @@
 				:entry="currentEntry"
 				:options="options"
 				:preview-options="previewOptions"
-				:preview-inset="previewInset"
+				:preview-inset="resolvedPreviewInset"
 				:preview-scroller="previewScroller"
 				:preview-variables="previewVariables"
 				:local="local"
@@ -168,7 +168,8 @@ import {
 	PLAYGROUND_MOBILE_NARROW_CODE_MAX_HEIGHT,
 	PLAYGROUND_MOBILE_NARROW_PREVIEW_MAX_HEIGHT,
 	resolvePlaygroundMobileMaxHeight,
-	resolvePlaygroundMobilePreviewWidth
+	resolvePlaygroundMobilePreviewWidth,
+	resolvePlaygroundPreviewInset
 } from './core/runtime/mobile';
 import {
 	cloneViewport,
@@ -236,7 +237,6 @@ const props = withDefaults(defineProps<{
 	entry: '',
 	views: () => ['runtime'],
 	styleless: false,
-	previewInset: 0,
 	previewScroller: false,
 	local: true,
 	title: '',
@@ -302,6 +302,10 @@ const titleId = computed(() => resolvePlaygroundTitleId(
 ));
 const copyValue = computed(() => sourceFiles.value[currentEntry.value] || '');
 const mobileEnabled = computed(() => isPlaygroundMobile(props.mobile));
+const resolvedPreviewInset = computed(() => resolvePlaygroundPreviewInset(
+	props.previewInset,
+	mobileEnabled.value && !props.styleless
+));
 const mobileMaxHeight = computed(() => (
 	mobileEnabled.value ? resolvePlaygroundMobileMaxHeight(props.mobile as true | number) : 0
 ));
