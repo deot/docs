@@ -1,5 +1,31 @@
 # @deot/docs ChangeLog
 
+## v1.2.13
+
+_2026-11-26_
+
+### Bugfixes
+
+- fix(markdown): accept style in playground config without a warning ([c4570f0](https://github.com/deot/docs/commit/c4570f0e39085ae1a6c3e8c219aeafa9aca80dc5))
+- fix(playground): run mobile handlers without waiting for height ([c0bfde4](https://github.com/deot/docs/commit/c0bfde4c1246dad53c6bee68361815d5ded2541b))
+- fix(playground): run height examples in the iframe preview ([dc921fe](https://github.com/deot/docs/commit/dc921fe49eaea306f4ad08ff68a4772996553f07))
+
+### Features
+
+- feat(cli,dever,markdown,client): add doc check smoke test ([c5d4867](https://github.com/deot/docs/commit/c5d486771bd77a296b71181560d08fc2eaf120fc))
+- feat(markdown,client): warn about ignored playground config ([12d0aaf](https://github.com/deot/docs/commit/12d0aafb8d82daf4359920aed83fbb7d3bf6cc0a))
+- feat(markdown,client): add mobile-only playground site defaults ([30e3335](https://github.com/deot/docs/commit/30e33351e75b01634f8043d70ec99c4e2a813b90))
+- feat(playground,markdown): contain overlays in local mobile previews ([2a83ef9](https://github.com/deot/docs/commit/2a83ef92c6bc734b6541305843d4d9430a60b1cb))
+- feat(markdown,playground): configure preview variable links and value labels ([a9973b3](https://github.com/deot/docs/commit/a9973b3b5744ef158a1799e7f6c6dc4485ae3a65))
+- feat(playground): show unhandled rejections and console errors in previews ([4008ba5](https://github.com/deot/docs/commit/4008ba5188f3658bf6dbc02a81534fd34658cbfb))
+- feat(playground): keep mobile previews clear of the rounded frame ([84c8fbd](https://github.com/deot/docs/commit/84c8fbd1489af92098d09d05bbd97acbd9941428))
+- feat(playground): fold overflow preview variables into one row ([9277dab](https://github.com/deot/docs/commit/9277dabbdc6b99f5c4ba8503cb3bad405f8a92e9))
+
+### Updates
+
+- chore(client): bump @deot/vc to 1.2.9 ([7dff762](https://github.com/deot/docs/commit/7dff7629c1354d7fed298aaa08f3ae4328d35d8e))
+- chore(theme): force-publish `1.2.11` -> `1.2.13`
+
 ## v1.2.12
 
 _2026-11-25_

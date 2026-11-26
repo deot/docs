@@ -1,5 +1,13 @@
 # @deot/docs-cli ChangeLog
 
+## v1.2.13
+
+_2026-11-26_
+
+### Features
+
+- feat: add doc check smoke test ([c5d4867](https://github.com/deot/docs/commit/c5d486771bd77a296b71181560d08fc2eaf120fc))
+
 ## v1.2.11
 
 _2026-11-25_

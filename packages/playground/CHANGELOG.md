@@ -1,5 +1,26 @@
 # @deot/docs-playground ChangeLog
 
+## v1.2.13
+
+_2026-11-26_
+
+### Bugfixes
+
+- fix: run mobile handlers without waiting for height ([c0bfde4](https://github.com/deot/docs/commit/c0bfde4c1246dad53c6bee68361815d5ded2541b))
+- fix: run height examples in the iframe preview ([dc921fe](https://github.com/deot/docs/commit/dc921fe49eaea306f4ad08ff68a4772996553f07))
+
+### Features
+
+- feat: show unhandled rejections and console errors in previews ([4008ba5](https://github.com/deot/docs/commit/4008ba5188f3658bf6dbc02a81534fd34658cbfb))
+- feat: contain overlays in local mobile previews ([2a83ef9](https://github.com/deot/docs/commit/2a83ef92c6bc734b6541305843d4d9430a60b1cb))
+- feat: configure preview variable links and value labels ([a9973b3](https://github.com/deot/docs/commit/a9973b3b5744ef158a1799e7f6c6dc4485ae3a65))
+- feat: keep mobile previews clear of the rounded frame ([84c8fbd](https://github.com/deot/docs/commit/84c8fbd1489af92098d09d05bbd97acbd9941428))
+- feat: fold overflow preview variables into one row ([9277dab](https://github.com/deot/docs/commit/9277dabbdc6b99f5c4ba8503cb3bad405f8a92e9))
+
+### Updates
+
+- chore(theme): force-publish `1.2.11` -> `1.2.13`
+
 ## v1.2.12
 
 _2026-11-25_
