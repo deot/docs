@@ -67,8 +67,8 @@ importers:
         specifier: ^1.1.10
         version: 1.1.10(debug@4.4.3(supports-color@10.2.2))
       '@deot/vc':
-        specifier: ^1.2.7
-        version: 1.2.7(@deot/helper@1.1.24)(echarts@6.1.0)(lodash-es@4.18.1)(vue@3.5.43(typescript@6.0.3))
+        specifier: ^1.2.9
+        version: 1.2.9(@deot/helper@1.1.24)(echarts@6.1.0)(lodash-es@4.18.1)(vue@3.5.43(typescript@6.0.3))
       codemirror:
         specifier: ^6.0.2
         version: 6.0.2
@@ -754,8 +754,42 @@ packages:
       vue:
         optional: true
 
+  '@deot/vc-components@1.2.9':
+    resolution: {integrity: sha512-yd4ThwZO9d6UgytT6hPoFG53aaUwJGdeJtuXK/LGQXMCSgWJz7mQ3kXy7WTVB0rzoFoG1BCsw7g482rxvPR1Vw==}
+    peerDependencies:
+      '@deot/helper': '*'
+      '@zumer/snapdom': '*'
+      echarts: '*'
+      lodash-es: '*'
+      quill: '*'
+      vue: '*'
+    peerDependenciesMeta:
+      '@deot/helper':
+        optional: true
+      '@zumer/snapdom':
+        optional: true
+      echarts:
+        optional: true
+      lodash-es:
+        optional: true
+      quill:
+        optional: true
+      vue:
+        optional: true
+
   '@deot/vc-hooks@1.2.7':
     resolution: {integrity: sha512-9XeKJ0BRU55gzh1RHqxh/bgGzd38XQ0H+b9LIiWzo4uwAcQpjTvgIKMWTS4+WtLGrGbRIB7QiWuAzu2TrlsXmg==}
+    peerDependencies:
+      '@deot/helper': '*'
+      vue: '*'
+    peerDependenciesMeta:
+      '@deot/helper':
+        optional: true
+      vue:
+        optional: true
+
+  '@deot/vc-hooks@1.2.8':
+    resolution: {integrity: sha512-G04E00JwxzdoxOq0U5wMvOV09cSkjz7kRBHBVmRloJb0HwZgCAa3quvZJRk0DGlxTnfNYw7ETy5noqgJC24jyA==}
     peerDependencies:
       '@deot/helper': '*'
       vue: '*'
@@ -768,11 +802,25 @@ packages:
   '@deot/vc-locale@1.2.7':
     resolution: {integrity: sha512-n8w1xStPxyFBeIbD53aeKlhFrq1hWQO2Md+MJJQERTcq3bSyDFxULvMH1DDuGwlWPPZIE/22G2XCDt15oIBIUA==}
 
+  '@deot/vc-locale@1.2.8':
+    resolution: {integrity: sha512-hfNDKFu+II4PI1eZ/wSseXl/Xa+L29WTxPxwJDGio2nDTyYWCwWRBv6RhJ5L4lQsskuPNXU8qDh0R2c24bPWzA==}
+
   '@deot/vc-shared@1.2.7':
     resolution: {integrity: sha512-x/ubQVvA74FyjFu1wQuFZk6bJ3skMKhj9sJTJsQOf+COpuQPoclfWOZ9Y54PieN5RAIZGrBJY4p9d2XbKBcVbQ==}
 
+  '@deot/vc-shared@1.2.8':
+    resolution: {integrity: sha512-GTV/s4S9qOXiAEipyIoVoSmR1Lnbx6NZt4kuKcfvm6ks2kgWe8ZrkYHzQItKfolL1wpvt3mYwxPOKleg+cYOYQ==}
+
   '@deot/vc@1.2.7':
     resolution: {integrity: sha512-6A2cIFw4rSTl5506IEBn3VrfZEWmjoDaD5F+Y7qpdTNY8jEUungVqGM86UfN8s6VSWmbZqUc5KQhf3lQEHHoDQ==}
+    peerDependencies:
+      vue: '*'
+    peerDependenciesMeta:
+      vue:
+        optional: true
+
+  '@deot/vc@1.2.9':
+    resolution: {integrity: sha512-hB0HD0+Z5Lk8OA5adMo22vzo3MtmP1GXzPG1n40OfWdNqIbKewzC17K5KdlVgSm1v1DiWu0X5NmOawCeS9N9xQ==}
     peerDependencies:
       vue: '*'
     peerDependenciesMeta:
@@ -5674,6 +5722,17 @@ snapshots:
       lodash-es: 4.18.1
       vue: 3.5.43(typescript@6.0.3)
 
+  '@deot/vc-components@1.2.9(@deot/helper@1.1.24)(echarts@6.1.0)(lodash-es@4.18.1)(vue@3.5.43(typescript@6.0.3))':
+    dependencies:
+      '@deot/vc-hooks': 1.2.8(@deot/helper@1.1.24)(vue@3.5.43(typescript@6.0.3))
+      '@deot/vc-locale': 1.2.8
+      '@deot/vc-shared': 1.2.8
+    optionalDependencies:
+      '@deot/helper': 1.1.24
+      echarts: 6.1.0
+      lodash-es: 4.18.1
+      vue: 3.5.43(typescript@6.0.3)
+
   '@deot/vc-hooks@1.2.7(@deot/helper@1.1.24)(vue@3.5.43(typescript@6.0.3))':
     dependencies:
       '@deot/vc-shared': 1.2.7
@@ -5681,9 +5740,20 @@ snapshots:
       '@deot/helper': 1.1.24
       vue: 3.5.43(typescript@6.0.3)
 
+  '@deot/vc-hooks@1.2.8(@deot/helper@1.1.24)(vue@3.5.43(typescript@6.0.3))':
+    dependencies:
+      '@deot/vc-shared': 1.2.8
+    optionalDependencies:
+      '@deot/helper': 1.1.24
+      vue: 3.5.43(typescript@6.0.3)
+
   '@deot/vc-locale@1.2.7': {}
 
+  '@deot/vc-locale@1.2.8': {}
+
   '@deot/vc-shared@1.2.7': {}
+
+  '@deot/vc-shared@1.2.8': {}
 
   '@deot/vc@1.2.7(@deot/helper@1.1.24)(echarts@6.1.0)(lodash-es@4.18.1)(vue@3.5.43(typescript@6.0.3))':
     dependencies:
@@ -5691,6 +5761,21 @@ snapshots:
       '@deot/vc-hooks': 1.2.7(@deot/helper@1.1.24)(vue@3.5.43(typescript@6.0.3))
       '@deot/vc-locale': 1.2.7
       '@deot/vc-shared': 1.2.7
+    optionalDependencies:
+      vue: 3.5.43(typescript@6.0.3)
+    transitivePeerDependencies:
+      - '@deot/helper'
+      - '@zumer/snapdom'
+      - echarts
+      - lodash-es
+      - quill
+
+  '@deot/vc@1.2.9(@deot/helper@1.1.24)(echarts@6.1.0)(lodash-es@4.18.1)(vue@3.5.43(typescript@6.0.3))':
+    dependencies:
+      '@deot/vc-components': 1.2.9(@deot/helper@1.1.24)(echarts@6.1.0)(lodash-es@4.18.1)(vue@3.5.43(typescript@6.0.3))
+      '@deot/vc-hooks': 1.2.8(@deot/helper@1.1.24)(vue@3.5.43(typescript@6.0.3))
+      '@deot/vc-locale': 1.2.8
+      '@deot/vc-shared': 1.2.8
     optionalDependencies:
       vue: 3.5.43(typescript@6.0.3)
     transitivePeerDependencies:

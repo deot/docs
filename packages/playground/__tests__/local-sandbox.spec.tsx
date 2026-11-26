@@ -117,6 +117,45 @@ const label = playground.overlay?.classList.contains('docs-playground-local__ove
 		expect(cleanup).toHaveBeenCalledTimes(2);
 	}, 25_000);
 
+	it('rebuilds the overlay when the layout changes and caps reported errors', async () => {
+		const setup = vi.fn();
+		const files = { 'App.vue': '<template><p class="layout-switch">ok</p></template>' };
+		// 先换掉 console.error，错误总线安装时会把它当作原函数保留。
+		const original = console.error;
+		console.error = vi.fn();
+		const wrapper = mount(LocalSandbox, {
+			props: { files, entry: 'App.vue', options: {}, mobile: true, overlay: { setup }, rootStyle: { '--a': '1' } },
+			attachTo: document.body
+		});
+		try {
+			await vi.waitFor(() => expect(wrapper.get('.layout-switch').text()).toBe('ok'), { timeout: 10_000 });
+			await wrapper.setProps({ rootStyle: { '--a': '2' } });
+			expect(wrapper.get('.docs-playground-local__overlay').attributes('style')).toContain('--a: 2');
+
+			wrapper.get('.docs-playground-local').element.dispatchEvent(new Event('pointerdown'));
+			for (let index = 0; index < 7; index += 1) console.error(`e${index}`);
+			console.error('e6');
+			await nextTick();
+			const errors = wrapper.emitted('error') as Array<[{ runtime: string }]>;
+			expect(errors.at(-1)?.[0].runtime.split('\n')).toEqual([
+				'console.error: e2',
+				'console.error: e3',
+				'console.error: e4',
+				'console.error: e5',
+				'console.error: e6'
+			]);
+
+			await wrapper.setProps({ mobile: false });
+			await vi.waitFor(() => expect(wrapper.find('.docs-playground-local__overlay').exists()).toBe(false));
+			await vi.waitFor(() => expect(wrapper.find('.layout-switch').exists()).toBe(true), { timeout: 10_000 });
+			await wrapper.setProps({ mobile: true });
+			await vi.waitFor(() => expect(setup.mock.calls.length).toBeGreaterThanOrEqual(2), { timeout: 10_000 });
+		} finally {
+			wrapper.unmount();
+			console.error = original;
+		}
+	}, 30_000);
+
 	it('keeps desktop local previews without an overlay', async () => {
 		const setup = vi.fn();
 		const wrapper = mount(LocalSandbox, {

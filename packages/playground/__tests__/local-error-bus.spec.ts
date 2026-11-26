@@ -3,6 +3,7 @@ import { forgetPreviewActivity, markPreviewActive } from '../src/core/runtime/lo
 import { registerPreviewErrors } from '../src/core/runtime/local/error-bus';
 import { compilePlayground } from '../src/core/runtime/local/compile';
 import { linkPlayground } from '../src/core/runtime/local/linker';
+import { formatPlaygroundErrorArgument } from '../src/core/runtime/local/format-error';
 
 const rejection = (reason: unknown) => {
 	const event = new Event('unhandledrejection') as PromiseRejectionEvent;
@@ -52,6 +53,25 @@ describe('local error bus', () => {
 			expect(console.error).toBe(silent);
 			console.error = original;
 		}
+	});
+
+	it('formats console.error arguments', () => {
+		const circular: Record<string, unknown> = {};
+		circular.self = circular;
+		expect(formatPlaygroundErrorArgument('text')).toBe('text');
+		expect(formatPlaygroundErrorArgument(new Error('failed'))).toBe('failed');
+		expect(formatPlaygroundErrorArgument({ a: 1 })).toBe('{"a":1}');
+		expect(formatPlaygroundErrorArgument(undefined)).toBe('undefined');
+		expect(formatPlaygroundErrorArgument(circular)).toBe('[object Object]');
+	});
+
+	it('keeps errors that belong to no preview in the console only', () => {
+		const report = vi.fn();
+		const stop = registerPreviewErrors('one', report);
+		window.dispatchEvent(new ErrorEvent('error', { message: '' }));
+		rejection(new Error('nobody'));
+		expect(report).not.toHaveBeenCalled();
+		stop();
 	});
 
 	it('tags linked modules with a per-preview source URL', async () => {

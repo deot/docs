@@ -2,7 +2,7 @@ import { onBeforeUnmount, ref } from 'vue';
 import type { Ref } from 'vue';
 import { resolveSandboxMessageSource } from './auto-height';
 import type { SandboxExposed } from './auto-height';
-import { formatPlaygroundRuntimeError } from './local/format-error';
+import { formatPlaygroundErrorArgument, formatPlaygroundRuntimeError } from './local/format-error';
 
 export const UNKNOWN_RUNTIME_ERROR = '运行时发生未知错误';
 const MODULE_SPECIFIER_RE = /Failed to resolve module specifier|Error resolving module specifier/u;
@@ -47,17 +47,6 @@ const toRuntimeErrorMessage = (value: unknown, message: unknown) => {
 	return UNKNOWN_RUNTIME_ERROR;
 };
 
-const formatConsoleArgument = (value: unknown) => {
-	if (typeof value === 'string') return value;
-	const text = formatPlaygroundRuntimeError(value);
-	if (text && text !== '[object Object]') return text;
-	try {
-		return JSON.stringify(value) ?? String(value);
-	} catch {
-		return String(value);
-	}
-};
-
 /**
  * 把 iframe 转发的消息统一成 `{ action: 'error', value: string }`。
  * 接受 `error`、@vue/repl 转发的 `unhandledrejection` 和 `console`（只取 error 级别）。
@@ -80,7 +69,7 @@ export const normalizeRuntimeErrorMessage = (data: unknown) => {
 	}
 	if (message.action === 'console' && message.level === 'error'
 		&& Array.isArray(message.args) && message.args.length) {
-		const text = message.args.map(formatConsoleArgument).filter(Boolean).join(' ');
+		const text = message.args.map(formatPlaygroundErrorArgument).filter(Boolean).join(' ');
 		if (!text) return false;
 		message.value = `console.error: ${text}`;
 		return true;

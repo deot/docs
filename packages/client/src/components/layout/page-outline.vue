@@ -58,14 +58,10 @@ import {
 
 defineOptions({ name: 'DocsPageOutline' });
 
-interface ParentScrollerContext extends ScrollerExposed {
-	clientHeight?: number;
-	off?: (listener: () => void) => void;
-	on?: (listener: () => void) => void;
-	scrollHeight?: number;
-	scrollTop?: number;
-	wrapper?: HTMLElement;
-}
+// 注入的父级 Scroller 可能缺少这些字段（旧版本或非 vc 实现），按可选处理。
+type OptionalScrollerKeys = 'clientHeight' | 'off' | 'on' | 'scrollHeight' | 'scrollTop' | 'wrapper';
+type ParentScrollerContext = Omit<ScrollerExposed, OptionalScrollerKeys>
+	& Partial<Pick<ScrollerExposed, OptionalScrollerKeys>>;
 
 type ScrollHost = HTMLElement | Window;
 

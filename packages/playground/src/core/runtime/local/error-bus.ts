@@ -1,5 +1,5 @@
 import { getActivePreview } from './activity';
-import { formatPlaygroundRuntimeError } from './format-error';
+import { formatPlaygroundErrorArgument, formatPlaygroundRuntimeError } from './format-error';
 import { PLAYGROUND_SOURCE_URL_PREFIX } from './linker';
 
 /**
@@ -32,17 +32,6 @@ const resolveScope = (stack: string) => {
 	return scope && reporters.has(scope) ? scope : undefined;
 };
 
-const formatArgument = (value: unknown) => {
-	if (typeof value === 'string') return value;
-	const text = formatPlaygroundRuntimeError(value);
-	if (text && text !== '[object Object]') return text;
-	try {
-		return JSON.stringify(value) ?? String(value);
-	} catch {
-		return String(value);
-	}
-};
-
 /**
  * @param stack 用于归属的调用栈。
  * @param message 要显示的文本。
@@ -67,7 +56,7 @@ const install = () => {
 	const original = console.error;
 	const wrapped = function (this: Console, ...args: unknown[]) {
 		original.apply(this, args);
-		const text = args.map(formatArgument).filter(Boolean).join(' ');
+		const text = args.map(formatPlaygroundErrorArgument).filter(Boolean).join(' ');
 		const stack = [new Error('console.error').stack || '', ...args.map(stackOf)].join('\n');
 		dispatch(stack, `console.error: ${text}`);
 	};
