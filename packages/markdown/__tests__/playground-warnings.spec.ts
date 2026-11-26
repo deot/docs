@@ -16,7 +16,8 @@ describe('playground warnings', () => {
 		expect(collectPlaygroundWarnings({ mobileDefaults: {} })).toEqual([
 			'mobileDefaults 只能写在站点配置 components.playground 里，块内会被忽略'
 		]);
-		expect(collectPlaygroundWarnings({ title: 'ok', views: ['runtime'], view: 'runtime' })).toEqual([]);
+		expect(collectPlaygroundWarnings({ title: 'ok', views: ['runtime'], view: 'runtime', style: 'height:200px' }))
+			.toEqual([]);
 	});
 
 	it('flags keys the mobile split ignores', () => {

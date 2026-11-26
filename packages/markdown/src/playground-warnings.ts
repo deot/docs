@@ -20,7 +20,9 @@ export const PLAYGROUND_CONFIG_KEYS: readonly string[] = Object.freeze([
 	'mobile',
 	'previewVariables',
 	'previewVariableLinks',
-	'previewOptions'
+	'previewOptions',
+	// 不是 Playground prop，但会作为根元素的 style 透传（例如固定高度示例）。
+	'style'
 ]);
 
 /** 只能写在站点配置 `components.playground` 里的键。 */
