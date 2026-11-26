@@ -15,7 +15,15 @@ import { createGuardedVue, type VueGuardCapture } from './vue-guard';
 export interface LinkOptions {
 	modules?: Record<string, unknown>;
 	loadModule?: ModuleLoader;
+	/**
+	 * 预览的作用域 id。设置后每个模块带上 `//# sourceURL=docs-playground://<scope>/<file>`，
+	 * 运行时错误可以按调用栈归属到这个预览。
+	 */
+	sourceScope?: string;
 }
+
+/** 示例模块 sourceURL 的前缀。 */
+export const PLAYGROUND_SOURCE_URL_PREFIX = 'docs-playground://';
 
 /**
  * 在当前页面链接编译结果，返回入口组件。
@@ -81,7 +89,10 @@ export const linkPlayground = (
 		cache.set(key, module.exports);
 		visiting.add(key);
 		try {
-			const runner = new Function('require', 'module', 'exports', '__docs_import', mod.js) as (
+			const source = options.sourceScope
+				? `${mod.js}\n//# sourceURL=${PLAYGROUND_SOURCE_URL_PREFIX}${options.sourceScope}/${key}`
+				: mod.js;
+			const runner = new Function('require', 'module', 'exports', '__docs_import', source) as (
 				require: (id: string) => unknown,
 				module: { exports: Record<string, unknown> },
 				exports: Record<string, unknown>,

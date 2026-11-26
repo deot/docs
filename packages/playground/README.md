@@ -190,6 +190,7 @@ local 模式下，Vue 文件内所有 `<style>` 块（含 SCSS / Sass）统一�
 - `local` 默认开启：同一份 `files` 在当前文档里编译。直接渲染不撑开预览高度，`expandable` 固定为关闭，`docs:playground.run` 不会申请临时高度；`<DocsLink>` 仍通过 `docs:navigate` 通知。`local: false` 改回 iframe Sandbox。
 - `mobile` 把代码和预览放在同一行，两边都在格子内用 `Scroller` 滚动，不再按内容撑开外框。预览列宽跟随 `viewport` 的数字宽度，未指定时为 375。窄容器改为上预览、下代码。
 - local 且开启 `mobile` 时，预览区是 `position: fixed` 的包含块，并提供弹层节点 `docs:playground.overlay`（位于手机框内、滚动区外，带预览根的变量和样式作用域）；桌面 local 为 `null`，iframe 为预览文档的 `body`。`overlay.setup` 适配器把组件库的命令式弹层接到该节点；未接入的弹层仍在 `body` 上，预览操作后 1 秒内出现的节点会带上预览根的变量和样式作用域，并在预览销毁时移除。
+- 运行时错误显示在预览上方：local 显示 `onErrorCaptured` 捕获的渲染错误，以及归属到该预览的未处理 Promise 拒绝（`Unhandled rejection: …`）、全局错误和 `console.error`。归属先看调用栈里的 `docs-playground://<scope>/<file>`（示例模块的 sourceURL），否则取操作后 1 秒内的预览；无法归属的只留在控制台。iframe 同样显示 @vue/repl 转发的未处理拒绝和 `console.error`（包括 Vue 组件错误）。空的拒绝（如弹层取消）不显示。
 - `mobile` 分栏高度固定，`docs:playground.run(height, …)` 不改变高度，也不等待：直接调用回调，或把 `visible` 置为 `true`。local 与 iframe 行为一致。
 - `previewVariables` 只写当前预览根。local 写到挂载根；iframe 写到预览文档的 `documentElement`。local 且开启 `mobile` 时，联动的 `target` 未指定时写成该联动的 `auto`（默认 `--vc-rem: min(calc(100cqw / 750), 0.64px)`），避免沿用整页的 `100vw`。iframe 的 `auto` 不改写 `target`。
 

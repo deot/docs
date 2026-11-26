@@ -49,6 +49,7 @@ import type {
 } from '../../../types';
 import { markPreviewActive, trackPreviewActivity } from './activity';
 import { createPreviewOverlay } from './overlay';
+import { registerPreviewErrors } from './error-bus';
 import type { PreviewOverlayController } from './overlay';
 import { createLocalPlayground } from './playground';
 import { createRuntimeImports, createRuntimeImportOverrides } from '../../store';
@@ -121,6 +122,20 @@ let pendingMount: {
 const styleId = `docs-local-${Math.random().toString(36).slice(2, 10)}`;
 const styleScopeAttrs = { [PREVIEW_STYLE_SCOPE_ATTR]: styleId };
 
+/** 未处理的拒绝和 console.error 最多保留的条数。 */
+const MAX_REPORTED_ERRORS = 5;
+let stopErrors: (() => void) | undefined;
+
+/**
+ * 追加一条运行时提示；渲染错误仍由 onErrorCaptured 直接覆盖。
+ * @param message 错误文本。
+ */
+const appendRuntimeError = (message: string) => {
+	const lines = runtimeError.value ? runtimeError.value.split('\n') : [];
+	if (lines.includes(message)) return;
+	runtimeError.value = [...lines, message].slice(-MAX_REPORTED_ERRORS).join('\n');
+};
+
 const reportOverlayError = (error: unknown) => {
 	const message = formatPlaygroundRuntimeError(error);
 	runtimeError.value = `[Playground] overlay.setup: ${message || String(error)}`;
@@ -134,8 +149,6 @@ const syncOverlay = () => {
 		overlayController.dispose();
 		overlayController = null;
 	}
-	stopActivity?.();
-	stopActivity = undefined;
 	if (!element || !containerEl.value) return;
 	overlayController ??= createPreviewOverlay({
 		scope: styleId,
@@ -144,7 +157,6 @@ const syncOverlay = () => {
 		onError: reportOverlayError
 	});
 	overlayController.updateVars(props.rootStyle);
-	stopActivity = trackPreviewActivity(styleId, containerEl.value);
 };
 
 const publishError = () => {
@@ -219,8 +231,8 @@ const mountPreview = (job: NonNullable<typeof pendingMount>, preview: LocalPrevi
 		const message = formatPlaygroundRuntimeError(error);
 		if (message) runtimeError.value = message;
 	};
-	// 挂载时同步追加到 body 的节点也算本预览的。
-	if (overlayController) markPreviewActive(styleId);
+	// 挂载时同步追加到 body 的节点、挂载后马上出现的错误也算本预览的。
+	markPreviewActive(styleId);
 	app.mount(mountEl.value);
 	previewApp = app;
 };
@@ -310,7 +322,11 @@ const run = async () => {
 		}
 		// 外部模块已经执行，示例代码还没执行：此时配置的弹层节点对顶层代码和事件回调都生效。
 		overlayController?.setup(loaded.modules);
-		const linked = linkPlayground(compiled, props.files, { modules: loaded.modules, loadModule: remote.loadModule });
+		const linked = linkPlayground(compiled, props.files, {
+			modules: loaded.modules,
+			loadModule: remote.loadModule,
+			sourceScope: styleId
+		});
 		/* istanbul ignore if -- 并发编译时只保留最后一次 */
 		if (current !== version) return;
 		if (linked.errors.length || !linked.component) {
@@ -345,6 +361,8 @@ const handleBridgeLoad = () => {
 };
 
 onMounted(() => {
+	if (containerEl.value) stopActivity = trackPreviewActivity(styleId, containerEl.value);
+	stopErrors = registerPreviewErrors(styleId, appendRuntimeError);
 	syncOverlay();
 	void run();
 });
@@ -376,6 +394,7 @@ onBeforeUnmount(() => {
 	overlayController?.dispose();
 	overlayController = null;
 	stopActivity?.();
+	stopErrors?.();
 	releaseStyles?.();
 });
 

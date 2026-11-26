@@ -74,6 +74,15 @@ describe('runtime error guard', () => {
 		normalizeRuntimeErrorMessage(unprintableError);
 		expect(unprintableError.value).toBe(UNKNOWN_RUNTIME_ERROR);
 		expect(normalizeRuntimeErrorMessage({ action: 'console', value: null })).toBe(false);
+		const rejection: Record<string, unknown> = { action: 'unhandledrejection', value: new Error('load failed') };
+		expect(normalizeRuntimeErrorMessage(rejection)).toBe(true);
+		expect(rejection.value).toBe('Unhandled rejection: load failed');
+		expect(normalizeRuntimeErrorMessage({ action: 'unhandledrejection', value: undefined })).toBe(false);
+		const logged: Record<string, unknown> = { action: 'console', level: 'error', args: ['[Vue warn]', { message: 'bad' }, { a: 1 }] };
+		expect(normalizeRuntimeErrorMessage(logged)).toBe(true);
+		expect(logged.value).toBe('console.error: [Vue warn] bad {"a":1}');
+		expect(normalizeRuntimeErrorMessage({ action: 'console', level: 'warn', args: ['x'] })).toBe(false);
+		expect(normalizeRuntimeErrorMessage({ action: 'console', level: 'error', duplicate: true })).toBe(false);
 		expect(toErrorText('compile failed')).toBe('compile failed');
 		expect(toErrorText(new Error('parse failed'))).toBe('parse failed');
 		expect(toErrorText(null)).toBe('');
