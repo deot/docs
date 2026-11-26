@@ -46,12 +46,18 @@ const props = withDefaults(defineProps<{
 	 * `?tab=` 读写；未传时优先 inject，再回退 history 适配器。
 	 */
 	tabQuery?: MarkdownTabQueryAdapter;
+	/**
+	 * 在示例上方显示 Playground 配置警告（未知键、mobile 下不生效的键等）。
+	 * 警告总会输出到 `console.warn`；Client 在开发模式下开启显示。
+	 */
+	showPlaygroundWarnings?: boolean;
 	modelValue?: string;
 	value?: string;
 }>(), {
 	indicator: true,
 	theme: 'default',
-	playground: () => ({})
+	playground: () => ({}),
+	showPlaygroundWarnings: false
 });
 
 const content = ref<HTMLElement>();
@@ -80,7 +86,8 @@ const markdownBinding = computed(() => ({
 	onRendered: (value: string, sourceLines: number[]) => emit('rendered', value, sourceLines),
 	locale: locale.value,
 	playground: props.playground,
-	tabQuery: resolvedTabQuery.value
+	tabQuery: resolvedTabQuery.value,
+	showPlaygroundWarnings: props.showPlaygroundWarnings
 }));
 </script>
 <style lang="scss">

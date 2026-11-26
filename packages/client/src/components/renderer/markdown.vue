@@ -9,6 +9,7 @@
 			:locale="context.locale"
 			:theme="markdownTheme"
 			:playground="playgroundDefaults"
+			:show-playground-warnings="showPlaygroundWarnings"
 		/>
 	</div>
 </template>
@@ -23,7 +24,7 @@ import {
 	resolveDocsPlaygroundComponent
 } from '../../utils/components';
 import { createResourceIdentity, resolveResource } from '../../utils/resolver';
-import { getDocsConfig } from '../../utils/runtime';
+import { getDocsConfig, getDocsRuntime } from '../../utils/runtime';
 import {
 	docsMarkdownIndicator,
 	docsMarkdownInlineContent,
@@ -33,6 +34,8 @@ import {
 const props = defineProps<RendererModuleViewerProps>();
 const { t } = useLocale();
 const docs = getDocsConfig();
+// 开发模式下在示例上方显示 Playground 配置警告；生产环境只输出到控制台。
+const showPlaygroundWarnings = getDocsRuntime().mode === 'development';
 const content = ref('');
 const error = ref('');
 const loading = ref(false);

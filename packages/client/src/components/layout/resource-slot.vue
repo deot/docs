@@ -32,6 +32,7 @@
 						:theme="markdownTheme"
 						:indicator="markdownIndicator"
 						:playground="playgroundDefaults"
+						:show-playground-warnings="showPlaygroundWarnings"
 						@click="handleMarkdownClick"
 					/>
 					<PageFooter />
@@ -45,6 +46,7 @@
 			:theme="markdownTheme"
 			:indicator="markdownIndicator"
 			:playground="playgroundDefaults"
+			:show-playground-warnings="showPlaygroundWarnings"
 			@click="handleMarkdownClick"
 		/>
 		<div v-else-if="builtin" class="docs-resource-slot__builtin" :data-builtin="builtin"></div>
@@ -76,7 +78,7 @@ import {
 	resolveDocsPlaygroundComponent,
 	resolveDocsRendererComponent
 } from '../../utils/components';
-import { getDocsConfig } from '../../utils/runtime';
+import { getDocsConfig, getDocsRuntime } from '../../utils/runtime';
 import { resolveInlineSidebar } from '../../utils/sidebar';
 import { markdownArticleKey } from '../../utils/outline';
 import { omitRouteQuery } from '../../utils/query';
@@ -90,6 +92,8 @@ const props = defineProps<{ name: 'header' | 'sidebar' | 'content' | 'footer' | 
 const route = useRoute();
 const router = useRouter();
 const docs = getDocsConfig();
+// 开发模式下在示例上方显示 Playground 配置警告；生产环境只输出到控制台。
+const showPlaygroundWarnings = getDocsRuntime().mode === 'development';
 const { locale, t } = useLocale();
 const rendererModules = useRendererModules();
 const markdownDefaults = computed(() => resolveDocsMarkdownComponent(docs));

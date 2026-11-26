@@ -9,6 +9,7 @@ import {
 import type { MarkdownTabQueryAdapter } from './tab-query';
 import TabsNav from './tabs-nav.vue';
 import { resolvePlaygroundProps } from './playground-props';
+import { collectPlaygroundDefaultsWarnings } from './playground-warnings';
 import type { MarkdownPlaygroundConfig, MarkdownPlaygroundDefaults, MarkdownPlaygroundMountProps } from './types';
 
 const mountedApps = new WeakMap<HTMLElement, App[]>();
@@ -43,7 +44,52 @@ interface MarkdownDirectiveValue {
 	 * `?tab=` 读写适配器；缺省时用 history.replaceState。
 	 */
 	tabQuery?: MarkdownTabQueryAdapter;
+	/**
+	 * 在示例上方显示配置警告。警告总会输出到 `console.warn`。
+	 */
+	showPlaygroundWarnings?: boolean;
 }
+
+/** 已经输出过警告的站点默认值，避免每次渲染重复提示。 */
+const warnedPlaygroundDefaults = new Set<string>();
+
+const warnPlaygroundDefaults = (defaults: object) => {
+	const key = JSON.stringify(defaults);
+	if (warnedPlaygroundDefaults.has(key)) return;
+	warnedPlaygroundDefaults.add(key);
+	for (const message of collectPlaygroundDefaultsWarnings(defaults as Record<string, unknown>)) {
+		console.warn(`PLAYGROUND: ${message}`);
+	}
+};
+
+const parseWarnings = (value: string | undefined): string[] => {
+	if (!value) return [];
+	try {
+		const parsed: unknown = JSON.parse(value);
+		return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
+	} catch {
+		return [];
+	}
+};
+
+/**
+ * 输出单个示例的配置警告。
+ * @param item 示例挂载点。
+ * @param title 示例标题，便于在控制台里定位。
+ * @param show 是否同时在示例上方显示。
+ */
+const reportPlaygroundWarnings = (item: HTMLElement, title: string | undefined, show: boolean) => {
+	const warnings = parseWarnings(item.dataset.warnings);
+	if (!warnings.length) return;
+	const line = item.dataset.sourceLine ? Number(item.dataset.sourceLine) : undefined;
+	for (const message of warnings) console.warn(`PLAYGROUND: ${message}`, { title, line });
+	if (!show) return;
+	const notice = document.createElement('div');
+	notice.className = 'docs-playground-warning';
+	notice.setAttribute('role', 'note');
+	notice.textContent = warnings.map(message => `PLAYGROUND: ${message}`).join('\n');
+	item.before(notice);
+};
 
 const serializePlaygroundDefaults = (value?: MarkdownPlaygroundDefaults) => (
 	JSON.stringify(value || {})
@@ -128,6 +174,7 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirecti
 	const sitePlaygroundDefaults = binding.value.playground && typeof binding.value.playground === 'object'
 		? binding.value.playground
 		: {};
+	if (playgrounds.length) warnPlaygroundDefaults(sitePlaygroundDefaults);
 	playgrounds.forEach((item) => {
 		const code = item.dataset.code;
 		let files: PlaygroundFiles | undefined;
@@ -138,6 +185,7 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirecti
 		try {
 			files = item.dataset.files ? JSON.parse(item.dataset.files) as PlaygroundFiles : undefined;
 		} catch { /* 忽略无效的文件配置 */ }
+		reportPlaygroundWarnings(item, propsData?.title, !!binding.value.showPlaygroundWarnings);
 		const runtimeProps: MarkdownPlaygroundMountProps = files
 			? { files, entry: item.dataset.entry }
 			: { modelValue: code };
@@ -158,6 +206,7 @@ const update = (el: HTMLElement, binding: DirectiveBinding<MarkdownDirectiveValu
 	if (binding.value.source !== binding.oldValue?.source
 		|| binding.value.locale !== binding.oldValue?.locale
 		|| binding.value.tabQuery !== binding.oldValue?.tabQuery
+		|| binding.value.showPlaygroundWarnings !== binding.oldValue?.showPlaygroundWarnings
 		|| serializePlaygroundDefaults(binding.value.playground)
 		!== serializePlaygroundDefaults(binding.oldValue?.playground)
 	) {

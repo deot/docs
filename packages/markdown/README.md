@@ -152,6 +152,8 @@ createApp(App).mount('#app');
 `expandable` 为可选：`true` 展开到剩余视口，正数为展开目标高度（px）；未配置时不显示展开控件。
 `previewScroller` 为可选布尔值：开启后在 iframe 内用 `@deot/vc` Scroller 替换原生滚动条；会动态探测 `Scroller`，不存在则回退。
 
+配置取值非法时整块替换为 `PLAYGROUND: …` 错误，只报第一条。未知键（附最接近的键名）、`mobile` 下不生效的键（`views`、`expandable`、`previewScroller: false`、`viewport` / `viewportOptions` 中的 `'auto'`）以及不合法的 JSON5 只产生警告，不阻止渲染：警告写在挂载点的 `data-warnings` 上，挂载时输出到 `console.warn`；`<Markdown show-playground-warnings>` 时同时显示在示例上方（`.docs-playground-warning`）。挂载点和错误节点都带 `data-source-line`（源文件中 `:::playground` 的行号，tabs 内同样按源文件计算）。
+
 Playground 会在浏览器里编译 Vue SFC 的 `<style lang="scss">` 以及独立 `.scss` / `.sass` 文件。下划线 partial（如 `_variables.scss`）只作为 `@use` 依赖，不会单独注入预览。
 
 Playground 只在页面出现 fence 或 `:::playground` 时动态加载。使用 Playground 容器时，还需要加载 `@deot/docs-playground/dist/index.style.css` 和宿主应用使用的 `@deot/vc-components` 样式。

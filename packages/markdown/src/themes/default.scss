@@ -841,6 +841,19 @@ $sign: md;
 				border-radius: 8px;
 			}
 
+			// 非致命的 Playground 配置警告，只在开发模式显示；与错误的红色区分。
+			& .docs-playground-warning {
+				padding: 8px 12px;
+				margin: 24px 0 -12px;
+				font-size: 13px;
+				line-height: 1.6;
+				color: #92400e;
+				white-space: pre-wrap;
+				background: #fffbeb;
+				border: 1px dashed #fcd34d;
+				border-radius: 8px;
+			}
+
 			& :not(pre) > code[#{$sign}]:not(.hljs),
 			& :not(pre) > tt[#{$sign}] {
 				padding: 0;
@@ -976,6 +989,12 @@ $sign: md;
 					color: #fecaca;
 					background: color-mix(in srgb, #991b1b 24%, transparent);
 					border-color: color-mix(in srgb, #fecaca 35%, transparent);
+				}
+
+				.docs-playground-warning {
+					color: #fde68a;
+					background: color-mix(in srgb, #92400e 24%, transparent);
+					border-color: color-mix(in srgb, #fcd34d 35%, transparent);
 				}
 
 				.tip[md].tip--filled,

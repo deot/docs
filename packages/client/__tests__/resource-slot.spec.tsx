@@ -92,13 +92,15 @@ vi.mock('@deot/docs-markdown', async () => ({
 			value: String,
 			theme: { type: String, default: 'default' },
 			indicator: { type: [Boolean, Object], default: true },
-			playground: { type: Object, default: () => ({}) }
+			playground: { type: Object, default: () => ({}) },
+			showPlaygroundWarnings: { type: Boolean, default: false }
 		},
 		setup: props => () => (
 			<div
 				class="markdown"
 				data-theme={props.theme || 'default'}
 				data-playground={JSON.stringify(props.playground || {})}
+				data-playground-warnings={String(props.showPlaygroundWarnings)}
 			>
 				<h2 id="%E5%9F%BA%E6%9C%AC">
 					<a class="header-anchor" href="#%E5%9F%BA%E6%9C%AC">#</a>
@@ -301,6 +303,24 @@ describe('ResourceSlot', () => {
 		await vi.waitFor(() => expect(wrapper.text()).toContain('# Themed'));
 		expect(wrapper.find('.markdown').attributes('data-theme')).toBe('traditional');
 		expect(wrapper.find('.markdown').attributes('data-playground')).toBe(JSON.stringify({ previewInset: 16 }));
+	});
+
+	it('shows playground config warnings in development only', async () => {
+		load.mockResolvedValueOnce({ content: '# Dev' });
+		const runtime = window.$docs.runtime;
+		const wrapper = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(wrapper.text()).toContain('# Dev'));
+		expect(wrapper.find('.markdown').attributes('data-playground-warnings'))
+			.toBe(String(runtime?.mode === 'development'));
+		wrapper.unmount();
+
+		load.mockResolvedValueOnce({ content: '# Prod' });
+		window.$docs.runtime = { mode: 'production' };
+		const production = mount(ResourceSlot, { props: { name: 'content' } });
+		await vi.waitFor(() => expect(production.text()).toContain('# Prod'));
+		expect(production.find('.markdown').attributes('data-playground-warnings')).toBe('false');
+		production.unmount();
+		window.$docs.runtime = runtime;
 	});
 
 	it('renders a page header above markdown from the current sidebar section', async () => {

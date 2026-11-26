@@ -1268,6 +1268,69 @@ describe('markdown', () => {
 		wrapper.unmount();
 	});
 
+	it('records config warnings and source lines without blocking the playground', () => {
+		const html = MarkdownRenderer.render([
+			'# Title',
+			'',
+			runtimeWithConfig('{ mobile: true, expandable: true, previewInsets: 4 }', '```vue\n<template />\n```'),
+			'',
+			runtimeWithConfig('{ broken: ', '```vue\n<template />\n```'),
+			'',
+			runtimeWithConfig('{ views: "x", foo: 1 }', '```vue\n<template />\n```')
+		].join('\n'));
+		const template = document.createElement('template');
+		template.innerHTML = html;
+		const [first, second] = [...template.content.querySelectorAll<HTMLElement>('[data-playground]')];
+		expect(first.dataset.sourceLine).toBe('3');
+		expect(JSON.parse(first.dataset.warnings!)).toEqual([
+			'未知配置 previewInsets，是否想写 previewInset？',
+			'mobile 下 expandable 不生效，分栏高度固定'
+		]);
+		expect(second.dataset.sourceLine).toBe('14');
+		expect(JSON.parse(second.dataset.warnings!)[0]).toMatch(/^config 不是合法的 JSON5，已忽略：/);
+		const error = template.content.querySelector<HTMLElement>('.docs-playground-error')!;
+		// 错误路径保持原有格式，只补充行号；错误优先，不再附带警告。
+		expect(error.textContent).toBe('PLAYGROUND: views 必须是非空数组');
+		expect(error.dataset.sourceLine).toBe('25');
+	});
+
+	it('keeps source lines for playgrounds inside tabs', () => {
+		const html = MarkdownRenderer.render([
+			'::::tabs',
+			'````markdown Demo',
+			'intro',
+			'',
+			':::playground',
+			'```vue',
+			'<template />',
+			'```',
+			':::',
+			'````',
+			'::::'
+		].join('\n'));
+		expect(html).toContain('data-source-line="5"');
+	});
+
+	it('logs playground warnings and shows them only when asked', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const source = runtimeWithConfig('{ title: "demo", foo: 1 }', '```vue\n<template />\n```');
+		const hidden = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
+		await vi.waitFor(() => expect(hidden.find('.playground').exists()).toBe(true));
+		expect(hidden.find('.docs-playground-warning').exists()).toBe(false);
+		expect(warn).toHaveBeenCalledWith('PLAYGROUND: 未知配置 foo，该键会被忽略', { title: 'demo', line: 1 });
+		hidden.unmount();
+
+		const shown = mount(Markdown, {
+			props: { modelValue: source, showPlaygroundWarnings: true, playground: { previewInsetz: 1 } as never },
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(shown.find('.playground').exists()).toBe(true));
+		expect(shown.get('.docs-playground-warning').text()).toBe('PLAYGROUND: 未知配置 foo，该键会被忽略');
+		expect(warn).toHaveBeenCalledWith('PLAYGROUND: components.playground: 未知配置 previewInsetz，是否想写 previewInset？');
+		shown.unmount();
+		warn.mockRestore();
+	});
+
 	it('passes playground expandable to Playground', async () => {
 		const enabled = mount(Markdown, {
 			props: {

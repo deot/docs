@@ -5,6 +5,7 @@ import markdownIt from 'markdown-it';
 import JSON5 from 'json5';
 import type { PlaygroundFiles, PlaygroundView, PlaygroundViewport } from '@deot/docs-playground';
 import type { MarkdownPlaygroundConfig } from './types';
+import { collectPlaygroundWarnings } from './playground-warnings';
 
 const HTML_MD_SIGN = 'md';
 const PLAYGROUND = 'playground';
@@ -98,8 +99,9 @@ const tabsOpen = `container_${TABS}_open`;
 const tabsClose = `container_${TABS}_close`;
 const htmlCommentRE = /<!--([\s\S]*?)-->/g;
 const runtimeConfigRE = /<config\s+lang\s*=\s*["']json5["']\s*>([\s\S]*?)<\/config>/i;
-const renderPlaygroundError = (message: string) =>
-	`<div class="docs-playground-error">PLAYGROUND: ${md.utils.escapeHtml(message)}</div>\n`;
+const renderSourceLineAttr = (line?: number) => (line ? ` data-source-line="${line}"` : '');
+const renderPlaygroundError = (message: string, line?: number) =>
+	`<div class="docs-playground-error"${renderSourceLineAttr(line)}>PLAYGROUND: ${md.utils.escapeHtml(message)}</div>\n`;
 const renderTabsError = (message: string) =>
 	`<div class="docs-markdown-tabs-error">TABS: ${md.utils.escapeHtml(message)}</div>\n`;
 /**
@@ -286,7 +288,10 @@ const validatePreviewVariableLinks = (propsData: MarkdownPlaygroundConfig) => {
 	}
 	return '';
 };
-const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>): MarkdownPlaygroundConfig => {
+const parseRuntimeProps = (
+	tokens: Array<{ type: string; content?: string }>
+): { props: MarkdownPlaygroundConfig; warnings: string[] } => {
+	const warnings: string[] = [];
 	for (const token of tokens) {
 		const sources: string[] = [];
 		if (token.type === 'html_block' && token.content) sources.push(token.content);
@@ -300,20 +305,42 @@ const parseRuntimeProps = (tokens: Array<{ type: string; content?: string }>): M
 					try {
 						const parsed = JSON5.parse(configMatch[1]);
 						if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-							return parsed as MarkdownPlaygroundConfig;
+							return { props: parsed as MarkdownPlaygroundConfig, warnings };
 						}
-					} catch { /* 配置格式异常时保持为空 */ }
+						warnings.push('config 必须是对象，已忽略');
+					} catch (error) {
+						// 配置格式异常时保持为空，只给出警告。
+						const reason = error instanceof Error ? error.message : String(error);
+						warnings.push(`config 不是合法的 JSON5，已忽略：${reason}`);
+					}
 				}
 				commentMatch = htmlCommentRE.exec(source);
 			}
 		}
 	}
-	return {};
+	return { props: {}, warnings };
 };
-const renderPlaygroundAttrs = (propsData: MarkdownPlaygroundConfig) => `data-props="${md.utils.escapeHtml(JSON.stringify(propsData))}"`;
+const renderPlaygroundAttrs = (propsData: MarkdownPlaygroundConfig, warnings: string[] = [], line?: number) => [
+	`data-props="${md.utils.escapeHtml(JSON.stringify(propsData))}"`,
+	warnings.length ? `data-warnings="${md.utils.escapeHtml(JSON.stringify(warnings))}"` : '',
+	line ? `data-source-line="${line}"` : ''
+].filter(Boolean).join(' ');
+
+/**
+ * @param env markdown-it 的 env。嵌套渲染（tabs 分栏）时带有 `lineOffset`。
+ * @param map token 的行号区间。
+ * @returns 源文件中的 1 起始行号；未知时为 undefined。
+ */
+const resolveSourceLine = (env: unknown, map: [number, number] | null | undefined) => {
+	if (!map) return undefined;
+	const offset = env && typeof env === 'object' && typeof (env as { lineOffset?: unknown }).lineOffset === 'number'
+		? (env as { lineOffset: number }).lineOffset
+		: 0;
+	return offset + map[0] + 1;
+};
 
 const renderTabsHtml = (
-	panels: Array<{ id: string; title: string; content: string }>
+	panels: Array<{ id: string; title: string; content: string; lineOffset?: number }>
 ) => {
 	const parts = [
 		'<div class="docs-markdown-tabs" md data-tabs>',
@@ -325,7 +352,7 @@ const renderTabsHtml = (
 		const title = md.utils.escapeHtml(panel.title);
 		parts.push(
 			`<div class="docs-markdown-tabs__panel" role="tabpanel" data-tab="${id}" data-tab-title="${title}"${hidden}>`,
-			md.render(panel.content),
+			md.render(panel.content, { lineOffset: panel.lineOffset }),
 			'</div>'
 		);
 	});
@@ -360,7 +387,7 @@ md.core.ruler.after('block', 'markdown-tabs', (state) => {
 		if (!fences.length) {
 			placeholder.content = renderTabsError('至少需要声明一个分栏');
 		} else {
-			const panels: Array<{ id: string; title: string; content: string }> = [];
+			const panels: Array<{ id: string; title: string; content: string; lineOffset?: number }> = [];
 			const seen = new Set<string>();
 			let error = '';
 			for (const fence of fences) {
@@ -375,7 +402,9 @@ md.core.ruler.after('block', 'markdown-tabs', (state) => {
 					break;
 				}
 				seen.add(id);
-				panels.push({ id, title, content: fence.content });
+				// 分栏内容从 fence 开始行的下一行起算，嵌套渲染时据此还原源文件行号。
+				const fenceLine = resolveSourceLine(state.env, fence.map);
+				panels.push({ id, title, content: fence.content, lineOffset: fenceLine });
 				panelSources?.push(fence.content);
 			}
 			placeholder.content = error
@@ -406,7 +435,8 @@ md.core.ruler.after('markdown-tabs', 'runtime-files', (state) => {
 		placeholder.block = true;
 		placeholder.map = openToken.map;
 		placeholder.level = openToken.level;
-		const propsData = parseRuntimeProps(innerTokens);
+		const line = resolveSourceLine(state.env, openToken.map);
+		const { props: propsData, warnings: parseWarnings } = parseRuntimeProps(innerTokens);
 		const propsError = validateRuntimeViews(propsData)
 			|| validateRuntimeViewport(propsData)
 			|| validatePreviewInset(propsData)
@@ -418,12 +448,13 @@ md.core.ruler.after('markdown-tabs', 'runtime-files', (state) => {
 			|| validateMobile(propsData)
 			|| validatePreviewVariables(propsData)
 			|| validatePreviewVariableLinks(propsData);
-		const propsAttr = renderPlaygroundAttrs(propsData);
+		const warnings = propsError ? [] : [...parseWarnings, ...collectPlaygroundWarnings(propsData as Record<string, unknown>)];
+		const propsAttr = renderPlaygroundAttrs(propsData, warnings, line);
 
 		if (!fences.length) {
-			placeholder.content = renderPlaygroundError('至少需要声明一个代码文件');
+			placeholder.content = renderPlaygroundError('至少需要声明一个代码文件', line);
 		} else if (propsError) {
-			placeholder.content = renderPlaygroundError(propsError);
+			placeholder.content = renderPlaygroundError(propsError, line);
 		} else {
 			const fileEntries = fences.map((token) => {
 				const [, filename = ''] = token.info.trim().split(/\s+/, 2);
@@ -449,11 +480,11 @@ md.core.ruler.after('markdown-tabs', 'runtime-files', (state) => {
 				const entry = configuredEntry || filenames[0];
 
 				if (missingFilename) {
-					placeholder.content = renderPlaygroundError('多文件模式下每个代码块都必须声明文件名');
+					placeholder.content = renderPlaygroundError('多文件模式下每个代码块都必须声明文件名', line);
 				} else if (duplicateFilename) {
-					placeholder.content = renderPlaygroundError(`文件名 ${duplicateFilename} 重复`);
+					placeholder.content = renderPlaygroundError(`文件名 ${duplicateFilename} 重复`, line);
 				} else if (!filenames.includes(entry)) {
-					placeholder.content = renderPlaygroundError(`入口文件 ${entry} 不存在`);
+					placeholder.content = renderPlaygroundError(`入口文件 ${entry} 不存在`, line);
 				} else {
 					const files: PlaygroundFiles = Object.fromEntries(fileEntries);
 					placeholder.content = [

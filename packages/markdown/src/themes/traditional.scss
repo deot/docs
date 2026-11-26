@@ -683,6 +683,18 @@ $sign: md;
 				border-radius: 6px;
 			}
 
+			& .docs-playground-warning {
+				padding: 8px 12px;
+				margin: 20px 0 -10px;
+				font-size: 13px;
+				line-height: 1.6;
+				color: #92400e;
+				white-space: pre-wrap;
+				background: #fffbeb;
+				border: 1px dashed #fcd34d;
+				border-radius: 6px;
+			}
+
 			& code[#{$sign}]:not(.hljs)  {
 				padding: 0.15em 0.4em;
 				color: var(--docs-color-primary, #873bf4);

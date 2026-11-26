@@ -53,6 +53,7 @@
 						:indicator="markdownDefaults.indicator"
 						:locale="locale"
 						:playground="playgroundDefaults"
+						:show-playground-warnings="showPlaygroundWarnings"
 						@rendered="onRendered"
 					/>
 				</article>
@@ -71,7 +72,7 @@ import { useLocale } from '@deot/docs-locale';
 import SourceEditor from './components/source-editor.vue';
 import PaneDivider from './components/pane-divider.vue';
 import ThemeToggler from '../../components/theme-toggler/index.vue';
-import { getDocsConfig } from '../../utils/runtime';
+import { getDocsConfig, getDocsRuntime } from '../../utils/runtime';
 import { createResourceIdentity, getDocsDeploymentBase, getDocsNamespace, resolveResource } from '../../utils/resolver';
 import { resolveDocsMarkdownComponent, resolveDocsPlaygroundComponent } from '../../utils/components';
 import { Gateway } from '../../modules/gateway';
@@ -83,6 +84,8 @@ const SAMPLE = '# Markdown\n\n## Hello\n\nEdit **Markdown** and preview it here.
 	+ '| Name | Value |\n| --- | --- |\n| Markdown | Live preview |\n\n```js\nconsole.log("Hello Markdown");\n```\n';
 const route = useRoute();
 const docs = getDocsConfig();
+// 开发模式下在示例上方显示 Playground 配置警告；生产环境只输出到控制台。
+const showPlaygroundWarnings = getDocsRuntime().mode === 'development';
 const base = getDocsDeploymentBase(docs);
 const namespace = getDocsNamespace(docs);
 const { locale, t } = useLocale();

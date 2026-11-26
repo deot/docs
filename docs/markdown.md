@@ -591,3 +591,26 @@ const rows = Array.from({ length: 24 }, (_, index) => index + 1);
 </style>
 ```
 :::
+
+## 配置校验
+
+写错的配置不会打断示例，但会给出警告：未知键（附最接近的键名）、mobile 下不生效的键、不是合法 JSON5 的 `<config>`。警告总会输出到 `console.warn`，开发模式下还会显示在示例上方。站点配置 `components.playground` 里的未知键同样会在控制台提示。`views` 等取值非法时仍按原样报 `PLAYGROUND: …` 错误。
+
+下面的示例同时写了 `mobile: true` 与 `expandable: true`，开发模式下能看到「mobile 下 expandable 不生效」的提示：
+
+:::playground
+<!--
+<config lang="json5">
+{
+	title: '配置警告',
+	mobile: true,
+	expandable: true
+}
+</config>
+-->
+```vue
+<template>
+	<p>expandable 在移动端分栏下不生效</p>
+</template>
+```
+:::
