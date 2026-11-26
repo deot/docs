@@ -37,6 +37,7 @@ The sample documentation workspace uses the repository root `index.html` (README
 | Serve package examples | `npm run dev` |
 | Serve the sample documentation site | `npm run cli:dev` |
 | Preview the sample site (production runtime) | `npm run cli:preview` |
+| Smoke-check every playground in a headless browser | `npm run cli:check` (add `-- --include 'docs/**'` to narrow; needs network for CDN deps) |
 
 Valid package folder names for targeted tests and builds are `cli`, `client`, `dever`, `index`, `launch`, `locale`, `markdown`, `playground`, `renderer`, and `theme`. Use `--include '<pattern>'` for a narrower Vitest run. For example, validate Markdown with `npm run test -- --package-name markdown` and `npm run build -- --package-name markdown`. Tests collect coverage by default. The CI-equivalent checks are typecheck, all-package tests, and build.
 

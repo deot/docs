@@ -3,7 +3,7 @@ import type { Command } from 'commander';
 import { createRequire } from 'node:module';
 
 import * as Dever from '@deot/docs-dever';
-import type { DeverOptions } from '@deot/docs-dever';
+import type { CheckOptions, DeverOptions } from '@deot/docs-dever';
 
 const require = createRequire(import.meta.url);
 
@@ -18,7 +18,7 @@ const defaultOptions: Option[] = [
 ];
 
 // 在绑定执行函数前，为每个命令追加相同的传输层选项。
-const addOptions = (ctx: Command, action: (options: DeverOptions) => Promise<void>) => {
+const addOptions = <T extends DeverOptions>(ctx: Command, action: (options: T) => Promise<void>) => {
 	defaultOptions.forEach(i => ctx.addOption(i));
 	ctx.action(action);
 };
@@ -61,6 +61,31 @@ addOptions(
 		.option('--package-name <string>', 'Select PackageName')
 		.description('preview workspace in production mode'),
 	options => Dever.run({ ...options, preview: true })
+);
+
+const parsePositive = (value: string) => {
+	const number = Number(value);
+	if (!Number.isFinite(number) || number < 0) throw new InvalidArgumentError('Expected a non-negative number');
+	return number;
+};
+
+// doc check 冒烟检查命令。
+addOptions<DeverOptions & CheckOptions>(
+	program
+		.command('check')
+		.option('--workspace <string>', 'Select Workspace')
+		.option('--package-name <string>', 'Select PackageName')
+		.addOption(new Option('--mode <mode>', 'declared: use each example\'s own local setting; both: run local and iframe')
+			.choices(['declared', 'local', 'iframe', 'both'])
+			.default('declared'))
+		.option('--include <pattern>', 'Only check routes or sources matching the pattern (* wildcards)')
+		.option('--timeout <ms>', 'Max time to wait for each example to mount', parsePositive, 30000)
+		.option('--settle <ms>', 'Time to keep collecting async errors after mount', parsePositive, 500)
+		.addOption(new Option('--reporter <type>', 'Report format').choices(['text', 'json']).default('text'))
+		.option('--url <url>', 'Check a running site instead of starting a dev server')
+		.option('--strict', 'Fail on config warnings too')
+		.description('mount every playground in a headless browser and report errors'),
+	Dever.check
 );
 
 const main = async () => {

@@ -12,6 +12,7 @@
 			<pre
 				v-if="errorText"
 				class="docs-playground__runtime-error"
+				:data-error-kind="compileErrorText ? 'compile' : 'runtime'"
 				role="alert"
 			>{{ errorText }}</pre>
 			<div class="docs-playground-runtime__viewport" :style="viewportStyle">
@@ -69,6 +70,7 @@
 			<pre
 				v-if="errorText"
 				class="docs-playground__runtime-error"
+				:data-error-kind="compileErrorText ? 'compile' : 'runtime'"
 				role="alert"
 			>{{ errorText }}</pre>
 			<div

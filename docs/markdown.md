@@ -653,6 +653,8 @@ const handleToast = () => {
 
 写错的配置不会打断示例，但会给出警告：未知键（附最接近的键名）、mobile 下不生效的键、不是合法 JSON5 的 `<config>`。警告总会输出到 `console.warn`，开发模式下还会显示在示例上方。站点配置 `components.playground` 里的未知键同样会在控制台提示。`views` 等取值非法时仍按原样报 `PLAYGROUND: …` 错误。
 
+CI 里可以用 `doc check`（本仓库为 `npm run cli:check`）逐页挂载全部示例：它会收集编译错误、运行时错误、`console.error` 和未处理的 Promise 拒绝，按「文件:行号 「标题」」输出，有错误时以非零退出码结束；`--strict` 时警告也算失败。直接渲染的示例里，未处理的拒绝和 `console.error` 也会显示在预览上方。
+
 下面的示例同时写了 `mobile: true` 与 `expandable: true`，开发模式下能看到「mobile 下 expandable 不生效」的提示：
 
 :::playground

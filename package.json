@@ -20,6 +20,7 @@
     "release": "ddc release",
     "typecheck": "vue-tsc --noEmit --skipLibCheck",
     "cli:dev": "tsx ./packages/cli/src/index.ts dev",
+    "cli:check": "tsx ./packages/cli/src/index.ts check",
     "cli:preview": "tsx ./packages/cli/src/index.ts preview",
     "cli:build": "tsx --tsconfig ./tsconfig.json ./packages/cli/src/index.ts build"
   },
@@ -43,6 +44,7 @@
   },
   "homepage": "https://github.com/deot/docs#readme",
   "devDependencies": {
-    "@deot/dev": "^2.10.0"
+    "@deot/dev": "^2.10.0",
+    "puppeteer": "^25.13.0"
   }
 }

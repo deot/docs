@@ -62,6 +62,19 @@ pnpm exec doc build --workspace site --out-dir dist
 pnpm exec doc preview --workspace site
 ```
 
+### `doc check`
+
+冒烟检查：启动开发服务（或用 `--url` 检查已在运行的站点），用无头浏览器逐页打开文档，依次挂载每个 Playground，收集编译错误、运行时错误、`console.error`、未处理的 Promise 拒绝、资源加载失败和配置错误，按「文件:行号 「标题」 [local|iframe]」输出报告。有错误时退出码为 1；配置警告只列出，`--strict` 时也算失败。
+
+```bash
+pnpm exec doc check
+pnpm exec doc check --include 'docs/**' --mode both --reporter json
+```
+
+- 示例按串行方式挂载，期间页面上的错误都归到当前示例。`views: ['files']` 的示例也会跑一次运行时。
+- 多语言共用同一份 Markdown 时，同一源文件只检查一次。
+- 需要 `puppeteer`（可选依赖，`pnpm add -D puppeteer`）。Playground 从公共 CDN 加载依赖，需要网络；首次加载组件库可能较慢，必要时调大 `--timeout`。
+
 ## 选项
 
 | 选项 | 适用命令 | 说明 |
@@ -70,6 +83,13 @@ pnpm exec doc preview --workspace site
 | `--out-dir <path>` | `build` | 输出目录，默认 `dist`。 |
 | `--host <host>` | `preview` | 监听地址，默认 `0.0.0.0`。 |
 | `--port <port>` | `preview` | 监听端口，默认 `4173`。 |
+| `--mode <mode>` | `check` | `declared`（默认，按示例自己的 `local`）、`local`、`iframe`，或 `both`（每个示例两种方式各跑一次）。 |
+| `--include <pattern>` | `check` | 只检查路由或源文件匹配的页面；含 `*` 时按通配符（`**` 跨目录），否则按子串。 |
+| `--timeout <ms>` | `check` | 单个示例等待挂载的上限，默认 `30000`。 |
+| `--settle <ms>` | `check` | 挂载后继续收集异步错误的时间，默认 `500`。 |
+| `--reporter <type>` | `check` | `text`（默认）或 `json`。 |
+| `--url <url>` | `check` | 检查已在运行的站点，不启动开发服务。 |
+| `--strict` | `check` | 配置警告也算失败。 |
 | `--dry-run [boolean]` | 全部 | 只输出将要运行的模式，不启动服务或执行构建。 |
 | `--package-name <name>` | 全部 | 原样传给运行层的包名上下文；当前核心模式不读取。 |
 | `--custom <value>` | 全部 | 原样传给运行层的扩展信息；当前核心模式不读取。 |

@@ -7,10 +7,29 @@ import { build as createBuild, createServer, mergeConfig } from 'vite';
 import createPlugins from './plugins';
 import { createLocalDocsAliases, findLocalClientWorkspace } from './local-client';
 import { startPreviewServer } from './preview';
+import { createPuppeteerDriver, formatCheckReport, isCheckFailed, resolveServerUrl, runChecks } from './check';
+import type { CheckOptions } from './check';
 import type { DeverMode, DeverOptions } from './types';
 import { isInside, resolveDocsWorkspace } from './workspace';
 
 export type { DeverMode, DeverOptions } from './types';
+export {
+	createIncludeMatcher,
+	dedupeRoutes,
+	formatCheckReport,
+	isCheckFailed,
+	resolveRunModes,
+	runChecks
+} from './check';
+export type {
+	CheckDriver,
+	CheckIssue,
+	CheckMode,
+	CheckOptions,
+	CheckPage,
+	CheckReport,
+	CheckReporter
+} from './check';
 export type { ResolvedDocsWorkspace } from './workspace';
 export { resolveDocsWorkspace } from './workspace';
 
@@ -127,4 +146,45 @@ export const run = (input: DeverOptions) => Utils.autoCatch(async () => {
 	await server.listen();
 	server.printUrls();
 	server.bindCLIShortcuts({ print: true });
+});
+
+/**
+ * `doc check`：启动开发服务（或使用 `--url`），用无头浏览器逐页、逐个挂载 Playground，
+ * 汇总编译错误、运行时错误、console.error 与未处理的 Promise 拒绝。有错误时退出码为 1。
+ * @param input 检查参数。
+ * @returns 检查完成（或 dry run 输出完成）。
+ */
+export const check = (input: DeverOptions & CheckOptions) => Utils.autoCatch(async () => {
+	const options = { dryRun: false, ...input };
+	if (typeof input.dryRun === 'undefined') options.dryRun = process.env.NODE_ENV === 'UNIT';
+	if (options.dryRun) return Shell.spawn(`echo check ${dirname}`);
+	let server: Awaited<ReturnType<typeof createServer>> | undefined;
+	let baseUrl = options.url;
+	if (!baseUrl) {
+		process.env.ENV_OPTIONS = encodeURIComponent(JSON.stringify(options));
+		const config = createDeverConfig({ ...options, build: false, preview: false });
+		server = await createServer(mergeConfig(config, {
+			// 浏览器里的警告会被 Vite 转发到终端，检查报告只看错误。
+			logLevel: 'error',
+			server: { port: 0, strictPort: false, host: '127.0.0.1', open: false, hmr: false }
+		}));
+		await server.listen();
+		baseUrl = resolveServerUrl(server);
+	}
+	try {
+		const driver = await createPuppeteerDriver();
+		try {
+			const report = await runChecks(baseUrl, driver, options);
+			console.log(formatCheckReport(report, options));
+			if (isCheckFailed(report, options)) process.exitCode = 1;
+		} finally {
+			await driver.close();
+		}
+	} catch (error) {
+		// autoCatch 只打印错误，检查失败必须以非零退出码结束。
+		process.exitCode = 1;
+		throw error;
+	} finally {
+		await server?.close();
+	}
 });

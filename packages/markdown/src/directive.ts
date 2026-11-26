@@ -8,6 +8,14 @@ import {
 } from './tab-query';
 import type { MarkdownTabQueryAdapter } from './tab-query';
 import TabsNav from './tabs-nav.vue';
+import {
+	getDocsCheck,
+	markCheckRendered,
+	registerCheckEntries,
+	removeCheckEntries,
+	waitForCheckedPreview
+} from './check';
+import type { DocsCheckEntry } from './check';
 import { resolvePlaygroundProps } from './playground-props';
 import { collectPlaygroundDefaultsWarnings } from './playground-warnings';
 import type { MarkdownPlaygroundConfig, MarkdownPlaygroundDefaults, MarkdownPlaygroundMountProps } from './types';
@@ -23,6 +31,12 @@ const defaultTabQuery = createHistoryTabQueryAdapter();
 const cleanup = (el: HTMLElement) => {
 	for (const app of mountedApps.get(el) || []) app.unmount();
 	mountedApps.delete(el);
+	removeCheckEntries(el);
+};
+
+const parseSourceLine = (value: string | undefined) => {
+	const line = Number(value);
+	return Number.isInteger(line) && line > 0 ? line : undefined;
 };
 
 const resolveBlockLanguage = (block: Element) => {
@@ -149,9 +163,25 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirecti
 
 	const blocks = el.querySelectorAll('pre code');
 	const playgrounds = el.querySelectorAll<HTMLElement>('div[data-playground]');
+	const check = getDocsCheck();
+	const checkEntries: DocsCheckEntry[] = check
+		? [...el.querySelectorAll<HTMLElement>('.docs-playground-error')].map(element => ({
+				element,
+				title: '',
+				line: parseSourceLine(element.dataset.sourceLine),
+				local: true,
+				warnings: [],
+				error: element.textContent?.trim() || ''
+			}))
+		: [];
 	if (!blocks.length && !playgrounds.length) {
 		await nextTick();
-		if (renderVersions.get(el) === version) binding.value.onRendered?.(binding.value.source || '', sourceLines);
+		if (renderVersions.get(el) !== version) return;
+		if (check) {
+			registerCheckEntries(el, checkEntries);
+			markCheckRendered();
+		}
+		binding.value.onRendered?.(binding.value.source || '', sourceLines);
 		return;
 	}
 	const DocsPlayground = await loadPlayground();
@@ -189,17 +219,48 @@ const render = async (el: HTMLElement, binding: DirectiveBinding<MarkdownDirecti
 		const runtimeProps: MarkdownPlaygroundMountProps = files
 			? { files, entry: item.dataset.entry }
 			: { modelValue: code };
-		const app = createApp(() => h(DocsPlayground.Playground, {
-			...resolvePlaygroundProps(sitePlaygroundDefaults, propsData),
+		const playgroundProps = resolvePlaygroundProps(sitePlaygroundDefaults, propsData);
+		const createPlayground = (overrides: Record<string, unknown> = {}) => createApp(() => h(DocsPlayground.Playground, {
+			...playgroundProps,
+			...overrides,
 			...runtimeProps,
 			locale: binding.value.locale
 		}));
-		app.mount(item);
-		apps.push(app);
+		if (!check) {
+			const app = createPlayground();
+			app.mount(item);
+			apps.push(app);
+			return;
+		}
+		// 检查模式：登记示例，由检查脚本逐个挂载。
+		const declaredLocal = playgroundProps.local !== false;
+		checkEntries.push({
+			element: item,
+			title: typeof propsData.title === 'string' ? propsData.title : '',
+			line: parseSourceLine(item.dataset.sourceLine),
+			local: declaredLocal,
+			warnings: parseWarnings(item.dataset.warnings),
+			mount: async (options) => {
+				const local = options.local ?? declaredLocal;
+				// views: ['files'] 的示例也要跑一次运行时。
+				const app = createPlayground({ local, views: ['runtime'] });
+				app.mount(item);
+				try {
+					return await waitForCheckedPreview(item, local, options);
+				} finally {
+					app.unmount();
+				}
+			}
+		});
 	});
 
 	await nextTick();
-	if (renderVersions.get(el) === version) binding.value.onRendered?.(binding.value.source || '', sourceLines);
+	if (renderVersions.get(el) !== version) return;
+	if (check) {
+		registerCheckEntries(el, checkEntries);
+		markCheckRendered();
+	}
+	binding.value.onRendered?.(binding.value.source || '', sourceLines);
 };
 
 const update = (el: HTMLElement, binding: DirectiveBinding<MarkdownDirectiveValue>) => {

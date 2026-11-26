@@ -1331,6 +1331,58 @@ describe('markdown', () => {
 		warn.mockRestore();
 	});
 
+	it('registers playgrounds for doc check instead of mounting them', async () => {
+		window.__DOCS_CHECK__ = {};
+		const source = [
+			runtimeWithConfig('{ title: "first", foo: 1 }', '```vue\n<template />\n```'),
+			'',
+			runtimeWithConfig('{ title: "second", local: false, views: ["files"] }', '```vue\n<template />\n```'),
+			'',
+			runtimeWithConfig('{ views: "x" }', '```vue\n<template />\n```')
+		].join('\n');
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const wrapper = mount(Markdown, { props: { modelValue: source }, attachTo: document.body });
+		try {
+			await vi.waitFor(() => expect(window.__DOCS_CHECK__?.renders).toBe(1));
+			expect(wrapper.find('.playground').exists()).toBe(false);
+			expect(window.__DOCS_CHECK__!.playgrounds!()).toEqual([
+				{ index: 0, title: 'first', line: 1, local: true, warnings: ['未知配置 foo，该键会被忽略'] },
+				{ index: 1, title: 'second', line: 12, local: false, warnings: [] },
+				{ index: 2, title: '', line: 23, local: true, warnings: [], error: 'PLAYGROUND: views 必须是非空数组' }
+			]);
+			const result = await window.__DOCS_CHECK__!.mount!(1, { timeout: 30, settle: 0 });
+			expect(result).toEqual({
+				status: 'timeout',
+				local: false,
+				errors: [{ kind: 'timeout', message: '预览在 30ms 内没有完成挂载' }]
+			});
+			// 挂载时强制运行时视图，结束后卸载。
+			expect(playgroundUnmounted).toHaveBeenCalled();
+			expect(await window.__DOCS_CHECK__!.mount!(2)).toMatchObject({
+				status: 'error',
+				errors: [{ kind: 'config', message: 'PLAYGROUND: views 必须是非空数组' }]
+			});
+			await expect(window.__DOCS_CHECK__!.mount!(9)).rejects.toThrow(RangeError);
+		} finally {
+			wrapper.unmount();
+			warn.mockRestore();
+			delete window.__DOCS_CHECK__;
+		}
+	});
+
+	it('reports a mounted preview as ready and collects its errors by kind', async () => {
+		const { waitForCheckedPreview } = await import('../src/check');
+		const item = document.createElement('div');
+		item.innerHTML = '<div class="docs-playground-local__mount"><p>ok</p></div>';
+		expect(await waitForCheckedPreview(item, true, { settle: 0 })).toEqual({ status: 'ok', local: true, errors: [] });
+		item.innerHTML = '<pre class="docs-playground__runtime-error" data-error-kind="compile">bad template</pre>';
+		expect(await waitForCheckedPreview(item, true, { settle: 0 })).toEqual({
+			status: 'error',
+			local: true,
+			errors: [{ kind: 'compile', message: 'bad template' }]
+		});
+	});
+
 	it('passes playground expandable to Playground', async () => {
 		const enabled = mount(Markdown, {
 			props: {

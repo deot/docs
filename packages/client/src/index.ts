@@ -9,6 +9,7 @@ import '../../../node_modules/@deot/docs-playground/dist/index.style.css';
 import App from './app.vue';
 import { provideRendererModules } from './components/renderer';
 import { connectResourceEvents } from './events';
+import { installDocsCheck } from './modules/check';
 import { Resource } from './modules/resource';
 import { Settings, ThemeRuntime, ContentWidthRuntime } from './modules/settings';
 import { createDocsRouter } from './router';
@@ -105,6 +106,7 @@ export const bootstrap = async (config?: DocsConfig) => {
 		{ immediate: true }
 	);
 	app.mount('#app');
+	installDocsCheck(router, config);
 	const disconnectEvents = connectResourceEvents();
 	let disconnected = false;
 	let stopPrefetch: (() => void) | undefined;

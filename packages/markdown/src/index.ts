@@ -3,6 +3,14 @@ import Markdown from './wrapper.vue';
 export { Markdown };
 export { parseMarkdownSearchSections, toMarkdownTabId } from './markdown';
 export { mergePreviewVariablesByName, resolvePlaygroundProps } from './playground-props';
+export { getDocsCheck } from './check';
+export type {
+	DocsCheckError,
+	DocsCheckHooks,
+	DocsCheckMountOptions,
+	DocsCheckMountResult,
+	DocsCheckPlayground
+} from './check';
 export { collectMarkdownHeadings, getMarkdownHeadingTitle } from './headings';
 export {
 	createHistoryTabQueryAdapter,

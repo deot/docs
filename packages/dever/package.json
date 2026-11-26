@@ -29,5 +29,13 @@
     "sass": "^1.105.1",
     "vite": "^8.3.4"
   },
+  "peerDependencies": {
+    "puppeteer": ">=24"
+  },
+  "peerDependenciesMeta": {
+    "puppeteer": {
+      "optional": true
+    }
+  },
   "devDependencies": {}
 }
