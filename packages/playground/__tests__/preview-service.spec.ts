@@ -7,11 +7,11 @@ import { PREVIEW_SCROLLER_USE_CODE } from '../src/core/preview-scroll';
 describe('preview service', () => {
 	let runtime: PlaygroundService;
 	let post: ReturnType<typeof vi.spyOn>;
-	const applied = (accepted = true, source: MessageEventSource = window) => {
+	const applied = (accepted = true, source: MessageEventSource = window, extra: Record<string, unknown> = {}) => {
 		const request = post.mock.calls.map(call => call[0]).filter(data => data.operation === 'enable').at(-1);
 		window.dispatchEvent(new MessageEvent('message', {
 			source,
-			data: { ...request, action: 'docs:height:applied', accepted }
+			data: { ...request, action: 'docs:height:applied', accepted, ...extra }
 		}));
 	};
 	const releases = () => post.mock.calls.filter(call => call[0].operation === 'release');
@@ -70,6 +70,19 @@ describe('preview service', () => {
 		expect(await ready).toBe(true);
 		expect(releases()).toHaveLength(0);
 		expect(await handleVisible(false)).toBeUndefined();
+		expect(releases()).toHaveLength(1);
+	});
+
+	it('runs the handler at once when the host height is fixed', async () => {
+		vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(100);
+		const visible = vue.ref(false);
+		const open = runtime.run(560, { visible });
+		const result = open();
+		applied(true, window, { fixed: true });
+		await result;
+		expect(visible.value).toBe(true);
+		expect(releases()).toHaveLength(0);
+		visible.value = false;
 		expect(releases()).toHaveLength(1);
 	});
 

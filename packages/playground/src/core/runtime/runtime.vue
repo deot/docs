@@ -332,7 +332,7 @@ const localError = ref({ compile: '', runtime: '' });
 const handleLocalError = (payload: { compile: string; runtime: string }) => {
 	localError.value = payload;
 };
-const temporaryHeight = usePreviewHeightBridge(sandboxRef);
+const temporaryHeight = usePreviewHeightBridge(sandboxRef, undefined, () => !!props.mobile);
 const sandboxKey = ref(0);
 const runtimeHeight = useSandboxAutoHeight(sandboxRef);
 const runtimeError = useSandboxRuntimeErrorGuard(sandboxRef);

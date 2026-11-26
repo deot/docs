@@ -468,9 +468,27 @@ const handleClick = playground.run(560, { visible: isActive });
 ```
 :::
 
+## 站点默认值
+
+`window.$docs.components.playground` 是所有 Playground 的默认配置，块内配置按键覆盖，数组整体替换。例如让桌面示例都显示运行时和文件两个视图：
+
+```js
+window.$docs = {
+	components: {
+		playground: {
+			views: ['runtime', 'files']
+		}
+	}
+};
+```
+
+`mobile: true` 的块会忽略 `views`，始终是代码和预览分栏；但块内写了非法的 `views` 仍会报错。
+
 ## 移动端分栏
 
 左代码、右预览，整块最高 640px。容器窄于 720px 时改为上预览、下代码。底栏切换 `--rem`，预览根会同时重写 `--vc-rem`。
+
+分栏高度固定：`docs:playground.run(height, …)` 不改变高度，直接调用回调（或把 `visible` 置为 `true`），local 与 iframe 一致。`views`、`expandable` 在分栏下不生效。
 
 :::playground
 <!--

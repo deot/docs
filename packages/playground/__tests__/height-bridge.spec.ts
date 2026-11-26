@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils';
 import { usePreviewHeightBridge } from '../src/core/runtime/height-bridge';
 
 describe('preview height host', () => {
-	const setup = (maxHeight?: () => number) => {
+	const setup = (maxHeight?: () => number, fixed?: () => boolean) => {
 		const container = document.createElement('div');
 		const iframe = document.createElement('iframe');
 		container.appendChild(iframe);
@@ -14,7 +14,7 @@ describe('preview height host', () => {
 		const sandbox = shallowRef({ container });
 		const wrapper = mount(defineComponent({
 			setup() {
-				const height = usePreviewHeightBridge(sandbox, maxHeight);
+				const height = usePreviewHeightBridge(sandbox, maxHeight, fixed);
 				return () => h('div', height.value);
 			}
 		}));
@@ -65,6 +65,15 @@ describe('preview height host', () => {
 		await host.send('enable', 1, 560);
 		expect(host.wrapper.text()).toBe('0');
 		expect(host.reply).toHaveBeenCalledWith(expect.objectContaining({ accepted: false }), '*');
+		host.dispose();
+	});
+
+	it('accepts fixed-height requests immediately without growing the preview', async () => {
+		const host = setup(() => 400, () => true);
+		await host.send('start');
+		await host.send('enable', 1, 560);
+		expect(host.wrapper.text()).toBe('0');
+		expect(host.reply).toHaveBeenCalledWith(expect.objectContaining({ accepted: true, fixed: true, id: 1 }), '*');
 		host.dispose();
 	});
 

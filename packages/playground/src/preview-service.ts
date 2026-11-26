@@ -243,7 +243,12 @@ export class PlaygroundService {
 			if (event.source !== this.target.parent || data?.action !== 'docs:height:applied'
 				|| data.session !== this.session || data.id !== id || settled) return;
 			if (!data.accepted) release();
-			else check();
+			else if (data.fixed) {
+				// 固定高度的预览（mobile 分栏）不会变高，不再等待视口。
+				settled = true;
+				stopWaiting();
+				resolveReady(true);
+			} else check();
 		};
 		const request: PreviewRequest = {
 			ready,

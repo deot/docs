@@ -187,6 +187,7 @@ local 模式下，Vue 文件内所有 `<style>` 块（含 SCSS / Sass）统一�
 - 每个 Playground 实例都使用自己的 preview 配置和 iframe 消息来源校验。
 - `local` 默认开启：同一份 `files` 在当前文档里编译。直接渲染不撑开预览高度，`expandable` 固定为关闭，`docs:playground.run` 不会申请临时高度；`<DocsLink>` 仍通过 `docs:navigate` 通知。`local: false` 改回 iframe Sandbox。
 - `mobile` 把代码和预览放在同一行，两边都在格子内用 `Scroller` 滚动，不再按内容撑开外框。预览列宽跟随 `viewport` 的数字宽度，未指定时为 375。窄容器改为上预览、下代码。
+- `mobile` 分栏高度固定，`docs:playground.run(height, …)` 不改变高度，也不等待：直接调用回调，或把 `visible` 置为 `true`。local 与 iframe 行为一致。
 - `previewVariables` 只写当前预览根。local 写到挂载根；iframe 写到预览文档的 `documentElement`。local 且开启 `mobile` 时，未指定 `--vc-rem` 会按预览列宽度写成 `min(calc(100cqw / 750), 0.64px)`，避免沿用整页的 `100vw`。iframe 的 `auto` 不改写 `--vc-rem`。
 
 ```vue

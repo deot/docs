@@ -7,11 +7,13 @@ import type { SandboxExposed } from './auto-height';
  * 只接收本宿主当前 iframe 的高度请求，应用重评时切换会话。
  * @param sandbox 预览容器。
  * @param maxHeight 当前可用高度，普通预览默认不限制。
+ * @param fixed 预览高度是否固定（mobile 分栏）。固定时不记录高度，直接回复已应用，iframe 不再等待。
  * @returns 所有有效请求的最大高度。
  */
 export function usePreviewHeightBridge(
 	sandbox: Ref<SandboxExposed | null>,
-	maxHeight: () => number = () => Infinity
+	maxHeight: () => number = () => Infinity,
+	fixed: () => boolean = () => false
 ) {
 	const height = ref(0);
 	const requests = new Map<number, number>();
@@ -48,8 +50,9 @@ export function usePreviewHeightBridge(
 			return;
 		}
 		if (data.operation !== 'enable' || !Number.isFinite(data.height) || data.height <= 0) return;
-		const accepted = data.height <= maxHeight();
-		if (accepted) requests.set(data.id, data.height);
+		const isFixed = fixed();
+		const accepted = isFixed || data.height <= maxHeight();
+		if (accepted && !isFixed) requests.set(data.id, data.height);
 		sync();
 		const receiver = source;
 		await nextTick();
@@ -58,7 +61,8 @@ export function usePreviewHeightBridge(
 			action: 'docs:height:applied',
 			session,
 			id: data.id,
-			accepted
+			accepted,
+			...(isFixed ? { fixed: true } : {})
 		}, '*');
 	};
 	watch(() => resolveSandboxMessageSource(sandbox.value), reset, { flush: 'sync' });

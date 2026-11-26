@@ -1220,6 +1220,25 @@ describe('markdown', () => {
 		overridden.unmount();
 	});
 
+	it('applies site views to every block and leaves the mobile split to Playground', async () => {
+		const source = [
+			runtimeWithConfig('{ title: "desktop" }', '```vue\n<template />\n```'),
+			runtimeWithConfig('{ title: "mobile", mobile: true }', '```vue\n<template />\n```')
+		].join('\n\n');
+		const wrapper = mount(Markdown, {
+			props: { modelValue: source, playground: { views: ['runtime', 'files'] } },
+			attachTo: document.body
+		});
+		await vi.waitFor(() => expect(wrapper.findAll('.playground')).toHaveLength(2));
+		const [desktop, mobile] = wrapper.findAll('.playground').map(item => item.text());
+		expect(desktop).toContain('["runtime","files"]');
+		expect(desktop).toContain('desktop');
+		// Playground 在 mobile 下忽略 views（见 playground 的分栏测试），这里只确认站点值照常传入。
+		expect(mobile).toContain('["runtime","files"]');
+		expect(mobile).toMatch(/mobile-+true/);
+		wrapper.unmount();
+	});
+
 	it('passes playground expandable to Playground', async () => {
 		const enabled = mount(Markdown, {
 			props: {
