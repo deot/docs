@@ -33,7 +33,7 @@
     "@deot/docs-theme": "^1.2.13",
     "@deot/helper": "^1.1.24",
     "@deot/http": "^1.1.10",
-    "@deot/vc": "^1.2.9",
+    "@deot/vc": "^1.2.10",
     "codemirror": "^6.0.2",
     "es-module-lexer": "^3.0.3"
   },
