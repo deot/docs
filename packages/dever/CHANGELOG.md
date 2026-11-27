@@ -1,5 +1,13 @@
 # @deot/docs-dever ChangeLog
 
+## v1.2.14
+
+_2026-11-27_
+
+### Force Update Package
+
+- `1.2.13` -> `1.2.14`
+
 ## v1.2.13
 
 _2026-11-26_

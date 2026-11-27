@@ -1,5 +1,14 @@
 # @deot/docs-client ChangeLog
 
+## v1.2.14
+
+_2026-11-27_
+
+### Updates
+
+- chore: bump @deot/vc to 1.2.10 ([60ea798](https://github.com/deot/docs/commit/60ea798e5994f31eadfb2a85a43bfc703272adea))
+- chore(theme): force-publish `1.2.13` -> `1.2.14`
+
 ## v1.2.13
 
 _2026-11-26_
